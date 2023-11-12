@@ -55,6 +55,7 @@ where
     }
 
     pub fn update_direction(&mut self, direction: ArrowDirection) {
+        return;
         if self.direction != direction {
             self.direction = direction;
             self.force_update = true;
@@ -62,6 +63,7 @@ where
     }
 
     pub fn update_speed(&mut self, speed: f64) {
+        return;
         let old_speed = self.speed;
         if speed > 0.0 {
             self.speed = speed / 100.0 * 3.5 + 1.0;
@@ -85,6 +87,7 @@ where
     }
 
     pub fn draw(&mut self, target: &mut D) -> Result<(), D::Error> {
+        return Ok(());
         if self.offset >= self.arrow_width as f64 {
             self.offset = self.speed;
         }
@@ -124,11 +127,25 @@ where
             .translate(Point::new(-(triangle_offset * new_offest), 0));
             if self.direction == ArrowDirection::Forward {
                 for a in (-1..(self.size.width / self.arrow_width) as i32 + 2).rev() {
-                    self.draw_triangle(&mut area, &style, &style_black, triangle, triangle_offset, a)?;
+                    self.draw_triangle(
+                        &mut area,
+                        &style,
+                        &style_black,
+                        triangle,
+                        triangle_offset,
+                        a,
+                    )?;
                 }
             } else {
                 for a in 0..(self.size.width / self.arrow_width) as i32 + 4 {
-                    self.draw_triangle(&mut area, &style, &style_black, triangle, triangle_offset, a)?;
+                    self.draw_triangle(
+                        &mut area,
+                        &style,
+                        &style_black,
+                        triangle,
+                        triangle_offset,
+                        a,
+                    )?;
                 }
             }
             self.old_offest = new_offest;
@@ -148,10 +165,16 @@ where
         triangle_offset: i32,
         a: i32,
     ) -> Result<(), D::Error> {
-        let triangle_a = triangle.translate(Point::new((self.arrow_width as f64 / 1.2).ceil() as i32 * a, 0));
+        let triangle_a = triangle.translate(Point::new(
+            (self.arrow_width as f64 / 1.2).ceil() as i32 * a,
+            0,
+        ));
         triangle_a.draw_styled(style, area)?;
         triangle_a
-            .translate(Point::new(triangle_offset * (self.arrow_width as i32 / 3), 0))
+            .translate(Point::new(
+                triangle_offset * (self.arrow_width as i32 / 3),
+                0,
+            ))
             .draw_styled(style_black, area)?;
         Ok(())
     }
