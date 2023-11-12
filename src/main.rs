@@ -70,21 +70,10 @@ fn main() -> ! {
     let mut system = peripherals.SYSTEM.split();
     let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
 
-    #[cfg(feature = "embassy-time-systick")]
+    //#[cfg(feature = "embassy-time-systick")]
     embassy::init(
         &clocks,
         esp32c3_hal::systimer::SystemTimer::new(peripherals.SYSTIMER),
-    );
-
-    #[cfg(feature = "embassy-time-timg0")]
-    embassy::init(
-        &clocks,
-        esp32c3_hal::timer::TimerGroup::new(
-            peripherals.TIMG0,
-            &clocks,
-            &mut system.peripheral_clock_control,
-        )
-        .timer0,
     );
 
     esp32c3_hal::interrupt::enable(
@@ -137,8 +126,13 @@ fn main() -> ! {
     //};
     //let spibus = SpiBusController::from_spi(spi);
 
-    let spi = ExclusiveDevice::new(spi, cs1, NoDelay);
-    let interface1 = SPIInterface::new(spi, dc);
+    let spi2 = unsafe { core::ptr::read(&spi) };
+    let dc2 = unsafe { core::ptr::read(&dc) };
+
+    let spi_device = ExclusiveDevice::new(spi, cs1, NoDelay);
+    let spi2_device = ExclusiveDevice::new(spi2, cs2, NoDelay);
+    let interface1 = SPIInterface::new(spi_device, dc);
+    let interface2 = SPIInterface::new(spi2_device, dc2);
 
     let display1 = AsyncDisplay::new(
         interface1,
@@ -148,9 +142,17 @@ fn main() -> ! {
     )
     .into_buffered_graphics_mode();
 
+    let display2 = AsyncDisplay::new(
+        interface2,
+        PixelCoord(256, 64),
+        PixelCoord(0, 0),
+        DisplayRotation::Rotate180,
+    )
+    .into_buffered_graphics_mode();
+
     let executor = make_static!(Executor::new());
     executor.run(|spawner| {
-        spawner.spawn(display::task::run1(display1)).ok();
+        spawner.spawn(display::task::run1(display1, display2)).ok();
         //spawner.spawn(run2(spi)).ok();
     })
 }
