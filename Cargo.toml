@@ -7,37 +7,38 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 # Base ESP deps
-esp32c3-hal = { git = "https://github.com/LechevSpace/esp-hal", branch = "fix/esp32-hal-common-atomic-emulation-typo", features = [
+esp-hal = { version = "0.16.1", features = [
     "async",
     "embassy",
-    "embassy-time-systick",
+    "embassy-time-systick-16mhz",
     "eh1",
+    "esp32c3",
 ] }
-esp-backtrace = { version = "0.9.0", features = [
+esp-backtrace = { version = "0.11.1", features = [
     "esp32c3",
     "panic-handler",
     "exception-handler",
-    "print-uart",
+    "println",
 ] }
-esp-println = { version = "0.7.1", features = ["esp32c3"] }
+esp-println = { version = "0.9.1", features = ["esp32c3"] }
 esp-alloc = { version = "0.3.0" }
 #esp-wifi  = { git = "https://github.com/esp-rs/esp-wifi/", rev = "7632e74", features = ["esp32c3", "wifi"] }
 
 # Embeded hal
-embedded-hal-async = "=1.0.0-rc.1"
-embedded-hal-bus =  { version = "0.1.0-rc.1", features = ["async"] } 
+embedded-hal-async = "1.0.0"
+embedded-hal-bus = { version = "0.1.0", features = ["async"] }
 
 static_cell = { version = "2.0.0", features = ["nightly"] }
 portable-atomic = { version = "1.5", features = ["unsafe-assume-single-core"] }
 
 # Embassy deps
-embassy-executor = { version = "0.3.0", features = [
+embassy-executor = { version = "0.5.0", features = [
     "nightly",
     "integrated-timers",
     "arch-riscv32",
     "executor-thread",
 ] }
-embassy-time = { version = "0.1.3", features = ["nightly"] }
+embassy-time = { version = "0.3.0" }
 
 
 # OLED SSD1306 deps
@@ -56,7 +57,7 @@ display-interface-spi = { git = "https://github.com/therealprof/display-interfac
     "async",
     "nightly",
 ] }
-inverted-pin = "0.2.0"
+inverted-pin = "1.0.0"
 profont = "0.7.0"
 
 heapless = "0.8.0"

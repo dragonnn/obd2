@@ -27,3 +27,7 @@ Przykładowe układy:
 - SN74LVC1G139DCTT - jednokanałowy mały, wygląda idealnie
 
 SN74LVC1G139DCTT daje outputy typu low, może wymagać dodania NOTów np. 74AC04
+
+
+https://github.com/collin80/SavvyCAN może się przydać do śledzenia co się dzieje na CAN
+https://hackaday.com/2023/11/22/esp32-used-as-wireless-can-bus-reader/

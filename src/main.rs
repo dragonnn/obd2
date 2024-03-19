@@ -12,13 +12,14 @@ use display_interface_spi::SPIInterface;
 use embassy_executor::Executor;
 use embassy_time::{Duration, Timer};
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
-use esp32c3_hal::spi::master::prelude::_esp_hal_spi_master_dma_WithDmaSpi2;
-use esp32c3_hal::spi::master::SpiBusController;
-use esp32c3_hal::{
+use esp_backtrace as _;
+use esp_hal::spi::master::prelude::_esp_hal_spi_master_dma_WithDmaSpi2;
+use esp_hal::spi::master::SpiBusController;
+use esp_hal::{
     clock::ClockControl,
+    dma::Dma,
     dma::DmaPriority,
     embassy,
-    gdma::Gdma,
     peripherals::Peripherals,
     prelude::*,
     riscv::singleton,
@@ -28,7 +29,6 @@ use esp32c3_hal::{
     },
     Delay, IO,
 };
-use esp_backtrace as _;
 use sh1122::{
     async_display::buffered_graphics::AsyncBufferedGraphicsMode, display::DisplayRotation,
     AsyncDisplay, PixelCoord,
@@ -46,7 +46,7 @@ async fn run1() {
 }
 
 pub type SpiType<'d> =
-    SpiDma<'d, esp32c3_hal::peripherals::SPI2, esp32c3_hal::gdma::Channel0, FullDuplexMode>;
+    SpiDma<'d, esp_hal::peripherals::SPI2, esp_hal::dma::Channel0, FullDuplexMode>;
 
 #[embassy_executor::task]
 async fn run2(spi: &'static mut SpiType<'static>) {
@@ -73,18 +73,18 @@ fn main() -> ! {
     //#[cfg(feature = "embassy-time-systick")]
     embassy::init(
         &clocks,
-        esp32c3_hal::systimer::SystemTimer::new(peripherals.SYSTIMER),
+        esp_hal::systimer::SystemTimer::new(peripherals.SYSTIMER),
     );
 
-    esp32c3_hal::interrupt::enable(
-        esp32c3_hal::peripherals::Interrupt::DMA_CH0,
-        esp32c3_hal::interrupt::Priority::Priority1,
+    esp_hal::interrupt::enable(
+        esp_hal::peripherals::Interrupt::DMA_CH0,
+        esp_hal::interrupt::Priority::Priority1,
     )
     .unwrap();
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    let dma = Gdma::new(peripherals.DMA);
+    let dma = Dma::new(peripherals.DMA);
     let dma_channel = dma.channel0;
 
     let sclk = io.pins.gpio6;
