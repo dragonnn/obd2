@@ -2,9 +2,8 @@ use display_interface_spi::SPIInterface;
 use embassy_time::{Duration, Instant, Timer};
 use embedded_graphics::prelude::*;
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
-use esp32c3_hal::{
+use esp_hal::{
     dma::*,
-    gdma::*,
     gpio::*,
     peripherals::*,
     spi::{master::dma::SpiDma, FullDuplexMode},
@@ -14,18 +13,15 @@ use sh1122::{async_display::buffered_graphics::AsyncBufferedGraphicsMode, AsyncD
 use super::widgets::*;
 
 #[embassy_executor::task]
-pub async fn run1(
+pub async fn run4(
     mut display1: AsyncDisplay<
         SPIInterface<
             ExclusiveDevice<
                 SpiDma<'static, SPI2, Channel0, FullDuplexMode>,
-                esp32c3_hal::gpio::GpioPin<
-                    esp32c3_hal::gpio::Output<esp32c3_hal::gpio::PushPull>,
-                    10,
-                >,
+                esp_hal::gpio::GpioPin<esp_hal::gpio::Output<esp_hal::gpio::PushPull>, 10>,
                 NoDelay,
             >,
-            esp32c3_hal::gpio::GpioPin<esp32c3_hal::gpio::Output<esp32c3_hal::gpio::PushPull>, 9>,
+            esp_hal::gpio::GpioPin<esp_hal::gpio::Output<esp_hal::gpio::PushPull>, 9>,
         >,
         AsyncBufferedGraphicsMode,
     >,
@@ -33,13 +29,10 @@ pub async fn run1(
         SPIInterface<
             ExclusiveDevice<
                 SpiDma<'static, SPI2, Channel0, FullDuplexMode>,
-                esp32c3_hal::gpio::GpioPin<
-                    esp32c3_hal::gpio::Output<esp32c3_hal::gpio::PushPull>,
-                    1,
-                >,
+                esp_hal::gpio::GpioPin<esp_hal::gpio::Output<esp_hal::gpio::PushPull>, 1>,
                 NoDelay,
             >,
-            esp32c3_hal::gpio::GpioPin<esp32c3_hal::gpio::Output<esp32c3_hal::gpio::PushPull>, 9>,
+            esp_hal::gpio::GpioPin<esp_hal::gpio::Output<esp_hal::gpio::PushPull>, 9>,
         >,
         AsyncBufferedGraphicsMode,
     >,

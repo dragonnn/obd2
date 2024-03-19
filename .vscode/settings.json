@@ -1,4 +1,7 @@
 {
     "rust-analyzer.checkOnSave.allTargets": false,
-    "rust-analyzer.cargo.target": "riscv32imc-unknown-none-elf"
+    "rust-analyzer.cargo.target": "riscv32imc-unknown-none-elf",
+    "cSpell.words": [
+        "Gdma"
+    ]
 }

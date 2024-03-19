@@ -14,10 +14,11 @@ use embassy_time::{Duration, Timer};
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use esp_backtrace as _;
 use esp_hal::spi::master::prelude::_esp_hal_spi_master_dma_WithDmaSpi2;
-use esp_hal::spi::master::SpiBusController;
+//use esp_hal::spi::master::SpiBusController;
 use esp_hal::{
     clock::ClockControl,
     dma::Dma,
+    dma::DmaDescriptor,
     dma::DmaPriority,
     embassy,
     peripherals::Peripherals,
@@ -48,7 +49,7 @@ async fn run1() {
 pub type SpiType<'d> =
     SpiDma<'d, esp_hal::peripherals::SPI2, esp_hal::dma::Channel0, FullDuplexMode>;
 
-#[embassy_executor::task]
+/*#[embassy_executor::task]
 async fn run2(spi: &'static mut SpiType<'static>) {
     let send_buffer = [0, 1, 2, 3, 4, 5, 6, 7];
     let mut buffer = [0; 8];
@@ -61,7 +62,7 @@ async fn run2(spi: &'static mut SpiType<'static>) {
         esp_println::println!("Bing!");
         Timer::after(Duration::from_millis(5_000)).await;
     }
-}
+}*/
 
 #[entry]
 fn main() -> ! {
@@ -90,8 +91,8 @@ fn main() -> ! {
     let sclk = io.pins.gpio6;
     let mosi = io.pins.gpio7;
 
-    let descriptors = make_static!([0u32; 8 * 3]);
-    let rx_descriptors = make_static!([0u32; 8 * 3]);
+    let descriptors = make_static!([DmaDescriptor::EMPTY; 8]);
+    let rx_descriptors = make_static!([DmaDescriptor::EMPTY; 8]);
 
     let spi = Spi::new(peripherals.SPI2, 12u32.MHz(), SpiMode::Mode0, &clocks)
         .with_sck(sclk)
@@ -152,7 +153,7 @@ fn main() -> ! {
 
     let executor = make_static!(Executor::new());
     executor.run(|spawner| {
-        spawner.spawn(display::task::run1(display1, display2)).ok();
+        spawner.spawn(display::task::run4(display1, display2)).ok();
         //spawner.spawn(run2(spi)).ok();
     })
 }
