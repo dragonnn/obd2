@@ -54,7 +54,9 @@ pub async fn run(
         esp_println::println!("cap1188.rs: Hello from embassy using esp-hal-async!");
         **/
         let touched = cap1188.touched().await.unwrap();
-        esp_println::println!("cap1188.rs: Touched: {:x?}", touched);
+        if touched != 0 {
+            esp_println::println!("cap1188.rs: Touched: {:x?}", touched);
+        }
         Timer::after_millis(100).await;
     }
 }
@@ -93,6 +95,7 @@ where
 
     pub async fn init(&mut self) -> Result<(), SPI::Error> {
         let mut prod_id = [0; 3];
+        self.reset().await?;
         self.read_register(CAP1188_PRODID, &mut prod_id).await?;
         esp_println::println!("cap1188.rs: Product ID: {:x?}", &prod_id[0]);
         esp_println::println!("cap1188.rs: Manufacturer ID: {:x?}", &prod_id[1]);
@@ -171,5 +174,14 @@ where
         self.spi
             .transaction(&mut [Operation::Write(&init_buf)])
             .await
+    }
+
+    async fn reset(&mut self) -> Result<(), SPI::Error> {
+        let mut buffer = [0; 2];
+
+        buffer[0] = 0x7a;
+        buffer[1] = 0x7a;
+
+        self.spi.transaction(&mut [Operation::Write(&buffer)]).await
     }
 }

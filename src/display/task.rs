@@ -10,6 +10,8 @@ use esp_hal::{
 };
 use sh1122::{async_display::buffered_graphics::AsyncBufferedGraphicsMode, AsyncDisplay};
 
+use crate::cap1188::Cap1188;
+
 use super::widgets::*;
 
 #[embassy_executor::task]
@@ -36,11 +38,19 @@ pub async fn run4(
         >,
         AsyncBufferedGraphicsMode,
     >,
+    mut cap1188: Cap1188<
+        ExclusiveDevice<
+            SpiDma<'static, SPI2, Channel0, FullDuplexMode>,
+            esp_hal::gpio::GpioPin<esp_hal::gpio::Output<esp_hal::gpio::PushPull>, 3>,
+            NoDelay,
+        >,
+    >,
 ) {
     // Get a region covering the entire display area, and clear it by writing all zeros.
 
     display1.init(None).await.unwrap();
     display2.init(None).await.unwrap();
+    cap1188.init().await.unwrap();
 
     display1.clear();
     display2.clear();
@@ -170,6 +180,9 @@ pub async fn run4(
             battery2.draw(&mut display2).unwrap();
             display2.flush().await.unwrap();
             display1.flush().await.unwrap();
+        }
+        if cap1188.touched().await.unwrap() != 0 {
+            esp_println::println!("Touched!");
         }
     }
 }

@@ -1,8 +1,15 @@
 [target.riscv32imc-unknown-none-elf]
-runner = "espflash flash --monitor -p /dev/ttyUSB1"
-
+#runner = "espflash flash --monitor -p /dev/ttyUSB1 -L defmt"
+runner = "probe-rs run --chip esp32c3"
 [build]
-rustflags = ["-C", "link-arg=-Tlinkall.x", "-C", "force-frame-pointers"]
+rustflags = [
+    "-C",
+    "link-arg=-Tlinkall.x",
+    "-C",
+    "force-frame-pointers",
+    "-C",
+    "link-arg=-Tdefmt.x",
+]
 
 target = "riscv32imc-unknown-none-elf"
 

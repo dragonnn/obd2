@@ -8,6 +8,8 @@
 #![feature(type_alias_impl_trait)]
 #![feature(let_chains)]
 
+use defmt::info;
+use defmt_rtt as _;
 use display_interface_spi::SPIInterface;
 use embassy_executor::Executor;
 use embassy_time::{Duration, Timer};
@@ -35,6 +37,8 @@ use sh1122::{
     AsyncDisplay, PixelCoord,
 };
 use static_cell::make_static;
+
+use crate::cap1188::Cap1188;
 
 mod cap1188;
 mod display;
@@ -71,7 +75,7 @@ fn main() -> ! {
     let peripherals = Peripherals::take();
     let mut system = peripherals.SYSTEM.split();
     let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
-
+    info!("starting");
     //#[cfg(feature = "embassy-time-systick")]
     embassy::init(
         &clocks,
@@ -96,7 +100,7 @@ fn main() -> ! {
     let tx_descriptors = make_static!([DmaDescriptor::EMPTY; 8]);
     let rx_descriptors = make_static!([DmaDescriptor::EMPTY; 8]);
 
-    let spi = Spi::new(peripherals.SPI2, 2u32.MHz(), SpiMode::Mode0, &clocks)
+    let spi = Spi::new(peripherals.SPI2, 6u32.MHz(), SpiMode::Mode0, &clocks)
         .with_sck(sclk)
         .with_mosi(mosi)
         .with_miso(miso)
@@ -127,9 +131,9 @@ fn main() -> ! {
     rs.set_low().unwrap();
     delay.delay_ms(100u32);
     rs.set_high().unwrap();
-    delay.delay_ms(100u32);
-    rs.set_low().unwrap();
-    delay.delay_ms(100u32);
+    //delay.delay_ms(100u32);
+    //rs.set_low().unwrap();
+    //delay.delay_ms(100u32);
     /*
        digitalWrite(_resetpin, LOW);
        delay(100);
@@ -175,10 +179,14 @@ fn main() -> ! {
     )
     .into_buffered_graphics_mode();
 
+    let cap1188 = Cap1188::new(spi3_device);
+
     let executor = make_static!(Executor::new());
     executor.run(|spawner| {
-        //spawner.spawn(display::task::run4(display1, display2)).ok();
-        spawner.spawn(cap1188::run(spi3_device)).ok();
+        spawner
+            .spawn(display::task::run4(display1, display2, cap1188))
+            .ok();
+        //spawner.spawn(cap1188::run(spi3_device)).ok();
         //spawner.spawn(run2(spi)).ok();
     })
 }
