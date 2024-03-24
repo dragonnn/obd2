@@ -36,6 +36,7 @@ use sh1122::{
 };
 use static_cell::make_static;
 
+mod cap1188;
 mod display;
 
 #[embassy_executor::task]
@@ -90,16 +91,18 @@ fn main() -> ! {
 
     let sclk = io.pins.gpio6;
     let mosi = io.pins.gpio7;
+    let miso = io.pins.gpio5;
 
-    let descriptors = make_static!([DmaDescriptor::EMPTY; 8]);
+    let tx_descriptors = make_static!([DmaDescriptor::EMPTY; 8]);
     let rx_descriptors = make_static!([DmaDescriptor::EMPTY; 8]);
 
-    let spi = Spi::new(peripherals.SPI2, 12u32.MHz(), SpiMode::Mode0, &clocks)
+    let spi = Spi::new(peripherals.SPI2, 2u32.MHz(), SpiMode::Mode0, &clocks)
         .with_sck(sclk)
         .with_mosi(mosi)
+        .with_miso(miso)
         .with_dma(dma_channel.configure(
             false,
-            descriptors,
+            tx_descriptors,
             rx_descriptors,
             DmaPriority::Priority0,
         ));
@@ -107,6 +110,7 @@ fn main() -> ! {
     let mut dc = io.pins.gpio9.into_push_pull_output();
     let mut cs1 = io.pins.gpio10.into_push_pull_output();
     let mut cs2 = io.pins.gpio1.into_push_pull_output();
+    let mut cs3 = io.pins.gpio3.into_push_pull_output();
     let mut rs = io.pins.gpio4.into_push_pull_output();
 
     let mut delay = Delay::new(&clocks);
@@ -114,10 +118,28 @@ fn main() -> ! {
     rs.set_low().unwrap();
     cs1.set_high().unwrap();
     cs2.set_high().unwrap();
+    cs3.set_high().unwrap();
     delay.delay_ms(5u32);
     rs.set_high().unwrap();
 
     delay.delay_ms(5u32);
+
+    rs.set_low().unwrap();
+    delay.delay_ms(100u32);
+    rs.set_high().unwrap();
+    delay.delay_ms(100u32);
+    rs.set_low().unwrap();
+    delay.delay_ms(100u32);
+    /*
+       digitalWrite(_resetpin, LOW);
+       delay(100);
+       digitalWrite(_resetpin, HIGH);
+       delay(100);
+       digitalWrite(_resetpin, LOW);
+       delay(100);
+    */
+
+    //rs.set_low().unwrap();
 
     //let (interface1, interface2) = unsafe {
     //    let spi2 = core::ptr::read(&spi);
@@ -128,10 +150,12 @@ fn main() -> ! {
     //let spibus = SpiBusController::from_spi(spi);
 
     let spi2 = unsafe { core::ptr::read(&spi) };
+    let spi3 = unsafe { core::ptr::read(&spi) };
     let dc2 = unsafe { core::ptr::read(&dc) };
 
     let spi_device = ExclusiveDevice::new(spi, cs1, NoDelay);
     let spi2_device = ExclusiveDevice::new(spi2, cs2, NoDelay);
+    let spi3_device = ExclusiveDevice::new(spi3, cs3, NoDelay);
     let interface1 = SPIInterface::new(spi_device, dc);
     let interface2 = SPIInterface::new(spi2_device, dc2);
 
@@ -153,7 +177,8 @@ fn main() -> ! {
 
     let executor = make_static!(Executor::new());
     executor.run(|spawner| {
-        spawner.spawn(display::task::run4(display1, display2)).ok();
+        //spawner.spawn(display::task::run4(display1, display2)).ok();
+        spawner.spawn(cap1188::run(spi3_device)).ok();
         //spawner.spawn(run2(spi)).ok();
     })
 }
