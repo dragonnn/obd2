@@ -1,4 +1,6 @@
+use defmt::info;
 use display_interface_spi::SPIInterface;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_time::{Duration, Instant, Timer};
 use embedded_graphics::prelude::*;
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
@@ -18,31 +20,50 @@ use super::widgets::*;
 pub async fn run4(
     mut display1: AsyncDisplay<
         SPIInterface<
-            ExclusiveDevice<
-                SpiDma<'static, SPI2, Channel0, FullDuplexMode>,
-                esp_hal::gpio::GpioPin<esp_hal::gpio::Output<esp_hal::gpio::PushPull>, 10>,
-                NoDelay,
+            embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
+                'static,
+                CriticalSectionRawMutex,
+                esp_hal::spi::master::dma::SpiDma<
+                    'static,
+                    esp_hal::peripherals::SPI2,
+                    esp_hal::dma::Channel0,
+                    FullDuplexMode,
+                >,
+                GpioPin<Output<esp_hal::gpio::PushPull>, 10>,
             >,
-            esp_hal::gpio::GpioPin<esp_hal::gpio::Output<esp_hal::gpio::PushPull>, 9>,
+            GpioPin<Output<esp_hal::gpio::PushPull>, 9>,
         >,
         AsyncBufferedGraphicsMode,
     >,
     mut display2: AsyncDisplay<
         SPIInterface<
-            ExclusiveDevice<
-                SpiDma<'static, SPI2, Channel0, FullDuplexMode>,
-                esp_hal::gpio::GpioPin<esp_hal::gpio::Output<esp_hal::gpio::PushPull>, 1>,
-                NoDelay,
+            embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
+                'static,
+                CriticalSectionRawMutex,
+                esp_hal::spi::master::dma::SpiDma<
+                    'static,
+                    esp_hal::peripherals::SPI2,
+                    esp_hal::dma::Channel0,
+                    FullDuplexMode,
+                >,
+                GpioPin<Output<esp_hal::gpio::PushPull>, 1>,
             >,
-            esp_hal::gpio::GpioPin<esp_hal::gpio::Output<esp_hal::gpio::PushPull>, 9>,
+            GpioPin<Output<esp_hal::gpio::PushPull>, 9>,
         >,
         AsyncBufferedGraphicsMode,
     >,
+
     mut cap1188: Cap1188<
-        ExclusiveDevice<
-            SpiDma<'static, SPI2, Channel0, FullDuplexMode>,
+        embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
+            'static,
+            CriticalSectionRawMutex,
+            esp_hal::spi::master::dma::SpiDma<
+                'static,
+                esp_hal::peripherals::SPI2,
+                esp_hal::dma::Channel0,
+                FullDuplexMode,
+            >,
             esp_hal::gpio::GpioPin<esp_hal::gpio::Output<esp_hal::gpio::PushPull>, 3>,
-            NoDelay,
         >,
     >,
 ) {
@@ -131,7 +152,7 @@ pub async fn run4(
         }
         updates += 1;
         if now.elapsed().as_millis() > 1000 {
-            esp_println::println!("fps: {}", updates);
+            info!("fps: {}", updates);
             updates = 0;
             now = Instant::now();
         }
@@ -182,7 +203,7 @@ pub async fn run4(
             display1.flush().await.unwrap();
         }
         if cap1188.touched().await.unwrap() != 0 {
-            esp_println::println!("Touched!");
+            //info!("Touched!");
         }
     }
 }

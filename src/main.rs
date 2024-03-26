@@ -11,7 +11,10 @@
 use defmt::info;
 use defmt_rtt as _;
 use display_interface_spi::SPIInterface;
+use embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice;
 use embassy_executor::Executor;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::mutex::Mutex;
 use embassy_time::{Duration, Timer};
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use esp_backtrace as _;
@@ -36,7 +39,7 @@ use sh1122::{
     async_display::buffered_graphics::AsyncBufferedGraphicsMode, display::DisplayRotation,
     AsyncDisplay, PixelCoord,
 };
-use static_cell::make_static;
+use static_cell::{make_static, StaticCell};
 
 use crate::cap1188::Cap1188;
 
@@ -112,56 +115,48 @@ fn main() -> ! {
         ));
 
     let mut dc = io.pins.gpio9.into_push_pull_output();
-    let mut cs1 = io.pins.gpio10.into_push_pull_output();
-    let mut cs2 = io.pins.gpio1.into_push_pull_output();
-    let mut cs3 = io.pins.gpio3.into_push_pull_output();
+    let mut cs_display1 = io.pins.gpio10.into_push_pull_output();
+    let mut cs_display2 = io.pins.gpio1.into_push_pull_output();
+    let mut cs_cap1188 = io.pins.gpio3.into_push_pull_output();
     let mut rs = io.pins.gpio4.into_push_pull_output();
 
     let mut delay = Delay::new(&clocks);
     dc.set_high().unwrap();
     rs.set_low().unwrap();
-    cs1.set_high().unwrap();
-    cs2.set_high().unwrap();
-    cs3.set_high().unwrap();
-    delay.delay_ms(5u32);
+    cs_display1.set_high().unwrap();
+    cs_display2.set_high().unwrap();
+    cs_cap1188.set_high().unwrap();
+    delay.delay_ms(100u32);
     rs.set_high().unwrap();
 
-    delay.delay_ms(5u32);
+    delay.delay_ms(100u32);
 
     rs.set_low().unwrap();
     delay.delay_ms(100u32);
     rs.set_high().unwrap();
-    //delay.delay_ms(100u32);
-    //rs.set_low().unwrap();
-    //delay.delay_ms(100u32);
-    /*
-       digitalWrite(_resetpin, LOW);
-       delay(100);
-       digitalWrite(_resetpin, HIGH);
-       delay(100);
-       digitalWrite(_resetpin, LOW);
-       delay(100);
-    */
-
+    delay.delay_ms(100u32);
     //rs.set_low().unwrap();
 
-    //let (interface1, interface2) = unsafe {
-    //    let spi2 = core::ptr::read(&spi);
-    //    let dc2 = core::ptr::read(&dc);
-    //
-    //    (SPIInterface::new(spi, dc), SPIInterface::new(spi2, dc2))
-    //};
-    //let spibus = SpiBusController::from_spi(spi);
-
-    let spi2 = unsafe { core::ptr::read(&spi) };
-    let spi3 = unsafe { core::ptr::read(&spi) };
     let dc2 = unsafe { core::ptr::read(&dc) };
 
-    let spi_device = ExclusiveDevice::new(spi, cs1, NoDelay);
-    let spi2_device = ExclusiveDevice::new(spi2, cs2, NoDelay);
-    let spi3_device = ExclusiveDevice::new(spi3, cs3, NoDelay);
-    let interface1 = SPIInterface::new(spi_device, dc);
-    let interface2 = SPIInterface::new(spi2_device, dc2);
+    static SPI_BUS: StaticCell<
+        Mutex<
+            CriticalSectionRawMutex,
+            esp_hal::spi::master::dma::SpiDma<
+                '_,
+                esp_hal::peripherals::SPI2,
+                esp_hal::dma::Channel0,
+                FullDuplexMode,
+            >,
+        >,
+    > = StaticCell::new();
+    let spi_bus = SPI_BUS.init(Mutex::new(spi));
+
+    let display1_spi = SpiDevice::new(spi_bus, cs_display1);
+    let display2_spi = SpiDevice::new(spi_bus, cs_display2);
+    let cap1188_spi = SpiDevice::new(spi_bus, cs_cap1188);
+    let interface1 = SPIInterface::new(display1_spi, dc);
+    let interface2 = SPIInterface::new(display2_spi, dc2);
 
     let display1 = AsyncDisplay::new(
         interface1,
@@ -179,7 +174,7 @@ fn main() -> ! {
     )
     .into_buffered_graphics_mode();
 
-    let cap1188 = Cap1188::new(spi3_device);
+    let cap1188 = Cap1188::new(cap1188_spi);
 
     let executor = make_static!(Executor::new());
     executor.run(|spawner| {

@@ -1,3 +1,5 @@
+use defmt::error;
+use defmt::info;
 use display_interface_spi::SPIInterface;
 use embassy_time::Delay;
 use embassy_time::Timer;
@@ -95,19 +97,19 @@ where
 
     pub async fn init(&mut self) -> Result<(), SPI::Error> {
         let mut prod_id = [0; 3];
-        self.reset().await?;
+        //self.reset().await?;
         self.read_register(CAP1188_PRODID, &mut prod_id).await?;
-        esp_println::println!("cap1188.rs: Product ID: {:x?}", &prod_id[0]);
-        esp_println::println!("cap1188.rs: Manufacturer ID: {:x?}", &prod_id[1]);
-        esp_println::println!("cap1188.rs: Revision: {:x?}", &prod_id[2]);
+        info!("cap1188.rs: Product ID: {:x}", &prod_id[0]);
+        info!("cap1188.rs: Manufacturer ID: {:x}", &prod_id[1]);
+        info!("cap1188.rs: Revision: {:x}", &prod_id[2]);
         if prod_id[0] != 0x50 {
-            panic!("cap1188.rs: Invalid Product ID");
+            error!("cap1188.rs: Invalid Product ID");
         }
         if prod_id[1] != 0x5d {
-            panic!("cap1188.rs: Invalid Manufacturer");
+            error!("cap1188.rs: Invalid Manufacturer");
         }
         if prod_id[2] != 0x83 {
-            panic!("cap1188.rs: Revision");
+            error!("cap1188.rs: Revision");
         }
 
         /*
