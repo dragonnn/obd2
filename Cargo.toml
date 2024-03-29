@@ -60,6 +60,10 @@ profont = "0.7.0"
 
 heapless = "0.8.0"
 
+# OBD2 deps
+modular-bitfield = "0.11.2"
+embedded-can = "0.4.1"
+
 [dependencies.num-traits]
 version = "0.2"
 default-features = false
@@ -67,6 +71,10 @@ features = ["libm"]
 
 [profile.release]
 opt-level = "s"
+debug = 2
 
 [profile.dev]
 opt-level = "s"
+
+[env]
+DEFMT_LOG = "debug"

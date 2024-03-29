@@ -42,9 +42,11 @@ use sh1122::{
 use static_cell::{make_static, StaticCell};
 
 use crate::cap1188::Cap1188;
+use crate::mcp2515::Mcp2515;
 
 mod cap1188;
 mod display;
+mod mcp2515;
 
 #[embassy_executor::task]
 async fn run1() {
@@ -118,6 +120,7 @@ fn main() -> ! {
     let mut cs_display1 = io.pins.gpio10.into_push_pull_output();
     let mut cs_display2 = io.pins.gpio1.into_push_pull_output();
     let mut cs_cap1188 = io.pins.gpio3.into_push_pull_output();
+    let mut cs_mcp2515 = io.pins.gpio8.into_push_pull_output();
     let mut rs = io.pins.gpio4.into_push_pull_output();
 
     let mut delay = Delay::new(&clocks);
@@ -126,6 +129,7 @@ fn main() -> ! {
     cs_display1.set_high().unwrap();
     cs_display2.set_high().unwrap();
     cs_cap1188.set_high().unwrap();
+    cs_mcp2515.set_high().unwrap();
     delay.delay_ms(100u32);
     rs.set_high().unwrap();
 
@@ -155,6 +159,7 @@ fn main() -> ! {
     let display1_spi = SpiDevice::new(spi_bus, cs_display1);
     let display2_spi = SpiDevice::new(spi_bus, cs_display2);
     let cap1188_spi = SpiDevice::new(spi_bus, cs_cap1188);
+    let mcp2515_spi = SpiDevice::new(spi_bus, cs_mcp2515);
     let interface1 = SPIInterface::new(display1_spi, dc);
     let interface2 = SPIInterface::new(display2_spi, dc2);
 
@@ -175,12 +180,14 @@ fn main() -> ! {
     .into_buffered_graphics_mode();
 
     let cap1188 = Cap1188::new(cap1188_spi);
+    let mcp2515 = Mcp2515::new(mcp2515_spi);
 
     let executor = make_static!(Executor::new());
     executor.run(|spawner| {
         spawner
             .spawn(display::task::run4(display1, display2, cap1188))
             .ok();
+        spawner.spawn(mcp2515::run(mcp2515)).ok();
         //spawner.spawn(cap1188::run(spi3_device)).ok();
         //spawner.spawn(run2(spi)).ok();
     })
