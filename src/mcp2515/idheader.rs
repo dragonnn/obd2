@@ -1,7 +1,8 @@
+use defmt::Format;
 use embedded_can::{ExtendedId, Id, StandardId};
 
 /// Id header used in filters and masks
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, Format)]
 #[repr(C)]
 pub struct IdHeader {
     sidh: u8,
@@ -11,8 +12,6 @@ pub struct IdHeader {
 }
 
 impl IdHeader {
-    #[cfg(any(feature = "mcp2515", feature = "mcp25625"))]
-    #[cfg_attr(doc, doc(cfg(any(feature = "mcp2515", feature = "mcp25625"))))]
     pub fn with_two_data_bytes(id: StandardId, bytes: [u8; 2]) -> Self {
         let id = id.as_raw();
         IdHeader {

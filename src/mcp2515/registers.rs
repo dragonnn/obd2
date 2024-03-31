@@ -1,7 +1,7 @@
 #![allow(clippy::identity_op)] // FIXME https://github.com/Robbepop/modular-bitfield/issues/62
 
+use defmt::Format;
 use modular_bitfield::prelude::*;
-
 /// 8 bit Register
 pub trait Register: From<u8> + Into<u8> {
     /// Address of the register
@@ -56,22 +56,6 @@ pub struct RXB1CTRL {
 }
 
 /// Receive Buffer Operating Mode
-#[cfg(not(any(feature = "mcp2515", feature = "mcp25625")))]
-#[derive(BitfieldSpecifier, Copy, Clone, Debug)]
-#[bits = 2]
-pub enum RXM {
-    /// Receive all valid messages using either standard or extended identifiers that meet filter criteria
-    Filter = 0b00,
-    /// Receive only valid messages with standard identifiers that meet filter criteria
-    FilterStandard = 0b01,
-    /// Receive only valid messages with extended identifiers that meet filter criteria
-    FilterExtended = 0b10,
-    /// Turn mask/filters off; receive any message
-    ReceiveAny = 0b11,
-}
-
-/// Receive Buffer Operating Mode
-#[cfg(any(feature = "mcp2515", feature = "mcp25625"))]
 #[derive(BitfieldSpecifier, Copy, Clone, Debug)]
 #[bits = 2]
 pub enum RXM {
@@ -84,7 +68,6 @@ pub enum RXM {
 }
 
 /// Can Control Register
-#[cfg(any(feature = "mcp2515", feature = "mcp25625"))]
 #[bitfield]
 #[repr(u8)]
 #[derive(Copy, Clone, Debug)]
@@ -93,27 +76,8 @@ pub struct CANCTRL {
     pub clkpre: CLKPRE,
     ///  CLKOUT Pin Enable
     pub clken: bool,
-    #[cfg_attr(doc, doc(cfg(any(feature = "mcp2515", feature = "mcp25625"))))]
     /// One-Shot Mode
     pub osm: bool,
-    /// Abort All Pending Transmissions
-    pub abat: bool,
-    /// Request Operation Mode
-    pub reqop: OperationMode,
-}
-
-/// Can Control Register
-#[cfg(not(any(feature = "mcp2515", feature = "mcp25625")))]
-#[bitfield]
-#[repr(u8)]
-#[derive(Copy, Clone, Debug)]
-pub struct CANCTRL {
-    /// CLKOUT Pin Prescaler
-    pub clkpre: CLKPRE,
-    ///  CLKOUT Pin Enable
-    pub clken: bool,
-    #[skip]
-    __: B1,
     /// Abort All Pending Transmissions
     pub abat: bool,
     /// Request Operation Mode
@@ -259,7 +223,6 @@ pub struct CNF2 {
 /// Configuration 3 Register
 ///
 /// Note: Write operations require Configuration mode
-#[cfg(any(feature = "mcp2515", feature = "mcp25625"))]
 #[bitfield]
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, Default)]
@@ -271,33 +234,14 @@ pub struct CNF3 {
     __: B3,
     /// Wake-up Filter
     pub wakfil: bool,
-    #[cfg_attr(doc, doc(cfg(any(feature = "mcp2515", feature = "mcp25625"))))]
     /// Start-of-Frame Signal
     pub sof: bool,
-}
-
-/// Configuration 3 Register
-///
-/// Note: Write operations require Configuration mode
-#[cfg(not(any(feature = "mcp2515", feature = "mcp25625")))]
-#[bitfield]
-#[repr(u8)]
-#[derive(Copy, Clone, Debug, Default)]
-pub struct CNF3 {
-    /// PS2 Length
-    pub phseg2: B3,
-    #[skip]
-    __: B3,
-    /// Wake-up Filter
-    pub wakfil: bool,
-    #[skip]
-    __: B1,
 }
 
 /// Data Length Code Register
 #[bitfield]
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, Format)]
 pub struct DLC {
     /// Data Length Code
     pub dlc: B4,
@@ -421,7 +365,7 @@ pub struct CANINTF {
 /// Error Flag Register
 #[bitfield]
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, Format)]
 pub struct EFLG {
     /// Error Warning Flag bit
     pub ewarn: bool,
@@ -527,11 +471,9 @@ pub struct ReadStatusResponse {
 }
 
 /// Read Status Response Bitfield
-#[cfg(any(feature = "mcp2515", feature = "mcp25625"))]
-#[cfg_attr(doc, doc(cfg(any(feature = "mcp2515", feature = "mcp25625"))))]
 #[bitfield]
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, Format)]
 pub struct RxStatusResponse {
     pub filter_match: FilterMatch,
     pub is_remote: bool,
@@ -545,8 +487,6 @@ pub struct RxStatusResponse {
 }
 
 /// The filter that matched the received message
-#[cfg(any(feature = "mcp2515", feature = "mcp25625"))]
-#[cfg_attr(doc, doc(cfg(any(feature = "mcp2515", feature = "mcp25625"))))]
 #[derive(BitfieldSpecifier, Copy, Clone, Debug)]
 #[bits = 3]
 pub enum FilterMatch {

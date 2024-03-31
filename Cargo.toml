@@ -75,6 +75,3 @@ debug = 2
 
 [profile.dev]
 opt-level = "s"
-
-[env]
-DEFMT_LOG = "debug"

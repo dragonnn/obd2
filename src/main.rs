@@ -121,6 +121,7 @@ fn main() -> ! {
     let mut cs_display2 = io.pins.gpio1.into_push_pull_output();
     let mut cs_cap1188 = io.pins.gpio3.into_push_pull_output();
     let mut cs_mcp2515 = io.pins.gpio8.into_push_pull_output();
+    let int_mcp2515 = io.pins.gpio21.into_pull_down_input();
     let mut rs = io.pins.gpio4.into_push_pull_output();
 
     let mut delay = Delay::new(&clocks);
@@ -180,7 +181,7 @@ fn main() -> ! {
     .into_buffered_graphics_mode();
 
     let cap1188 = Cap1188::new(cap1188_spi);
-    let mcp2515 = Mcp2515::new(mcp2515_spi);
+    let mcp2515 = Mcp2515::new(mcp2515_spi, int_mcp2515);
 
     let executor = make_static!(Executor::new());
     executor.run(|spawner| {
@@ -192,18 +193,3 @@ fn main() -> ! {
         //spawner.spawn(run2(spi)).ok();
     })
 }
-
-/*impl<
-        'a,
-        A: embedded_hal_async::spi::ErrorType,
-        B: esp32c3_hal::dma::ChannelTypes,
-        C: esp32c3_hal::spi::IsFullDuplex,
-    > embedded_hal_async::spi::SpiDevice for SpiDma<'a, A, B, C>
-{
-    async fn transaction(
-        &mut self,
-        operations: &mut [embedded_hal_async::spi::Operation<'_, u8>],
-    ) -> Result<(), Self::Error> {
-        todo!()
-    }
-}*/

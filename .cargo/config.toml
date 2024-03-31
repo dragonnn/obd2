@@ -15,3 +15,7 @@ target = "riscv32imc-unknown-none-elf"
 
 [unstable]
 build-std = ["alloc", "core"]
+
+[env]
+DEFMT_LOG = "debug"
+DEFMT_RTT_BUFFER_SIZE = "256"

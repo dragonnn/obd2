@@ -3,7 +3,9 @@
     "rust-analyzer.cargo.target": "riscv32imc-unknown-none-elf",
     "cSpell.words": [
         "canctrl",
+        "CANINTE",
         "Gdma",
+        "interputs",
         "repr"
     ]
 }

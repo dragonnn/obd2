@@ -138,7 +138,7 @@ pub async fn run4(
 
     let mut ice_temp = 20.0;
     loop {
-        Timer::after(Duration::from_millis(1)).await;
+        Timer::after(Duration::from_millis(10)).await;
         if i >= 256 - 64 && direction {
             direction = false;
         } else if i == 0 && !direction {
@@ -151,8 +151,8 @@ pub async fn run4(
             i -= 1;
         }
         updates += 1;
-        if now.elapsed().as_millis() > 1000 {
-            info!("fps: {}", updates);
+        if now.elapsed().as_millis() > 10000 {
+            info!("fps: {}", updates / 10);
             updates = 0;
             now = Instant::now();
         }
