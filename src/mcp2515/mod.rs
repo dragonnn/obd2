@@ -7,6 +7,7 @@ use embassy_time::Delay;
 use embassy_time::Duration;
 use embassy_time::Timer;
 use embedded_can::Frame as _;
+use embedded_can::StandardId;
 use embedded_hal_async::spi::{Operation, SpiDevice};
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use esp_hal::gpio::InputPin;
@@ -26,6 +27,8 @@ pub use bitrates::*;
 pub use config::*;
 pub use idheader::*;
 pub use registers::*;
+
+use crate::mcp2515::frame::CanFrame;
 
 use self::registers::OperationMode;
 use self::registers::Register;
@@ -60,7 +63,7 @@ pub async fn run(
         )
         .receive_buffer_1(RXB1CTRL::default().with_rxm(RXM::ReceiveAny));
 
-    config.canctrl.with_osm(true);
+    //config.canctrl.set_osm(true);
 
     mcp2515.apply_config(&config).await.unwrap();
     let interputs_config = CANINTE::default()
@@ -81,40 +84,81 @@ pub async fn run(
     warn!("mcp config applied");
     loop {
         let mut timeout = false;
-        match embassy_time::with_timeout(Duration::from_millis(100), mcp2515.interrupt()).await {
+        match embassy_time::with_timeout(Duration::from_millis(1000), mcp2515.interrupt()).await {
             Ok(_) => {
-                warn!("mcp2515 interrupt");
+                let rx_status = mcp2515.rx_status().await.unwrap();
+                let status = mcp2515.status().await.unwrap();
+                let errors = mcp2515.errors().await.unwrap();
+                info!(
+                    "errors: {:b} with status: {:b}",
+                    errors.into_bytes(),
+                    status.into_bytes()
+                );
+                if status.into_bytes()[0] > 0 {
+                    /*warn!(
+                        "rx_status: 0b{:b} status: {:b} errors: {:b}",
+                        rx_status.into_bytes(),
+                        status.into_bytes(),
+                        errors.into_bytes()
+                    );*/
+                    let frame1 = mcp2515.read_rx_buffer(RxBuffer::RXB0).await.unwrap();
+                    let pid = frame1.data[2];
+                    if pid != 5 && pid != 12 {
+                        warn!("frame1: {:?}", frame1);
+                    }
+
+                    warn!(
+                        "found pid: {} in frame: {:?} from: {}",
+                        pid,
+                        frame1,
+                        defmt::Debug2Format(&frame1.id())
+                    );
+                    let rx_status = mcp2515.rx_status().await.unwrap();
+                    let status = mcp2515.status().await.unwrap();
+                    let errors = mcp2515.errors().await.unwrap();
+                    /*warn!(
+                        "rx_status: 0b{:b} status: {:b} errors: {:b}",
+                        rx_status.into_bytes(),
+                        status.into_bytes(),
+                        errors.into_bytes()
+                    );*/
+                    /*match frame1.id() {
+                        embedded_can::Id::Standard(st_id) => {
+                            warn!("got standard id: {:x}", st_id.as_raw());
+                        }
+                        embedded_can::Id::Extended(ext_id) => {
+                            warn!("got extended id: {:x}", ext_id.as_raw());
+                        }
+                    }*/
+
+                    /*let can_id = StandardId::new(0x7ea).unwrap();
+                    let mut data = [1, 2, 3, 4, 5, 6, 7, 8];
+                    data[2] = frame1.data[2];
+                    let frame = CanFrame::new(can_id, &data).unwrap();
+                    mcp2515
+                        .load_tx_buffer(TxBuffer::TXB0, &frame)
+                        .await
+                        .unwrap();
+                    mcp2515.request_to_send(TxBuffer::TXB0).await.unwrap();
+                    */
+                    if pid == 5 {
+                        let eng_temp: f64 =
+                            (9.0 * (frame1.data[3] as i32 - 40) as f64 / 5.0 + 32.0);
+                        info!("engine temp: {} raw: {}", eng_temp, frame1.data[3]);
+                    }
+                }
             }
             Err(_) => {
-                timeout = true;
+                let can_id = StandardId::new(0x7df).unwrap();
+                let data = [0x02, 0x01, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00];
+                let frame = CanFrame::new(can_id, &data).unwrap();
+                info!("sending request frame: {:?}", frame);
+                mcp2515
+                    .load_tx_buffer(TxBuffer::TXB0, &frame)
+                    .await
+                    .unwrap();
+                mcp2515.request_to_send(TxBuffer::TXB0).await.unwrap();
             }
-        }
-        let rx_status = mcp2515.rx_status().await.unwrap();
-        let status = mcp2515.status().await.unwrap();
-        let errors = mcp2515.errors().await.unwrap();
-        if status.into_bytes()[0] > 0 {
-            if timeout {
-                warn!("timeout");
-            }
-            warn!(
-                "rx_status: 0b{:b} status: {:b} errors: {:b}",
-                rx_status.into_bytes(),
-                status.into_bytes(),
-                errors.into_bytes()
-            );
-            let frame1 = mcp2515.read_rx_buffer(RxBuffer::RXB0).await.unwrap();
-            let frame2 = mcp2515.read_rx_buffer(RxBuffer::RXB1).await.unwrap();
-            warn!("frame2: {:?}", frame1);
-            warn!("frame1: {:?}", frame2);
-            let rx_status = mcp2515.rx_status().await.unwrap();
-            let status = mcp2515.status().await.unwrap();
-            let errors = mcp2515.errors().await.unwrap();
-            warn!(
-                "rx_status: 0b{:b} status: {:b} errors: {:b}",
-                rx_status.into_bytes(),
-                status.into_bytes(),
-                errors.into_bytes()
-            );
         }
     }
 }
@@ -263,6 +307,34 @@ where
         //    .await?;
 
         Ok(frame)
+    }
+
+    pub async fn load_tx_buffer(
+        &mut self,
+        buf_idx: TxBuffer,
+        frame: &frame::CanFrame,
+    ) -> Result<(), SPI::Error> {
+        let mut load_tx_buf = [0; 1];
+        load_tx_buf[0] = Instruction::LoadTxBuffer as u8 | (buf_idx as u8 * 2);
+
+        let data = &frame.as_bytes()[0..5 + frame.dlc()];
+
+        self.spi
+            .transaction(&mut [Operation::Write(&load_tx_buf), Operation::Write(data)])
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn request_to_send(&mut self, buf_idx: TxBuffer) -> Result<(), SPI::Error> {
+        let mut request_to_send_buf = [0; 1];
+        request_to_send_buf[0] = Instruction::Rts as u8 | (1 << buf_idx as u8);
+
+        self.spi
+            .transaction(&mut [Operation::Write(&request_to_send_buf)])
+            .await?;
+
+        Ok(())
     }
 
     async fn read_registers(

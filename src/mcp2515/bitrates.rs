@@ -20,6 +20,11 @@ pub mod clock_8mhz {
     pub const CNF_33K3_BPS: CNF = CNF::from_bytes([0x85, 0xE2, 0x47]);
     pub const CNF_31K25_BPS: CNF = CNF::from_bytes([0x84, 0xA4, 0x07]);
     pub const CNF_20K_BPS: CNF = CNF::from_bytes([0x87, 0xBF, 0x07]);
+    /*
+    #define MCP_8MHz_10kBPS_CFG1 (0x0F)
+    #define MCP_8MHz_10kBPS_CFG2 (0xBF)
+    #define MCP_8MHz_10kBPS_CFG3 (0x87)
+     */
     pub const CNF_10K_BPS: CNF = CNF::from_bytes([0x87, 0xBF, 0x0F]);
     pub const CNF_5K_BPS: CNF = CNF::from_bytes([0x87, 0xBF, 0x1F]);
 }
