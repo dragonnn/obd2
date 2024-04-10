@@ -30,11 +30,6 @@ pub use registers::*;
 
 use crate::mcp2515::frame::CanFrame;
 
-use self::registers::OperationMode;
-use self::registers::Register;
-use self::registers::CNF;
-use self::registers::CNF3;
-
 #[embassy_executor::task]
 pub async fn run(
     mut mcp2515: Mcp2515<
@@ -142,8 +137,7 @@ pub async fn run(
                     mcp2515.request_to_send(TxBuffer::TXB0).await.unwrap();
                     */
                     if pid == 5 {
-                        let eng_temp: f64 =
-                            (9.0 * (frame1.data[3] as i32 - 40) as f64 / 5.0 + 32.0);
+                        let eng_temp = (frame1.data[3] as i32 - 40);
                         info!("engine temp: {} raw: {}", eng_temp, frame1.data[3]);
                     }
                 }

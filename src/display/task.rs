@@ -12,61 +12,12 @@ use esp_hal::{
 };
 use sh1122::{async_display::buffered_graphics::AsyncBufferedGraphicsMode, AsyncDisplay};
 
-use crate::cap1188::Cap1188;
+use crate::types::*;
 
 use super::widgets::*;
 
 #[embassy_executor::task]
-pub async fn run4(
-    mut display1: AsyncDisplay<
-        SPIInterface<
-            embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
-                'static,
-                CriticalSectionRawMutex,
-                esp_hal::spi::master::dma::SpiDma<
-                    'static,
-                    esp_hal::peripherals::SPI2,
-                    esp_hal::dma::Channel0,
-                    FullDuplexMode,
-                >,
-                GpioPin<Output<esp_hal::gpio::PushPull>, 10>,
-            >,
-            GpioPin<Output<esp_hal::gpio::PushPull>, 9>,
-        >,
-        AsyncBufferedGraphicsMode,
-    >,
-    mut display2: AsyncDisplay<
-        SPIInterface<
-            embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
-                'static,
-                CriticalSectionRawMutex,
-                esp_hal::spi::master::dma::SpiDma<
-                    'static,
-                    esp_hal::peripherals::SPI2,
-                    esp_hal::dma::Channel0,
-                    FullDuplexMode,
-                >,
-                GpioPin<Output<esp_hal::gpio::PushPull>, 1>,
-            >,
-            GpioPin<Output<esp_hal::gpio::PushPull>, 9>,
-        >,
-        AsyncBufferedGraphicsMode,
-    >,
-
-    mut cap1188: Cap1188<
-        embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
-            'static,
-            CriticalSectionRawMutex,
-            esp_hal::spi::master::dma::SpiDma<
-                'static,
-                esp_hal::peripherals::SPI2,
-                esp_hal::dma::Channel0,
-                FullDuplexMode,
-            >,
-            esp_hal::gpio::GpioPin<esp_hal::gpio::Output<esp_hal::gpio::PushPull>, 3>,
-        >,
-    >,
-) {
+pub async fn run4(mut display1: Sh1122<10>, mut display2: Sh1122<1>, mut cap1188: Cap1188) {
     // Get a region covering the entire display area, and clear it by writing all zeros.
 
     display1.init(None).await.unwrap();

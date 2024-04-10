@@ -47,6 +47,8 @@ use crate::mcp2515::Mcp2515;
 mod cap1188;
 mod display;
 mod mcp2515;
+mod obd2;
+mod types;
 
 #[embassy_executor::task]
 async fn run1() {
