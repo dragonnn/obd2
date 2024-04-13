@@ -25,10 +25,9 @@ mod registers;
 
 pub use bitrates::*;
 pub use config::*;
+pub use frame::*;
 pub use idheader::*;
 pub use registers::*;
-
-use crate::mcp2515::frame::CanFrame;
 
 #[embassy_executor::task]
 pub async fn run(
@@ -212,6 +211,13 @@ where
         } else {
             info!("MCP2515 interrupts config success");
         }
+        Ok(())
+    }
+
+    pub async fn clear_interrupts(&mut self) -> Result<(), SPI::Error> {
+        let mut data = [0u8; 1];
+        data[0] = 0x00;
+        self.write_registers(CANINTF::ADDRESS, &data).await?;
         Ok(())
     }
 

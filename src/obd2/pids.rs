@@ -1,4 +1,52 @@
-use defmt::info;
+use defmt::{info, Format};
+use enum_dispatch::enum_dispatch;
+use strum::EnumIter;
+
+#[derive(Format, EnumIter)]
+pub enum Ids {
+    Ecu = 0x7E8,
+}
+
+#[derive(Format, EnumIter)]
+pub enum EcuPids {
+    EngineSpeed = 0x0C,
+    HybridBatteryPackSoL = 0x5B,
+    EngineOilTemperature = 0x5C,
+    EngineFuelRate = 0x5E,
+    EngineCoolantTemperature = 0x05,
+    TransmissionGear = 0xA4,
+    Extended = 0x21,
+}
+
+#[derive(Format, EnumIter)]
+pub enum ExtendedPids {
+    Bms = 0x01,
+}
+
+#[derive(Format, EnumIter)]
+pub enum Requests {
+    EngineSpeed,
+    HybridBatteryPackSoL,
+    EngineOilTemperature,
+    EngineFuelRate,
+    EngineCoolantTemperature,
+    TransmissionGear,
+    Bms,
+}
+
+impl Requests {
+    pub fn request(&self) -> &'static [u8; 8] {
+        match self {
+            Self::EngineSpeed => &[0x02, 0x01, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00],
+            Self::HybridBatteryPackSoL => &[0x02, 0x01, 0x5B, 0x00, 0x00, 0x00, 0x00, 0x00],
+            Self::EngineOilTemperature => &[0x02, 0x01, 0x5C, 0x00, 0x00, 0x00, 0x00, 0x00],
+            Self::EngineFuelRate => &[0x02, 0x01, 0x5E, 0x00, 0x00, 0x00, 0x00, 0x00],
+            Self::EngineCoolantTemperature => &[0x02, 0x01, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00],
+            Self::TransmissionGear => &[0x02, 0x01, 0xA4, 0x00, 0x00, 0x00, 0x00, 0x00],
+            Self::Bms => &[0x02, 0x21, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00],
+        }
+    }
+}
 
 pub trait Pid {
     const ID: Option<u8>;
@@ -8,7 +56,7 @@ pub trait Pid {
     where
         Self: Sized;
 }
-
+#[derive(Format, Default)]
 pub struct EngineSpeed(pub f64);
 
 impl Pid for EngineSpeed {
@@ -24,7 +72,7 @@ impl Pid for EngineSpeed {
         Some(Self(rpm))
     }
 }
-
+#[derive(Format, Default)]
 pub struct HybridBatteryPackSoL(pub f64);
 
 impl Pid for HybridBatteryPackSoL {
@@ -40,7 +88,7 @@ impl Pid for HybridBatteryPackSoL {
         Some(Self(soc))
     }
 }
-
+#[derive(Format, Default)]
 pub struct EngineOilTemperature(pub i32);
 
 impl Pid for EngineOilTemperature {
@@ -56,7 +104,7 @@ impl Pid for EngineOilTemperature {
         Some(Self(temp))
     }
 }
-
+#[derive(Format, Default)]
 pub struct EngineFuelRate(pub f64);
 
 impl Pid for EngineFuelRate {
@@ -72,7 +120,7 @@ impl Pid for EngineFuelRate {
         Some(Self(rate))
     }
 }
-
+#[derive(Format, Default)]
 pub struct EngineCoolantTemperature(pub i32);
 
 impl Pid for EngineCoolantTemperature {
@@ -88,7 +136,7 @@ impl Pid for EngineCoolantTemperature {
         Some(Self(temp))
     }
 }
-
+#[derive(Format, Default)]
 pub enum TransmissionGear {
     D1,
     D2,
@@ -97,6 +145,7 @@ pub enum TransmissionGear {
     D5,
     D6,
     D7,
+    #[default]
     Park,
     Reverse,
     Neutral,
@@ -129,7 +178,7 @@ impl Pid for TransmissionGear {
     }
 }
 
-pub enum Pids {
+pub enum Values {
     EngineSpeed(EngineSpeed),
     HybridBatteryPackSoL(HybridBatteryPackSoL),
     EngineOilTemperature(EngineOilTemperature),
@@ -138,28 +187,4 @@ pub enum Pids {
     TransmissionGear(TransmissionGear),
 }
 
-impl Pids {
-    pub fn parse_frame(data: &[u8]) -> Option<Self> {
-        if data.len() < 3 {
-            return None;
-        }
-
-        let pid = data[2];
-
-        match pid {
-            EngineSpeed::PID => EngineSpeed::parse(data).map(Self::EngineSpeed),
-            HybridBatteryPackSoL::PID => {
-                HybridBatteryPackSoL::parse(data).map(Self::HybridBatteryPackSoL)
-            }
-            EngineOilTemperature::PID => {
-                EngineOilTemperature::parse(data).map(Self::EngineOilTemperature)
-            }
-            EngineFuelRate::PID => EngineFuelRate::parse(data).map(Self::EngineFuelRate),
-            EngineCoolantTemperature::PID => {
-                EngineCoolantTemperature::parse(data).map(Self::EngineCoolantTemperature)
-            }
-            TransmissionGear::PID => TransmissionGear::parse(data).map(Self::TransmissionGear),
-            _ => None,
-        }
-    }
-}
+//pub fn parse<const N: usize>(out: &mut heapless::IndexSet) {}
