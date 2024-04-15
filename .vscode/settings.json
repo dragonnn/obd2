@@ -7,6 +7,8 @@
         "Gdma",
         "interputs",
         "pids",
-        "repr"
+        "procmacros",
+        "repr",
+        "statig"
     ]
 }

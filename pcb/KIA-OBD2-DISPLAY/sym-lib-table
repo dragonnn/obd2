@@ -1,0 +1,6 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "SH1122")(type "KiCad")(uri "${KIPRJMOD}/SH1122.kicad_sym")(options "")(descr ""))
+  (lib (name "CAP1188")(type "KiCad")(uri "${KIPRJMOD}/CAP1188/CAP1188-1-CP-TR.kicad_sym")(options "")(descr ""))
+  (lib (name "TJA1050C")(type "KiCad")(uri "${KIPRJMOD}/TJA1050C/TJA1050.kicad_sym")(options "")(descr ""))
+)

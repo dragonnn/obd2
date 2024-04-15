@@ -2,7 +2,6 @@ use defmt::info;
 use defmt_rtt as _;
 use display_interface_spi::SPIInterface;
 use embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice;
-use embassy_executor::Executor;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::mutex::Mutex;
 use embassy_time::{Duration, Timer};
@@ -35,6 +34,14 @@ use crate::cap1188::Cap1188;
 use crate::mcp2515::Mcp2515;
 use crate::types;
 
+// WARNING may overflow and wrap-around in long lived apps
+defmt::timestamp!("{=u32:us}", {
+    // NOTE(interrupt-safe) single instruction volatile read operation
+
+    (esp_hal::systimer::SystemTimer::now()
+        / (esp_hal::systimer::SystemTimer::TICKS_PER_SECOND / 1_000_000)) as u32
+});
+
 pub struct Hal {
     pub display1: types::Sh1122<10>,
     pub display2: types::Sh1122<1>,
@@ -44,10 +51,8 @@ pub struct Hal {
 
 pub fn init() -> Hal {
     let peripherals = Peripherals::take();
-    let mut system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
-    info!("starting");
-    //#[cfg(feature = "embassy-time-systick")]
+    let system = peripherals.SYSTEM.split();
+    let clocks = ClockControl::max(system.clock_control).freeze();
     embassy::init(
         &clocks,
         esp_hal::systimer::SystemTimer::new(peripherals.SYSTIMER),
