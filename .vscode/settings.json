@@ -2,6 +2,7 @@
     "rust-analyzer.checkOnSave.allTargets": false,
     "rust-analyzer.cargo.target": "riscv32imc-unknown-none-elf",
     "cSpell.words": [
+        "bitfield",
         "canctrl",
         "CANINTE",
         "Gdma",

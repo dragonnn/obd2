@@ -1,15 +1,20 @@
-use defmt::error;
-use defmt::info;
-use display_interface_spi::SPIInterface;
-use embassy_time::Delay;
-use embassy_time::Timer;
+use defmt::{error, Format};
 use embedded_hal_async::spi::{Operation, SpiDevice};
-use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
-use esp_hal::{
-    dma::Channel0,
-    peripherals::SPI2,
-    spi::{master::dma::SpiDma, FullDuplexMode},
-};
+use modular_bitfield::prelude::*;
+
+#[bitfield]
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Format, Default)]
+pub struct Cap1188Inputs {
+    pub b0: bool,
+    pub b1: bool,
+    pub b2: bool,
+    pub b3: bool,
+    pub b4: bool,
+    pub b5: bool,
+    pub b6: bool,
+    pub b7: bool,
+}
 
 pub struct Cap1188<SPI> {
     spi: SPI,
@@ -45,11 +50,8 @@ where
 
     pub async fn init(&mut self) -> Result<(), SPI::Error> {
         let mut prod_id = [0; 3];
-        //self.reset().await?;
+
         self.read_register(CAP1188_PRODID, &mut prod_id).await?;
-        info!("cap1188.rs: Product ID: {:x}", &prod_id[0]);
-        info!("cap1188.rs: Manufacturer ID: {:x}", &prod_id[1]);
-        info!("cap1188.rs: Revision: {:x}", &prod_id[2]);
         if prod_id[0] != 0x50 {
             error!("cap1188.rs: Invalid Product ID");
         }
@@ -60,15 +62,6 @@ where
             error!("cap1188.rs: Revision");
         }
 
-        /*
-        allow multiple touches
-        writeRegister(CAP1188_MTBLK, 0);
-        Have LEDs follow touches
-        writeRegister(CAP1188_LEDLINK, 0xFF);
-        speed up a bit
-        writeRegister(CAP1188_STANDBYCFG, 0x30);
-        */
-
         self.write_register(CAP1188_MTBLK, &[0]).await?;
         self.write_register(CAP1188_LEDLINK, &[0xFF]).await?;
         self.write_register(CAP1188_STANDBYCFG, &[0x30]).await?;
@@ -76,54 +69,29 @@ where
         Ok(())
     }
 
-    pub async fn touched(&mut self) -> Result<u8, SPI::Error> {
+    pub async fn touched(&mut self) -> Result<Cap1188Inputs, SPI::Error> {
         let mut touched = [0; 1];
-        self.read_register(CAP1188_SENINPUTSTATUS, &mut touched)
-            .await?;
-        /*
-                  if (t) {
-          writeRegister(CAP1188_MAIN, readRegister(CAP1188_MAIN) & ~CAP1188_MAIN_INT);
-        }
-              */
+        self.read_register(CAP1188_SENINPUTSTATUS, &mut touched).await?;
+
         if touched[0] != 0 {
             let mut main = [0; 1];
             self.read_register(CAP1188_MAIN, &mut main).await?;
-            self.write_register(CAP1188_MAIN, &[main[0] & !CAP1188_MAIN_INT])
-                .await?;
+            self.write_register(CAP1188_MAIN, &[main[0] & !CAP1188_MAIN_INT]).await?;
         }
-        Ok(touched[0])
+
+        Ok(Cap1188Inputs::from_bytes(touched))
     }
 
     async fn read_register(&mut self, reg: u8, out_buf: &mut [u8]) -> Result<(), SPI::Error> {
         let init_buf = [0x7d, reg, 0x7f];
 
         out_buf.fill(0x7F);
-        self.spi
-            .transaction(&mut [
-                Operation::Write(&init_buf),
-                Operation::TransferInPlace(out_buf),
-            ])
-            .await
+        self.spi.transaction(&mut [Operation::Write(&init_buf), Operation::TransferInPlace(out_buf)]).await
     }
 
     async fn write_register(&mut self, reg: u8, in_buf: &[u8]) -> Result<(), SPI::Error> {
-        /*
-                buffer[0] = 0x7D;
-        buffer[1] = reg;
-        buffer[2] = 0x7E;
-        buffer[3] = value;
-        spi_dev->write(buffer, 4);
-             */
-        /*let init_buf = [0x7d, reg, 0x7E];
-
-        self.spi
-            .transaction(&mut [Operation::Write(&init_buf), Operation::Write(in_buf)])
-            .await*/
-
         let init_buf = [0x7d, reg, 0x7E, in_buf[0]];
-        self.spi
-            .transaction(&mut [Operation::Write(&init_buf)])
-            .await
+        self.spi.transaction(&mut [Operation::Write(&init_buf)]).await
     }
 
     async fn reset(&mut self) -> Result<(), SPI::Error> {

@@ -12,17 +12,15 @@ use esp_hal::{
 };
 use sh1122::{async_display::buffered_graphics::AsyncBufferedGraphicsMode, AsyncDisplay};
 
+use super::widgets::*;
 use crate::types::*;
 
-use super::widgets::*;
-
 #[embassy_executor::task]
-pub async fn run4(mut display1: Sh1122<10>, mut display2: Sh1122<1>, mut cap1188: Cap1188) {
+pub async fn run4(mut display1: Sh1122<10>, mut display2: Sh1122<1>) {
     // Get a region covering the entire display area, and clear it by writing all zeros.
 
     display1.init(None).await.unwrap();
     display2.init(None).await.unwrap();
-    cap1188.init().await.unwrap();
 
     display1.clear();
     display2.clear();
@@ -37,24 +35,13 @@ pub async fn run4(mut display1: Sh1122<10>, mut display2: Sh1122<1>, mut cap1188
         true,
     );
     let mut arrow_direction = ArrowDirection::Reverse;
-    let mut arrow = Arrow::new(
-        Point {
-            x: 9 + 128,
-            y: 64 / 2 - 9,
-        },
-        Size {
-            width: 54,
-            height: 16,
-        },
-        14,
-        arrow_direction,
-    );
+    let mut arrow =
+        Arrow::new(Point { x: 9 + 128, y: 64 / 2 - 9 }, Size { width: 54, height: 16 }, 14, arrow_direction);
 
     let mut motor_electric = MotorElectric::new(Point::new(256 - 60, 0));
     let mut motor_ice = MotorIce::new(Point::new(0, 0));
 
-    let mut ice_temperature =
-        Temperature::new(Point::new(256 - 21, 0), Size::new(16, 64), 0.0, 130.0, 4);
+    let mut ice_temperature = Temperature::new(Point::new(256 - 21, 0), Size::new(16, 64), 0.0, 130.0, 4);
     let mut battery_12 = Battery12V::new(Point::new(256 - 41 - 22, 31));
 
     let mut power = Power::new(Point::new(128 + 36, 14));
@@ -152,9 +139,6 @@ pub async fn run4(mut display1: Sh1122<10>, mut display2: Sh1122<1>, mut cap1188
             battery2.draw(&mut display2).unwrap();
             display2.flush().await.unwrap();
             display1.flush().await.unwrap();
-        }
-        if cap1188.touched().await.unwrap() != 0 {
-            //info!("Touched!");
         }
     }
 }

@@ -1,15 +1,15 @@
 use defmt::*;
-use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::channel::Channel;
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 use statig::prelude::*;
 
-const EVENTS: Channel<CriticalSectionRawMutex, KiaEvent, 10> = Channel::new();
+pub static EVENTS: Channel<CriticalSectionRawMutex, KiaEvent, 32> = Channel::new();
 
 pub struct KiaContext {}
 
 #[derive(Format, PartialEq, Eq, Clone, Copy)]
 pub enum KiaEvent {
     Init,
+    Button(crate::tasks::buttons::Action),
 }
 
 #[derive(Default)]
@@ -30,6 +30,7 @@ pub struct KiaState {}
 impl KiaState {
     #[state()]
     async fn init(&mut self, context: &mut KiaContext, event: &KiaEvent) -> Response<State> {
+        info!("init got event: {:?}", event);
         Transition(State::init())
     }
 }
@@ -41,23 +42,14 @@ impl KiaState {
     }
 
     fn on_dispatch(&mut self, state: StateOrSuperstate<Self>, event: &KiaEvent) {
-        info!(
-            "dispatching `{}` to `{}`",
-            event,
-            defmt::Debug2Format(&state)
-        );
+        info!("dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
     }
 }
 
 pub async fn run() {
     let mut context = KiaContext {};
-    let mut state = KiaState::default()
-        .uninitialized_state_machine()
-        .init_with_context(&mut context)
-        .await;
-    state
-        .handle_with_context(&KiaEvent::Init, &mut context)
-        .await;
+    let mut state = KiaState::default().uninitialized_state_machine().init_with_context(&mut context).await;
+    state.handle_with_context(&KiaEvent::Init, &mut context).await;
 
     loop {
         let event = EVENTS.receive().await;

@@ -8,7 +8,6 @@ extern crate alloc;
 use core::mem::MaybeUninit;
 
 use embassy_executor::Spawner;
-use embassy_time::{Duration, Timer};
 use esp_hal::entry;
 use esp_hal_procmacros::main;
 
@@ -17,7 +16,7 @@ mod display;
 mod hal;
 mod mcp2515;
 mod obd2;
-mod state;
+mod tasks;
 mod types;
 
 #[global_allocator]
@@ -38,10 +37,10 @@ async fn main(spawner: Spawner) {
 
     let hal = hal::init();
 
-    spawner
-        .spawn(display::task::run4(hal.display1, hal.display2, hal.buttons))
-        .ok();
+    spawner.spawn(display::task::run4(hal.display1, hal.display2)).ok();
     spawner.spawn(obd2::run(hal.obd2)).ok();
 
-    state::run().await;
+    spawner.spawn(tasks::buttons::run(hal.buttons)).ok();
+
+    tasks::state::run().await;
 }

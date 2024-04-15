@@ -123,7 +123,7 @@ pub async fn run(mut mcp2515: Mcp2515) {
             }
             Err(_) => {
                 mcp2515.clear_interrupts().await.unwrap();
-                let can_id = StandardId::new(0x7df).unwrap();
+                /*let can_id = StandardId::new(0x7df).unwrap();
                 //let data = [0x02, 0x01, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00];
                 let data = [0x02, 0x09, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00];
                 let frame = CanFrame::new(can_id, &data).unwrap();
@@ -132,7 +132,7 @@ pub async fn run(mut mcp2515: Mcp2515) {
                     .load_tx_buffer(TxBuffer::TXB0, &frame)
                     .await
                     .unwrap();
-                mcp2515.request_to_send(TxBuffer::TXB0).await.unwrap();
+                mcp2515.request_to_send(TxBuffer::TXB0).await.unwrap();*/
             }
         }
     }

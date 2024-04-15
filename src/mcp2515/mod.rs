@@ -201,15 +201,12 @@ where
         interputs_config: CANINTE,
     ) -> Result<(), SPI::Error> {
         let caninte: u8 = interputs_config.into();
-        info!("setting interrupts config: {:b}", caninte);
         self.write_register(interputs_config).await?;
         let mut caninte_read = [0u8; 1];
         self.read_registers(CANINTE::ADDRESS, &mut caninte_read)
             .await?;
         if caninte_read[0] != caninte {
             error!("MCP2515 interrupts config failed");
-        } else {
-            info!("MCP2515 interrupts config success");
         }
         Ok(())
     }
@@ -237,13 +234,10 @@ where
     }
 
     pub async fn reset(&mut self) -> Result<(), SPI::Error> {
-        info!("mcp2515.rs: init()");
         let mut reset_buf = [0; 1];
         reset_buf[0] = Instruction::Reset as u8;
 
         self.spi.write(&reset_buf).await?;
-
-        info!("mcp2515.rs: init() - done");
         Ok(())
     }
 
