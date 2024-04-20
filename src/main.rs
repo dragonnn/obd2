@@ -37,10 +37,11 @@ async fn main(spawner: Spawner) {
 
     let hal = hal::init();
 
-    spawner.spawn(display::task::run4(hal.display1, hal.display2)).ok();
+    //spawner.spawn(display::task::run4(hal.display1, hal.display2)).ok();
     spawner.spawn(obd2::run(hal.obd2)).ok();
 
     spawner.spawn(tasks::buttons::run(hal.buttons)).ok();
+    spawner.spawn(tasks::lcd::run(hal.display1, hal.display2)).ok();
 
     tasks::state::run().await;
 }

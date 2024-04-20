@@ -1,7 +1,11 @@
 use core::fmt::Write;
+
 use display_interface::DisplayError;
 use embedded_graphics::{
-    mono_font::{ascii::{FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD, FONT_10X20}, MonoTextStyle},
+    mono_font::{
+        ascii::{FONT_10X20, FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD},
+        MonoTextStyle,
+    },
     pixelcolor::Gray4,
     prelude::*,
     primitives::*,
@@ -18,7 +22,7 @@ pub enum BatteryOrientation {
     HorizontalRight,
 }
 
-pub struct Battery<D> {
+pub struct Battery {
     temp: f64,
     voltage: f64,
     percentage: f64,
@@ -30,13 +34,9 @@ pub struct Battery<D> {
     inited: Option<(Point, Size)>,
     redraw: bool,
     text: bool,
-    _marker: core::marker::PhantomData<D>,
 }
 
-impl<D> Battery<D>
-where
-    D: DrawTarget<Color = Gray4>,
-{
+impl Battery {
     pub fn new(
         position: Point,
         size: Size,
@@ -57,11 +57,11 @@ where
             inited: None,
             text,
             redraw: true,
-            _marker: core::marker::PhantomData::default(),
+            //D: DrawTarget<Color = Gray4>,_marker: core::marker::PhantomData::default(),
         }
     }
 
-    fn cap_draw(&self, target: &mut D) -> Result<(Point, Size), D::Error> {
+    fn cap_draw<D: DrawTarget<Color = Gray4>>(&self, target: &mut D) -> Result<(Point, Size), D::Error> {
         use BatteryOrientation::*;
 
         Ok(if let Some(cap) = self.cap {
@@ -94,7 +94,7 @@ where
                 HorizontalRight => {
                     size.width -= cap.width;
                     let mut position = self.position;
-                    position.x += self.size.width as i32 - cap.width as i32  - 6;
+                    position.x += self.size.width as i32 - cap.width as i32 - 6;
                     position.y += (self.size.height / 2) as i32 - (cap.height / 2) as i32;
 
                     Rectangle::new(position, cap).draw_styled(&style, target)?;
@@ -118,12 +118,9 @@ where
         })
     }
 
-    fn init_draw(&self, target: &mut D) -> Result<(Point, Size), D::Error> {
-        let style = PrimitiveStyleBuilder::new()
-            .stroke_width(2)
-            .stroke_color(Gray4::WHITE)
-            .fill_color(Gray4::BLACK)
-            .build();
+    fn init_draw<D: DrawTarget<Color = Gray4>>(&self, target: &mut D) -> Result<(Point, Size), D::Error> {
+        let style =
+            PrimitiveStyleBuilder::new().stroke_width(2).stroke_color(Gray4::WHITE).fill_color(Gray4::BLACK).build();
 
         let (mut position, mut size) = self.cap_draw(target)?;
 
@@ -144,7 +141,6 @@ where
         }
     }
 
-
     pub fn update_voltage(&mut self, voltage: f64) {
         if self.voltage != voltage {
             self.voltage = voltage;
@@ -159,12 +155,14 @@ where
         }
     }
 
-    pub fn draw(&mut self, target: &mut D) -> Result<(), D::Error> {
+    pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.inited.is_none() {
             self.inited = Some(self.init_draw(target)?);
         }
 
-        if let Some((mut position, mut size)) = self.inited && self.redraw {
+        if let Some((mut position, mut size)) = self.inited
+            && self.redraw
+        {
             use BatteryOrientation::*;
             let style = PrimitiveStyleBuilder::new()
                 .stroke_width(2)
@@ -185,7 +183,7 @@ where
                     size.height = ((size.height as f64 * self.percentage) / 100.0).round() as u32;
                     Rectangle::new(position, size).draw_styled(&bar_style, target)?;
                 }
-                 VerticalTop => {
+                VerticalTop => {
                     size.height = ((size.height as f64 * self.percentage) / 100.0).round() as u32;
                     position.y += org_size.height as i32 - size.height as i32;
                     Rectangle::new(position, size).draw_styled(&bar_style, target)?;
@@ -206,19 +204,21 @@ where
                         let bar_size = org_size.height as i32 / self.bars;
                         for bar in 0..self.bars {
                             let mut bar_position = org_position;
-                            bar_position.y += bar_size * (bar + 1)  - (bar_size  / 2 - 2) - (bar * 2);
-                            Rectangle::new(bar_position, Size { width: size.width
-                                , height: 1 }).draw_styled(&style_black, target)?;
+                            bar_position.y += bar_size * (bar + 1) - (bar_size / 2 - 2) - (bar * 2);
+                            Rectangle::new(bar_position, Size { width: size.width, height: 1 })
+                                .draw_styled(&style_black, target)?;
                         }
-                    },
+                    }
                     HorizontalLeft | HorizontalRight => {
-                        let bar_size = ((org_size.width as i32 - self.bars * 2) as f64 / (self.bars + 1) as f64).floor() as i32 + self.bars * 2;
+                        let bar_size = ((org_size.width as i32 - self.bars * 2) as f64 / (self.bars + 1) as f64).floor()
+                            as i32
+                            + self.bars * 2;
 
                         for bar in 0..(self.bars - 1) {
                             let bar_translate = Point::new((bar_size + 2) * bar - 2 + 1 + bar_size - 2, 0);
 
-                            Rectangle::new(org_position + bar_translate, Size { width: 1
-                                , height: size.height }).draw_styled(&style_black, target)?;
+                            Rectangle::new(org_position + bar_translate, Size { width: 1, height: size.height })
+                                .draw_styled(&style_black, target)?;
                         }
                     }
                 }
@@ -231,23 +231,15 @@ where
                 let character_style = MonoTextStyle::new(&PROFONT_14_POINT, Gray4::WHITE);
 
                 // Create a new text style.
-                let mut text_style = TextStyleBuilder::new()
-                    .alignment(Alignment::Center)
-                    .line_height(LineHeight::Percent(100))
-                    .build();
+                let mut text_style =
+                    TextStyleBuilder::new().alignment(Alignment::Center).line_height(LineHeight::Percent(100)).build();
 
                 // Create a text at position (20, 30) and draw it using the previously defined style.
                 let mut text_position = org_position;
                 text_position.x += org_size.width as i32 / 2 / 2 + org_size.width as i32 / 2;
-                text_position.y += org_size.height as i32 / 2 + 5; 
+                text_position.y += org_size.height as i32 / 2 + 5;
 
-                Text::with_text_style(
-                    text.as_str(),
-                    text_position,
-                    character_style,
-                    text_style,
-                )
-                .draw(target)?;
+                Text::with_text_style(text.as_str(), text_position, character_style, text_style).draw(target)?;
 
                 let character_style = MonoTextStyle::new(&PROFONT_12_POINT, Gray4::WHITE);
 
@@ -255,31 +247,19 @@ where
 
                 let mut text_position = org_position;
                 text_position.x += 2;
-                text_position.y += org_size.height as i32 / 2 / 2 + org_size.height as i32 / 2 + 6; 
+                text_position.y += org_size.height as i32 / 2 / 2 + org_size.height as i32 / 2 + 6;
                 text.clear();
                 write!(text, "{:1}V", self.voltage).unwrap();
 
-                Text::with_text_style(
-                    text.as_str(),
-                    text_position,
-                    character_style,
-                    text_style,
-                )
-                .draw(target)?;
+                Text::with_text_style(text.as_str(), text_position, character_style, text_style).draw(target)?;
 
                 let mut text_position = org_position;
                 text_position.x += 2;
-                text_position.y += org_size.height as i32 / 2 / 2 + 6; 
+                text_position.y += org_size.height as i32 / 2 / 2 + 6;
                 text.clear();
                 write!(text, "{:1}°C", self.temp).unwrap();
 
-                Text::with_text_style(
-                    text.as_str(),
-                    text_position,
-                    character_style,
-                    text_style,
-                )
-                .draw(target)?;
+                Text::with_text_style(text.as_str(), text_position, character_style, text_style).draw(target)?;
             }
 
             self.redraw = false;

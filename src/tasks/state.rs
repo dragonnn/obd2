@@ -2,6 +2,8 @@ use defmt::*;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 use statig::prelude::*;
 
+use super::lcd::{State as LCDState, STATE as LCD_STATE};
+
 pub static EVENTS: Channel<CriticalSectionRawMutex, KiaEvent, 32> = Channel::new();
 
 pub struct KiaContext {}
@@ -31,6 +33,14 @@ impl KiaState {
     #[state()]
     async fn init(&mut self, context: &mut KiaContext, event: &KiaEvent) -> Response<State> {
         info!("init got event: {:?}", event);
+        match event {
+            KiaEvent::Init => {
+                LCD_STATE.signal(LCDState::PowerOff);
+            }
+            KiaEvent::Button(button_action) => {
+                LCD_STATE.signal(LCDState::Main);
+            }
+        }
         Transition(State::init())
     }
 }
