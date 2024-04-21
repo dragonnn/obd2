@@ -6,33 +6,40 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Base ESP deps
-esp-hal = { version = "0.16.1", features = [
+esp-hal = { version = "0.17.0", features = [
     "async",
     "embassy",
-    "embassy-time-systick-16mhz",
+    #"embassy-time-systick-16mhz",
+    "embassy-time-timg0",
     "embassy-executor-thread",
+    #"embassy-executor-interrupt",
     "embassy-integrated-timers",
-    "eh1",
     "esp32c3",
     "defmt",
-] }
-esp-hal-procmacros = { version = "0.9.0", features = ["embassy"] }
+    "embedded-hal-02",
+    "embedded-hal",
+] } # Base ESP deps
+esp-hal-procmacros = { version = "0.10.0", features = ["embassy"] }
 esp-backtrace = { version = "0.11.1", features = [
     "esp32c3",
     "panic-handler",
     "exception-handler",
     "defmt",
 ] }
+riscv = "0.11.1"
 defmt = "0.3.6"
-defmt-rtt = "0.4.0"
+#defmt-serial = "0.8.0"
+#defmt-rtt = "0.4.0"
 
 esp-println = { version = "0.9.1", features = ["esp32c3"] }
 esp-alloc = { version = "0.3.0" }
 #esp-wifi  = { git = "https://github.com/esp-rs/esp-wifi/", rev = "7632e74", features = ["esp32c3", "wifi"] }
 
 # Embeded hal
+embedded-hal = "1.0.0"
 embedded-hal-async = "1.0.0"
+embedded-io = "0.6.1"
+embedded-io-async = "0.6.1"
 embedded-hal-bus = { version = "0.1.0", features = ["async"] }
 
 static_cell = { version = "2.0.0", features = ["nightly"] }
@@ -48,6 +55,7 @@ embassy-executor = { version = "0.5.0", features = [
 embassy-time = { version = "0.3.0" }
 embassy-embedded-hal = { version = "0.1.0", features = ["defmt"] }
 embassy-sync = "0.5.0"
+critical-section = "1.1.2"
 
 
 # OLED SSD1306 deps

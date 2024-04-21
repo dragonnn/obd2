@@ -1,5 +1,5 @@
 use defmt::info;
-use defmt_rtt as _;
+//use defmt_rtt as _;
 use display_interface_spi::SPIInterface;
 use embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
@@ -9,9 +9,8 @@ use esp_backtrace as _;
 //use esp_hal::spi::master::SpiBusController;
 use esp_hal::{
     clock::ClockControl,
-    dma::Dma,
-    dma::DmaDescriptor,
-    dma::DmaPriority,
+    delay::Delay,
+    dma::{Dma, DmaDescriptor, DmaPriority},
     embassy,
     peripherals::Peripherals,
     prelude::*,
@@ -20,9 +19,14 @@ use esp_hal::{
         master::{dma::SpiDma, Spi},
         FullDuplexMode, SpiMode,
     },
-    Delay, IO,
+    timer::TimerGroup,
+    usb_serial_jtag::UsbSerialJtag,
+    Async, Blocking,
 };
-use esp_hal::{gpio::Output, spi::master::prelude::_esp_hal_spi_master_dma_WithDmaSpi2};
+use esp_hal::{
+    gpio::{Output, IO},
+    spi::master::prelude::_esp_hal_spi_master_dma_WithDmaSpi2,
+};
 use sh1122::{
     async_display::buffered_graphics::AsyncBufferedGraphicsMode, display::DisplayRotation, AsyncDisplay, PixelCoord,
 };
@@ -42,13 +46,18 @@ pub struct Hal {
     pub display2: types::Sh1122<1>,
     pub buttons: types::Cap1188,
     pub obd2: types::Mcp2515,
+    pub usb_serial: types::UsbSerial,
 }
 
 pub fn init() -> Hal {
     let peripherals = Peripherals::take();
     let system = peripherals.SYSTEM.split();
     let clocks = ClockControl::max(system.clock_control).freeze();
-    embassy::init(&clocks, esp_hal::systimer::SystemTimer::new(peripherals.SYSTIMER));
+
+    let timg0 = TimerGroup::new_async(peripherals.TIMG0, &clocks);
+    embassy::init(&clocks, timg0);
+
+    //embassy::init(&clocks, esp_hal::systimer::SystemTimer::new_async(peripherals.SYSTIMER));
 
     esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::DMA_CH0, esp_hal::interrupt::Priority::Priority1)
         .unwrap();
@@ -69,7 +78,7 @@ pub fn init() -> Hal {
         .with_sck(sclk)
         .with_mosi(mosi)
         .with_miso(miso)
-        .with_dma(dma_channel.configure(false, tx_descriptors, rx_descriptors, DmaPriority::Priority0));
+        .with_dma(dma_channel.configure_for_async(false, tx_descriptors, rx_descriptors, DmaPriority::Priority0));
 
     let mut dc = io.pins.gpio9.into_push_pull_output();
     let mut cs_display1 = io.pins.gpio10.into_push_pull_output();
@@ -78,30 +87,42 @@ pub fn init() -> Hal {
     let mut cs_mcp2515 = io.pins.gpio8.into_push_pull_output();
     let int_mcp2515 = io.pins.gpio21.into_pull_down_input();
     let mut rs = io.pins.gpio4.into_push_pull_output();
+    let ing = io.pins.gpio2;
+    let result = ing.is_input_high();
 
     let mut delay = Delay::new(&clocks);
-    dc.set_high().unwrap();
-    rs.set_low().unwrap();
-    cs_display1.set_high().unwrap();
-    cs_display2.set_high().unwrap();
-    cs_cap1188.set_high().unwrap();
-    cs_mcp2515.set_high().unwrap();
-    delay.delay_ms(1u32);
-    rs.set_high().unwrap();
+    dc.set_high();
+    rs.set_low();
+    cs_display1.set_high();
+    cs_display2.set_high();
+    cs_cap1188.set_high();
+    cs_mcp2515.set_high();
+    delay.delay_micros(1u32);
+    rs.set_high();
 
-    delay.delay_ms(1u32);
+    delay.delay_micros(1u32);
 
-    rs.set_low().unwrap();
-    delay.delay_ms(1u32);
-    rs.set_high().unwrap();
-    delay.delay_ms(1u32);
+    rs.set_low();
+    delay.delay_micros(1u32);
+    rs.set_high();
+    delay.delay_micros(1u32);
+
+    unsafe {
+        riscv::interrupt::enable();
+    }
 
     let dc2 = unsafe { core::ptr::read(&dc) };
 
     static SPI_BUS: StaticCell<
         Mutex<
             CriticalSectionRawMutex,
-            esp_hal::spi::master::dma::SpiDma<'_, esp_hal::peripherals::SPI2, esp_hal::dma::Channel0, FullDuplexMode>,
+            esp_hal::spi::master::dma::SpiDma<
+                '_,
+                esp_hal::peripherals::SPI2,
+                esp_hal::dma::Channel0,
+                FullDuplexMode,
+                Async,
+            >,
         >,
     > = StaticCell::new();
     let spi_bus = SPI_BUS.init(Mutex::new(spi));
@@ -122,5 +143,7 @@ pub fn init() -> Hal {
     let cap1188 = Cap1188::new(cap1188_spi);
     let mcp2515 = Mcp2515::new(mcp2515_spi, int_mcp2515);
 
-    Hal { display1, display2, buttons: cap1188, obd2: mcp2515 }
+    let mut usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
+
+    Hal { display1, display2, buttons: cap1188, obd2: mcp2515, usb_serial }
 }

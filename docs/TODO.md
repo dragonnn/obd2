@@ -67,3 +67,5 @@ for the variable naming thing – it’s basically a replacement for the A,B,C s
 End Quote.
 
 FYI
+
+D24V10F3 jako przetwornica do zasilania

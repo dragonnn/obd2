@@ -1,18 +1,13 @@
-use defmt::error;
-use defmt::info;
-use defmt::warn;
+use defmt::{error, info, warn};
 use display_interface_spi::SPIInterface;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_time::Delay;
-use embassy_time::Duration;
-use embassy_time::Timer;
-use embedded_can::Frame as _;
-use embedded_can::StandardId;
+use embassy_time::{Delay, Duration, Timer};
+use embedded_can::{Frame as _, StandardId};
 use embedded_hal_async::spi::{Operation, SpiDevice};
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
-use esp_hal::gpio::InputPin;
 use esp_hal::{
     dma::Channel0,
+    gpio::InputPin,
     peripherals::SPI2,
     spi::{master::dma::SpiDma, FullDuplexMode},
 };
@@ -29,7 +24,7 @@ pub use frame::*;
 pub use idheader::*;
 pub use registers::*;
 
-#[embassy_executor::task]
+/*#[embassy_executor::task]
 pub async fn run(
     mut mcp2515: Mcp2515<
         embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
@@ -154,7 +149,7 @@ pub async fn run(
             }
         }
     }
-}
+}*/
 
 pub struct Mcp2515<SPI, INT> {
     spi: SPI,
@@ -196,15 +191,11 @@ where
         Ok(())
     }
 
-    pub async fn apply_interrupts_config(
-        &mut self,
-        interputs_config: CANINTE,
-    ) -> Result<(), SPI::Error> {
+    pub async fn apply_interrupts_config(&mut self, interputs_config: CANINTE) -> Result<(), SPI::Error> {
         let caninte: u8 = interputs_config.into();
         self.write_register(interputs_config).await?;
         let mut caninte_read = [0u8; 1];
-        self.read_registers(CANINTE::ADDRESS, &mut caninte_read)
-            .await?;
+        self.read_registers(CANINTE::ADDRESS, &mut caninte_read).await?;
         if caninte_read[0] != caninte {
             error!("MCP2515 interrupts config failed");
         }
@@ -219,16 +210,11 @@ where
     }
 
     pub async fn set_bitrate(&mut self, cnf: CNF) -> Result<(), SPI::Error> {
-        self.write_registers(CNF3::ADDRESS, &cnf.into_bytes())
-            .await?;
+        self.write_registers(CNF3::ADDRESS, &cnf.into_bytes()).await?;
         Ok(())
     }
 
-    pub async fn set_filter(
-        &mut self,
-        filter: AcceptanceFilter,
-        id: IdHeader,
-    ) -> Result<(), SPI::Error> {
+    pub async fn set_filter(&mut self, filter: AcceptanceFilter, id: IdHeader) -> Result<(), SPI::Error> {
         self.write_registers(filter as u8, &id.into_bytes()).await?;
         Ok(())
     }
@@ -245,9 +231,7 @@ where
         let mut rx_status_buf = [0; 1];
         rx_status_buf[0] = Instruction::RxStatus as u8;
         let mut buf = [0];
-        self.spi
-            .transaction(&mut [Operation::Write(&rx_status_buf), Operation::Read(&mut buf)])
-            .await?;
+        self.spi.transaction(&mut [Operation::Write(&rx_status_buf), Operation::Read(&mut buf)]).await?;
         Ok(RxStatusResponse::from_bytes(buf))
     }
 
@@ -255,9 +239,7 @@ where
         let mut status_buf = [0; 1];
         status_buf[0] = Instruction::ReadStatus as u8;
         let mut buf = [0];
-        self.spi
-            .transaction(&mut [Operation::Write(&status_buf), Operation::Read(&mut buf)])
-            .await?;
+        self.spi.transaction(&mut [Operation::Write(&status_buf), Operation::Read(&mut buf)]).await?;
         Ok(ReadStatusResponse::from_bytes(buf))
     }
 
@@ -265,9 +247,7 @@ where
         let mut eflg_buf = [0; 1];
         eflg_buf[0] = Instruction::Read as u8 | EFLG::ADDRESS;
         let mut buf = [0];
-        self.spi
-            .transaction(&mut [Operation::Write(&eflg_buf), Operation::Read(&mut buf)])
-            .await?;
+        self.spi.transaction(&mut [Operation::Write(&eflg_buf), Operation::Read(&mut buf)]).await?;
 
         self.modify_register(EFLG::new(), 1 << 7 as u8).await?;
         self.modify_register(EFLG::new(), 1 << 6 as u8).await?;
@@ -275,20 +255,12 @@ where
         Ok(EFLG::from_bytes(buf))
     }
 
-    pub async fn read_rx_buffer(
-        &mut self,
-        buf_idx: RxBuffer,
-    ) -> Result<frame::CanFrame, SPI::Error> {
+    pub async fn read_rx_buffer(&mut self, buf_idx: RxBuffer) -> Result<frame::CanFrame, SPI::Error> {
         let mut frame_buffer = [0; core::mem::size_of::<frame::CanFrame>()];
 
         let mut rx_buf = [0; 1];
         rx_buf[0] = Instruction::ReadRxBuffer as u8 | (buf_idx as u8 * 2);
-        self.spi
-            .transaction(&mut [
-                Operation::Write(&rx_buf),
-                Operation::Read(&mut frame_buffer),
-            ])
-            .await?;
+        self.spi.transaction(&mut [Operation::Write(&rx_buf), Operation::Read(&mut frame_buffer)]).await?;
 
         let mut frame: frame::CanFrame = unsafe { core::mem::transmute(frame_buffer) };
         let mut dlc = frame.dlc();
@@ -303,19 +275,13 @@ where
         Ok(frame)
     }
 
-    pub async fn load_tx_buffer(
-        &mut self,
-        buf_idx: TxBuffer,
-        frame: &frame::CanFrame,
-    ) -> Result<(), SPI::Error> {
+    pub async fn load_tx_buffer(&mut self, buf_idx: TxBuffer, frame: &frame::CanFrame) -> Result<(), SPI::Error> {
         let mut load_tx_buf = [0; 1];
         load_tx_buf[0] = Instruction::LoadTxBuffer as u8 | (buf_idx as u8 * 2);
 
         let data = &frame.as_bytes()[0..5 + frame.dlc()];
 
-        self.spi
-            .transaction(&mut [Operation::Write(&load_tx_buf), Operation::Write(data)])
-            .await?;
+        self.spi.transaction(&mut [Operation::Write(&load_tx_buf), Operation::Write(data)]).await?;
 
         Ok(())
     }
@@ -324,24 +290,16 @@ where
         let mut request_to_send_buf = [0; 1];
         request_to_send_buf[0] = Instruction::Rts as u8 | (1 << buf_idx as u8);
 
-        self.spi
-            .transaction(&mut [Operation::Write(&request_to_send_buf)])
-            .await?;
+        self.spi.transaction(&mut [Operation::Write(&request_to_send_buf)]).await?;
 
         Ok(())
     }
 
-    async fn read_registers(
-        &mut self,
-        start_address: u8,
-        buf: &mut [u8],
-    ) -> Result<(), SPI::Error> {
+    async fn read_registers(&mut self, start_address: u8, buf: &mut [u8]) -> Result<(), SPI::Error> {
         let mut read_buf = [0; 2];
         read_buf[0] = Instruction::Read as u8;
         read_buf[1] = start_address;
-        self.spi
-            .transaction(&mut [Operation::Write(&read_buf), Operation::Read(buf)])
-            .await?;
+        self.spi.transaction(&mut [Operation::Write(&read_buf), Operation::Read(buf)]).await?;
         Ok(())
     }
 
@@ -351,9 +309,7 @@ where
         write_buf[1] = R::ADDRESS;
         write_buf[2] = r.into();
 
-        self.spi
-            .transaction(&mut [Operation::Write(&write_buf)])
-            .await?;
+        self.spi.transaction(&mut [Operation::Write(&write_buf)]).await?;
         Ok(())
     }
 
@@ -362,9 +318,7 @@ where
         write_buf[0] = Instruction::Write as u8;
         write_buf[1] = start_address;
 
-        self.spi
-            .transaction(&mut [Operation::Write(&write_buf), Operation::Write(data)])
-            .await?;
+        self.spi.transaction(&mut [Operation::Write(&write_buf), Operation::Write(data)]).await?;
         Ok(())
     }
 

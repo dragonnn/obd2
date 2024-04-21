@@ -1,4 +1,4 @@
-use defmt::{unwrap, Format};
+use defmt::{error, unwrap, Format};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use embedded_graphics::geometry::{Point, Size};
 
@@ -18,6 +18,7 @@ pub enum State {
 
 impl State {
     pub async fn apply(&self, previous: &Self, display1: &mut Sh1122<10>, display2: &mut Sh1122<1>) {
+        let mut bat_value = 0;
         match self {
             State::PowerOff => {
                 unwrap!(display1.sleep(true).await);
@@ -38,9 +39,18 @@ impl State {
                     4,
                     true,
                 );
-                unwrap!(battery2.draw(display2));
-                unwrap!(display1.flush().await);
-                unwrap!(display2.flush().await);
+                loop {
+                    error!("lcd redraw");
+                    bat_value += 1;
+                    if bat_value > 100 {
+                        break;
+                    }
+                    battery2.update_percentage(bat_value as f64);
+                    unwrap!(battery2.draw(display2));
+                    unwrap!(display1.flush().await);
+                    unwrap!(display2.flush().await);
+                    embassy_time::Timer::after_secs(1).await;
+                }
             }
         }
     }
@@ -60,9 +70,9 @@ pub async fn run(mut display1: Sh1122<10>, mut display2: Sh1122<1>) {
     current_state.apply(&current_state, &mut display1, &mut display2).await;
     loop {
         let new_state = STATE.wait().await;
-        if new_state != current_state {
-            new_state.apply(&current_state, &mut display1, &mut display2).await;
-            current_state = new_state;
-        }
+        //if new_state != current_state {
+        new_state.apply(&current_state, &mut display1, &mut display2).await;
+        current_state = new_state;
+        //}
     }
 }

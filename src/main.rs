@@ -12,6 +12,7 @@ use esp_hal::entry;
 use esp_hal_procmacros::main;
 
 mod cap1188;
+mod defmt_serial;
 mod display;
 mod hal;
 mod mcp2515;
@@ -36,7 +37,7 @@ async fn main(spawner: Spawner) {
     init_heap();
 
     let hal = hal::init();
-
+    spawner.spawn(tasks::usb::run(hal.usb_serial)).ok();
     //spawner.spawn(display::task::run4(hal.display1, hal.display2)).ok();
     spawner.spawn(obd2::run(hal.obd2)).ok();
 
