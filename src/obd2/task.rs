@@ -29,6 +29,7 @@ pub async fn run(mut mcp2515: Mcp2515) {
     loop {
         match embassy_time::with_timeout(timeout, mcp2515.interrupt()).await {
             Ok(_) => {
+                //mcp2515.clear_interrupts().await.unwrap();
                 let rx_status = mcp2515.rx_status().await.unwrap();
                 let mut frames = [None, None];
                 if rx_status.rx0if() {

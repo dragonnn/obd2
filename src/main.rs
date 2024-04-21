@@ -17,6 +17,7 @@ mod display;
 mod hal;
 mod mcp2515;
 mod obd2;
+mod obd2v2;
 mod tasks;
 mod types;
 
@@ -38,6 +39,11 @@ async fn main(spawner: Spawner) {
 
     let hal = hal::init();
     spawner.spawn(tasks::usb::run(hal.usb_serial)).ok();
+
+    for i in 0..20 {
+        defmt::info!("init {}", i);
+        embassy_time::Timer::after_millis(100).await;
+    }
     //spawner.spawn(display::task::run4(hal.display1, hal.display2)).ok();
     spawner.spawn(obd2::run(hal.obd2)).ok();
 

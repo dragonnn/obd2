@@ -338,11 +338,7 @@ where
     }
 
     pub async fn interrupt(&mut self) {
-        /*self.int.enable_input_in_sleep_mode(true);
-        self.int
-            .listen_with_options(esp_hal::gpio::Event::AnyEdge, true, true, true);*/
-
-        self.int.wait_for_any_edge().await.unwrap();
+        self.int.wait_for_falling_edge().await.ok();
     }
 }
 

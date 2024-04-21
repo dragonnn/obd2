@@ -70,7 +70,5 @@ unsafe impl defmt::Logger for GlobalSerialLogger {
 /// Write to serial using proxy function. We must ensure this function is not called
 /// several times in parallel.
 fn write_serial(remaining: &[u8]) {
-    unsafe {
-        PIPE.try_write(remaining);
-    }
+    PIPE.try_write(remaining).ok();
 }
