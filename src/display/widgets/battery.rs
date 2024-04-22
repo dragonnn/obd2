@@ -15,15 +15,19 @@ use heapless::String;
 use num_traits::float::FloatCore;
 use profont::*;
 
+#[derive(Default)]
 pub enum BatteryOrientation {
+    #[default]
     VerticalTop,
     VerticalDown,
     HorizontalLeft,
     HorizontalRight,
 }
 
+#[derive(Default)]
 pub struct Battery {
-    temp: f64,
+    min_temp: f64,
+    max_temp: f64,
     voltage: f64,
     percentage: f64,
     size: Size,
@@ -50,7 +54,8 @@ impl Battery {
             size,
             orientation,
             percentage: 0.0,
-            temp: 0.0,
+            min_temp: 0.0,
+            max_temp: 0.0,
             voltage: 0.0,
             cap,
             bars,
@@ -148,9 +153,16 @@ impl Battery {
         }
     }
 
-    pub fn update_temp(&mut self, temp: f64) {
-        if self.temp != temp {
-            self.temp = temp;
+    pub fn update_min_temp(&mut self, min_temp: f64) {
+        if self.min_temp != min_temp {
+            self.min_temp = min_temp;
+            self.redraw = true;
+        }
+    }
+
+    pub fn update_max_temp(&mut self, max_temp: f64) {
+        if self.max_temp != max_temp {
+            self.max_temp = max_temp;
             self.redraw = true;
         }
     }
@@ -255,9 +267,9 @@ impl Battery {
 
                 let mut text_position = org_position;
                 text_position.x += 2;
-                text_position.y += org_size.height as i32 / 2 / 2 + 6;
+                text_position.y += org_size.height as i32 / 2 / 2 + 2;
                 text.clear();
-                write!(text, "{:1}°C", self.temp).unwrap();
+                write!(text, "{:1}/{:1}°C", self.min_temp, self.max_temp).unwrap();
 
                 Text::with_text_style(text.as_str(), text_position, character_style, text_style).draw(target)?;
             }

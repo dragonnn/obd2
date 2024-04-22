@@ -14,6 +14,7 @@ use esp_hal_procmacros::main;
 mod cap1188;
 mod defmt_serial;
 mod display;
+mod event;
 mod hal;
 mod mcp2515;
 mod obd2;

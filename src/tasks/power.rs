@@ -1,11 +1,11 @@
 use defmt::error;
-use embassy_time::Duration;
+use embassy_time::{Duration, Timer};
 use esp_hal::{
     rtc_cntl::{get_reset_reason, get_wakeup_cause, SocResetReason},
     Cpu,
 };
 
-use crate::power::Power;
+use crate::{event::*, power::Power};
 
 #[embassy_executor::task]
 pub async fn run(mut power: Power) {
@@ -15,25 +15,20 @@ pub async fn run(mut power: Power) {
     let wake_reason = get_wakeup_cause();
     error!("wake reason: {:?}", defmt::Debug2Format(&wake_reason));
 
-    if power.is_ignition_on() {
-        /*let old_power = true;
-        loop {
-            let new_power = power.is_ignition_on();
-            if new_power != old_power {
-                error!("ignition state changed: {}", new_power);
-                break;
-            }
-            embassy_time::Timer::after(embassy_time::Duration::from_millis(50)).await;
-        }*/
+    let mut sleep_timeout = Duration::from_secs(1);
 
-        //power.wait_for_ignition_off().await;
+    if power.is_ignition_on() {
+        KIA_EVENTS.send(KiaEvent::InitIgnitionOn).await;
         power.wait_for_ignition_off().await;
         error!("got low ignition signal");
     } else {
+        KIA_EVENTS.send(KiaEvent::InitIgnitionOff).await;
+        sleep_timeout = Duration::from_secs(60);
         defmt::warn!("ignition is off");
     }
 
     defmt::warn!("deep sleep in one second");
-    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
+    KIA_EVENTS.send(KiaEvent::Shutdown).await;
+    Timer::after(sleep_timeout).await;
     power.deep_sleep(Duration::from_secs(5 * 60));
 }

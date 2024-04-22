@@ -66,7 +66,7 @@ pub async fn run4(mut display1: Sh1122<10>, mut display2: Sh1122<1>) {
     motor_ice.draw(&mut display1).unwrap();
 
     battery2.update_voltage(360.1);
-    battery2.update_temp(35.2);
+    battery2.update_min_temp(35.2);
 
     let mut speed = 0.0;
     arrow.update_speed(speed);

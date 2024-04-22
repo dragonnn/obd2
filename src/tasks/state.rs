@@ -2,16 +2,19 @@ use defmt::*;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 use statig::prelude::*;
 
-use super::lcd::{State as LCDState, STATE as LCD_STATE};
+use crate::event::{LcdEvent, Obd2Event, LCD_EVENTS};
 
 pub static EVENTS: Channel<CriticalSectionRawMutex, KiaEvent, 32> = Channel::new();
 
 pub struct KiaContext {}
 
-#[derive(Format, PartialEq, Eq, Clone, Copy)]
+#[derive(Format, PartialEq, Clone)]
 pub enum KiaEvent {
-    Init,
+    InitIgnitionOff,
+    InitIgnitionOn,
+    Shutdown,
     Button(crate::tasks::buttons::Action),
+    Obd2Event(Obd2Event),
 }
 
 #[derive(Default)]
@@ -34,14 +37,33 @@ impl KiaState {
     async fn init(&mut self, context: &mut KiaContext, event: &KiaEvent) -> Response<State> {
         info!("init got event: {:?}", event);
         match event {
-            KiaEvent::Init => {
-                LCD_STATE.signal(LCDState::PowerOff);
+            KiaEvent::InitIgnitionOff => {
+                LCD_EVENTS.send(LcdEvent::PowerOff).await;
+                Handled
             }
-            KiaEvent::Button(button_action) => {
-                LCD_STATE.signal(LCDState::Main);
+            KiaEvent::InitIgnitionOn => {
+                LCD_EVENTS.send(LcdEvent::Main).await;
+                Transition(State::ignition_on())
             }
+            _ => Handled,
         }
-        Transition(State::init())
+    }
+
+    #[state()]
+    async fn ignition_on(&mut self, context: &mut KiaContext, event: &KiaEvent) -> Response<State> {
+        info!("ignition_on got event: {:?}", event);
+        match event {
+            KiaEvent::Shutdown => {
+                LCD_EVENTS.send(LcdEvent::PowerOff).await;
+                Transition(State::init())
+            }
+            KiaEvent::Obd2Event(obd2_event) => {
+                LCD_EVENTS.send(LcdEvent::Obd2Event(obd2_event.clone())).await;
+                Handled
+            }
+
+            _ => Handled,
+        }
     }
 }
 
@@ -59,7 +81,6 @@ impl KiaState {
 pub async fn run() {
     let mut context = KiaContext {};
     let mut state = KiaState::default().uninitialized_state_machine().init_with_context(&mut context).await;
-    state.handle_with_context(&KiaEvent::Init, &mut context).await;
 
     loop {
         let event = EVENTS.receive().await;
