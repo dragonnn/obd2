@@ -37,9 +37,17 @@ impl Power {
     }
 
     pub async fn wait_for_ignition_off(&mut self) {
-        self.ing_gpio.unlisten();
+        /*self.ing_gpio.unlisten();
         self.ing_gpio.clear_interrupt();
 
-        self.ing_gpio.wait_for_falling_edge().await;
+        self.ing_gpio.wait_for_falling_edge().await;*/
+        let mut old_power = true;
+        loop {
+            let new_power = self.is_ignition_on();
+            if new_power != old_power {
+                break;
+            }
+            embassy_time::Timer::after(Duration::from_millis(50)).await;
+        }
     }
 }

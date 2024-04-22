@@ -34,6 +34,6 @@ pub async fn run(mut power: Power) {
     }
 
     defmt::warn!("deep sleep in one second");
-    embassy_time::Timer::after(embassy_time::Duration::from_secs(10)).await;
+    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     power.deep_sleep(Duration::from_secs(5 * 60));
 }
