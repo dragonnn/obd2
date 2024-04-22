@@ -103,15 +103,13 @@ impl Obd2 {
                         if let Some(obd2_message_length) = obd2_message_length {
                             let new_obd2_message_id = can_frame.data[0] & 0x0F;
                             if new_obd2_message_id == obd2_message_id + 1 {
-                                unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data[2..]));
+                                unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data[1..]));
                                 //unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data));
-                                if self.obd2_message_buffer.len() >= obd2_message_length - 7 {
+                                if self.obd2_message_buffer.len() >= obd2_message_length {
                                     //self.obd2_message_buffer.truncate(obd2_message_length);
                                     obd2_data = Some(self.obd2_message_buffer.as_slice());
                                     info!("got last consecutive frame: {}", new_obd2_message_id);
                                     break 'outer;
-                                } else {
-                                    error!("obd2_message_buffer.len(): {}", self.obd2_message_buffer.len());
                                 }
                                 obd2_message_id = new_obd2_message_id;
                             } else {

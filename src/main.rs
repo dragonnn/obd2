@@ -18,6 +18,7 @@ mod hal;
 mod mcp2515;
 mod obd2;
 mod pid;
+mod power;
 mod tasks;
 mod types;
 
@@ -50,6 +51,7 @@ async fn main(spawner: Spawner) {
     spawner.spawn(tasks::buttons::run(hal.buttons)).ok();
     spawner.spawn(tasks::lcd::run(hal.display1, hal.display2)).ok();
     spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
+    spawner.spawn(tasks::power::run(hal.power)).ok();
 
     tasks::state::run().await;
 }

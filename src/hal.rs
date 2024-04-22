@@ -11,10 +11,11 @@ use esp_hal::{
     clock::ClockControl,
     delay::Delay,
     dma::{Dma, DmaDescriptor, DmaPriority},
-    embassy,
+    embassy, gpio,
     peripherals::Peripherals,
     prelude::*,
     riscv::singleton,
+    rtc_cntl::{sleep::WakeupLevel, Rtc},
     spi::{
         master::{dma::SpiDma, Spi},
         FullDuplexMode, SpiMode,
@@ -32,7 +33,7 @@ use sh1122::{
 };
 use static_cell::{make_static, StaticCell};
 
-use crate::{cap1188::Cap1188, mcp2515::Mcp2515, obd2, types};
+use crate::{cap1188::Cap1188, mcp2515::Mcp2515, obd2, power, types};
 
 // WARNING may overflow and wrap-around in long lived apps
 defmt::timestamp!("{=u32:us}", {
@@ -47,6 +48,7 @@ pub struct Hal {
     pub buttons: types::Cap1188,
     pub obd2: obd2::Obd2,
     pub usb_serial: types::UsbSerial,
+    pub power: power::Power,
 }
 
 pub fn init() -> Hal {
@@ -63,6 +65,7 @@ pub fn init() -> Hal {
         .unwrap();
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    let mut rtc = Rtc::new(peripherals.LPWR, None);
 
     let dma = Dma::new(peripherals.DMA);
     let dma_channel = dma.channel0;
@@ -87,8 +90,10 @@ pub fn init() -> Hal {
     let mut cs_mcp2515 = io.pins.gpio8.into_push_pull_output();
     let int_mcp2515 = io.pins.gpio21.into_pull_down_input();
     let mut rs = io.pins.gpio4.into_push_pull_output();
-    let ing = io.pins.gpio2;
-    let result = ing.is_input_high();
+    let mut ing = io.pins.gpio2;
+
+    let ing_wakeup_pins: &mut [(&mut dyn gpio::RTCPinWithResistors, WakeupLevel)] =
+        &mut [(&mut ing, WakeupLevel::High)];
 
     let mut delay = Delay::new(&clocks);
     dc.set_high();
@@ -145,5 +150,12 @@ pub fn init() -> Hal {
 
     let mut usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
 
-    Hal { display1, display2, buttons: cap1188, obd2: obd2::Obd2::new(mcp2515), usb_serial }
+    Hal {
+        display1,
+        display2,
+        buttons: cap1188,
+        obd2: obd2::Obd2::new(mcp2515),
+        usb_serial,
+        power: power::Power::new(ing, delay, rtc),
+    }
 }
