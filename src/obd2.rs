@@ -7,7 +7,7 @@ use embedded_can::Frame as _;
 use static_cell::make_static;
 
 use crate::{
-    mcp2515::{CanFrame, RxBuffer, TxBuffer},
+    mcp2515::{clock_8mhz, CanFrame, OperationMode, RxBuffer, TxBuffer, CANINTE, RXB0CTRL, RXB1CTRL, RXM},
     types::Mcp2515,
 };
 
@@ -37,14 +37,29 @@ impl Obd2 {
         Self { mcp2515, obd2_message_buffer, obd2_timeout }
     }
 
+    pub async fn init(&mut self) {
+        let config = crate::mcp2515::Config::default()
+            .mode(OperationMode::NormalOperation)
+            .bitrate(clock_8mhz::CNF_500K_BPS)
+            .receive_buffer_0(RXB0CTRL::default().with_rxm(RXM::ReceiveAny).with_bukt(true))
+            .receive_buffer_1(RXB1CTRL::default().with_rxm(RXM::ReceiveAny));
+
+        self.mcp2515.apply_config(&config).await.unwrap();
+
+        let interputs_config = CANINTE::default().with_rx0ie(true).with_rx1ie(true);
+        self.mcp2515.apply_interrupts_config(interputs_config).await.unwrap();
+    }
+
     pub async fn request<PID: Pid>(&mut self) -> Result<PID, Obd2Error> {
+        self.mcp2515.clear_interrupts().await?;
         self.mcp2515.load_tx_buffer(TxBuffer::TXB0, &PID::request()).await?;
         self.mcp2515.request_to_send(TxBuffer::TXB0).await?;
 
         let mut can_frames = [None, None];
         let obd2_data: Option<&[u8]>;
+        let mut obd2_message_length = None;
+        let mut obd2_message_id = 0;
         'outer: loop {
-            self.mcp2515.interrupt().await;
             let rx_status = self.mcp2515.rx_status().await?;
             if rx_status.rx0if() {
                 can_frames[0] = Some(self.mcp2515.read_rx_buffer(RxBuffer::RXB0).await?);
@@ -54,15 +69,13 @@ impl Obd2 {
                 can_frames[1] = Some(self.mcp2515.read_rx_buffer(RxBuffer::RXB1).await?);
             }
             for can_frame in can_frames.iter().flatten() {
-                let mut obd2_message_length = None;
-                let mut obd2_message_id = 0;
                 let obd2_frame_type = can_frame.data[0] & 0xF0;
-                info!(
+                /*info!(
                     "can_frame.data[0]: {:#04x} from: {:?} type: {:#04x}",
                     can_frame.data,
                     defmt::Debug2Format(&can_frame.id()),
                     obd2_frame_type
-                );
+                );*/
 
                 match obd2_frame_type {
                     0x02 => {
@@ -75,7 +88,8 @@ impl Obd2 {
                         obd2_message_length =
                             Some(((can_frame.data[0] & 0x0F) as usize) << 8 | can_frame.data[1] as usize);
                         info!("first obd2_message_length length: {}", obd2_message_length);
-                        unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data));
+                        unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data[2..]));
+                        //unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data));
                         obd2_message_id = 0;
                     }
                     0x30 => {
@@ -88,13 +102,16 @@ impl Obd2 {
                     0x20 => {
                         if let Some(obd2_message_length) = obd2_message_length {
                             let new_obd2_message_id = can_frame.data[0] & 0x0F;
-                            info!("consecutive frame: {} of length: {}", new_obd2_message_id, obd2_message_length);
                             if new_obd2_message_id == obd2_message_id + 1 {
-                                unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data[1..]));
-                                if self.obd2_message_buffer.len() >= obd2_message_length {
-                                    self.obd2_message_buffer.truncate(obd2_message_length);
+                                unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data[2..]));
+                                //unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data));
+                                if self.obd2_message_buffer.len() >= obd2_message_length - 7 {
+                                    //self.obd2_message_buffer.truncate(obd2_message_length);
                                     obd2_data = Some(self.obd2_message_buffer.as_slice());
+                                    info!("got last consecutive frame: {}", new_obd2_message_id);
                                     break 'outer;
+                                } else {
+                                    error!("obd2_message_buffer.len(): {}", self.obd2_message_buffer.len());
                                 }
                                 obd2_message_id = new_obd2_message_id;
                             } else {
@@ -115,11 +132,15 @@ impl Obd2 {
                     }
                 }
             }
+            self.mcp2515.interrupt().await;
         }
+
+        info!("obd2_data: {:?}", obd2_data);
 
         if let Some(obd2_data) = obd2_data {
             PID::parse(obd2_data)
         } else {
+            error!("no obd2_data found");
             Err(Obd2Error::DataNotFound)
         }
     }

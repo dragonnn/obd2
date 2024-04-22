@@ -32,7 +32,7 @@ use sh1122::{
 };
 use static_cell::{make_static, StaticCell};
 
-use crate::{cap1188::Cap1188, mcp2515::Mcp2515, types};
+use crate::{cap1188::Cap1188, mcp2515::Mcp2515, obd2, types};
 
 // WARNING may overflow and wrap-around in long lived apps
 defmt::timestamp!("{=u32:us}", {
@@ -45,7 +45,7 @@ pub struct Hal {
     pub display1: types::Sh1122<10>,
     pub display2: types::Sh1122<1>,
     pub buttons: types::Cap1188,
-    pub obd2: types::Mcp2515,
+    pub obd2: obd2::Obd2,
     pub usb_serial: types::UsbSerial,
 }
 
@@ -145,5 +145,5 @@ pub fn init() -> Hal {
 
     let mut usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
 
-    Hal { display1, display2, buttons: cap1188, obd2: mcp2515, usb_serial }
+    Hal { display1, display2, buttons: cap1188, obd2: obd2::Obd2::new(mcp2515), usb_serial }
 }
