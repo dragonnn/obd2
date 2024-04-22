@@ -12,6 +12,7 @@ use esp_hal::{
     delay::Delay,
     dma::{Dma, DmaDescriptor, DmaPriority},
     embassy, gpio,
+    interrupt::Priority,
     peripherals::Peripherals,
     prelude::*,
     riscv::singleton,
@@ -64,7 +65,7 @@ pub fn init() -> Hal {
     esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::DMA_CH0, esp_hal::interrupt::Priority::Priority1)
         .unwrap();
 
-    let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    let io = IO::new_with_priority(peripherals.GPIO, peripherals.IO_MUX, Priority::Priority1);
     let mut rtc = Rtc::new(peripherals.LPWR, None);
 
     let dma = Dma::new(peripherals.DMA);
@@ -90,10 +91,7 @@ pub fn init() -> Hal {
     let mut cs_mcp2515 = io.pins.gpio8.into_push_pull_output();
     let int_mcp2515 = io.pins.gpio21.into_pull_down_input();
     let mut rs = io.pins.gpio4.into_push_pull_output();
-    let mut ing = io.pins.gpio2;
-
-    let ing_wakeup_pins: &mut [(&mut dyn gpio::RTCPinWithResistors, WakeupLevel)] =
-        &mut [(&mut ing, WakeupLevel::High)];
+    let mut ing = io.pins.gpio2.into_pull_down_input();
 
     let mut delay = Delay::new(&clocks);
     dc.set_high();

@@ -1,7 +1,7 @@
 use embassy_time::Duration;
 use esp_hal::{
     delay::Delay,
-    gpio,
+    gpio::{self, InputPin, Pin},
     rtc_cntl::{
         sleep::{RtcioWakeupSource, TimerWakeupSource, WakeupLevel},
         Rtc,
@@ -30,5 +30,16 @@ impl Power {
         let rtcio = RtcioWakeupSource::new(wakeup_pins);
 
         self.rtc.sleep_deep(&[&timer, &rtcio], &mut self.delay);
+    }
+
+    pub fn is_ignition_on(&self) -> bool {
+        self.ing_gpio.is_input_high()
+    }
+
+    pub async fn wait_for_ignition_off(&mut self) {
+        self.ing_gpio.unlisten();
+        self.ing_gpio.clear_interrupt();
+
+        self.ing_gpio.wait_for_falling_edge().await;
     }
 }
