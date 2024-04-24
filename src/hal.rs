@@ -65,6 +65,8 @@ pub fn init() -> Hal {
     esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::DMA_CH0, esp_hal::interrupt::Priority::Priority1)
         .unwrap();
 
+    esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::GPIO, esp_hal::interrupt::Priority::Priority1).unwrap();
+
     let io = IO::new_with_priority(peripherals.GPIO, peripherals.IO_MUX, Priority::Priority1);
     let mut rtc = Rtc::new(peripherals.LPWR, None);
 
