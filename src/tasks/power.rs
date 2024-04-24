@@ -15,7 +15,7 @@ pub async fn run(mut power: Power) {
     let wake_reason = get_wakeup_cause();
     error!("wake reason: {:?}", defmt::Debug2Format(&wake_reason));
 
-    let mut sleep_timeout = Duration::from_secs(1);
+    let mut sleep_timeout = Duration::from_secs(5);
 
     if power.is_ignition_on() {
         KIA_EVENTS.send(KiaEvent::InitIgnitionOn).await;
