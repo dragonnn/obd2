@@ -1,6 +1,6 @@
 #!/bin/bash
-probe-rs download --chip esp32c3 --connect-under-reset $1
-probe-rs reset --chip esp32c3 
+probe-rs download --chip esp32c6 --connect-under-reset $1
+probe-rs reset --chip esp32c6 
 
 #socat tcp-l:4444,reuseaddr,fork file:/dev/ttyACM0,nonblock &
 
