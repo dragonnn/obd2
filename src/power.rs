@@ -3,7 +3,7 @@ use esp_hal::{
     delay::Delay,
     gpio::{self, InputPin, Pin},
     rtc_cntl::{
-        sleep::{RtcioWakeupSource, TimerWakeupSource, WakeupLevel},
+        sleep::{Ext1WakeupSource, TimerWakeupSource, WakeupLevel},
         Rtc,
     },
 };
@@ -27,7 +27,8 @@ impl Power {
         let wakeup_pins: &mut [(&mut dyn gpio::RTCPinWithResistors, WakeupLevel)] =
             &mut [(&mut self.ing_gpio, WakeupLevel::High)];
 
-        let rtcio = RtcioWakeupSource::new(wakeup_pins);
+        //let rtcio = RtcioWakeupSource::new(wakeup_pins);
+        let rtcio = Ext1WakeupSource::new(wakeup_pins);
 
         self.rtc.sleep_deep(&[&timer, &rtcio], &mut self.delay);
     }

@@ -44,8 +44,8 @@ defmt::timestamp!("{=u32:us}", {
 });
 
 pub struct Hal {
-    pub display1: types::Sh1122<10>,
-    pub display2: types::Sh1122<1>,
+    pub display1: types::Sh1122<18>,
+    pub display2: types::Sh1122<19>,
     pub buttons: types::Cap1188,
     pub obd2: obd2::Obd2,
     pub usb_serial: types::UsbSerial,
@@ -62,7 +62,9 @@ pub fn init() -> Hal {
 
     //embassy::init(&clocks, esp_hal::systimer::SystemTimer::new_async(peripherals.SYSTIMER));
 
-    esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::DMA_CH0, esp_hal::interrupt::Priority::Priority1)
+    esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::DMA_IN_CH0, esp_hal::interrupt::Priority::Priority1)
+        .unwrap();
+    esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::DMA_OUT_CH0, esp_hal::interrupt::Priority::Priority1)
         .unwrap();
 
     esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::GPIO, esp_hal::interrupt::Priority::Priority1).unwrap();
@@ -75,7 +77,7 @@ pub fn init() -> Hal {
 
     let sclk = io.pins.gpio6;
     let mosi = io.pins.gpio7;
-    let miso = io.pins.gpio5;
+    let miso = io.pins.gpio2;
 
     let tx_descriptors = make_static!([DmaDescriptor::EMPTY; 8]);
     let rx_descriptors = make_static!([DmaDescriptor::EMPTY; 8]);
@@ -86,14 +88,14 @@ pub fn init() -> Hal {
         .with_miso(miso)
         .with_dma(dma_channel.configure_for_async(false, tx_descriptors, rx_descriptors, DmaPriority::Priority0));
 
-    let mut dc = io.pins.gpio9.into_push_pull_output();
-    let mut cs_display1 = io.pins.gpio10.into_push_pull_output();
-    let mut cs_display2 = io.pins.gpio1.into_push_pull_output();
-    let mut cs_cap1188 = io.pins.gpio3.into_push_pull_output();
-    let mut cs_mcp2515 = io.pins.gpio8.into_push_pull_output();
-    let int_mcp2515 = io.pins.gpio21.into_pull_down_input();
-    let mut rs = io.pins.gpio4.into_push_pull_output();
-    let mut ing = io.pins.gpio2.into_pull_down_input();
+    let mut dc = io.pins.gpio23.into_push_pull_output();
+    let mut cs_display1 = io.pins.gpio18.into_push_pull_output();
+    let mut cs_display2 = io.pins.gpio19.into_push_pull_output();
+    let mut cs_cap1188 = io.pins.gpio20.into_push_pull_output();
+    let mut cs_mcp2515 = io.pins.gpio16.into_push_pull_output();
+    let int_mcp2515 = io.pins.gpio4.into_pull_down_input();
+    let mut rs = io.pins.gpio22.into_push_pull_output();
+    let mut ing = io.pins.gpio5.into_pull_down_input();
 
     let mut delay = Delay::new(&clocks);
     dc.set_high();

@@ -22,12 +22,12 @@ pub enum LcdEvent {
 
 #[derive()]
 pub struct LcdState {
-    display1: Sh1122<10>,
-    display2: Sh1122<1>,
+    display1: Sh1122<18>,
+    display2: Sh1122<19>,
 }
 
 impl LcdState {
-    pub fn new(display1: Sh1122<10>, display2: Sh1122<1>) -> Self {
+    pub fn new(display1: Sh1122<18>, display2: Sh1122<19>) -> Self {
         Self { display1, display2 }
     }
 }
@@ -125,7 +125,7 @@ impl LcdState {
 }
 
 #[embassy_executor::task]
-pub async fn run(mut display1: Sh1122<10>, mut display2: Sh1122<1>) {
+pub async fn run(mut display1: Sh1122<18>, mut display2: Sh1122<19>) {
     let mut context = LcdContext {};
     let mut state =
         LcdState::new(display1, display2).uninitialized_state_machine().init_with_context(&mut context).await;
