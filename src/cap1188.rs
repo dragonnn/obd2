@@ -1,5 +1,6 @@
 use defmt::{error, Format};
 use embedded_hal_async::spi::{Operation, SpiDevice};
+use esp_hal::gpio::InputPin;
 use modular_bitfield::prelude::*;
 
 #[bitfield]
@@ -16,8 +17,9 @@ pub struct Cap1188Inputs {
     pub b7: bool,
 }
 
-pub struct Cap1188<SPI> {
+pub struct Cap1188<SPI, INT> {
     spi: SPI,
+    int: INT,
 }
 
 ///< The Sensor Input Status Register stores status bits that indicate a
@@ -40,12 +42,13 @@ const CAP1188_MAIN: u8 = 0x00; // Main Control register. Controls the primary po
 const CAP1188_MAIN_INT: u8 = 0x01; // Main Control Int register. Indicates that there is an interrupt.
 const CAP1188_LEDPOL: u8 = 0x73; // LED Polarity. Controls the output polarity of LEDs.
 
-impl<SPI> Cap1188<SPI>
+impl<SPI, INT> Cap1188<SPI, INT>
 where
     SPI: SpiDevice<u8>,
+    INT: InputPin + embedded_hal_async::digital::Wait,
 {
-    pub fn new(spi: SPI) -> Self {
-        Self { spi }
+    pub fn new(spi: SPI, int: INT) -> Self {
+        Self { spi, int }
     }
 
     pub async fn init(&mut self) -> Result<(), SPI::Error> {
@@ -101,5 +104,9 @@ where
         buffer[1] = 0x7a;
 
         self.spi.transaction(&mut [Operation::Write(&buffer)]).await
+    }
+
+    pub async fn wait_for_touched(&mut self) {
+        self.int.wait_for_low().await;
     }
 }

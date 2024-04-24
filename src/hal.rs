@@ -96,6 +96,7 @@ pub fn init() -> Hal {
     let int_mcp2515 = io.pins.gpio4.into_pull_down_input();
     let mut rs = io.pins.gpio22.into_push_pull_output();
     let mut ing = io.pins.gpio5.into_pull_down_input();
+    let mut int_cap1188 = io.pins.gpio3.into_pull_down_input();
 
     let mut delay = Delay::new(&clocks);
     dc.set_high();
@@ -147,7 +148,7 @@ pub fn init() -> Hal {
     let display2 = AsyncDisplay::new(interface2, PixelCoord(256, 64), PixelCoord(0, 0), DisplayRotation::Rotate180)
         .into_buffered_graphics_mode();
 
-    let cap1188 = Cap1188::new(cap1188_spi);
+    let cap1188 = Cap1188::new(cap1188_spi, int_cap1188);
     let mcp2515 = Mcp2515::new(mcp2515_spi, int_mcp2515);
 
     let mut usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);

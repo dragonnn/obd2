@@ -29,6 +29,7 @@ pub async fn run(mut cap1188: Cap1188) {
     let mut old_touched = unwrap!(cap1188.touched().await);
     let mut old_touched_bytes = old_touched.into_bytes()[0];
     loop {
+        cap1188.wait_for_touched().await;
         let new_touched = unwrap!(cap1188.touched().await);
         let new_touched_bytes = new_touched.into_bytes()[0];
         if new_touched_bytes != old_touched_bytes {
@@ -96,6 +97,5 @@ pub async fn run(mut cap1188: Cap1188) {
             old_touched = new_touched;
             old_touched_bytes = new_touched_bytes;
         }
-        Timer::after_millis(50).await;
     }
 }

@@ -27,8 +27,9 @@ pub async fn run(mut power: Power) {
         defmt::warn!("ignition is off");
     }
 
-    defmt::warn!("deep sleep in one second");
     KIA_EVENTS.send(KiaEvent::Shutdown).await;
     Timer::after(sleep_timeout).await;
+    defmt::warn!("deep sleep in 100ms");
+    Timer::after(Duration::from_millis(100)).await;
     power.deep_sleep(Duration::from_secs(5 * 60));
 }
