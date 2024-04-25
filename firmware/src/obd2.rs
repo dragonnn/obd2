@@ -69,14 +69,8 @@ impl Obd2 {
                 warn!("rx1if frame found");
                 can_frames[1] = Some(self.mcp2515.read_rx_buffer(RxBuffer::RXB1).await?);
             }
-            for can_frame in can_frames.iter().flatten() {
+            for can_frame in can_frames.iter().flatten().filter(|frame| PID::filter_frame(frame)) {
                 let obd2_frame_type = can_frame.data[0] & 0xF0;
-                /*info!(
-                    "can_frame.data[0]: {:#04x} from: {:?} type: {:#04x}",
-                    can_frame.data,
-                    defmt::Debug2Format(&can_frame.id()),
-                    obd2_frame_type
-                );*/
 
                 match obd2_frame_type {
                     0x02 => {
@@ -122,9 +116,9 @@ impl Obd2 {
                     }
                     _ => {
                         if can_frame.data[0] == 0x03 {
-                            //info!("single frame in _: {}", can_frame.data);
-                            //obd2_data = Some(can_frame.data.as_slice());
-                            //break 'outer;
+                            info!("single frame in _: {}", can_frame.data);
+                            obd2_data = Some(can_frame.data.as_slice());
+                            break 'outer;
                         } else {
                             error!("unknown frame: {}", obd2_frame_type);
                         }
@@ -146,6 +140,9 @@ impl Obd2 {
 }
 
 pub trait Pid {
+    fn filter_frame(frame: &CanFrame) -> bool {
+        true
+    }
     fn request() -> CanFrame;
     fn parse(data: &[u8]) -> Result<Self, Obd2Error>
     where

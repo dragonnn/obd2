@@ -47,4 +47,11 @@ impl Pid for BmsPid {
 
         Ok(Self { hv_max_temp, hv_min_temp, hv_dc_voltage, hv_soc, hv_cell_voltage_deviation, aux_dc_voltage })
     }
+
+    fn filter_frame(frame: &CanFrame) -> bool {
+        if frame.data().len() < 3 {
+            return false;
+        }
+        frame.id() == StandardId::new(0x7ec).unwrap().into() && frame.data()[2] == 0x21
+    }
 }
