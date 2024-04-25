@@ -1,7 +1,7 @@
 [target.riscv32imc-unknown-none-elf]
 #runner = "espflash flash --monitor -p /dev/ttyUSB1 -L defmt"
-#runner = "probe-rs run --chip esp32c3 --connect-under-reset"
-runner = ".cargo/run.sh"
+runner = "probe-rs run --chip esp32c6 --connect-under-reset"
+#runner = ".cargo/run.sh"
 [build]
 rustflags = [
     "-C",

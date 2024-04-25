@@ -58,9 +58,9 @@ pub fn init() -> Hal {
     let clocks = ClockControl::max(system.clock_control).freeze();
 
     let timg0 = TimerGroup::new_async(peripherals.TIMG0, &clocks);
-    embassy::init(&clocks, timg0);
+    //embassy::init(&clocks, timg0);
 
-    //embassy::init(&clocks, esp_hal::systimer::SystemTimer::new_async(peripherals.SYSTIMER));
+    embassy::init(&clocks, esp_hal::systimer::SystemTimer::new_async(peripherals.SYSTIMER));
 
     esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::DMA_IN_CH0, esp_hal::interrupt::Priority::Priority1)
         .unwrap();

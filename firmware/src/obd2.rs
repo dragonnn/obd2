@@ -15,6 +15,7 @@ pub enum Obd2Error {
     Spi(SpiDeviceError<esp_hal::spi::Error, Infallible>),
     Parse,
     DataNotFound,
+    FrameToShort,
 }
 
 impl From<SpiDeviceError<esp_hal::spi::Error, Infallible>> for Obd2Error {
@@ -121,9 +122,9 @@ impl Obd2 {
                     }
                     _ => {
                         if can_frame.data[0] == 0x03 {
-                            info!("single frame in _: {}", can_frame.data);
-                            obd2_data = Some(can_frame.data.as_slice());
-                            break 'outer;
+                            //info!("single frame in _: {}", can_frame.data);
+                            //obd2_data = Some(can_frame.data.as_slice());
+                            //break 'outer;
                         } else {
                             error!("unknown frame: {}", obd2_frame_type);
                         }

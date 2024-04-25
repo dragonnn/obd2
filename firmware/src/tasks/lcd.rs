@@ -96,10 +96,10 @@ impl LcdState {
         let ret = match event {
             LcdEvent::PowerOff => Transition(State::init()),
             LcdEvent::Obd2Event(Obd2Event::BmsPid(bms_pid)) => {
-                main.hv_battery.update_voltage(bms_pid.dc_voltage);
-                main.hv_battery.update_min_temp(bms_pid.min_temp);
-                main.hv_battery.update_max_temp(bms_pid.max_temp);
-                main.hv_battery.update_percentage(bms_pid.soc);
+                main.hv_battery.update_voltage(bms_pid.hv_dc_voltage);
+                main.hv_battery.update_min_temp(bms_pid.hv_min_temp);
+                main.hv_battery.update_max_temp(bms_pid.hv_max_temp);
+                main.hv_battery.update_percentage(bms_pid.hv_soc);
                 unwrap!(main.hv_battery.draw(&mut self.display2));
                 Handled
             }

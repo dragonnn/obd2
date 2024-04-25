@@ -8,12 +8,13 @@ extern crate alloc;
 use core::mem::MaybeUninit;
 
 use defmt::info;
+use defmt_rtt as _;
 use embassy_executor::Spawner;
 use esp_hal::entry;
 use esp_hal_procmacros::main;
 
 mod cap1188;
-mod defmt_serial;
+//mod defmt_serial;
 mod display;
 mod event;
 mod hal;
@@ -41,7 +42,7 @@ async fn main(spawner: Spawner) {
     init_heap();
 
     let hal = hal::init();
-    spawner.spawn(tasks::usb::run(hal.usb_serial)).ok();
+    //spawner.spawn(tasks::usb::run(hal.usb_serial)).ok();
 
     info!("init");
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;

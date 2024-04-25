@@ -9,7 +9,16 @@ use crate::{event::*, power::Power};
 
 #[embassy_executor::task]
 pub async fn run(mut power: Power) {
-    embassy_time::Timer::after(embassy_time::Duration::from_secs(5)).await;
+    embassy_time::Timer::after(embassy_time::Duration::from_millis(5000)).await;
+
+    if power.is_ignition_on() {
+        error!("ignition is on");
+    } else {
+        error!("ignition is off");
+    }
+
+    KIA_EVENTS.send(KiaEvent::InitIgnitionOn).await;
+    embassy_time::Timer::after(embassy_time::Duration::from_millis(100000)).await;
     let reason = get_reset_reason(Cpu::ProCpu).unwrap_or(SocResetReason::ChipPowerOn);
     error!("reset reason: {:?}", defmt::Debug2Format(&reason));
     let wake_reason = get_wakeup_cause();
@@ -31,5 +40,5 @@ pub async fn run(mut power: Power) {
     Timer::after(sleep_timeout).await;
     defmt::warn!("deep sleep in 100ms");
     Timer::after(Duration::from_millis(100)).await;
-    power.deep_sleep(Duration::from_secs(5 * 60));
+    //power.deep_sleep(Duration::from_secs(5 * 60));
 }
