@@ -82,7 +82,7 @@ impl Obd2 {
                 can_frames[1] = Some(frame);
                 info!("found can frame 1: {:?}", can_frames[1]);
             }
-            for can_frame in can_frames.iter().flatten().filter(|frame| PID::filter_frame(frame)) {
+            for can_frame in can_frames.iter().flatten() {
                 let obd2_frame_type = can_frame.data[0] & 0xF0;
 
                 match obd2_frame_type {
@@ -160,9 +160,6 @@ impl Obd2 {
 }
 
 pub trait Pid {
-    fn filter_frame(frame: &CanFrame) -> bool {
-        true
-    }
     fn request() -> CanFrame;
     fn parse(data: &[u8]) -> Result<Self, Obd2Error>
     where
