@@ -50,7 +50,7 @@ impl DebugScroll {
             let character_style = MonoTextStyle::new(&PROFONT_7_POINT, Gray4::WHITE);
             let text_style =
                 TextStyleBuilder::new().alignment(Alignment::Left).line_height(LineHeight::Percent(100)).build();
-            let mut position = Point::new(0, 4);
+            let mut position = Point::new(0, 6);
             let mut text_buffer_chunks = self.text_buffer.chunks(DEBUG_CHANNEL_LEN / 2);
             for text in text_buffer_chunks.next().unwrap() {
                 let text = Text::with_text_style(text, position, character_style, text_style);
@@ -58,7 +58,7 @@ impl DebugScroll {
                 position += Point::new(0, 8);
             }
 
-            let mut position = Point::new(0, 4);
+            let mut position = Point::new(0, 6);
             for text in text_buffer_chunks.next().unwrap() {
                 let text = Text::with_text_style(text, position, character_style, text_style);
 

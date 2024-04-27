@@ -141,6 +141,8 @@ impl LcdState {
     async fn enter_main(&mut self, main: &mut LcdMainState) {
         self.display_on().await;
         let lock = crate::locks::SPI_BUS.lock().await;
+        self.display1.clear();
+        self.display2.clear();
         warn!("enter_main");
         unwrap!(main.hv_battery.draw(&mut self.display2));
         unwrap!(self.display1.flush().await);
@@ -175,7 +177,7 @@ impl LcdState {
         let lock = crate::locks::SPI_BUS.lock().await;
         warn!("enter_debug");
         self.display_on().await;
-        debug.debug.add_line("Hello, World!");
+        debug.debug.add_line("debug init");
         unwrap!(debug.debug.draw(&mut self.display2, &mut self.display1));
         unwrap!(self.display1.flush().await);
         unwrap!(self.display2.flush().await);

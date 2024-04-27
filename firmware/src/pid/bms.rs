@@ -50,6 +50,7 @@ impl Pid for BmsPid {
     }
 
     fn filter_frame(frame: &CanFrame) -> bool {
+        return true;
         if frame.data().len() < 3 {
             internal_debug!("bms filter frame out length");
             return false;
