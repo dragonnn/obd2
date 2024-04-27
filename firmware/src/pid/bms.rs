@@ -2,11 +2,12 @@ use defmt::{info, Format};
 use embedded_can::{Frame as _, StandardId};
 
 use crate::{
+    debug::internal_debug,
     mcp2515::CanFrame,
     obd2::{Obd2Error, Pid},
 };
 
-#[derive(Format, PartialEq, Clone)]
+#[derive(Debug, Format, PartialEq, Clone)]
 pub struct BmsPid {
     pub hv_max_temp: f64,
     pub hv_min_temp: f64,
@@ -50,8 +51,15 @@ impl Pid for BmsPid {
 
     fn filter_frame(frame: &CanFrame) -> bool {
         if frame.data().len() < 3 {
+            internal_debug!("bms filter frame out length");
             return false;
         }
-        frame.id() == StandardId::new(0x7ec).unwrap().into() && frame.data()[2] == 0x21
+        //not sure about checking for the 0x61
+        let ret = frame.id() == StandardId::new(0x7ec).unwrap().into() && frame.data()[2] == 0x61;
+        if !ret {
+            internal_debug!("bms frame out {:x?} {:x}", frame.id(), frame.data()[2]);
+        }
+        ret;
+        true
     }
 }

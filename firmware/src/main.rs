@@ -15,9 +15,11 @@ use esp_hal_procmacros::main;
 
 mod cap1188;
 //mod defmt_serial;
+mod debug;
 mod display;
 mod event;
 mod hal;
+mod locks;
 mod mcp2515;
 mod obd2;
 mod pid;
@@ -44,10 +46,6 @@ async fn main(spawner: Spawner) {
     let hal = hal::init();
     //spawner.spawn(tasks::usb::run(hal.usb_serial)).ok();
 
-    info!("init");
-    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
-    info!("init");
-    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     info!("init");
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     info!("init");

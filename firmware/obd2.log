@@ -1,0 +1,140 @@
+226.207258 INFO  init
+└─ kia_obd2_esp32c3_v2::____embassy_main_task::{async_fn#0} @ src/main.rs:47  
+227.207325 INFO  init
+└─ kia_obd2_esp32c3_v2::____embassy_main_task::{async_fn#0} @ src/main.rs:49  
+227.210299 INFO  cap1188 task started
+└─ kia_obd2_esp32c3_v2::tasks::buttons::__run_task::{async_fn#0} @ src/tasks/buttons.rs:28  
+227.307966 ERROR ignition is on
+└─ kia_obd2_esp32c3_v2::tasks::power::__run_task::{async_fn#0} @ src/tasks/power.rs:15  
+227.308078 INFO  dispatching `InitIgnitionOn` to `State(Init)`
+└─ kia_obd2_esp32c3_v2::tasks::state::{impl#0}::on_dispatch @ src/tasks/state.rs:77  
+227.308271 INFO  init got event: InitIgnitionOn
+└─ kia_obd2_esp32c3_v2::tasks::state::{impl#6}::init::{async_fn#0} @ src/tasks/state.rs:38  
+227.308430 INFO  transitioned from `Init` to `IgnitionOn`
+└─ kia_obd2_esp32c3_v2::tasks::state::{impl#0}::on_transition @ src/tasks/state.rs:73  
+227.308604 INFO  canctrl: 10000111
+└─ kia_obd2_esp32c3_v2::mcp2515::{impl#0}::apply_config::{async_fn#0} @ src/mcp2515/mod.rs:173 
+227.308907 INFO  init got event: Main
+└─ kia_obd2_esp32c3_v2::tasks::lcd::{impl#6}::init::{async_fn#0} @ src/tasks/lcd.rs:67  
+227.309670 ERROR sending obd2 request
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:57  
+227.339231 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [16, 61, 97, 1, 255, 255, 255, 255] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+227.339334 WARN  rx1if frame found
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:71  
+227.339424 INFO  found can frame 1: Some(CanFrame { id_header: IdHeader { sidh: 34, sidl: 0, eid8: 15, eid0: 159 }, dlc: DLC { bytes: [18] }, data: [14, 14, 13, 12, 7, 96, 252, 128] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:73  
+229.809375 ERROR timeout requesting bms pid
+└─ kia_obd2_esp32c3_v2::tasks::obd2::__run_task::{async_fn#0} @ src/tasks/obd2.rs:28  
+230.809547 ERROR sending obd2 request
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:57  
+230.809687 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [2, 126, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+230.826246 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [16, 61, 97, 1, 255, 255, 255, 255] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+230.826942 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 252, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [48, 0, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+230.837252 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [33, 190, 14, 155, 22, 248, 128, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+230.846256 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [34, 0, 15, 159, 18, 14, 14, 13] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+230.856262 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [35, 14, 14, 15, 0, 16, 208, 2] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+230.866284 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [36, 207, 52, 0, 255, 119, 0, 1] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+230.876279 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [37, 146, 3, 0, 1, 145, 175, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+230.886509 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [38, 0, 144, 180, 0, 0, 140, 171] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+230.896295 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [39, 0, 160, 214, 82, 73, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+230.907410 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [40, 0, 0, 0, 0, 3, 232, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+231.010397 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 252, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [2, 62, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+231.026459 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [2, 126, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+232.991627 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 252, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [2, 62, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+233.006751 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [2, 126, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+233.309432 ERROR timeout requesting bms pid
+└─ kia_obd2_esp32c3_v2::tasks::obd2::__run_task::{async_fn#0} @ src/tasks/obd2.rs:28  
+234.309535 ERROR sending obd2 request
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:57  
+234.319768 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [16, 61, 97, 1, 255, 255, 255, 255] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+234.320464 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 252, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [48, 0, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+234.329760 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [33, 190, 14, 155, 22, 248, 128, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+234.339779 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [34, 0, 15, 159, 18, 14, 14, 13] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+234.349785 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [35, 14, 14, 15, 0, 16, 208, 2] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+234.359837 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [36, 207, 52, 0, 255, 119, 0, 1] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+234.369799 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [37, 146, 3, 0, 1, 145, 175, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+234.379804 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [38, 0, 144, 180, 0, 0, 140, 171] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+234.389820 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [39, 0, 160, 214, 85, 73, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+234.399862 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [40, 0, 0, 0, 0, 3, 232, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+235.004155 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 252, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [2, 62, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+235.018611 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [2, 126, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+236.809476 ERROR timeout requesting bms pid
+└─ kia_obd2_esp32c3_v2::tasks::obd2::__run_task::{async_fn#0} @ src/tasks/obd2.rs:28  
+237.809577 ERROR sending obd2 request
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:57  
+237.818307 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 75, eid0: 183 }, dlc: DLC { bytes: [8] }, data: [16, 61, 97, 1, 255, 255, 255, 255] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+237.819007 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 252, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [48, 0, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+237.828291 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 75, eid0: 183 }, dlc: DLC { bytes: [8] }, data: [33, 190, 14, 155, 22, 248, 128, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+237.838333 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [34, 0, 15, 159, 18, 14, 14, 13] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+237.848316 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 75, eid0: 183 }, dlc: DLC { bytes: [8] }, data: [35, 14, 14, 15, 0, 16, 208, 2] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+237.858326 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [36, 207, 52, 0, 255, 119, 0, 1] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+237.868330 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 75, eid0: 183 }, dlc: DLC { bytes: [8] }, data: [37, 146, 3, 0, 1, 145, 175, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+237.878342 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [38, 0, 144, 180, 0, 0, 140, 171] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+237.888347 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 75, eid0: 183 }, dlc: DLC { bytes: [8] }, data: [39, 0, 160, 214, 89, 73, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+237.898383 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [40, 0, 0, 0, 0, 3, 232, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+238.972913 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 252, sidl: 128, eid8: 75, eid0: 183 }, dlc: DLC { bytes: [8] }, data: [2, 62, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+238.986135 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 137, eid0: 19 }, dlc: DLC { bytes: [8] }, data: [2, 126, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+240.309520 ERROR timeout requesting bms pid
+└─ kia_obd2_esp32c3_v2::tasks::obd2::__run_task::{async_fn#0} @ src/tasks/obd2.rs:28  
+241.309620 ERROR sending obd2 request
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:57  
+241.316970 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [16, 61, 97, 1, 255, 255, 255, 255] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+241.317664 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 252, sidl: 128, eid8: 75, eid0: 183 }, dlc: DLC { bytes: [8] }, data: [48, 0, 0, 0, 0, 0, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+241.327140 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [33, 190, 14, 155, 22, 248, 128, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+241.337446 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 75, eid0: 183 }, dlc: DLC { bytes: [8] }, data: [34, 0, 15, 159, 18, 14, 14, 13] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+241.346876 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [35, 14, 14, 15, 0, 16, 208, 2] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+241.356855 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 75, eid0: 183 }, dlc: DLC { bytes: [8] }, data: [36, 207, 52, 0, 255, 119, 0, 1] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+241.366865 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [37, 146, 3, 0, 1, 145, 175, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+241.376865 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 75, eid0: 183 }, dlc: DLC { bytes: [8] }, data: [38, 0, 144, 180, 0, 0, 140, 171] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+241.386879 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 220, eid0: 156 }, dlc: DLC { bytes: [8] }, data: [39, 0, 160, 214, 92, 73, 0, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  
+241.396911 INFO  found can frame 0: Some(CanFrame { id_header: IdHeader { sidh: 253, sidl: 128, eid8: 75, eid0: 183 }, dlc: DLC { bytes: [8] }, data: [40, 0, 0, 0, 0, 3, 232, 0] })
+└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request::{async_fn#0} @ src/obd2.rs:68  

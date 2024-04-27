@@ -1,6 +1,7 @@
 mod arrow;
 mod battery;
 mod battery_12v;
+mod debug;
 mod fuel;
 mod motor_electric;
 mod motor_ice;
@@ -10,6 +11,7 @@ mod temperature;
 pub use arrow::{Arrow, ArrowDirection};
 pub use battery::{Battery, BatteryOrientation};
 pub use battery_12v::Battery12V;
+pub use debug::DebugScroll;
 pub use fuel::Fuel;
 pub use motor_electric::MotorElectric;
 pub use motor_ice::MotorIce;

@@ -927,6 +927,7 @@ dependencies = [
  "display-interface-spi",
  "embassy-embedded-hal",
  "embassy-executor",
+ "embassy-futures",
  "embassy-sync",
  "embassy-time",
  "embedded-can",

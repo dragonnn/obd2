@@ -7,6 +7,7 @@ use embedded_can::Frame as _;
 use static_cell::make_static;
 
 use crate::{
+    debug::internal_debug,
     mcp2515::{clock_8mhz, CanFrame, OperationMode, RxBuffer, TxBuffer, CANINTE, RXB0CTRL, RXB1CTRL, RXM},
     types::Mcp2515,
 };
@@ -27,15 +28,13 @@ impl From<SpiDeviceError<esp_hal::spi::Error, Infallible>> for Obd2Error {
 pub struct Obd2 {
     mcp2515: Mcp2515,
     obd2_message_buffer: &'static mut heapless::Vec<u8, 4095>,
-    obd2_timeout: Option<Duration>,
 }
 
 impl Obd2 {
     pub fn new(mcp2515: Mcp2515) -> Self {
         let obd2_message_buffer = make_static!(heapless::Vec::new());
-        let obd2_timeout = None;
 
-        Self { mcp2515, obd2_message_buffer, obd2_timeout }
+        Self { mcp2515, obd2_message_buffer }
     }
 
     pub async fn init(&mut self) {
@@ -51,9 +50,17 @@ impl Obd2 {
         self.mcp2515.apply_interrupts_config(interputs_config).await.unwrap();
     }
 
-    pub async fn request<PID: Pid>(&mut self) -> Result<PID, Obd2Error> {
+    pub async fn request_pid<PID: Pid>(&mut self) -> Result<PID, Obd2Error> {
+        let lock = crate::locks::SPI_BUS.lock().await;
+
         self.mcp2515.clear_interrupts().await?;
-        self.mcp2515.load_tx_buffer(TxBuffer::TXB0, &PID::request()).await?;
+        let request = PID::request();
+
+        internal_debug!("req pid: {:x?}", request.data);
+        //5 ms flow control
+        let flow_control = CanFrame::new(request.id(), &[0x30, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap();
+        self.mcp2515.load_tx_buffer(TxBuffer::TXB0, &request).await?;
+        error!("sending obd2 request");
         self.mcp2515.request_to_send(TxBuffer::TXB0).await?;
 
         let mut can_frames = [None, None];
@@ -63,11 +70,17 @@ impl Obd2 {
         'outer: loop {
             let rx_status = self.mcp2515.rx_status().await?;
             if rx_status.rx0if() {
-                can_frames[0] = Some(self.mcp2515.read_rx_buffer(RxBuffer::RXB0).await?);
+                let frame = self.mcp2515.read_rx_buffer(RxBuffer::RXB0).await?;
+                internal_debug!("rx0if: {:x?}", frame.data);
+                can_frames[0] = Some(frame);
+                info!("found can frame 0: {:?}", can_frames[0]);
             }
             if rx_status.rx1if() {
                 warn!("rx1if frame found");
-                can_frames[1] = Some(self.mcp2515.read_rx_buffer(RxBuffer::RXB1).await?);
+                let frame = self.mcp2515.read_rx_buffer(RxBuffer::RXB1).await?;
+                internal_debug!("rx1if: {:x?}", frame.data);
+                can_frames[1] = Some(frame);
+                info!("found can frame 1: {:?}", can_frames[1]);
             }
             for can_frame in can_frames.iter().flatten().filter(|frame| PID::filter_frame(frame)) {
                 let obd2_frame_type = can_frame.data[0] & 0xF0;
@@ -75,6 +88,7 @@ impl Obd2 {
                 match obd2_frame_type {
                     0x02 => {
                         info!("single frame: {}", can_frame.data);
+                        internal_debug!("single frame");
                         obd2_data = Some(can_frame.data.as_slice());
                         break 'outer;
                     }
@@ -83,18 +97,22 @@ impl Obd2 {
                         obd2_message_length =
                             Some(((can_frame.data[0] & 0x0F) as usize) << 8 | can_frame.data[1] as usize);
                         info!("first obd2_message_length length: {}", obd2_message_length);
+                        internal_debug!("first frame");
+                        self.mcp2515.load_tx_buffer(TxBuffer::TXB0, &flow_control).await?;
+                        error!("sending obd2 request");
+                        self.mcp2515.request_to_send(TxBuffer::TXB0).await?;
+
                         unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data[2..]));
-                        //unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data));
+
                         obd2_message_id = 0;
                     }
                     0x30 => {
+                        internal_debug!("flow control frame");
                         let timeout_ms = can_frame.data[2];
                         warn!("flow control frame with separation time: {}ms", timeout_ms);
-                        if timeout_ms > 0 {
-                            self.obd2_timeout = Some(Duration::from_millis(timeout_ms as u64));
-                        }
                     }
                     0x20 => {
+                        internal_debug!("consecutive frame");
                         if let Some(obd2_message_length) = obd2_message_length {
                             let new_obd2_message_id = can_frame.data[0] & 0x0F;
                             if new_obd2_message_id == obd2_message_id + 1 {
@@ -116,10 +134,12 @@ impl Obd2 {
                     }
                     _ => {
                         if can_frame.data[0] == 0x03 {
+                            internal_debug!("single frame in 0x03");
                             info!("single frame in _: {}", can_frame.data);
                             obd2_data = Some(can_frame.data.as_slice());
                             break 'outer;
                         } else {
+                            internal_debug!("unknown frame");
                             error!("unknown frame: {}", obd2_frame_type);
                         }
                     }

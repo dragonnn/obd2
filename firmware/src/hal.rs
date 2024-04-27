@@ -62,12 +62,12 @@ pub fn init() -> Hal {
 
     embassy::init(&clocks, esp_hal::systimer::SystemTimer::new_async(peripherals.SYSTIMER));
 
-    esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::DMA_IN_CH0, esp_hal::interrupt::Priority::Priority1)
+    /*esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::DMA_IN_CH0, esp_hal::interrupt::Priority::Priority1)
         .unwrap();
     esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::DMA_OUT_CH0, esp_hal::interrupt::Priority::Priority1)
         .unwrap();
 
-    esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::GPIO, esp_hal::interrupt::Priority::Priority1).unwrap();
+    esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::GPIO, esp_hal::interrupt::Priority::Priority1).unwrap();*/
 
     let io = IO::new_with_priority(peripherals.GPIO, peripherals.IO_MUX, Priority::Priority1);
     let mut rtc = Rtc::new(peripherals.LPWR, None);

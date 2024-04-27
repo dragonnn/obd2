@@ -9,7 +9,7 @@ use crate::{event::*, power::Power};
 
 #[embassy_executor::task]
 pub async fn run(mut power: Power) {
-    embassy_time::Timer::after(embassy_time::Duration::from_millis(5000)).await;
+    //embassy_time::Timer::after(embassy_time::Duration::from_millis(100)).await;
 
     if power.is_ignition_on() {
         error!("ignition is on");
@@ -18,6 +18,7 @@ pub async fn run(mut power: Power) {
     }
 
     KIA_EVENTS.send(KiaEvent::InitIgnitionOn).await;
+    return;
     embassy_time::Timer::after(embassy_time::Duration::from_millis(100000)).await;
     let reason = get_reset_reason(Cpu::ProCpu).unwrap_or(SocResetReason::ChipPowerOn);
     error!("reset reason: {:?}", defmt::Debug2Format(&reason));

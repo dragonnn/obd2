@@ -2,7 +2,10 @@ use defmt::*;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 use statig::prelude::*;
 
-use crate::event::{LcdEvent, Obd2Event, LCD_EVENTS};
+use crate::{
+    event::{LcdEvent, Obd2Event, LCD_EVENTS},
+    tasks::buttons::{Action, Button},
+};
 
 pub static EVENTS: Channel<CriticalSectionRawMutex, KiaEvent, 32> = Channel::new();
 
@@ -61,6 +64,18 @@ impl KiaState {
                 LCD_EVENTS.send(LcdEvent::Obd2Event(obd2_event.clone())).await;
                 Handled
             }
+            KiaEvent::Button(action) => {
+                match action {
+                    Action::Pressed(Button::B7) => {
+                        LCD_EVENTS.send(LcdEvent::Main).await;
+                    }
+                    Action::Pressed(Button::B6) => {
+                        LCD_EVENTS.send(LcdEvent::Debug).await;
+                    }
+                    _ => {}
+                }
+                Handled
+            }
 
             _ => Handled,
         }
@@ -70,11 +85,11 @@ impl KiaState {
 impl KiaState {
     // The `on_transition` callback that will be called after every transition.
     fn on_transition(&mut self, source: &State, target: &State) {
-        info!("transitioned from `{}` to `{}`", source, target);
+        info!("kia transitioned from `{}` to `{}`", source, target);
     }
 
     fn on_dispatch(&mut self, state: StateOrSuperstate<Self>, event: &KiaEvent) {
-        info!("dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
+        info!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
     }
 }
 

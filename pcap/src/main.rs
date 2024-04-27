@@ -1,25 +1,31 @@
+#[macro_use]
+extern crate log;
+
 use std::fs::File;
 
+use can::frame::Frame as CanFrame;
 use pcap_parser::{traits::PcapReaderIterator, *};
 
 fn main() {
+    std::env::set_var("RUST_LOG", "debug");
+    env_logger::init();
+    info!("init");
+
     let file = File::open("bms.pcap").unwrap();
     let mut num_blocks = 0;
 
     let mut reader = LegacyPcapReader::new(65536, file).expect("LegacyPcapReader");
+    let mut can_frames: Vec<CanFrame> = Vec::new();
     loop {
         match reader.next() {
             Ok((offset, block)) => {
-                println!("got new block");
                 num_blocks += 1;
                 match block {
                     PcapBlockOwned::LegacyHeader(_hdr) => {
-                        // save hdr.network (linktype)
-                        println!("hdr.network: {:?}", _hdr);
+                        //info!("hdr.network: {:?}", _hdr);
                     }
-                    PcapBlockOwned::Legacy(_b) => {
-                        // use linktype to parse b.data()
-                        println!("b.data(): {:?}", _b);
+                    PcapBlockOwned::Legacy(b) => {
+                        info!("b.data(): {:x?}", b.data);
                     }
                     PcapBlockOwned::NG(_) => unreachable!(),
                 }
@@ -32,6 +38,5 @@ fn main() {
             Err(e) => panic!("error while reading: {:?}", e),
         }
     }
-    println!("num_blocks: {}", num_blocks);
-    println!("num_blocks: {}", num_blocks);
+    info!("num_blocks: {}", num_blocks);
 }
