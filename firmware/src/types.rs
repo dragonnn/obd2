@@ -55,3 +55,6 @@ pub type Cap1188 = crate::cap1188::Cap1188<
 pub type UsbSerial = esp_hal::usb_serial_jtag::UsbSerialJtag<'static, esp_hal::Async>;
 
 pub type IngGpio = GpioPin<Input<PullDown>, 5>;
+
+pub type Display1 = Sh1122<19>;
+pub type Display2 = Sh1122<18>;

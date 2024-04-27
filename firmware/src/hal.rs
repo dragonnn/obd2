@@ -44,8 +44,8 @@ defmt::timestamp!("{=u32:us}", {
 });
 
 pub struct Hal {
-    pub display1: types::Sh1122<18>,
-    pub display2: types::Sh1122<19>,
+    pub display1: types::Display1,
+    pub display2: types::Display2,
     pub buttons: types::Cap1188,
     pub obd2: obd2::Obd2,
     pub usb_serial: types::UsbSerial,
@@ -142,10 +142,10 @@ pub fn init() -> Hal {
     let interface1 = SPIInterface::new(display1_spi, dc);
     let interface2 = SPIInterface::new(display2_spi, dc2);
 
-    let display1 = AsyncDisplay::new(interface1, PixelCoord(256, 64), PixelCoord(0, 0), DisplayRotation::Rotate0)
+    let display2 = AsyncDisplay::new(interface1, PixelCoord(256, 64), PixelCoord(0, 0), DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
 
-    let display2 = AsyncDisplay::new(interface2, PixelCoord(256, 64), PixelCoord(0, 0), DisplayRotation::Rotate180)
+    let display1 = AsyncDisplay::new(interface2, PixelCoord(256, 64), PixelCoord(0, 0), DisplayRotation::Rotate180)
         .into_buffered_graphics_mode();
 
     let cap1188 = Cap1188::new(cap1188_spi, int_cap1188);

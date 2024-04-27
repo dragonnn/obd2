@@ -18,10 +18,10 @@ pub struct BmsPid {
     pub aux_dc_voltage: f64,
 }
 
-const fn toruge_pro_index_to_right_index(index: usize) -> usize {
+/*const fn toruge_pro_index_to_right_index(index: usize) -> usize {
     let packets = index / 6;
     index + packets
-}
+}*/
 
 impl Pid for BmsPid {
     fn request() -> CanFrame {

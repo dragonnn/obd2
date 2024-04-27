@@ -10,8 +10,14 @@ use crate::{
     debug::DEBUG_STRING_LEN,
     display::widgets::{Battery, BatteryOrientation, DebugScroll},
     event::Obd2Event,
-    types::Sh1122,
+    types::{Display1, Display2, Sh1122},
 };
+
+mod debug;
+mod main;
+
+use debug::LcdDebugState;
+use main::LcdMainState;
 
 pub static EVENTS: Channel<CriticalSectionRawMutex, LcdEvent, 16> = Channel::new();
 
@@ -22,56 +28,26 @@ pub enum LcdEvent {
     PowerOff,
     Main,
     Debug,
+    Menu,
     DebugLine(String<DEBUG_STRING_LEN>),
     Obd2Event(Obd2Event),
 }
 
 #[derive()]
 pub struct LcdState {
-    display1: Sh1122<18>,
-    display2: Sh1122<19>,
+    display1: Display1,
+    display2: Display2,
     display_on: bool,
     is_debug: bool,
 }
 
 impl LcdState {
-    pub fn new(display1: Sh1122<18>, display2: Sh1122<19>) -> Self {
+    pub fn new(display1: Display1, display2: Display2) -> Self {
         Self { display1, display2, display_on: false, is_debug: false }
     }
 
     pub fn is_debug(&self) -> bool {
         self.is_debug
-    }
-}
-
-#[derive(Default)]
-pub struct LcdMainState {
-    hv_battery: Battery,
-}
-
-impl LcdMainState {
-    pub fn new() -> Self {
-        Self {
-            hv_battery: Battery::new(
-                Point::new(9, 1),
-                Size::new(128, 62),
-                BatteryOrientation::HorizontalRight,
-                Some(Size::new(8, 32)),
-                4,
-                true,
-            ),
-        }
-    }
-}
-
-#[derive(Default)]
-pub struct LcdDebugState {
-    debug: DebugScroll,
-}
-
-impl LcdDebugState {
-    pub fn new() -> Self {
-        Self { debug: DebugScroll::new() }
     }
 }
 
@@ -144,9 +120,7 @@ impl LcdState {
         self.display1.clear();
         self.display2.clear();
         warn!("enter_main");
-        unwrap!(main.hv_battery.draw(&mut self.display2));
-        unwrap!(self.display1.flush().await);
-        unwrap!(self.display2.flush().await);
+        main.draw(&mut self.display1, &mut self.display2).await;
     }
 
     #[state(entry_action = "enter_main", superstate = "state_dispatch")]
@@ -156,18 +130,12 @@ impl LcdState {
         info!("lcd main got spi block");
         let ret = match event {
             LcdEvent::Obd2Event(Obd2Event::BmsPid(bms_pid)) => {
-                main.hv_battery.update_voltage(bms_pid.hv_dc_voltage);
-                main.hv_battery.update_min_temp(bms_pid.hv_min_temp);
-                main.hv_battery.update_max_temp(bms_pid.hv_max_temp);
-                main.hv_battery.update_percentage(bms_pid.hv_soc);
-                unwrap!(main.hv_battery.draw(&mut self.display2));
+                main.update_bms_pid(bms_pid);
+                main.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }
             _ => Super,
         };
-
-        unwrap!(self.display1.flush().await);
-        unwrap!(self.display2.flush().await);
 
         ret
     }
@@ -177,10 +145,7 @@ impl LcdState {
         let lock = crate::locks::SPI_BUS.lock().await;
         warn!("enter_debug");
         self.display_on().await;
-        debug.debug.add_line("debug init");
-        unwrap!(debug.debug.draw(&mut self.display2, &mut self.display1));
-        unwrap!(self.display1.flush().await);
-        unwrap!(self.display2.flush().await);
+        debug.draw(&mut self.display1, &mut self.display2).await;
     }
 
     #[state(entry_action = "enter_debug", superstate = "state_dispatch")]
@@ -193,10 +158,8 @@ impl LcdState {
         let lock = crate::locks::SPI_BUS.lock().await;
         match event {
             LcdEvent::DebugLine(line) => {
-                debug.debug.add_line(line);
-                unwrap!(debug.debug.draw(&mut self.display2, &mut self.display1));
-                unwrap!(self.display1.flush().await);
-                unwrap!(self.display2.flush().await);
+                debug.add_line(line);
+                debug.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }
             _ => Super,
@@ -221,7 +184,7 @@ impl LcdState {
 }
 
 #[embassy_executor::task]
-pub async fn run(mut display1: Sh1122<18>, mut display2: Sh1122<19>) {
+pub async fn run(mut display1: Display1, mut display2: Display2) {
     unwrap!(display1.init(None).await);
     unwrap!(display2.init(None).await);
     let mut context = LcdContext {};
