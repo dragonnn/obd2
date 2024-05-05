@@ -1,4 +1,4 @@
-23229408548513074
+23234549536307747
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -2526,6 +2526,13 @@ speaker CUI
 0
 2
 2
+CAP1188
+QFN50P400X400X90-25N
+
+
+0
+25
+25
 Calibration_Scale
 Gauge_10mm_Type1_CopperTop
 Gauge, Massstab, 10mm, CopperTop, Type 1,
@@ -87485,6 +87492,13 @@ rotary encoder
 0
 7
 6
+SH1122
+SH1122
+
+
+0
+7
+7
 Sensor
 ASAIR_AM2302_P2.54mm_Lead2.75mm_TabDown
 Temperature and humidity module, http://akizukidenshi.com/download/ds/aosong/AM2302.pdf
@@ -89137,6 +89151,13 @@ Logo WEEE
 0
 0
 0
+TJA1050
+SOT96-1
+<li><b>SOT96-1</b><hr><ul><li>SO8: plastic small outline package; 8 leads; body width 3.9 mm<li><u>JEDEC</u>: MS-012<li><u>IEC</u>: 076E03</ul>
+
+0
+8
+8
 TerminalBlock
 TerminalBlock_Altech_AK300-2_P5.00mm
 Altech AK300 terminal block, pitch 5.0mm, 45 degree angled, see http://www.mouser.com/ds/2/16/PCBMETRC-24178.pdf
