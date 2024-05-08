@@ -68,4 +68,15 @@ End Quote.
 
 FYI
 
-D24V10F3 jako przetwornica do zasilania
+D24V10F3 power step-down
+
+Incoming pins:
+1. +12V
+2. GND
+3. OBD CAN H
+4. OBD CAN L
+5. ING SIGNAL
+6. CAN LISTEN H
+7. CAN LISTEN L
+
+crystal for can https://www.tme.eu/pl/details/3225-16m-sr/rezonatory-kwarcowe-smd/sr-passives/
