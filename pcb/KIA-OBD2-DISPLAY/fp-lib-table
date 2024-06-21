@@ -5,4 +5,5 @@
   (lib (name "CAP1188")(type "KiCad")(uri "${KIPRJMOD}/CAP1188")(options "")(descr ""))
   (lib (name "D24V10F3")(type "KiCad")(uri "${KIPRJMOD}/D24V10F3.pretty")(options "")(descr ""))
   (lib (name "LED_0602")(type "KiCad")(uri "${KIPRJMOD}/LED_0602")(options "")(descr ""))
+  (lib (name "MEM2085")(type "KiCad")(uri "${KIPRJMOD}/MEM2085")(options "")(descr ""))
 )
