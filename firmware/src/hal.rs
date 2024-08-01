@@ -6,28 +6,25 @@ use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer};
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use esp_backtrace as _;
-//use esp_hal::spi::master::SpiBusController;
 use esp_hal::{
     clock::ClockControl,
     delay::Delay,
     dma::{Dma, DmaDescriptor, DmaPriority},
-    embassy, gpio,
+    dma_descriptors, gpio,
+    gpio::{Input, Io, Output, Pull},
     interrupt::Priority,
     peripherals::Peripherals,
     prelude::*,
     riscv::singleton,
     rtc_cntl::{sleep::WakeupLevel, Rtc},
     spi::{
-        master::{dma::SpiDma, Spi},
+        master::{dma::SpiDma, prelude::_esp_hal_spi_master_dma_WithDmaSpi2, Spi},
         FullDuplexMode, SpiMode,
     },
-    timer::TimerGroup,
+    system::SystemControl,
+    timer::{timg::TimerGroup, ErasedTimer, OneShotTimer},
     usb_serial_jtag::UsbSerialJtag,
     Async, Blocking,
-};
-use esp_hal::{
-    gpio::{Output, IO},
-    spi::master::prelude::_esp_hal_spi_master_dma_WithDmaSpi2,
 };
 use sh1122::{
     async_display::buffered_graphics::AsyncBufferedGraphicsMode, display::DisplayRotation, AsyncDisplay, PixelCoord,
@@ -37,11 +34,11 @@ use static_cell::{make_static, StaticCell};
 use crate::{cap1188::Cap1188, mcp2515::Mcp2515, obd2, power, types};
 
 // WARNING may overflow and wrap-around in long lived apps
-defmt::timestamp!("{=u32:us}", {
+/*defmt::timestamp!("{=u32:us}", {
     // NOTE(interrupt-safe) single instruction volatile read operation
 
     (esp_hal::systimer::SystemTimer::now() / (esp_hal::systimer::SystemTimer::TICKS_PER_SECOND / 1_000_000)) as u32
-});
+});*/
 
 pub struct Hal {
     pub display1: types::Display1,
@@ -52,15 +49,25 @@ pub struct Hal {
     pub power: power::Power,
 }
 
+macro_rules! mk_static {
+    ($t:ty,$val:expr) => {{
+        static STATIC_CELL: static_cell::StaticCell<$t> = static_cell::StaticCell::new();
+        #[deny(unused_attributes)]
+        let x = STATIC_CELL.uninit().write(($val));
+        x
+    }};
+}
+
 pub fn init() -> Hal {
     let peripherals = Peripherals::take();
-    let system = peripherals.SYSTEM.split();
+    let system = SystemControl::new(peripherals.SYSTEM);
     let clocks = ClockControl::max(system.clock_control).freeze();
 
-    let timg0 = TimerGroup::new_async(peripherals.TIMG0, &clocks);
-    //embassy::init(&clocks, timg0);
-
-    embassy::init(&clocks, esp_hal::systimer::SystemTimer::new_async(peripherals.SYSTIMER));
+    let timg0 = TimerGroup::new(peripherals.TIMG0, &clocks, None);
+    let timer0: ErasedTimer = timg0.timer0.into();
+    let timers = [OneShotTimer::new(timer0)];
+    let timers = mk_static!([OneShotTimer<ErasedTimer>; 1], timers);
+    esp_hal_embassy::init(&clocks, timers);
 
     /*esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::DMA_IN_CH0, esp_hal::interrupt::Priority::Priority1)
         .unwrap();
@@ -69,7 +76,7 @@ pub fn init() -> Hal {
 
     esp_hal::interrupt::enable(esp_hal::peripherals::Interrupt::GPIO, esp_hal::interrupt::Priority::Priority1).unwrap();*/
 
-    let io = IO::new_with_priority(peripherals.GPIO, peripherals.IO_MUX, Priority::Priority1);
+    let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
     let mut rtc = Rtc::new(peripherals.LPWR, None);
 
     let dma = Dma::new(peripherals.DMA);
@@ -79,16 +86,15 @@ pub fn init() -> Hal {
     let mosi = io.pins.gpio7;
     let miso = io.pins.gpio2;
 
-    let tx_descriptors = make_static!([DmaDescriptor::EMPTY; 8]);
-    let rx_descriptors = make_static!([DmaDescriptor::EMPTY; 8]);
+    let (descriptors, rx_descriptors) = dma_descriptors!(32000);
 
     let spi = Spi::new(peripherals.SPI2, 6u32.MHz(), SpiMode::Mode0, &clocks)
         .with_sck(sclk)
         .with_mosi(mosi)
         .with_miso(miso)
-        .with_dma(dma_channel.configure_for_async(false, tx_descriptors, rx_descriptors, DmaPriority::Priority0));
+        .with_dma(dma_channel.configure_for_async(false, DmaPriority::Priority0), descriptors, rx_descriptors);
 
-    let mut dc = io.pins.gpio23.into_push_pull_output();
+    /*let mut dc = io.pins.gpio23.into_push_pull_output();
     let mut cs_display1 = io.pins.gpio18.into_push_pull_output();
     let mut cs_display2 = io.pins.gpio19.into_push_pull_output();
     let mut cs_cap1188 = io.pins.gpio20.into_push_pull_output();
@@ -96,7 +102,17 @@ pub fn init() -> Hal {
     let int_mcp2515 = io.pins.gpio4.into_pull_down_input();
     let mut rs = io.pins.gpio22.into_push_pull_output();
     let mut ing = io.pins.gpio5.into_pull_down_input();
-    let mut int_cap1188 = io.pins.gpio3.into_pull_down_input();
+    let mut int_cap1188 = io.pins.gpio3.into_pull_down_input();*/
+
+    let mut dc = Output::new(io.pins.gpio23, false.into());
+    let mut cs_display1 = Output::new(io.pins.gpio18, false.into());
+    let mut cs_display2 = Output::new(io.pins.gpio19, false.into());
+    let mut cs_cap1188 = Output::new(io.pins.gpio20, false.into());
+    let mut cs_mcp2515 = Output::new(io.pins.gpio30, false.into());
+    let int_mcp2515 = Input::new(io.pins.gpio4, Pull::Down);
+    let mut rs = Output::new(io.pins.gpio22, false.into());
+    let mut ing = Input::new(io.pins.gpio5, Pull::Down);
+    let int_cap1188 = Input::new(io.pins.gpio3, Pull::Down);
 
     let mut delay = Delay::new(&clocks);
     dc.set_high();

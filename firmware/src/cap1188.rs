@@ -45,7 +45,7 @@ const CAP1188_LEDPOL: u8 = 0x73; // LED Polarity. Controls the output polarity o
 impl<SPI, INT> Cap1188<SPI, INT>
 where
     SPI: SpiDevice<u8>,
-    INT: InputPin + embedded_hal_async::digital::Wait,
+    INT: embedded_hal_async::digital::Wait,
 {
     pub fn new(spi: SPI, int: INT) -> Self {
         Self { spi, int }

@@ -11969,7 +11969,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "10k"
 			(at 518.16 233.6799 0)
 			(effects
 				(font
@@ -12107,7 +12107,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "65R"
 			(at 580.39 297.18 90)
 			(effects
 				(font
@@ -13392,7 +13392,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "1k"
 			(at 491.49 478.79 90)
 			(effects
 				(font
@@ -13530,7 +13530,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "65R"
 			(at 580.39 281.94 90)
 			(effects
 				(font
@@ -13663,7 +13663,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "4.7k"
 			(at 491.49 466.09 90)
 			(effects
 				(font
@@ -14149,7 +14149,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "65R"
 			(at 580.39 293.37 90)
 			(effects
 				(font
@@ -15422,7 +15422,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "10k"
 			(at 358.14 237.4899 0)
 			(effects
 				(font
@@ -15899,7 +15899,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "220R"
 			(at 500.38 238.7599 0)
 			(effects
 				(font
@@ -16098,7 +16098,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "65R"
 			(at 452.12 285.75 90)
 			(effects
 				(font
@@ -16166,7 +16166,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "65R"
 			(at 580.39 289.56 90)
 			(effects
 				(font
@@ -16234,7 +16234,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "10k"
 			(at 452.12 283.21 90)
 			(effects
 				(font
@@ -16641,7 +16641,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "65R"
 			(at 580.39 278.13 90)
 			(effects
 				(font
@@ -16925,7 +16925,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "65R"
 			(at 580.39 274.32 90)
 			(effects
 				(font
@@ -18608,7 +18608,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "65R"
 			(at 580.39 285.75 90)
 			(effects
 				(font
@@ -19278,7 +19278,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "65R"
 			(at 580.39 270.51 90)
 			(effects
 				(font

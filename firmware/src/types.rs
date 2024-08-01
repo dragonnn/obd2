@@ -12,9 +12,9 @@ pub type Mcp2515 = crate::mcp2515::Mcp2515<
             FullDuplexMode,
             esp_hal::Async,
         >,
-        GpioPin<Output<PushPull>, 16>,
+        Output<'static, GpioPin<30>>,
     >,
-    GpioPin<Input<PullDown>, 4>,
+    Input<'static, GpioPin<4>>,
 >;
 
 pub type Sh1122<const CS: u8> = sh1122::AsyncDisplay<
@@ -29,9 +29,9 @@ pub type Sh1122<const CS: u8> = sh1122::AsyncDisplay<
                 FullDuplexMode,
                 esp_hal::Async,
             >,
-            GpioPin<Output<PushPull>, CS>,
+            Output<'static, GpioPin<CS>>,
         >,
-        GpioPin<Output<PushPull>, 23>,
+        Output<'static, GpioPin<23>>,
     >,
     sh1122::async_display::buffered_graphics::AsyncBufferedGraphicsMode,
 >;
@@ -47,14 +47,14 @@ pub type Cap1188 = crate::cap1188::Cap1188<
             FullDuplexMode,
             esp_hal::Async,
         >,
-        GpioPin<Output<PushPull>, 20>,
+        Output<'static, GpioPin<20>>,
     >,
-    GpioPin<Input<PullDown>, 3>,
+    Input<'static, GpioPin<3>>,
 >;
 
 pub type UsbSerial = esp_hal::usb_serial_jtag::UsbSerialJtag<'static, esp_hal::Async>;
 
-pub type IngGpio = GpioPin<Input<PullDown>, 5>;
+pub type IngGpio = Input<'static, GpioPin<5>>;
 
 pub type Display1 = Sh1122<19>;
 pub type Display2 = Sh1122<18>;
