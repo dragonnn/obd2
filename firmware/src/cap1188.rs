@@ -56,13 +56,13 @@ where
 
         self.read_register(CAP1188_PRODID, &mut prod_id).await?;
         if prod_id[0] != 0x50 {
-            error!("cap1188.rs: Invalid Product ID");
+            error!("cap1188.rs: Invalid Product ID {}", prod_id[0]);
         }
         if prod_id[1] != 0x5d {
-            error!("cap1188.rs: Invalid Manufacturer");
+            error!("cap1188.rs: Invalid Manufacturer {}", prod_id[1]);
         }
         if prod_id[2] != 0x83 {
-            error!("cap1188.rs: Revision");
+            error!("cap1188.rs: Revision {}", prod_id[2]);
         }
 
         self.write_register(CAP1188_MTBLK, &[0]).await?;

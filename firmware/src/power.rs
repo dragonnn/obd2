@@ -13,12 +13,12 @@ use crate::types::IngGpio;
 pub struct Power {
     ing_gpio: IngGpio,
     delay: Delay,
-    rtc: Rtc<'static>,
+    //rtc: Rtc<'static>,
 }
 
 impl Power {
     pub fn new(ing_gpio: IngGpio, delay: Delay, rtc: Rtc<'static>) -> Self {
-        Self { ing_gpio, delay, rtc }
+        Self { ing_gpio, delay /*rtc*/ }
     }
 
     pub fn deep_sleep(&mut self, duration: Duration) {

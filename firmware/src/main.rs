@@ -31,7 +31,7 @@ mod types;
 pub(crate) static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 fn init_heap() {
-    const HEAP_SIZE: usize = 32 * 1024;
+    const HEAP_SIZE: usize = 8 * 1024;
     static mut HEAP: MaybeUninit<[u8; HEAP_SIZE]> = MaybeUninit::uninit();
 
     unsafe {
@@ -41,9 +41,10 @@ fn init_heap() {
 
 #[main]
 async fn main(spawner: Spawner) {
+    info!("heap init");
     init_heap();
-
-    let hal = hal::init();
+    info!("hal init");
+    let hal = hal::init().await;
     //spawner.spawn(tasks::usb::run(hal.usb_serial)).ok();
 
     info!("init");
@@ -53,10 +54,11 @@ async fn main(spawner: Spawner) {
     //spawner.spawn(display::task::run4(hal.display1, hal.display2)).ok();
     //spawner.spawn(obd2::run(hal.obd2)).ok();
 
+    spawner.spawn(tasks::led::run(hal.led)).ok();
     spawner.spawn(tasks::buttons::run(hal.buttons)).ok();
     spawner.spawn(tasks::lcd::run(hal.display1, hal.display2)).ok();
-    spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
-    spawner.spawn(tasks::power::run(hal.power)).ok();
+    //spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
+    //spawner.spawn(tasks::power::run(hal.power)).ok();
 
     tasks::state::run().await;
 }

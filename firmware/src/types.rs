@@ -12,7 +12,7 @@ pub type Mcp2515 = crate::mcp2515::Mcp2515<
             FullDuplexMode,
             esp_hal::Async,
         >,
-        Output<'static, GpioPin<30>>,
+        Output<'static, GpioPin<17>>,
     >,
     Input<'static, GpioPin<4>>,
 >;
@@ -58,3 +58,5 @@ pub type IngGpio = Input<'static, GpioPin<5>>;
 
 pub type Display1 = Sh1122<19>;
 pub type Display2 = Sh1122<18>;
+
+pub type Led = Output<'static, GpioPin<0>>;
