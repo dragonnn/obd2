@@ -190,7 +190,6 @@ pub async fn run(mut display1: Display1, mut display2: Display2) {
     let mut context = LcdContext {};
     let mut state =
         LcdState::new(display1, display2).uninitialized_state_machine().init_with_context(&mut context).await;
-
     loop {
         match state.state() {
             State::Debug { debug: _ } => match select(EVENTS.receive(), crate::debug::receive()).await {

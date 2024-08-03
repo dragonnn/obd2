@@ -138,6 +138,12 @@ pub async fn init() -> Hal {
     delay.delay_micros(1u32);
     rs.set_high();
     delay.delay_micros(1u32);
+    /*for _ in 0..3000 {
+        dc.set_low();
+        delay.delay_micros(100u32);
+        dc.set_high();
+        delay.delay_micros(100u32);
+    }*/
 
     let dc2 = unsafe { core::ptr::read(&dc) };
 

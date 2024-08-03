@@ -51,25 +51,28 @@ where
         Self { spi, int }
     }
 
-    pub async fn init(&mut self) -> Result<(), SPI::Error> {
+    pub async fn init(&mut self) -> Result<bool, SPI::Error> {
         let mut prod_id = [0; 3];
 
         self.read_register(CAP1188_PRODID, &mut prod_id).await?;
         if prod_id[0] != 0x50 {
             error!("cap1188.rs: Invalid Product ID {}", prod_id[0]);
+            return Ok(false);
         }
         if prod_id[1] != 0x5d {
             error!("cap1188.rs: Invalid Manufacturer {}", prod_id[1]);
+            return Ok(false);
         }
         if prod_id[2] != 0x83 {
             error!("cap1188.rs: Revision {}", prod_id[2]);
+            return Ok(false);
         }
 
         self.write_register(CAP1188_MTBLK, &[0]).await?;
         self.write_register(CAP1188_LEDLINK, &[0xFF]).await?;
         self.write_register(CAP1188_STANDBYCFG, &[0x30]).await?;
 
-        Ok(())
+        Ok(true)
     }
 
     pub async fn touched(&mut self) -> Result<Cap1188Inputs, SPI::Error> {

@@ -48,8 +48,9 @@ async fn main(spawner: Spawner) {
     //spawner.spawn(tasks::usb::run(hal.usb_serial)).ok();
 
     info!("init");
-    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
-    info!("init");
+    //embassy_time::Timer::after(embassy_time::Duration::from_secs(5)).await;
+    info!("init run");
+    //embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
 
     //spawner.spawn(display::task::run4(hal.display1, hal.display2)).ok();
     //spawner.spawn(obd2::run(hal.obd2)).ok();
@@ -57,8 +58,8 @@ async fn main(spawner: Spawner) {
     spawner.spawn(tasks::led::run(hal.led)).ok();
     spawner.spawn(tasks::buttons::run(hal.buttons)).ok();
     spawner.spawn(tasks::lcd::run(hal.display1, hal.display2)).ok();
-    //spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
-    //spawner.spawn(tasks::power::run(hal.power)).ok();
+    spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
+    spawner.spawn(tasks::power::run(hal.power)).ok();
 
     tasks::state::run().await;
 }
