@@ -24,43 +24,7 @@ pub enum Action {
 
 #[embassy_executor::task]
 pub async fn run(mut cap1188: Cap1188) {
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    /*Timer::after(embassy_time::Duration::from_secs(5)).await;
-    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B0))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Released(Button::B0))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B1))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Released(Button::B1))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B2))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Released(Button::B2))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B3))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Released(Button::B3))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B4))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Released(Button::B4))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B5))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Released(Button::B5))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B6))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Released(Button::B6))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    /*EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B7))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;
-    EVENTS.send(KiaEvent::Button(Action::Released(Button::B7))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;*/*/
-
     cap1188.reset().await;
-
     loop {
         match cap1188.init().await {
             Ok(true) => {

@@ -22,6 +22,7 @@ macro_rules! internal_debug {
         use heapless::String;
         use core::fmt::Write;
         let mut string = String::new();
+        core::write!(&mut string, "{:.1}: ", embassy_time::Instant::from_ticks(0).elapsed().as_millis() as f64 / 1000.0).ok();
         core::write!(&mut string, $($arg)*).ok();
 
         crate::debug::debug(string);
