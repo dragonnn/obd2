@@ -9,7 +9,7 @@ use crate::{event::*, power::Power};
 
 #[embassy_executor::task]
 pub async fn run(mut power: Power) {
-    //embassy_time::Timer::after(embassy_time::Duration::from_millis(100)).await;
+    embassy_time::Timer::after(embassy_time::Duration::from_millis(1000)).await;
 
     if power.is_ignition_on() {
         error!("ignition is on");

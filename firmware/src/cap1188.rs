@@ -100,7 +100,7 @@ where
         self.spi.transaction(&mut [Operation::Write(&init_buf)]).await
     }
 
-    async fn reset(&mut self) -> Result<(), SPI::Error> {
+    pub async fn reset(&mut self) -> Result<(), SPI::Error> {
         let mut buffer = [0; 2];
 
         buffer[0] = 0x7a;

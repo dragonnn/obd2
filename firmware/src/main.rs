@@ -44,16 +44,11 @@ async fn main(spawner: Spawner) {
     info!("heap init");
     init_heap();
     info!("hal init");
-    let hal = hal::init().await;
-    //spawner.spawn(tasks::usb::run(hal.usb_serial)).ok();
+    let mut hal = hal::init();
+    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
 
     info!("init");
-    //embassy_time::Timer::after(embassy_time::Duration::from_secs(5)).await;
-    info!("init run");
-    //embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
-
-    //spawner.spawn(display::task::run4(hal.display1, hal.display2)).ok();
-    //spawner.spawn(obd2::run(hal.obd2)).ok();
+    hal.led.set_low();
 
     spawner.spawn(tasks::led::run(hal.led)).ok();
     spawner.spawn(tasks::buttons::run(hal.buttons)).ok();

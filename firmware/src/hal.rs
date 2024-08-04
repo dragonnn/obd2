@@ -59,10 +59,12 @@ macro_rules! mk_static {
     }};
 }
 
-pub async fn init() -> Hal {
+pub fn init() -> Hal {
     let peripherals = Peripherals::take();
     let system = SystemControl::new(peripherals.SYSTEM);
     let clocks = ClockControl::max(system.clock_control).freeze();
+    let delay = Delay::new(&clocks);
+    delay.delay_micros(100u32);
 
     let timg0 = TimerGroup::new(peripherals.TIMG0, &clocks, None);
     let timer0: ErasedTimer = timg0.timer0.into();
@@ -120,9 +122,7 @@ pub async fn init() -> Hal {
     let mut led = Output::new(io.pins.gpio0, false.into());
 
     info!("delay init");
-    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
 
-    let mut delay = Delay::new(&clocks);
     dc.set_high();
     rs.set_low();
     cs_display1.set_high();

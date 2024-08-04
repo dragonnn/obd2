@@ -15,8 +15,11 @@ pub enum Obd2Event {
 
 #[embassy_executor::task]
 pub async fn run(mut obd2: Obd2) {
+    info!("obd2 task started");
     obd2.init().await;
+    info!("obd2 init done");
     loop {
+        info!("requesting bms pid");
         match with_timeout(Duration::from_millis(2500), obd2.request_pid::<pid::BmsPid>()).await {
             Ok(Ok(bms_pid)) => {
                 info!("bms pid: {:?}", bms_pid);
