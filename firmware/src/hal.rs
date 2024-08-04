@@ -109,13 +109,13 @@ pub async fn init() -> Hal {
     info!("cs mcp init");
     let mut cs_mcp2515 = Output::new(io.pins.gpio17, false.into());
     info!("int mcp init");
-    let int_mcp2515 = Input::new(io.pins.gpio4, Pull::Down);
+    let int_mcp2515 = Input::new(io.pins.gpio4, Pull::Up);
     info!("int rs init");
     let mut rs = Output::new(io.pins.gpio22, false.into());
     info!("int ing init");
     let mut ing = Input::new(io.pins.gpio5, Pull::Down);
     info!("int cap init");
-    let int_cap1188 = Input::new(io.pins.gpio3, Pull::Down);
+    let int_cap1188 = Input::new(io.pins.gpio3, Pull::Up);
 
     let mut led = Output::new(io.pins.gpio0, false.into());
 
@@ -168,10 +168,10 @@ pub async fn init() -> Hal {
     let interface1 = SPIInterface::new(display1_spi, dc);
     let interface2 = SPIInterface::new(display2_spi, dc2);
 
-    let display2 = AsyncDisplay::new(interface1, PixelCoord(256, 64), PixelCoord(0, 0), DisplayRotation::Rotate0)
+    let display1 = AsyncDisplay::new(interface1, PixelCoord(256, 64), PixelCoord(0, 0), DisplayRotation::Rotate180)
         .into_buffered_graphics_mode();
 
-    let display1 = AsyncDisplay::new(interface2, PixelCoord(256, 64), PixelCoord(0, 0), DisplayRotation::Rotate180)
+    let display2 = AsyncDisplay::new(interface2, PixelCoord(256, 64), PixelCoord(0, 0), DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
 
     let cap1188 = Cap1188::new(cap1188_spi, int_cap1188);

@@ -56,7 +56,7 @@ pub type UsbSerial = esp_hal::usb_serial_jtag::UsbSerialJtag<'static, esp_hal::A
 
 pub type IngGpio = Input<'static, GpioPin<5>>;
 
-pub type Display1 = Sh1122<19>;
-pub type Display2 = Sh1122<18>;
+pub type Display2 = Sh1122<19>;
+pub type Display1 = Sh1122<18>;
 
 pub type Led = Output<'static, GpioPin<0>>;

@@ -24,7 +24,7 @@ pub enum Action {
 
 #[embassy_executor::task]
 pub async fn run(mut cap1188: Cap1188) {
-    Timer::after(embassy_time::Duration::from_secs(5)).await;
+    /*Timer::after(embassy_time::Duration::from_secs(5)).await;
     EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B0))).await;
     Timer::after(embassy_time::Duration::from_secs(1)).await;
     EVENTS.send(KiaEvent::Button(Action::Released(Button::B0))).await;
@@ -56,7 +56,7 @@ pub async fn run(mut cap1188: Cap1188) {
     /*EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B7))).await;
     Timer::after(embassy_time::Duration::from_secs(1)).await;
     EVENTS.send(KiaEvent::Button(Action::Released(Button::B7))).await;
-    Timer::after(embassy_time::Duration::from_secs(1)).await;*/
+    Timer::after(embassy_time::Duration::from_secs(1)).await;*/*/
 
     loop {
         match cap1188.init().await {
@@ -77,8 +77,10 @@ pub async fn run(mut cap1188: Cap1188) {
     info!("cap1188 task started");
     let mut old_touched = unwrap!(cap1188.touched().await);
     let mut old_touched_bytes = old_touched.into_bytes()[0];
+    let mut last_touched = embassy_time::Instant::now();
     loop {
         cap1188.wait_for_touched().await;
+        info!("touched");
         let new_touched = unwrap!(cap1188.touched().await);
         let new_touched_bytes = new_touched.into_bytes()[0];
         if new_touched_bytes != old_touched_bytes {
@@ -145,6 +147,12 @@ pub async fn run(mut cap1188: Cap1188) {
             }
             old_touched = new_touched;
             old_touched_bytes = new_touched_bytes;
+
+            if last_touched.elapsed() < embassy_time::Duration::from_millis(100) {
+                info!("touched: {:?}", new_touched_bytes);
+                embassy_time::Timer::after(embassy_time::Duration::from_millis(100)).await;
+            }
+            last_touched = embassy_time::Instant::now();
         }
     }
 }
