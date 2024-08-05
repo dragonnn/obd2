@@ -1,8 +1,10 @@
 use defmt::{error, info, unwrap, Format};
 use embassy_time::Timer;
 
-use super::state::{KiaEvent, EVENTS};
-use crate::types::Cap1188;
+use crate::{
+    event::{KiaEvent, LcdEvent, KIA_EVENTS, LCD_EVENTS},
+    types::Cap1188,
+};
 
 #[derive(Format, PartialEq, Eq, Clone, Copy)]
 pub enum Button {
@@ -64,73 +66,89 @@ pub async fn run(mut cap1188: Cap1188) {
             if new_touched.b0() != old_touched.b0() {
                 if new_touched.b0() {
                     info!("button b0 pressed");
-                    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B0))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B0))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Pressed(Button::B0))).await;
                 } else {
                     info!("button b0 released");
-                    EVENTS.send(KiaEvent::Button(Action::Released(Button::B0))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Released(Button::B0))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Released(Button::B0))).await;
                 }
             }
             if new_touched.b1() != old_touched.b1() {
                 if new_touched.b1() {
                     info!("button b1 pressed");
-                    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B1))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B1))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Pressed(Button::B1))).await;
                 } else {
                     info!("button b1 released");
-                    EVENTS.send(KiaEvent::Button(Action::Released(Button::B1))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Released(Button::B1))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Released(Button::B1))).await;
                 }
             }
             if new_touched.b2() != old_touched.b2() {
                 if new_touched.b2() {
                     info!("button b2 pressed");
-                    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B2))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B2))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Pressed(Button::B2))).await;
                 } else {
                     info!("button b2 released");
-                    EVENTS.send(KiaEvent::Button(Action::Released(Button::B2))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Released(Button::B2))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Released(Button::B2))).await;
                 }
             }
             if new_touched.b3() != old_touched.b3() {
                 if new_touched.b3() {
                     info!("button b3 pressed");
-                    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B3))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B3))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Pressed(Button::B3))).await;
                 } else {
                     info!("button b3 released");
-                    EVENTS.send(KiaEvent::Button(Action::Released(Button::B3))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Released(Button::B3))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Released(Button::B3))).await;
                 }
             }
             if new_touched.b4() != old_touched.b4() {
                 if new_touched.b4() {
                     info!("button b4 pressed");
-                    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B4))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B4))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Pressed(Button::B4))).await;
                 } else {
                     info!("button b4 released");
-                    EVENTS.send(KiaEvent::Button(Action::Released(Button::B4))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Released(Button::B4))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Released(Button::B4))).await;
                 }
             }
             if new_touched.b5() != old_touched.b5() {
                 if new_touched.b5() {
                     info!("button b5 pressed");
-                    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B5))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B5))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Pressed(Button::B5))).await;
                 } else {
                     info!("button b5 released");
-                    EVENTS.send(KiaEvent::Button(Action::Released(Button::B5))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Released(Button::B5))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Released(Button::B5))).await;
                 }
             }
             if new_touched.b6() != old_touched.b6() {
                 if new_touched.b6() {
                     info!("button b6 pressed");
-                    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B6))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B6))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Pressed(Button::B6))).await;
                 } else {
                     info!("button b6 released");
-                    EVENTS.send(KiaEvent::Button(Action::Released(Button::B6))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Released(Button::B6))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Released(Button::B6))).await;
                 }
             }
             if new_touched.b7() != old_touched.b7() {
                 if new_touched.b7() {
                     info!("button b7 pressed");
-                    EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B7))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Pressed(Button::B7))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Pressed(Button::B7))).await;
                 } else {
                     info!("button b7 released");
-                    EVENTS.send(KiaEvent::Button(Action::Released(Button::B7))).await;
+                    KIA_EVENTS.send(KiaEvent::Button(Action::Released(Button::B7))).await;
+                    LCD_EVENTS.send(LcdEvent::Button(Action::Released(Button::B7))).await;
                 }
             }
         }

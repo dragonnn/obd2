@@ -67,7 +67,7 @@ impl KiaState {
             KiaEvent::Button(action) => {
                 info!("button action: {:?}", action);
                 match action {
-                    Action::Pressed(Button::B4) | Action::Released(Button::B4) => {
+                    /*Action::Pressed(Button::B4) | Action::Released(Button::B4) => {
                         LCD_EVENTS.send(LcdEvent::Main).await;
                     }
                     Action::Pressed(Button::B5) | Action::Released(Button::B5) => {
@@ -75,7 +75,7 @@ impl KiaState {
                     }
                     Action::Pressed(Button::B3) | Action::Released(Button::B3) => {
                         LCD_EVENTS.send(LcdEvent::Menu).await;
-                    }
+                    }*/
                     _ => {
                         warn!("unhandled button action: {:?}", action);
                     }

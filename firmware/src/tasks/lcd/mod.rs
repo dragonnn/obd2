@@ -21,6 +21,8 @@ use debug::LcdDebugState;
 use main::LcdMainState;
 use menu::LcdMenuState;
 
+use super::buttons::Action;
+
 pub static EVENTS: Channel<CriticalSectionRawMutex, LcdEvent, 16> = Channel::new();
 
 pub struct LcdContext {}
@@ -33,6 +35,7 @@ pub enum LcdEvent {
     Menu,
     DebugLine(String<DEBUG_STRING_LEN>),
     Obd2Event(Obd2Event),
+    Button(crate::tasks::buttons::Action),
 }
 
 #[derive()]
@@ -97,7 +100,7 @@ impl LcdState {
         match event {
             LcdEvent::Main => Transition(State::main(LcdMainState::new())),
             LcdEvent::Debug => Transition(State::debug(LcdDebugState::new())),
-            LcdEvent::Menu => Transition(State::menu(LcdMenuState::new())),
+            LcdEvent::Menu | LcdEvent::Button(Action::Pressed(_)) => Transition(State::menu(LcdMenuState::new())),
             LcdEvent::PowerOff => Transition(State::init()),
             _ => Handled,
         }
@@ -174,6 +177,8 @@ impl LcdState {
         let lock = crate::locks::SPI_BUS.lock().await;
         warn!("enter_debug");
         self.display_on().await;
+        self.display1.clear();
+        self.display2.clear();
         menu.draw(&mut self.display1, &mut self.display2).await;
     }
 
@@ -181,6 +186,13 @@ impl LcdState {
     async fn menu(&mut self, context: &mut LcdContext, menu: &mut LcdMenuState, event: &LcdEvent) -> Response<State> {
         let lock = crate::locks::SPI_BUS.lock().await;
         match event {
+            LcdEvent::Button(action) => {
+                if let Some(transition) = menu.handle_button(action) {
+                    return transition;
+                }
+                menu.draw(&mut self.display1, &mut self.display2).await;
+                Handled
+            }
             _ => Super,
         }
     }

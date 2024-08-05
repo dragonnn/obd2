@@ -1,9 +1,15 @@
-use defmt::unwrap;
+use defmt::{info, unwrap};
 use embedded_graphics::{image::Image, pixelcolor::BinaryColor, prelude::*};
 use embedded_iconoir::prelude::*;
+use statig::Response::{self, Transition};
 
+use super::State;
 use crate::{
     display::widgets::DebugScroll,
+    tasks::{
+        buttons::{Action, Button},
+        lcd::{debug::LcdDebugState, main::LcdMainState},
+    },
     types::{Display1, Display2},
 };
 
@@ -15,15 +21,25 @@ impl LcdMenuState {
         Self {}
     }
 
+    pub fn handle_button(&mut self, button: &Action) -> Option<Response<State>> {
+        info!("menu button: {:?}", button);
+        match button {
+            Action::Pressed(Button::B4) => Some(Transition(State::main(LcdMainState::new()))),
+            Action::Pressed(Button::B3) => Some(Transition(State::debug(LcdDebugState::new()))),
+            _ => None,
+        }
+    }
+
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
-        display1.clear();
-        display2.clear();
         let icon = embedded_iconoir::icons::size48px::devices::Computer::new(GrayColor::WHITE);
         let image = Image::new(&icon, Point::zero());
         image.draw(display1).unwrap();
         let icon = embedded_iconoir::icons::size48px::weather::SnowFlake::new(GrayColor::WHITE);
         let image = Image::new(&icon, Point { x: 52, y: 0 });
         image.draw(display1).unwrap();
+        let icon = embedded_iconoir::icons::size48px::development::CodeBrackets::new(GrayColor::WHITE);
+        let image = Image::new(&icon, Point { x: 52 * 4, y: 0 });
+        image.draw(display2).unwrap();
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);
     }
