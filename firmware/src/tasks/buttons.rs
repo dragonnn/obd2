@@ -47,7 +47,11 @@ pub async fn run(mut cap1188: Cap1188) {
     let mut last_touched = embassy_time::Instant::now();
     info!("cap1188 task running");
     loop {
-        cap1188.wait_for_touched().await;
+        if old_touched_bytes > 0 {
+            embassy_time::with_timeout(embassy_time::Duration::from_millis(100), cap1188.wait_for_touched()).await.ok();
+        } else {
+            cap1188.wait_for_touched().await;
+        }
         info!("cap1188 touched");
         let new_touched = unwrap!(cap1188.touched().await);
         let new_touched_bytes = new_touched.into_bytes()[0];

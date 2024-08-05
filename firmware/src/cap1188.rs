@@ -1,4 +1,4 @@
-use defmt::{error, Format};
+use defmt::{error, info, Format};
 use embedded_hal_async::spi::{Operation, SpiDevice};
 use esp_hal::gpio::InputPin;
 use modular_bitfield::prelude::*;
@@ -78,6 +78,7 @@ where
     pub async fn touched(&mut self) -> Result<Cap1188Inputs, SPI::Error> {
         let mut touched = [0; 1];
         self.read_register(CAP1188_SENINPUTSTATUS, &mut touched).await?;
+        info!("touched: {=u8:b}", touched[0]);
 
         if touched[0] != 0 {
             let mut main = [0; 1];
