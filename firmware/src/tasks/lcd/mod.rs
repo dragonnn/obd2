@@ -15,9 +15,11 @@ use crate::{
 
 mod debug;
 mod main;
+mod menu;
 
 use debug::LcdDebugState;
 use main::LcdMainState;
+use menu::LcdMenuState;
 
 pub static EVENTS: Channel<CriticalSectionRawMutex, LcdEvent, 16> = Channel::new();
 
@@ -95,6 +97,7 @@ impl LcdState {
         match event {
             LcdEvent::Main => Transition(State::main(LcdMainState::new())),
             LcdEvent::Debug => Transition(State::debug(LcdDebugState::new())),
+            LcdEvent::Menu => Transition(State::menu(LcdMenuState::new())),
             LcdEvent::PowerOff => Transition(State::init()),
             _ => Handled,
         }
@@ -162,6 +165,22 @@ impl LcdState {
                 debug.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }
+            _ => Super,
+        }
+    }
+
+    #[action]
+    async fn enter_menu(&mut self, menu: &mut LcdMenuState) {
+        let lock = crate::locks::SPI_BUS.lock().await;
+        warn!("enter_debug");
+        self.display_on().await;
+        menu.draw(&mut self.display1, &mut self.display2).await;
+    }
+
+    #[state(entry_action = "enter_menu", superstate = "state_dispatch")]
+    async fn menu(&mut self, context: &mut LcdContext, menu: &mut LcdMenuState, event: &LcdEvent) -> Response<State> {
+        let lock = crate::locks::SPI_BUS.lock().await;
+        match event {
             _ => Super,
         }
     }

@@ -73,6 +73,9 @@ impl KiaState {
                     Action::Pressed(Button::B5) | Action::Released(Button::B5) => {
                         LCD_EVENTS.send(LcdEvent::Debug).await;
                     }
+                    Action::Pressed(Button::B3) | Action::Released(Button::B3) => {
+                        LCD_EVENTS.send(LcdEvent::Menu).await;
+                    }
                     _ => {
                         warn!("unhandled button action: {:?}", action);
                     }

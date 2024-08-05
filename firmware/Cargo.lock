@@ -51,6 +51,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "bit_field"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc827186963e592360843fb5ba4b973e145841266c1357f7180c43526f2e5b61"
+
+[[package]]
 name = "bitfield"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -507,6 +513,18 @@ checksum = "fba4268c14288c828995299e59b12babdbe170f6c6d73731af1b4648142e8605"
 dependencies = [
  "embedded-hal 1.0.0",
  "nb 1.1.0",
+]
+
+[[package]]
+name = "embedded-iconoir"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c52b9899b636b56d4e66834f7a90766d0bc6600c0f067d91ed0711b11fa3f5c8"
+dependencies = [
+ "bit_field",
+ "embedded-graphics",
+ "paste",
+ "static_assertions",
 ]
 
 [[package]]
@@ -999,6 +1017,7 @@ dependencies = [
  "embedded-hal 1.0.0",
  "embedded-hal-async",
  "embedded-hal-bus",
+ "embedded-iconoir",
  "embedded-io",
  "embedded-io-async",
  "embedded-text",
