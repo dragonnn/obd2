@@ -1,11 +1,11 @@
 use defmt::info;
 //use defmt_rtt as _;
 use display_interface_spi::SPIInterface;
-use embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice;
+use embassy_embedded_hal::shared_bus::asynch::spi::{SpiDevice, SpiDeviceWithConfig};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 use esp_backtrace as _;
 use esp_hal::{
-    clock::ClockControl,
+    clock::{ClockControl, Clocks},
     delay::Delay,
     dma::{Dma, DmaPriority},
     dma_descriptors,
@@ -46,6 +46,69 @@ macro_rules! mk_static {
         let x = STATIC_CELL.uninit().write(($val));
         x
     }};
+}
+
+pub struct SpiBus {
+    spi: esp_hal::spi::master::dma::SpiDma<
+        'static,
+        esp_hal::peripherals::SPI2,
+        esp_hal::dma::Channel0,
+        FullDuplexMode,
+        Async,
+    >,
+    clocks: &'static Clocks<'static>,
+}
+
+impl SpiBus {
+    pub fn new(
+        spi: esp_hal::spi::master::dma::SpiDma<
+            'static,
+            esp_hal::peripherals::SPI2,
+            esp_hal::dma::Channel0,
+            FullDuplexMode,
+            Async,
+        >,
+        clocks: &'static Clocks<'static>,
+    ) -> Self {
+        Self { spi, clocks }
+    }
+}
+
+impl embedded_hal_async::spi::ErrorType for SpiBus {
+    type Error = esp_hal::spi::Error;
+}
+
+impl embedded_hal_async::spi::SpiBus for SpiBus {
+    async fn read(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
+        self.spi.read(words).await
+    }
+
+    async fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
+        self.spi.write(words).await
+    }
+
+    async fn transfer(&mut self, read: &mut [u8], write: &[u8]) -> Result<(), Self::Error> {
+        self.spi.transfer(read, write).await
+    }
+
+    async fn transfer_in_place(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
+        self.spi.transfer_in_place(words).await
+    }
+
+    async fn flush(&mut self) -> Result<(), Self::Error> {
+        self.spi.flush().await
+    }
+}
+
+impl embassy_embedded_hal::SetConfig for SpiBus {
+    type Config = u32;
+
+    type ConfigError = ();
+
+    fn set_config(&mut self, config: &Self::Config) -> Result<(), Self::ConfigError> {
+        self.spi.change_bus_frequency(config.MHz(), self.clocks);
+        Ok(())
+    }
 }
 
 pub fn init() -> Hal {
@@ -107,24 +170,15 @@ pub fn init() -> Hal {
 
     let dc2 = unsafe { core::ptr::read(&dc) };
 
-    static SPI_BUS: StaticCell<
-        Mutex<
-            CriticalSectionRawMutex,
-            esp_hal::spi::master::dma::SpiDma<
-                '_,
-                esp_hal::peripherals::SPI2,
-                esp_hal::dma::Channel0,
-                FullDuplexMode,
-                Async,
-            >,
-        >,
-    > = StaticCell::new();
-    let spi_bus = SPI_BUS.init(Mutex::new(spi));
+    static CLOCKS: StaticCell<Clocks> = StaticCell::new();
+    let clocks = CLOCKS.init(clocks);
+    static SPI_BUS: StaticCell<Mutex<CriticalSectionRawMutex, SpiBus>> = StaticCell::new();
+    let spi_bus = SPI_BUS.init(Mutex::new(SpiBus::new(spi, clocks)));
 
-    let display1_spi = SpiDevice::new(spi_bus, cs_display1);
-    let display2_spi = SpiDevice::new(spi_bus, cs_display2);
-    let cap1188_spi = SpiDevice::new(spi_bus, cs_cap1188);
-    let mcp2515_spi = SpiDevice::new(spi_bus, cs_mcp2515);
+    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, 60);
+    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, 60);
+    let cap1188_spi = SpiDeviceWithConfig::new(spi_bus, cs_cap1188, 6);
+    let mcp2515_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515, 6);
     let interface1 = SPIInterface::new(display1_spi, dc);
     let interface2 = SPIInterface::new(display2_spi, dc2);
 

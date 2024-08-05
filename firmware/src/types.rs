@@ -1,17 +1,24 @@
-use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use esp_hal::{gpio::*, spi::FullDuplexMode};
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
+use esp_hal::{gpio::*, spi::FullDuplexMode, Async};
+
+pub type Spi = Mutex<
+    CriticalSectionRawMutex,
+    esp_hal::spi::master::dma::SpiDma<
+        'static,
+        esp_hal::peripherals::SPI2,
+        esp_hal::dma::Channel0,
+        FullDuplexMode,
+        Async,
+    >,
+>;
+
+pub use crate::hal::SpiBus;
 
 pub type Mcp2515 = crate::mcp2515::Mcp2515<
-    embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
+    embassy_embedded_hal::shared_bus::asynch::spi::SpiDeviceWithConfig<
         'static,
         CriticalSectionRawMutex,
-        esp_hal::spi::master::dma::SpiDma<
-            'static,
-            esp_hal::peripherals::SPI2,
-            esp_hal::dma::Channel0,
-            FullDuplexMode,
-            esp_hal::Async,
-        >,
+        SpiBus,
         Output<'static, GpioPin<17>>,
     >,
     Input<'static, GpioPin<4>>,
@@ -19,16 +26,10 @@ pub type Mcp2515 = crate::mcp2515::Mcp2515<
 
 pub type Sh1122<const CS: u8> = sh1122::AsyncDisplay<
     display_interface_spi::SPIInterface<
-        embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
+        embassy_embedded_hal::shared_bus::asynch::spi::SpiDeviceWithConfig<
             'static,
             CriticalSectionRawMutex,
-            esp_hal::spi::master::dma::SpiDma<
-                'static,
-                esp_hal::peripherals::SPI2,
-                esp_hal::dma::Channel0,
-                FullDuplexMode,
-                esp_hal::Async,
-            >,
+            SpiBus,
             Output<'static, GpioPin<CS>>,
         >,
         Output<'static, GpioPin<23>>,
@@ -37,16 +38,10 @@ pub type Sh1122<const CS: u8> = sh1122::AsyncDisplay<
 >;
 
 pub type Cap1188 = crate::cap1188::Cap1188<
-    embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
+    embassy_embedded_hal::shared_bus::asynch::spi::SpiDeviceWithConfig<
         'static,
         CriticalSectionRawMutex,
-        esp_hal::spi::master::dma::SpiDma<
-            'static,
-            esp_hal::peripherals::SPI2,
-            esp_hal::dma::Channel0,
-            FullDuplexMode,
-            esp_hal::Async,
-        >,
+        SpiBus,
         Output<'static, GpioPin<20>>,
     >,
     Input<'static, GpioPin<3>>,
