@@ -117,7 +117,7 @@ pub async fn run(mut cap1188: Cap1188) {
             old_touched_bytes = new_touched_bytes;
         }
         info!("last_touched.elapsed(): {}ms", last_touched.elapsed().as_millis());
-        if last_touched.elapsed() < embassy_time::Duration::from_millis(80) {
+        if last_touched.elapsed() < embassy_time::Duration::from_millis(50) {
             error!("touched: {:?}", new_touched_bytes);
             embassy_time::Timer::after(embassy_time::Duration::from_millis(80)).await;
         }

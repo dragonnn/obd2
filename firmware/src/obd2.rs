@@ -51,7 +51,7 @@ impl Obd2 {
     }
 
     pub async fn request_pid<PID: Pid>(&mut self) -> Result<PID, Obd2Error> {
-        let lock = crate::locks::SPI_BUS.lock().await;
+        let mut _lock = Some(crate::locks::SPI_BUS.lock().await);
 
         self.mcp2515.clear_interrupts().await?;
         let request = PID::request();
@@ -145,7 +145,15 @@ impl Obd2 {
                     }
                 }
             }
-            self.mcp2515.interrupt().await;
+            while embassy_time::with_timeout(embassy_time::Duration::from_millis(50), self.mcp2515.interrupt())
+                .await
+                .is_err()
+            {
+                if _lock.is_some() {
+                    error!("timeout waiting for interrupt, drooping SPI lock");
+                    _lock = None;
+                }
+            }
         }
 
         info!("obd2_data: {:?}", obd2_data);

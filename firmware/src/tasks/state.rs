@@ -7,7 +7,7 @@ use crate::{
     tasks::buttons::{Action, Button},
 };
 
-pub static EVENTS: Channel<CriticalSectionRawMutex, KiaEvent, 32> = Channel::new();
+pub static EVENTS: Channel<CriticalSectionRawMutex, KiaEvent, 128> = Channel::new();
 
 pub struct KiaContext {}
 
@@ -65,11 +65,12 @@ impl KiaState {
                 Handled
             }
             KiaEvent::Button(action) => {
+                info!("button action: {:?}", action);
                 match action {
-                    Action::Pressed(Button::B4) => {
+                    Action::Pressed(Button::B4) | Action::Released(Button::B4) => {
                         LCD_EVENTS.send(LcdEvent::Main).await;
                     }
-                    Action::Pressed(Button::B5) => {
+                    Action::Pressed(Button::B5) | Action::Released(Button::B5) => {
                         LCD_EVENTS.send(LcdEvent::Debug).await;
                     }
                     _ => {
