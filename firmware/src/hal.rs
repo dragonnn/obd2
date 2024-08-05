@@ -34,12 +34,7 @@ use static_cell::{make_static, StaticCell};
 
 use crate::{cap1188::Cap1188, mcp2515::Mcp2515, obd2, power, types};
 
-// WARNING may overflow and wrap-around in long lived apps
-/*defmt::timestamp!("{=u32:us}", {
-    // NOTE(interrupt-safe) single instruction volatile read operation
-
-    (esp_hal::systimer::SystemTimer::now() / (esp_hal::systimer::SystemTimer::TICKS_PER_SECOND / 1_000_000)) as u32
-});*/
+defmt::timestamp!("{=u32:us}", { embassy_time::Instant::from_ticks(0).elapsed().as_micros() as u32 });
 
 pub struct Hal {
     pub display1: types::Display1,
@@ -75,7 +70,7 @@ pub fn init() -> Hal {
     info!("Embassy initialized");
     let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
     info!("io initialized");
-    let mut rtc = Rtc::new(peripherals.LPWR, None);
+    let rtc = Rtc::new(peripherals.LPWR, None);
 
     let dma = Dma::new(peripherals.DMA);
     let dma_channel = dma.channel0;
@@ -92,35 +87,16 @@ pub fn init() -> Hal {
         .with_miso(miso)
         .with_dma(dma_channel.configure_for_async(false, DmaPriority::Priority0), descriptors, rx_descriptors);
 
-    /*let mut dc = io.pins.gpio23.into_push_pull_output();
-    let mut cs_display1 = io.pins.gpio18.into_push_pull_output();
-    let mut cs_display2 = io.pins.gpio19.into_push_pull_output();
-    let mut cs_cap1188 = io.pins.gpio20.into_push_pull_output();
-    let mut cs_mcp2515 = io.pins.gpio16.into_push_pull_output();
-    let int_mcp2515 = io.pins.gpio4.into_pull_down_input();
-    let mut rs = io.pins.gpio22.into_push_pull_output();
-    let mut ing = io.pins.gpio5.into_pull_down_input();
-    let mut int_cap1188 = io.pins.gpio3.into_pull_down_input();*/
-
     let mut dc = Output::new(io.pins.gpio23, false.into());
-    info!("cs display1 init");
     let mut cs_display1 = Output::new(io.pins.gpio18, false.into());
-    info!("cs display2 init");
     let mut cs_display2 = Output::new(io.pins.gpio19, false.into());
-    info!("cs cap init");
     let mut cs_cap1188 = Output::new(io.pins.gpio20, false.into());
-    info!("cs mcp init");
     let mut cs_mcp2515 = Output::new(io.pins.gpio17, false.into());
-    info!("int mcp init");
     let int_mcp2515 = Input::new(io.pins.gpio4, Pull::Up);
-    info!("int rs init");
     let mut rs = Output::new(io.pins.gpio22, false.into());
-    info!("int ing init");
-    let mut ing = Input::new(io.pins.gpio5, Pull::Down);
-    info!("int cap init");
+    let ing = Input::new(io.pins.gpio5, Pull::Down);
     let int_cap1188 = Input::new(io.pins.gpio3, Pull::Up);
-
-    let mut led = Output::new(io.pins.gpio0, false.into());
+    let led = Output::new(io.pins.gpio0, false.into());
 
     info!("delay init");
 
@@ -139,12 +115,6 @@ pub fn init() -> Hal {
     delay.delay_micros(1u32);
     rs.set_high();
     delay.delay_micros(1u32);
-    /*for _ in 0..3000 {
-        dc.set_low();
-        delay.delay_micros(100u32);
-        dc.set_high();
-        delay.delay_micros(100u32);
-    }*/
 
     let dc2 = unsafe { core::ptr::read(&dc) };
 
@@ -178,7 +148,7 @@ pub fn init() -> Hal {
     let cap1188 = Cap1188::new(cap1188_spi, int_cap1188);
     let mcp2515 = Mcp2515::new(mcp2515_spi, int_mcp2515);
 
-    let mut usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
+    let usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
 
     info!("HAL initialized");
 

@@ -7,10 +7,12 @@
         "CANINTE",
         "Gdma",
         "interputs",
+        "LPWR",
         "pids",
         "procmacros",
         "repr",
         "statig",
+        "timg",
         "unlisten"
     ]
 }
