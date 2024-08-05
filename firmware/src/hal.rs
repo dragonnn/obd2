@@ -1,36 +1,29 @@
 use defmt::info;
 //use defmt_rtt as _;
 use display_interface_spi::SPIInterface;
-use embassy_embedded_hal::shared_bus::asynch::spi::{SpiDevice, SpiDeviceWithConfig};
+use embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
-use embassy_time::{Duration, Timer};
-//use embedded_hal_async::spi::SpiDevice;
-use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use esp_backtrace as _;
 use esp_hal::{
     clock::ClockControl,
     delay::Delay,
-    dma::{Dma, DmaDescriptor, DmaPriority},
-    dma_descriptors, gpio,
+    dma::{Dma, DmaPriority},
+    dma_descriptors,
     gpio::{Input, Io, Output, Pull},
-    interrupt::Priority,
     peripherals::Peripherals,
     prelude::*,
-    riscv::singleton,
-    rtc_cntl::{sleep::WakeupLevel, Rtc},
+    rtc_cntl::Rtc,
     spi::{
-        master::{dma::SpiDma, prelude::_esp_hal_spi_master_dma_WithDmaSpi2, Spi},
+        master::{prelude::_esp_hal_spi_master_dma_WithDmaSpi2, Spi},
         FullDuplexMode, SpiMode,
     },
     system::SystemControl,
     timer::{timg::TimerGroup, ErasedTimer, OneShotTimer},
     usb_serial_jtag::UsbSerialJtag,
-    Async, Blocking,
+    Async,
 };
-use sh1122::{
-    async_display::buffered_graphics::AsyncBufferedGraphicsMode, display::DisplayRotation, AsyncDisplay, PixelCoord,
-};
-use static_cell::{make_static, StaticCell};
+use sh1122::{display::DisplayRotation, AsyncDisplay, PixelCoord};
+use static_cell::StaticCell;
 
 use crate::{cap1188::Cap1188, mcp2515::Mcp2515, obd2, power, types};
 
@@ -67,9 +60,7 @@ pub fn init() -> Hal {
     let timers = [OneShotTimer::new(timer0)];
     let timers = mk_static!([OneShotTimer<ErasedTimer>; 1], timers);
     esp_hal_embassy::init(&clocks, timers);
-    info!("Embassy initialized");
     let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
-    info!("io initialized");
     let rtc = Rtc::new(peripherals.LPWR, None);
 
     let dma = Dma::new(peripherals.DMA);
@@ -97,8 +88,6 @@ pub fn init() -> Hal {
     let ing = Input::new(io.pins.gpio5, Pull::Down);
     let int_cap1188 = Input::new(io.pins.gpio3, Pull::Up);
     let led = Output::new(io.pins.gpio0, false.into());
-
-    info!("delay init");
 
     dc.set_high();
     rs.set_low();
