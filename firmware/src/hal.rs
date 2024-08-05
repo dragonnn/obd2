@@ -1,9 +1,10 @@
 use defmt::info;
 //use defmt_rtt as _;
 use display_interface_spi::SPIInterface;
-use embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice;
+use embassy_embedded_hal::shared_bus::asynch::spi::{SpiDevice, SpiDeviceWithConfig};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer};
+//use embedded_hal_async::spi::SpiDevice;
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use esp_backtrace as _;
 use esp_hal::{
@@ -45,7 +46,7 @@ pub struct Hal {
     pub display2: types::Display2,
     pub buttons: types::Cap1188,
     pub obd2: obd2::Obd2,
-    //pub usb_serial: types::UsbSerial,
+    pub usb_serial: types::UsbSerial,
     pub power: power::Power,
     pub led: types::Led,
 }
@@ -85,7 +86,7 @@ pub fn init() -> Hal {
 
     let (descriptors, rx_descriptors) = dma_descriptors!(32000);
 
-    let spi = Spi::new(peripherals.SPI2, 6000.kHz(), SpiMode::Mode0, &clocks)
+    let spi = Spi::new(peripherals.SPI2, 6.MHz(), SpiMode::Mode0, &clocks)
         .with_sck(sclk)
         .with_mosi(mosi)
         .with_miso(miso)
@@ -177,7 +178,7 @@ pub fn init() -> Hal {
     let cap1188 = Cap1188::new(cap1188_spi, int_cap1188);
     let mcp2515 = Mcp2515::new(mcp2515_spi, int_mcp2515);
 
-    //let mut usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
+    let mut usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
 
     info!("HAL initialized");
 
@@ -186,7 +187,7 @@ pub fn init() -> Hal {
         display2,
         buttons: cap1188,
         obd2: obd2::Obd2::new(mcp2515),
-        //usb_serial,
+        usb_serial,
         power: power::Power::new(ing, delay, rtc),
         led,
     }

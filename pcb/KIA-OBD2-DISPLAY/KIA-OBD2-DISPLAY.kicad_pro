@@ -1260,7 +1260,7 @@
       "plot": "",
       "pos_files": "",
       "specctra_dsn": "",
-      "step": "",
+      "step": "KIA-OBD2-DISPLAY.step",
       "svg": "",
       "vrml": ""
     },
