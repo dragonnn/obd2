@@ -34,7 +34,7 @@ pub struct Hal {
     pub display2: types::Display2,
     pub buttons: types::Cap1188,
     pub obd2: obd2::Obd2,
-    pub usb_serial: types::UsbSerial,
+    //pub usb_serial: types::UsbSerial,
     pub power: power::Power,
     pub led: types::Led,
 }
@@ -191,7 +191,7 @@ pub fn init() -> Hal {
     let cap1188 = Cap1188::new(cap1188_spi, int_cap1188);
     let mcp2515 = Mcp2515::new(mcp2515_spi, int_mcp2515);
 
-    let usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
+    //let usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
 
     info!("HAL initialized");
 
@@ -200,7 +200,7 @@ pub fn init() -> Hal {
         display2,
         buttons: cap1188,
         obd2: obd2::Obd2::new(mcp2515),
-        usb_serial,
+        //usb_serial,
         power: power::Power::new(ing, delay, rtc),
         led,
     }
