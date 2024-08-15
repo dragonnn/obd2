@@ -1,3 +1,4 @@
+use defmt::warn;
 use embassy_time::Duration;
 use esp_hal::{
     delay::Delay,
@@ -8,7 +9,7 @@ use esp_hal::{
     },
 };
 
-use crate::types::IngGpio;
+use crate::{debug::internal_debug, types::IngGpio};
 
 pub struct Power {
     ing_gpio: IngGpio,
@@ -34,6 +35,15 @@ impl Power {
 
     pub fn is_ignition_on(&self) -> bool {
         //self.ing_gpio.is_input_high()
+        if self.ing_gpio.is_high() {
+            internal_debug!("ignition on");
+            warn!("ignition on");
+            return true;
+        } else {
+            internal_debug!("ignition off");
+            warn!("ignition off");
+            return false;
+        }
         true
     }
 

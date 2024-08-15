@@ -52,7 +52,7 @@ pub struct SpiBus {
     spi: esp_hal::spi::master::dma::SpiDma<
         'static,
         esp_hal::peripherals::SPI2,
-        esp_hal::dma::Channel0,
+        esp_hal::dma::DmaChannel0,
         FullDuplexMode,
         Async,
     >,
@@ -64,7 +64,7 @@ impl SpiBus {
         spi: esp_hal::spi::master::dma::SpiDma<
             'static,
             esp_hal::peripherals::SPI2,
-            esp_hal::dma::Channel0,
+            esp_hal::dma::DmaChannel0,
             FullDuplexMode,
             Async,
         >,
@@ -118,13 +118,13 @@ pub fn init() -> Hal {
     let delay = Delay::new(&clocks);
     delay.delay_micros(100u32);
 
-    let timg0 = TimerGroup::new(peripherals.TIMG0, &clocks, None);
+    let timg0 = TimerGroup::new(peripherals.TIMG0, &clocks);
     let timer0: ErasedTimer = timg0.timer0.into();
     let timers = [OneShotTimer::new(timer0)];
     let timers = mk_static!([OneShotTimer<ErasedTimer>; 1], timers);
     esp_hal_embassy::init(&clocks, timers);
     let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
-    let rtc = Rtc::new(peripherals.LPWR, None);
+    let rtc = Rtc::new(peripherals.LPWR);
 
     let dma = Dma::new(peripherals.DMA);
     let dma_channel = dma.channel0;
@@ -148,7 +148,7 @@ pub fn init() -> Hal {
     let mut cs_mcp2515 = Output::new(io.pins.gpio17, false.into());
     let int_mcp2515 = Input::new(io.pins.gpio4, Pull::Up);
     let mut rs = Output::new(io.pins.gpio22, false.into());
-    let ing = Input::new(io.pins.gpio5, Pull::Down);
+    let ing = Input::new(io.pins.gpio5, Pull::Up);
     let int_cap1188 = Input::new(io.pins.gpio3, Pull::Up);
     let led = Output::new(io.pins.gpio0, false.into());
 
@@ -175,8 +175,8 @@ pub fn init() -> Hal {
     static SPI_BUS: StaticCell<Mutex<CriticalSectionRawMutex, SpiBus>> = StaticCell::new();
     let spi_bus = SPI_BUS.init(Mutex::new(SpiBus::new(spi, clocks)));
 
-    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, 60);
-    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, 60);
+    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, 25);
+    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, 25);
     let cap1188_spi = SpiDeviceWithConfig::new(spi_bus, cs_cap1188, 6);
     let mcp2515_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515, 6);
     let interface1 = SPIInterface::new(display1_spi, dc);

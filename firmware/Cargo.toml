@@ -42,22 +42,22 @@ static_cell = { version = "2.0.0", features = ["nightly"] }
 # portable-atomic = { version = "1.5", features = ["unsafe-assume-single-core"] }
 
 # Embassy deps
-embassy-executor = { version = "0.5.0", features = [
+embassy-executor = { version = "0.6.0", features = [
     "nightly",
     "integrated-timers",
     "arch-riscv32",
 
 ] }
 embassy-time = { version = "0.3.0" }
-embassy-embedded-hal = { version = "0.1.0", features = ["defmt"] }
-embassy-sync = "0.5.0"
+embassy-embedded-hal = { version = "0.2.0", features = ["defmt"] }
+embassy-sync = "0.6.0"
 critical-section = "1.1.2"
 
 
 # OLED SSD1306 deps
 sh1122 = { path = "./crates/sh1122" }
 embedded-graphics = "0.8.0"
-tinybmp = "0.5.0"
+tinybmp = "0.6.0"
 embedded-text = "0.7.0"
 embedded-iconoir = { version = "0.2.3", features = [
     "24px",
@@ -96,3 +96,7 @@ debug = 2
 
 [profile.dev]
 opt-level = "s"
+
+[patch.crates-io]
+esp-hal = { git = "https://github.com/esp-rs/esp-hal/", rev = "a10f86dbaa9f0c75760dad135e6cb7ca17372cdc" }
+esp-hal-embassy = { git = "https://github.com/esp-rs/esp-hal/", rev = "a10f86dbaa9f0c75760dad135e6cb7ca17372cdc" }

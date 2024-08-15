@@ -25,7 +25,11 @@ impl LcdMenuState {
         info!("menu button: {:?}", button);
         match button {
             Action::Pressed(Button::B4) => Some(Transition(State::main(LcdMainState::new()))),
-            Action::Pressed(Button::B3) => Some(Transition(State::debug(LcdDebugState::new()))),
+            Action::Pressed(Button::B2) => Some(Transition(State::debug(LcdDebugState::new()))),
+            Action::Pressed(Button::B3) => {
+                esp_hal::reset::software_reset();
+                None
+            }
             _ => None,
         }
     }
@@ -38,6 +42,9 @@ impl LcdMenuState {
         let image = Image::new(&icon, Point { x: 52, y: 0 });
         image.draw(display1).unwrap();
         let icon = embedded_iconoir::icons::size48px::development::CodeBrackets::new(GrayColor::WHITE);
+        let image = Image::new(&icon, Point { x: 52 * 3, y: 0 });
+        image.draw(display2).unwrap();
+        let icon = embedded_iconoir::icons::size48px::actions::Restart::new(GrayColor::WHITE);
         let image = Image::new(&icon, Point { x: 52 * 4, y: 0 });
         image.draw(display2).unwrap();
         unwrap!(display1.flush().await);

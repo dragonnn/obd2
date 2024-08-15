@@ -21,7 +21,6 @@ impl LcdDebugState {
 
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
         self.debug.draw(display1, display2);
-        let now = embassy_time::Instant::now();
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);
     }

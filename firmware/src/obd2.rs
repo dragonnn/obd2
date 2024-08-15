@@ -32,7 +32,10 @@ pub struct Obd2 {
 
 impl Obd2 {
     pub fn new(mcp2515: Mcp2515) -> Self {
-        let obd2_message_buffer = make_static!(heapless::Vec::new());
+        static obd2_message_buffer_static: static_cell::StaticCell<heapless::Vec<u8, 4095>> =
+            static_cell::StaticCell::new();
+
+        let obd2_message_buffer = obd2_message_buffer_static.init(heapless::Vec::new());
 
         Self { mcp2515, obd2_message_buffer }
     }

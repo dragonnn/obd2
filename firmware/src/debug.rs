@@ -19,13 +19,15 @@ pub fn debug(string: String<DEBUG_STRING_LEN>) {
 
 macro_rules! internal_debug {
     ($($arg:tt)*) => {
-        use heapless::String;
-        use core::fmt::Write;
-        let mut string = String::new();
-        core::write!(&mut string, "{:.1}: ", embassy_time::Instant::from_ticks(0).elapsed().as_millis() as f64 / 1000.0).ok();
-        core::write!(&mut string, $($arg)*).ok();
+        {
+            use heapless::String as InternalDebugString;
+            use core::fmt::Write as _;
+            let mut string = InternalDebugString::new();
+            core::write!(&mut string, "{:.1}: ", embassy_time::Instant::from_ticks(0).elapsed().as_millis() as f64 / 1000.0).ok();
+            core::write!(&mut string, $($arg)*).ok();
 
-        crate::debug::debug(string);
+            crate::debug::debug(string);
+        }
     };
     () => {
 
