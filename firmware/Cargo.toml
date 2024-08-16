@@ -98,5 +98,8 @@ debug = 2
 opt-level = "s"
 
 [patch.crates-io]
-esp-hal = { git = "https://github.com/esp-rs/esp-hal/", rev = "a10f86dbaa9f0c75760dad135e6cb7ca17372cdc" }
-esp-hal-embassy = { git = "https://github.com/esp-rs/esp-hal/", rev = "a10f86dbaa9f0c75760dad135e6cb7ca17372cdc" }
+esp-hal = { git = "https://github.com/esp-rs/esp-hal/", rev = "f95ab0def50130a9d7da0ba0101c921e239ecdb5" }
+esp-hal-embassy = { git = "https://github.com/esp-rs/esp-hal/", rev = "f95ab0def50130a9d7da0ba0101c921e239ecdb5" }
+
+[features]
+usb_serial = []

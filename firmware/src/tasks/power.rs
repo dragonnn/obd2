@@ -22,14 +22,7 @@ pub async fn run(mut power: Power) {
     let mut sleep_timeout = Duration::from_secs(5);
     //testing
     KIA_EVENTS.send(KiaEvent::InitIgnitionOn).await;
-    loop {
-        if power.is_ignition_on() {
-            internal_debug!("ignition on");
-        } else {
-            internal_debug!("ignition off");
-        }
-        embassy_time::Timer::after(Duration::from_millis(1000)).await;
-    }
+    return;
 
     if power.is_ignition_on() {
         internal_debug!("wait for ignition off");

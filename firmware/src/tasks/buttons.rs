@@ -26,6 +26,7 @@ pub enum Action {
 
 #[embassy_executor::task]
 pub async fn run(mut cap1188: Cap1188) {
+    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     cap1188.reset().await;
     loop {
         match cap1188.init().await {

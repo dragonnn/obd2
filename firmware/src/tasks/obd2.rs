@@ -35,6 +35,6 @@ pub async fn run(mut obd2: Obd2) {
                 error!("timeout requesting bms pid");
             }
         }
-        embassy_time::Timer::after(embassy_time::Duration::from_secs(10)).await;
+        embassy_time::Timer::after(embassy_time::Duration::from_millis(100)).await;
     }
 }

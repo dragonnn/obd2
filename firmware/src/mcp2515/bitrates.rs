@@ -34,7 +34,8 @@ pub mod clock_16mhz {
     use super::registers::CNF;
 
     pub const CNF_1000K_BPS: CNF = CNF::from_bytes([0x82, 0xD0, 0x00]);
-    pub const CNF_500K_BPS: CNF = CNF::from_bytes([0x86, 0xF0, 0x00]);
+    //pub const CNF_500K_BPS: CNF = CNF::from_bytes([0x86, 0xF0, 0x00]);
+    pub const CNF_500K_BPS: CNF = CNF::from_bytes([0x05, 0xB8, 0x00]);
     pub const CNF_250K_BPS: CNF = CNF::from_bytes([0x85, 0xF1, 0x41]);
     pub const CNF_200K_BPS: CNF = CNF::from_bytes([0x87, 0xFA, 0x01]);
     pub const CNF_125K_BPS: CNF = CNF::from_bytes([0x86, 0xF0, 0x03]);
@@ -54,7 +55,7 @@ pub mod clock_20mhz {
     use super::registers::CNF;
 
     pub const CNF_1000K_BPS: CNF = CNF::from_bytes([0x82, 0xD9, 0x00]);
-    pub const CNF_500K_BPS: CNF = CNF::from_bytes([0x87, 0xFA, 0x00]);
+    pub const CNF_500K_BPS: CNF = CNF::from_bytes([0x45, 0xF8, 0x00]);
     pub const CNF_250K_BPS: CNF = CNF::from_bytes([0x86, 0xFB, 0x41]);
     pub const CNF_200K_BPS: CNF = CNF::from_bytes([0x87, 0xFF, 0x01]);
     pub const CNF_125K_BPS: CNF = CNF::from_bytes([0x87, 0xFA, 0x03]);

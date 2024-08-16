@@ -34,7 +34,8 @@ pub struct Hal {
     pub display2: types::Display2,
     pub buttons: types::Cap1188,
     pub obd2: obd2::Obd2,
-    //pub usb_serial: types::UsbSerial,
+    #[cfg(feature = "usb_serial")]
+    pub usb_serial: types::UsbSerial,
     pub power: power::Power,
     pub led: types::Led,
 }
@@ -145,7 +146,7 @@ pub fn init() -> Hal {
     let mut cs_display1 = Output::new(io.pins.gpio18, false.into());
     let mut cs_display2 = Output::new(io.pins.gpio19, false.into());
     let mut cs_cap1188 = Output::new(io.pins.gpio20, false.into());
-    let mut cs_mcp2515 = Output::new(io.pins.gpio17, false.into());
+    let mut cs_mcp2515 = Output::new(io.pins.gpio16, false.into());
     let int_mcp2515 = Input::new(io.pins.gpio4, Pull::Up);
     let mut rs = Output::new(io.pins.gpio22, false.into());
     let ing = Input::new(io.pins.gpio5, Pull::Up);
@@ -175,8 +176,8 @@ pub fn init() -> Hal {
     static SPI_BUS: StaticCell<Mutex<CriticalSectionRawMutex, SpiBus>> = StaticCell::new();
     let spi_bus = SPI_BUS.init(Mutex::new(SpiBus::new(spi, clocks)));
 
-    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, 25);
-    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, 25);
+    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, 6);
+    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, 6);
     let cap1188_spi = SpiDeviceWithConfig::new(spi_bus, cs_cap1188, 6);
     let mcp2515_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515, 6);
     let interface1 = SPIInterface::new(display1_spi, dc);
@@ -191,7 +192,8 @@ pub fn init() -> Hal {
     let cap1188 = Cap1188::new(cap1188_spi, int_cap1188);
     let mcp2515 = Mcp2515::new(mcp2515_spi, int_mcp2515);
 
-    //let usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
+    #[cfg(feature = "usb_serial")]
+    let usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
 
     info!("HAL initialized");
 
@@ -200,7 +202,8 @@ pub fn init() -> Hal {
         display2,
         buttons: cap1188,
         obd2: obd2::Obd2::new(mcp2515),
-        //usb_serial,
+        #[cfg(feature = "usb_serial")]
+        usb_serial,
         power: power::Power::new(ing, delay, rtc),
         led,
     }

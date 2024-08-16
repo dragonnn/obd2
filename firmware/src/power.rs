@@ -34,28 +34,10 @@ impl Power {
     }
 
     pub fn is_ignition_on(&self) -> bool {
-        //self.ing_gpio.is_input_high()
-        if self.ing_gpio.is_high() {
-            internal_debug!("ignition on");
-            warn!("ignition on");
-            return true;
-        } else {
-            internal_debug!("ignition off");
-            warn!("ignition off");
-            return false;
-        }
-        true
+        self.ing_gpio.is_high()
     }
 
     pub async fn wait_for_ignition_off(&mut self) {
         self.ing_gpio.wait_for_falling_edge().await;
-        /*let mut old_power = true;
-        loop {
-            let new_power = self.is_ignition_on();
-            if new_power != old_power {
-                break;
-            }
-            embassy_time::Timer::after(Duration::from_millis(50)).await;
-        }*/
     }
 }
