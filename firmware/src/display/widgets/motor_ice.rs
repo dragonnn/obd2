@@ -5,46 +5,48 @@ use embedded_graphics::{
     prelude::*,
     primitives::*,
 };
+use once_cell::sync::OnceCell;
 use static_cell::StaticCell;
 use tinybmp::Bmp;
 
-static MOTOR_BMP: StaticCell<Bmp<Rgb565>> = StaticCell::new();
-static MOTOR_ON_BMP: StaticCell<Bmp<Rgb565>> = StaticCell::new();
-static MOTOR_OFF_BMP: StaticCell<Bmp<Rgb565>> = StaticCell::new();
-
-pub struct MotorIce<D> {
+#[derive(Debug, Clone)]
+pub struct MotorIce {
     motor_im: Image<'static, Bmp<'static, Rgb565>>,
     motor_on_im: Image<'static, Bmp<'static, Rgb565>>,
     motor_off_im: Image<'static, Bmp<'static, Rgb565>>,
 
     on: bool,
     needs_update: bool,
-    _marker: core::marker::PhantomData<D>,
 }
 
-impl<D> MotorIce<D>
-where
-    D: DrawTarget<Color = Gray4>,
-{
+impl Default for MotorIce {
+    fn default() -> Self {
+        Self::new(Point::zero())
+    }
+}
+
+impl MotorIce {
     pub fn new(position: Point) -> Self {
-        let motor_bmp = MOTOR_BMP.init(Bmp::from_slice(include_bytes!("../../../assets/motor_ice_body.bmp")).unwrap());
-        let motor_on_bmp =
-            MOTOR_ON_BMP.init(Bmp::from_slice(include_bytes!("../../../assets/motor_ice_symbol_on.bmp")).unwrap());
-        let motor_off_bmp =
-            MOTOR_OFF_BMP.init(Bmp::from_slice(include_bytes!("../../../assets/motor_ice_symbol_off.bmp")).unwrap());
+        static MOTOR_BMP: OnceCell<Bmp<'static, Rgb565>> = OnceCell::new();
+        let motor_bmp = MOTOR_BMP.get_or_init(|| unsafe {
+            Bmp::from_slice(include_bytes!("../../../assets/motor_ice_body.bmp")).unwrap_unchecked()
+        });
+
+        static MOTOR_ON_BMP: OnceCell<Bmp<'static, Rgb565>> = OnceCell::new();
+        let motor_on_bmp = MOTOR_ON_BMP.get_or_init(|| unsafe {
+            Bmp::from_slice(include_bytes!("../../../assets/motor_ice_symbol_on.bmp")).unwrap_unchecked()
+        });
+
+        static MOTOR_OFF_BMP: OnceCell<Bmp<'static, Rgb565>> = OnceCell::new();
+        let motor_off_bmp = MOTOR_OFF_BMP.get_or_init(|| unsafe {
+            Bmp::from_slice(include_bytes!("../../../assets/motor_ice_symbol_off.bmp")).unwrap_unchecked()
+        });
 
         let motor_im: Image<Bmp<Rgb565>> = Image::new(motor_bmp, position);
         let motor_on_im: Image<Bmp<Rgb565>> = Image::new(motor_on_bmp, position).translate(Point::new(5, 24));
         let motor_off_im: Image<Bmp<Rgb565>> = Image::new(motor_off_bmp, position).translate(Point::new(5, 24));
 
-        Self {
-            motor_im,
-            motor_on_im,
-            motor_off_im,
-            on: false,
-            needs_update: true,
-            _marker: core::marker::PhantomData::default(),
-        }
+        Self { motor_im, motor_on_im, motor_off_im, on: false, needs_update: true }
     }
 
     pub fn update_on(&mut self, on: bool) {
@@ -54,7 +56,7 @@ where
         }
     }
 
-    pub fn draw(&mut self, target: &mut D) -> Result<(), D::Error> {
+    pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.needs_update {
             esp_println::println!("motor ice redraw");
             self.motor_im.draw(&mut target.color_converted())?;

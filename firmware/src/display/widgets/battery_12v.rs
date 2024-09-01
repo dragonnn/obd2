@@ -15,20 +15,17 @@ use heapless::String;
 use num_traits::float::FloatCore;
 use profont::*;
 
-pub struct Battery12V<D> {
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Battery12V {
     voltage: f64,
     position: Point,
     redraw: bool,
     inited: bool,
-    _marker: core::marker::PhantomData<D>,
 }
 
-impl<D> Battery12V<D>
-where
-    D: DrawTarget<Color = Gray4>,
-{
+impl Battery12V {
     pub fn new(position: Point) -> Self {
-        Self { position, voltage: 12.5, redraw: true, inited: false, _marker: core::marker::PhantomData::default() }
+        Self { position, voltage: 12.5, redraw: true, inited: false }
     }
 
     pub fn update_voltage(&mut self, voltage: f64) {
@@ -38,7 +35,7 @@ where
         }
     }
 
-    pub fn init(&mut self, target: &mut D) -> Result<(), D::Error> {
+    pub fn init<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         let cap_height = 7;
         let cap_width = 10;
         let main_width = 32;
@@ -90,7 +87,7 @@ where
         Ok(())
     }
 
-    pub fn draw(&mut self, target: &mut D) -> Result<(), D::Error> {
+    pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if !self.inited {
             self.init(target)?;
         }

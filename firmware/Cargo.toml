@@ -39,6 +39,9 @@ embedded-hal-bus = { version = "0.2.0", features = ["async"] }
 embassy-futures = "0.1.1"
 
 static_cell = { version = "2.0.0", features = ["nightly"] }
+once_cell = { version = "1.19.0", default-features = false, features = [
+    "critical-section",
+] }
 # portable-atomic = { version = "1.5", features = ["unsafe-assume-single-core"] }
 
 # Embassy deps

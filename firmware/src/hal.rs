@@ -159,15 +159,15 @@ pub fn init() -> Hal {
     cs_display2.set_high();
     cs_cap1188.set_high();
     cs_mcp2515.set_high();
-    delay.delay_micros(1u32);
+    delay.delay_micros(2u32);
     rs.set_high();
 
-    delay.delay_micros(1u32);
+    delay.delay_micros(2u32);
 
     rs.set_low();
-    delay.delay_micros(1u32);
+    delay.delay_micros(2u32);
     rs.set_high();
-    delay.delay_micros(1u32);
+    delay.delay_micros(2u32);
 
     let dc2 = unsafe { core::ptr::read(&dc) };
 
@@ -176,10 +176,10 @@ pub fn init() -> Hal {
     static SPI_BUS: StaticCell<Mutex<CriticalSectionRawMutex, SpiBus>> = StaticCell::new();
     let spi_bus = SPI_BUS.init(Mutex::new(SpiBus::new(spi, clocks)));
 
-    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, 1);
-    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, 1);
-    let cap1188_spi = SpiDeviceWithConfig::new(spi_bus, cs_cap1188, 6);
-    let mcp2515_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515, 1);
+    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, 20);
+    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, 20);
+    let cap1188_spi = SpiDeviceWithConfig::new(spi_bus, cs_cap1188, 5);
+    let mcp2515_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515, 10);
     let interface1 = SPIInterface::new(display1_spi, dc);
     let interface2 = SPIInterface::new(display2_spi, dc2);
 

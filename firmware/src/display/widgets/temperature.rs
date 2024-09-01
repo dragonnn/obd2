@@ -17,7 +17,8 @@ use profont::*;
 
 use crate::display::RotatedDrawTarget;
 
-pub struct Temperature<D> {
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Temperature {
     max_temp: f64,
     min_temp: f64,
     current_temp: f64,
@@ -28,14 +29,9 @@ pub struct Temperature<D> {
 
     bars: i32,
     redraw: bool,
-
-    _marker: core::marker::PhantomData<D>,
 }
 
-impl<D> Temperature<D>
-where
-    D: DrawTarget<Color = Gray4>,
-{
+impl Temperature {
     pub fn new(position: Point, size: Size, min: f64, max: f64, bars: i32) -> Self {
         Self {
             position,
@@ -47,7 +43,6 @@ where
 
             bars,
             redraw: true,
-            _marker: core::marker::PhantomData::default(),
         }
     }
 
@@ -65,7 +60,7 @@ where
         }
     }
 
-    pub fn draw(&mut self, target: &mut D) -> Result<(), D::Error> {
+    pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
             let color = Gray4::new(4);
 

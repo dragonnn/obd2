@@ -1,8 +1,9 @@
-use defmt::{info, Format};
+use defmt::{debug, info, warn, Format};
 use embedded_can::{Frame as _, StandardId};
 
 use crate::{
     debug::internal_debug,
+    event::Obd2Event,
     mcp2515::CanFrame,
     obd2::{Obd2Error, Pid},
 };
@@ -14,6 +15,7 @@ pub struct BmsPid {
     pub hv_dc_voltage: f64,
     pub hv_soc: f64,
     pub hv_cell_voltage_deviation: f64,
+    pub hv_battery_current: f64,
 
     pub aux_dc_voltage: f64,
 }
@@ -43,9 +45,25 @@ impl Pid for BmsPid {
         let hv_cell_voltage_deviation = data[22] as f64 / 50.0;
 
         info!("hv_cell_voltage_deviation: {}", hv_cell_voltage_deviation);
+        //0_Niro_Auxillary Battery Voltage	Aux Batt Volts	2101	ad*0.1
         let aux_dc_voltage = data[31] as f64 * 0.1;
         info!("aux_dc_voltage: {}", aux_dc_voltage);
+        //0_Niro_Battery Current	Batt Current	2101	((Signed(K)*256)+L)/10
+        let hv_battery_current = (data[12] as i32 * 256 + data[13] as i32) as f64 / 10.0;
+        warn!("hv_battery_current: {}", hv_battery_current);
 
-        Ok(Self { hv_max_temp, hv_min_temp, hv_dc_voltage, hv_soc, hv_cell_voltage_deviation, aux_dc_voltage })
+        Ok(Self {
+            hv_max_temp,
+            hv_min_temp,
+            hv_dc_voltage,
+            hv_soc,
+            hv_cell_voltage_deviation,
+            hv_battery_current,
+            aux_dc_voltage,
+        })
+    }
+
+    fn into_event(self) -> Obd2Event {
+        Obd2Event::BmsPid(self)
     }
 }

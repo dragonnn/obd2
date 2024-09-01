@@ -2,12 +2,13 @@ use core::convert::Infallible;
 
 use defmt::{error, info, unwrap, warn};
 use embassy_embedded_hal::shared_bus::SpiDeviceError;
-use embassy_time::Duration;
+use embassy_time::{with_timeout, Duration};
 use embedded_can::Frame as _;
 use static_cell::make_static;
 
 use crate::{
     debug::internal_debug,
+    event::{KiaEvent, Obd2Event, KIA_EVENTS},
     mcp2515::{
         clock_16mhz, clock_8mhz, CanFrame, OperationMode, RxBuffer, TxBuffer, CANINTE, CLKPRE, RXB0CTRL, RXB1CTRL, RXM,
     },
@@ -75,19 +76,15 @@ impl Obd2 {
         let mut obd2_message_id = 0;
         'outer: loop {
             let rx_status = self.mcp2515.rx_status().await?;
-            info!("rx_status: {:?}", rx_status);
             if rx_status.rx0if() {
                 let frame = self.mcp2515.read_rx_buffer(RxBuffer::RXB0).await?;
                 //internal_debug!("rx0if: {:x?}", frame.data);
                 can_frames[0] = Some(frame);
-                info!("found can frame 0: {:?}", can_frames[0]);
             }
             if rx_status.rx1if() {
-                warn!("rx1if frame found");
                 let frame = self.mcp2515.read_rx_buffer(RxBuffer::RXB1).await?;
                 //internal_debug!("rx1if: {:x?}", frame.data);
                 can_frames[1] = Some(frame);
-                info!("found can frame 1: {:?}", can_frames[1]);
             }
             for can_frame in can_frames.iter().flatten() {
                 let obd2_frame_type = can_frame.data[0] & 0xF0;
@@ -103,10 +100,8 @@ impl Obd2 {
                         self.obd2_message_buffer.clear();
                         obd2_message_length =
                             Some(((can_frame.data[0] & 0x0F) as usize) << 8 | can_frame.data[1] as usize);
-                        info!("first obd2_message_length length: {}", obd2_message_length);
                         internal_debug!("first frame {:x?}", can_frame.data);
                         self.mcp2515.load_tx_buffer(TxBuffer::TXB0, &flow_control).await?;
-                        error!("sending obd2 request");
                         self.mcp2515.request_to_send(TxBuffer::TXB0).await?;
 
                         unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data[2..]));
@@ -114,12 +109,10 @@ impl Obd2 {
                         obd2_message_id = 0;
                     }
                     0x30 => {
-                        internal_debug!("flow control frame {:x?}", can_frame.data);
                         let timeout_ms = can_frame.data[2];
-                        warn!("flow control frame with separation time: {}ms", timeout_ms);
                     }
                     0x20 => {
-                        internal_debug!("consecutive frame {:x?}", can_frame.data);
+                        //internal_debug!("consecutive frame {:x?}", can_frame.data);
                         if let Some(obd2_message_length) = obd2_message_length {
                             let new_obd2_message_id = can_frame.data[0] & 0x0F;
                             if new_obd2_message_id == obd2_message_id + 1 {
@@ -172,6 +165,22 @@ impl Obd2 {
             Err(Obd2Error::DataNotFound)
         }
     }
+
+    pub async fn handle_pid<PID: Pid>(&mut self) {
+        match with_timeout(Duration::from_millis(2500), self.request_pid::<PID>()).await {
+            Ok(Ok(pid_result)) => {
+                KIA_EVENTS.send(KiaEvent::Obd2Event(pid_result.into_event())).await;
+            }
+            Ok(Err(e)) => {
+                internal_debug!("error requesting bms pid");
+                error!("error requesting bms pid");
+            }
+            Err(_) => {
+                internal_debug!("timeout requesting bms pid");
+                error!("timeout requesting bms pid");
+            }
+        }
+    }
 }
 
 pub trait Pid {
@@ -179,4 +188,5 @@ pub trait Pid {
     fn parse(data: &[u8]) -> Result<Self, Obd2Error>
     where
         Self: Sized;
+    fn into_event(self) -> Obd2Event;
 }

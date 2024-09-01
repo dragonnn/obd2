@@ -146,6 +146,11 @@ impl LcdState {
                 main.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }
+            LcdEvent::Obd2Event(Obd2Event::IceTemperaturePid(ice_temperature_pid)) => {
+                main.update_ice_temperature(ice_temperature_pid);
+                main.draw(&mut self.display1, &mut self.display2).await;
+                Handled
+            }
             _ => Super,
         };
 
@@ -245,6 +250,5 @@ pub async fn run(mut display1: Display1, mut display2: Display2) {
                 state.handle_with_context(&event, &mut context).await;
             }
         }
-        info!("lcd loop");
     }
 }
