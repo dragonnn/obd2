@@ -2,7 +2,9 @@ use defmt::{unwrap, warn};
 use embedded_graphics::geometry::{Point, Size};
 
 use crate::{
-    display::widgets::{Battery, Battery12V, BatteryOrientation, MotorElectric, MotorIce, Temperature},
+    display::widgets::{
+        Arrow, ArrowDirection, Battery, Battery12V, BatteryOrientation, MotorElectric, MotorIce, Power, Temperature,
+    },
     pid::{BmsPid, IceTemperaturePid},
     types::{Display1, Display2, Sh1122},
 };
@@ -13,6 +15,9 @@ pub struct LcdMainState {
     aux_battery: Battery12V,
 
     ice_temperature: Temperature,
+
+    electric_power: Power,
+    electric_power_arrow: Arrow,
 
     motor_electric: MotorElectric,
     motor_ice: MotorIce,
@@ -33,6 +38,14 @@ impl LcdMainState {
             aux_battery: Battery12V::new(Point::new(256 - 41 - 22, 31)),
             ice_temperature: Temperature::new(Point::new(256 - 21, 0), Size::new(16, 64), 0.0, 130.0, 4),
 
+            electric_power: Power::new(Point::new(128 + 36, 14)),
+            electric_power_arrow: Arrow::new(
+                Point { x: 9 + 128, y: 64 / 2 - 9 },
+                Size { width: 54, height: 16 },
+                14,
+                ArrowDirection::Reverse,
+            ),
+
             motor_electric: MotorElectric::new(Point::new(256 - 60, 0)),
             motor_ice: MotorIce::new(Point::new(0, 0)),
         }
@@ -45,6 +58,9 @@ impl LcdMainState {
         self.hv_battery.update_min_temp(bms_pid.hv_min_temp);
         self.hv_battery.update_cell_voltage_deviation(bms_pid.hv_cell_voltage_deviation);
         self.aux_battery.update_voltage(bms_pid.aux_dc_voltage);
+        self.electric_power_arrow.update_speed(50.0);
+        self.electric_power.update_power(bms_pid.hv_battery_current * bms_pid.hv_dc_voltage);
+        self.electric_power.update_current(bms_pid.hv_battery_current);
         //self.hv_battery.update_cell_voltage_deviation(bms_pid.hv_cell_voltage_deviation);
     }
 
@@ -58,6 +74,8 @@ impl LcdMainState {
         self.ice_temperature.draw(display2).ok();
         self.motor_electric.draw(display1).ok();
         self.motor_ice.draw(display2).ok();
+        self.electric_power.draw(display1).ok();
+        self.electric_power_arrow.draw(display1).ok();
 
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);

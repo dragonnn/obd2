@@ -17,23 +17,19 @@ use profont::*;
 
 use crate::display::RotatedDrawTarget;
 
-pub struct Power<D> {
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Power {
     position: Point,
 
     power: f64,
     current: f64,
 
     redraw: bool,
-
-    _marker: core::marker::PhantomData<D>,
 }
 
-impl<D> Power<D>
-where
-    D: DrawTarget<Color = Gray4>,
-{
+impl Power {
     pub fn new(position: Point) -> Self {
-        Self { position, power: 4450.0, current: 10.0, redraw: true, _marker: core::marker::PhantomData::default() }
+        Self { position, power: 0.0, current: 0.0, redraw: true }
     }
 
     pub fn update_power(&mut self, power: f64) {
@@ -50,7 +46,7 @@ where
         }
     }
 
-    pub fn draw(&mut self, target: &mut D) -> Result<(), D::Error> {
+    pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
             let mut text: String<16> = String::new();
             write!(text, "{:.2}kW", self.power / 1000.0).unwrap();
@@ -62,6 +58,8 @@ where
                 TextStyleBuilder::new().alignment(Alignment::Center).line_height(LineHeight::Percent(100)).build();
 
             let text = Text::with_text_style(text.as_str(), self.position, character_style, text_style);
+            let text_box = text.bounding_box();
+            text_box.draw_styled(&PrimitiveStyleBuilder::new().fill_color(Gray4::BLACK).build(), target)?;
 
             text.draw(target)?;
 
