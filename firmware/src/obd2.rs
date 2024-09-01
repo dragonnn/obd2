@@ -8,7 +8,9 @@ use static_cell::make_static;
 
 use crate::{
     debug::internal_debug,
-    mcp2515::{clock_16mhz, clock_8mhz, CanFrame, OperationMode, RxBuffer, TxBuffer, CANINTE, RXB0CTRL, RXB1CTRL, RXM},
+    mcp2515::{
+        clock_16mhz, clock_8mhz, CanFrame, OperationMode, RxBuffer, TxBuffer, CANINTE, CLKPRE, RXB0CTRL, RXB1CTRL, RXM,
+    },
     types::Mcp2515,
 };
 
@@ -43,7 +45,8 @@ impl Obd2 {
     pub async fn init(&mut self) {
         let config = crate::mcp2515::Config::default()
             .mode(OperationMode::NormalOperation)
-            .bitrate(clock_8mhz::CNF_250K_BPS)
+            .bitrate(clock_16mhz::CNF_500K_BPS)
+            .set_clk_prescaler(CLKPRE::SystemClockDiv2)
             .receive_buffer_0(RXB0CTRL::default().with_rxm(RXM::ReceiveAny).with_bukt(true))
             .receive_buffer_1(RXB1CTRL::default().with_rxm(RXM::ReceiveAny));
 

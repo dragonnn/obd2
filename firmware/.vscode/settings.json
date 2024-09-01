@@ -3,8 +3,10 @@
     "rust-analyzer.cargo.target": "riscv32imac-unknown-none-elf",
     "cSpell.words": [
         "bitfield",
+        "bukt",
         "canctrl",
         "CANINTE",
+        "CLKPRE",
         "Gdma",
         "iconoir",
         "interputs",

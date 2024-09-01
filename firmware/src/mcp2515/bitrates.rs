@@ -35,6 +35,7 @@ pub mod clock_16mhz {
 
     pub const CNF_1000K_BPS: CNF = CNF::from_bytes([0x82, 0xD0, 0x00]);
     //pub const CNF_500K_BPS: CNF = CNF::from_bytes([0x86, 0xF0, 0x00]);
+    //{(long)16E6, (long)500E3, {0x00, 0xf0, 0x86}},
     pub const CNF_500K_BPS: CNF = CNF::from_bytes([0x05, 0xB8, 0x00]);
     pub const CNF_250K_BPS: CNF = CNF::from_bytes([0x85, 0xF1, 0x41]);
     pub const CNF_200K_BPS: CNF = CNF::from_bytes([0x87, 0xFA, 0x01]);

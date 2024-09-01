@@ -52,10 +52,10 @@ async fn main(spawner: Spawner) {
     hal.led.set_low();
 
     spawner.spawn(tasks::led::run(hal.led)).ok();
-    //spawner.spawn(tasks::buttons::run(hal.buttons)).ok();
-    //spawner.spawn(tasks::lcd::run(hal.display1, hal.display2)).ok();
+    spawner.spawn(tasks::buttons::run(hal.buttons)).ok();
+    spawner.spawn(tasks::lcd::run(hal.display1, hal.display2)).ok();
     spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
-    //spawner.spawn(tasks::power::run(hal.power)).ok();
+    spawner.spawn(tasks::power::run(hal.power)).ok();
     #[cfg(feature = "usb_serial")]
     spawner.spawn(tasks::usb::run(hal.usb_serial)).ok();
 

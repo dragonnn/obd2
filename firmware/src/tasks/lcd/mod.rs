@@ -69,12 +69,14 @@ impl LcdState {
             warn!("display already on");
             return;
         }
-        info!("display on");
+        debug!("display on");
         let lock = crate::locks::SPI_BUS.lock().await;
         info!("display on got spi lock");
 
         self.display1.clear();
         self.display2.clear();
+        self.display1.flush().await.ok();
+        self.display2.flush().await.ok();
         unwrap!(self.display1.sleep(false).await);
         unwrap!(self.display2.sleep(false).await);
         self.display_on = true;
@@ -89,6 +91,10 @@ impl LcdState {
         let lock = crate::locks::SPI_BUS.lock().await;
         info!("display off got spi lock");
 
+        self.display1.clear();
+        self.display2.clear();
+        self.display1.flush().await.ok();
+        self.display2.flush().await.ok();
         unwrap!(self.display1.sleep(true).await);
         unwrap!(self.display2.sleep(true).await);
         self.display_on = false;
@@ -219,6 +225,10 @@ pub async fn run(mut display1: Display1, mut display2: Display2) {
     info!("lcd init start");
     unwrap!(display1.init(None).await);
     unwrap!(display2.init(None).await);
+    display1.clear();
+    display2.clear();
+    display1.flush().await.ok();
+    display2.flush().await.ok();
     info!("lcd init end");
     let mut context = LcdContext {};
     let mut state =

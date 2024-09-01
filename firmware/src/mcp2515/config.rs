@@ -1,5 +1,7 @@
-use super::registers::{OperationMode, CANCTRL, CNF, RXB0CTRL, RXB1CTRL};
-use super::{AcceptanceFilter, IdHeader};
+use super::{
+    registers::{OperationMode, CANCTRL, CNF, RXB0CTRL, RXB1CTRL},
+    AcceptanceFilter, IdHeader, CLKPRE,
+};
 
 /// Configuration for:
 /// * Clock settings
@@ -20,6 +22,10 @@ impl<'a> Config<'a> {
     #[inline]
     pub fn mode(mut self, mode: OperationMode) -> Self {
         self.canctrl.set_reqop(mode);
+        self
+    }
+    pub fn set_clk_prescaler(mut self, clkpre: CLKPRE) -> Self {
+        self.canctrl.set_clkpre(clkpre);
         self
     }
     #[inline]

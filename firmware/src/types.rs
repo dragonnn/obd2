@@ -19,7 +19,7 @@ pub type Mcp2515 = crate::mcp2515::Mcp2515<
         'static,
         CriticalSectionRawMutex,
         SpiBus,
-        Output<'static, GpioPin<16>>,
+        Output<'static, GpioPin<17>>,
     >,
     Input<'static, GpioPin<4>>,
 >;

@@ -58,6 +58,7 @@ where
 
         let written_canctrl: u8 = config.canctrl.into();
         self.read_registers(0x0F, &mut canctrl).await?;
+        info!("written_canctrl: {:b}", written_canctrl);
         if canctrl[0] != written_canctrl {
             error!("MCP2515 config failed");
         }

@@ -146,9 +146,9 @@ pub fn init() -> Hal {
     let mut cs_display1 = Output::new(io.pins.gpio18, false.into());
     let mut cs_display2 = Output::new(io.pins.gpio19, false.into());
     let mut cs_cap1188 = Output::new(io.pins.gpio20, false.into());
-    let mut cs_mcp2515 = Output::new(io.pins.gpio16, false.into());
+    let mut cs_mcp2515 = Output::new(io.pins.gpio17, false.into());
     let int_mcp2515 = Input::new(io.pins.gpio4, Pull::Up);
-    let mut rs = Output::new(io.pins.gpio22, false.into());
+    let mut rs = Output::new(io.pins.gpio22, true.into());
     let ing = Input::new(io.pins.gpio5, Pull::Up);
     let int_cap1188 = Input::new(io.pins.gpio3, Pull::Up);
     let led = Output::new(io.pins.gpio0, false.into());
@@ -176,10 +176,10 @@ pub fn init() -> Hal {
     static SPI_BUS: StaticCell<Mutex<CriticalSectionRawMutex, SpiBus>> = StaticCell::new();
     let spi_bus = SPI_BUS.init(Mutex::new(SpiBus::new(spi, clocks)));
 
-    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, 6);
-    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, 6);
+    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, 1);
+    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, 1);
     let cap1188_spi = SpiDeviceWithConfig::new(spi_bus, cs_cap1188, 6);
-    let mcp2515_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515, 6);
+    let mcp2515_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515, 1);
     let interface1 = SPIInterface::new(display1_spi, dc);
     let interface2 = SPIInterface::new(display2_spi, dc2);
 
