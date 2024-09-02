@@ -25,11 +25,12 @@ pub struct Power {
     current: f64,
 
     redraw: bool,
+    bounding_box: Option<Rectangle>,
 }
 
 impl Power {
     pub fn new(position: Point) -> Self {
-        Self { position, power: 0.0, current: 0.0, redraw: true }
+        Self { position, power: 0.0, current: 0.0, redraw: true, bounding_box: None }
     }
 
     pub fn update_power(&mut self, power: f64) {
@@ -58,8 +59,13 @@ impl Power {
                 TextStyleBuilder::new().alignment(Alignment::Center).line_height(LineHeight::Percent(100)).build();
 
             let text = Text::with_text_style(text.as_str(), self.position, character_style, text_style);
-            let text_box = text.bounding_box();
-            text_box.draw_styled(&PrimitiveStyleBuilder::new().fill_color(Gray4::BLACK).build(), target)?;
+            let new_bounding_box = text.bounding_box();
+            if new_bounding_box.size.width > self.bounding_box.map(|bb| bb.size.width).unwrap_or(0) {
+                self.bounding_box = Some(new_bounding_box);
+            }
+            if let Some(bb) = self.bounding_box {
+                bb.draw_styled(&PrimitiveStyleBuilder::new().fill_color(Gray4::BLACK).build(), target)?;
+            }
 
             text.draw(target)?;
 
