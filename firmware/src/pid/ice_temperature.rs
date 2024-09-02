@@ -15,7 +15,7 @@ pub struct IceTemperaturePid {
 
 impl Pid for IceTemperaturePid {
     fn request() -> CanFrame {
-        let can_id = StandardId::new(0x7e4).unwrap();
+        let can_id = StandardId::new(0x7df).unwrap();
         CanFrame::new(can_id, &[0x02, 0x01, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap()
     }
 
