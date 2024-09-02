@@ -160,7 +160,9 @@ pub async fn run(mut cap1188: Cap1188) {
             embassy_time::Timer::after(embassy_time::Duration::from_millis(200)).await;
             fast_loops += 1;
             if fast_loops > 10 {
-                cap1188.wait_for_released().await;
+                embassy_time::with_timeout(embassy_time::Duration::from_secs(1), cap1188.wait_for_released())
+                    .await
+                    .ok();
                 fast_loops = 0;
             }
         }
