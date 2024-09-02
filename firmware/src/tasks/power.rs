@@ -1,4 +1,4 @@
-use defmt::error;
+use defmt::{error, warn};
 use embassy_time::{Duration, Timer};
 use esp_hal::{
     rtc_cntl::{get_reset_reason, get_wakeup_cause, SocResetReason},
@@ -9,11 +9,6 @@ use crate::{debug::internal_debug, event::*, power::Power};
 
 #[embassy_executor::task]
 pub async fn run(mut power: Power) {
-    embassy_time::Timer::after(embassy_time::Duration::from_millis(1000)).await;
-
-    KIA_EVENTS.send(KiaEvent::InitIgnitionOn).await;
-    //return;
-    //embassy_time::Timer::after(embassy_time::Duration::from_millis(100000)).await;
     let reason = get_reset_reason(Cpu::ProCpu).unwrap_or(SocResetReason::ChipPowerOn);
     error!("reset reason: {:?}", defmt::Debug2Format(&reason));
     let wake_reason = get_wakeup_cause();
@@ -21,8 +16,11 @@ pub async fn run(mut power: Power) {
 
     let mut sleep_timeout = Duration::from_secs(5);
     //testing
-    KIA_EVENTS.send(KiaEvent::InitIgnitionOn).await;
-    return;
+    if esp_hal::debugger::debugger_connected() {
+        warn!("debugger connected");
+        KIA_EVENTS.send(KiaEvent::InitIgnitionOn).await;
+        return;
+    }
 
     if power.is_ignition_on() {
         internal_debug!("wait for ignition off");
@@ -40,6 +38,6 @@ pub async fn run(mut power: Power) {
     KIA_EVENTS.send(KiaEvent::Shutdown).await;
     Timer::after(sleep_timeout).await;
     defmt::warn!("deep sleep in 100ms");
-    Timer::after(Duration::from_millis(100)).await;
-    //power.deep_sleep(Duration::from_secs(5 * 60));
+    Timer::after(Duration::from_secs(5)).await;
+    power.deep_sleep(Duration::from_secs(5 * 60));
 }

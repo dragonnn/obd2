@@ -141,13 +141,8 @@ impl LcdState {
         let lock = crate::locks::SPI_BUS.lock().await;
         info!("lcd main got spi block");
         let ret = match event {
-            LcdEvent::Obd2Event(Obd2Event::BmsPid(bms_pid)) => {
-                main.update_bms_pid(bms_pid);
-                main.draw(&mut self.display1, &mut self.display2).await;
-                Handled
-            }
-            LcdEvent::Obd2Event(Obd2Event::IceTemperaturePid(ice_temperature_pid)) => {
-                main.update_ice_temperature(ice_temperature_pid);
+            LcdEvent::Obd2Event(obd2_event) => {
+                main.handle_obd2_event(obd2_event);
                 main.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }

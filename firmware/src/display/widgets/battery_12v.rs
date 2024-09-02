@@ -25,7 +25,7 @@ pub struct Battery12V {
 
 impl Battery12V {
     pub fn new(position: Point) -> Self {
-        Self { position, voltage: 12.5, redraw: true, inited: false }
+        Self { position, voltage: 0.0, redraw: true, inited: false }
     }
 
     pub fn update_voltage(&mut self, voltage: f64) {

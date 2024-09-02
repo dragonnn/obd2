@@ -13,7 +13,9 @@
         "LPWR",
         "pids",
         "procmacros",
+        "PROFONT",
         "repr",
+        "rtcio",
         "statig",
         "timg",
         "unlisten"

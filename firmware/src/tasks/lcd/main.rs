@@ -3,9 +3,11 @@ use embedded_graphics::geometry::{Point, Size};
 
 use crate::{
     display::widgets::{
-        Arrow, ArrowDirection, Battery, Battery12V, BatteryOrientation, MotorElectric, MotorIce, Power, Temperature,
+        Arrow, ArrowDirection, Battery, Battery12V, BatteryOrientation, GearboxGear, MotorElectric, MotorIce, Power,
+        Temperature,
     },
-    pid::{BmsPid, IceTemperaturePid},
+    event::Obd2Event,
+    pid::{BmsPid, GearboxGearPid, IceTemperaturePid},
     types::{Display1, Display2, Sh1122},
 };
 
@@ -21,6 +23,8 @@ pub struct LcdMainState {
 
     motor_electric: MotorElectric,
     motor_ice: MotorIce,
+
+    gearbox_gear: GearboxGear,
 }
 
 impl LcdMainState {
@@ -48,6 +52,23 @@ impl LcdMainState {
 
             motor_electric: MotorElectric::new(Point::new(256 - 60, 0)),
             motor_ice: MotorIce::new(Point::new(0, 0)),
+
+            gearbox_gear: GearboxGear::new(Point::new(40, 14)),
+        }
+    }
+
+    pub fn handle_obd2_event(&mut self, event: &Obd2Event) {
+        match event {
+            Obd2Event::BmsPid(bms_pid) => {
+                self.update_bms_pid(bms_pid);
+            }
+            Obd2Event::IceTemperaturePid(ice_temperature_pid) => {
+                self.update_ice_temperature(ice_temperature_pid);
+            }
+            Obd2Event::GearboxGearPid(gearbox_gear_pid) => {
+                self.update_gearbox_gear(gearbox_gear_pid);
+            }
+            _ => {}
         }
     }
 
@@ -72,6 +93,10 @@ impl LcdMainState {
         self.ice_temperature.update_temp(ice_temperature_pid.temperature);
     }
 
+    pub fn update_gearbox_gear(&mut self, gearbox_gear_pid: &GearboxGearPid) {
+        self.gearbox_gear.update_gear(gearbox_gear_pid.gear);
+    }
+
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
         self.hv_battery.draw(display1).ok();
         self.aux_battery.draw(display2).ok();
@@ -80,6 +105,7 @@ impl LcdMainState {
         self.motor_ice.draw(display2).ok();
         self.electric_power.draw(display1).ok();
         self.electric_power_arrow.draw(display1).ok();
+        self.gearbox_gear.draw(display2).ok();
 
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);
