@@ -61,7 +61,11 @@ impl LcdMainState {
         self.electric_power_arrow.update_speed(50.0);
         self.electric_power.update_power(bms_pid.hv_battery_current * bms_pid.hv_dc_voltage);
         self.electric_power.update_current(bms_pid.hv_battery_current);
-        //self.hv_battery.update_cell_voltage_deviation(bms_pid.hv_cell_voltage_deviation);
+        if bms_pid.hv_battery_current > 0.0 {
+            self.electric_power_arrow.update_direction(ArrowDirection::Forward);
+        } else {
+            self.electric_power_arrow.update_direction(ArrowDirection::Reverse);
+        }
     }
 
     pub fn update_ice_temperature(&mut self, ice_temperature_pid: &IceTemperaturePid) {

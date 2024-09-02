@@ -49,7 +49,7 @@ impl Pid for BmsPid {
         let aux_dc_voltage = data[31] as f64 * 0.1;
         info!("aux_dc_voltage: {}", aux_dc_voltage);
         //0_Niro_Battery Current	Batt Current	2101	((Signed(K)*256)+L)/10
-        let hv_battery_current = (data[12] as i32 * 256 + data[13] as i32) as f64 / 10.0;
+        let hv_battery_current = (data[12] as i8 as i32 * 256 + data[13] as i32) as f64 / 10.0;
         warn!("hv_battery_current: {}", hv_battery_current);
 
         Ok(Self {

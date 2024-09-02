@@ -78,7 +78,6 @@ where
     pub async fn touched(&mut self) -> Result<Cap1188Inputs, SPI::Error> {
         let mut touched = [0; 1];
         self.read_register(CAP1188_SENINPUTSTATUS, &mut touched).await?;
-        info!("touched: {=u8:b}", touched[0]);
 
         if touched[0] != 0 {
             let mut main = [0; 1];
@@ -111,6 +110,10 @@ where
     }
 
     pub async fn wait_for_touched(&mut self) {
-        self.int.wait_for_low().await;
+        self.int.wait_for_low().await.ok();
+    }
+
+    pub async fn wait_for_released(&mut self) {
+        self.int.wait_for_any_edge().await.ok();
     }
 }

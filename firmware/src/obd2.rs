@@ -167,7 +167,7 @@ impl Obd2 {
     }
 
     pub async fn handle_pid<PID: Pid>(&mut self) {
-        match with_timeout(Duration::from_millis(2500), self.request_pid::<PID>()).await {
+        match with_timeout(Duration::from_millis(250), self.request_pid::<PID>()).await {
             Ok(Ok(pid_result)) => {
                 KIA_EVENTS.send(KiaEvent::Obd2Event(pid_result.into_event())).await;
             }

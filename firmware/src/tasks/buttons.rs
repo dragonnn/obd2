@@ -1,4 +1,4 @@
-use defmt::{error, info, unwrap, Format};
+use defmt::{error, info, unwrap, warn, Format};
 use embassy_time::Timer;
 
 use crate::{
@@ -48,14 +48,15 @@ pub async fn run(mut cap1188: Cap1188) {
     let mut old_touched = unwrap!(cap1188.touched().await);
     let mut old_touched_bytes = old_touched.into_bytes()[0];
     let mut last_touched = embassy_time::Instant::now();
+    let mut fast_loops = 0;
     info!("cap1188 task running");
     loop {
         if old_touched_bytes > 0 {
             embassy_time::with_timeout(embassy_time::Duration::from_millis(100), cap1188.wait_for_touched()).await.ok();
+            warn!("cap1188 touched timeout");
         } else {
             cap1188.wait_for_touched().await;
         }
-        info!("cap1188 touched");
         let new_touched = unwrap!(cap1188.touched().await);
         let new_touched_bytes = new_touched.into_bytes()[0];
         if new_touched_bytes != old_touched_bytes {
@@ -155,10 +156,13 @@ pub async fn run(mut cap1188: Cap1188) {
         }
         old_touched = new_touched;
         old_touched_bytes = new_touched_bytes;
-        info!("last_touched.elapsed(): {}ms", last_touched.elapsed().as_millis());
         if last_touched.elapsed() < embassy_time::Duration::from_millis(50) {
-            error!("touched: {:?}", new_touched_bytes);
-            embassy_time::Timer::after(embassy_time::Duration::from_millis(80)).await;
+            embassy_time::Timer::after(embassy_time::Duration::from_millis(200)).await;
+            fast_loops += 1;
+            if fast_loops > 10 {
+                cap1188.wait_for_released().await;
+                fast_loops = 0;
+            }
         }
         last_touched = embassy_time::Instant::now();
     }
