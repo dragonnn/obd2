@@ -40,4 +40,8 @@ impl Power {
     pub async fn wait_for_ignition_off(&mut self) {
         self.ing_gpio.wait_for_falling_edge().await;
     }
+
+    pub async fn wait_for_ignition_on(&mut self) {
+        self.ing_gpio.wait_for_rising_edge().await;
+    }
 }
