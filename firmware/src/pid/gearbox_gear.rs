@@ -15,8 +15,10 @@ pub struct GearboxGearPid {
 
 impl Pid for GearboxGearPid {
     fn request() -> CanFrame {
-        let can_id = StandardId::new(0x7df).unwrap();
-        CanFrame::new(can_id, &[0x02, 0x01, 0xA4, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap()
+        //let can_id = StandardId::new(0x7df).unwrap();
+        //CanFrame::new(can_id, &[0x02, 0x01, 0xA4, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap()
+        let can_id = StandardId::new(0x7e2).unwrap();
+        CanFrame::new(can_id, &[0x02, 0x21, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap()
     }
 
     fn parse(data: &[u8]) -> Result<Self, Obd2Error> {
@@ -27,7 +29,7 @@ impl Pid for GearboxGearPid {
         //4 - B
         //5 - C
         //6 - D
-        Ok(Self { gear: (data[5] as i32 * 256 + data[6] as i32) / 1000 })
+        Ok(Self { gear: data[7] as i32 })
     }
 
     fn into_event(self) -> Obd2Event {

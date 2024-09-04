@@ -15,6 +15,8 @@ pub struct BmsPid {
     pub hv_dc_voltage: f64,
     pub hv_soc: f64,
     pub hv_cell_voltage_deviation: f64,
+    pub hv_min_cell_voltage: f64,
+    pub hv_max_cell_voltage: f64,
     pub hv_battery_current: f64,
 
     pub aux_dc_voltage: f64,
@@ -51,6 +53,10 @@ impl Pid for BmsPid {
         //0_Niro_Battery Current	Batt Current	2101	((Signed(K)*256)+L)/10
         let hv_battery_current = (data[12] as i8 as i32 * 256 + data[13] as i32) as f64 / 10.0;
         warn!("hv_battery_current: {}", hv_battery_current);
+        //0_Niro_Minimum Cell Voltage	Min Cell V	2101	z/50
+        let hv_min_cell_voltage = (data[27] as f64) / 50.0;
+        //0_Niro_Maximum Cell Voltage	Max Cell V	2101	x/50
+        let hv_max_cell_voltage = (data[25] as f64) / 50.0;
 
         Ok(Self {
             hv_max_temp,
@@ -58,6 +64,8 @@ impl Pid for BmsPid {
             hv_dc_voltage,
             hv_soc,
             hv_cell_voltage_deviation,
+            hv_min_cell_voltage,
+            hv_max_cell_voltage,
             hv_battery_current,
             aux_dc_voltage,
         })

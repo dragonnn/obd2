@@ -42,7 +42,7 @@ impl GearboxGear {
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
             let mut text: String<16> = String::new();
-            write!(text, "{}", self.gear).unwrap();
+            write!(text, "{}", self.gear).ok();
 
             let character_style = MonoTextStyle::new(&PROFONT_18_POINT, Gray4::WHITE);
 

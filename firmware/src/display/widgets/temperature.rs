@@ -141,7 +141,7 @@ impl Temperature {
 
             let mut text: String<16> = String::new();
 
-            write!(text, "{:.1}°C", self.current_temp).unwrap();
+            write!(text, "{:.1}°C", self.current_temp).ok();
 
             let character_style = MonoTextStyle::new(&PROFONT_9_POINT, Gray4::WHITE);
 

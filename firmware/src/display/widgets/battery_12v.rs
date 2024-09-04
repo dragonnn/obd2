@@ -99,7 +99,7 @@ impl Battery12V {
             let main_height = 30;
 
             let mut text: String<16> = String::new();
-            write!(text, "{:.1}V", self.voltage).unwrap();
+            write!(text, "{:.1}V", self.voltage).ok();
 
             let character_style = MonoTextStyle::new(&PROFONT_7_POINT, Gray4::WHITE);
 
