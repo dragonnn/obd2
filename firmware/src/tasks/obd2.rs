@@ -40,4 +40,5 @@ pub async fn run(mut obd2: Obd2) {
         get_shutdown_signal().next_message(),
     )
     .await;
+    obd2.shutdown().await;
 }

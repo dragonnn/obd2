@@ -109,6 +109,10 @@ where
         self.spi.transaction(&mut [Operation::Write(&buffer)]).await
     }
 
+    pub async fn shutdown(&mut self) -> Result<(), SPI::Error> {
+        self.write_register(0x00, &[0b0001_0000]).await
+    }
+
     pub async fn wait_for_touched(&mut self) {
         self.int.wait_for_low().await.ok();
     }

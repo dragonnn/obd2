@@ -2,6 +2,7 @@ use defmt::{error, unwrap, warn};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, pubsub::PubSubChannel};
 use embassy_time::{Duration, Timer};
 use esp_hal::{
+    reset::SleepSource,
     rtc_cntl::{get_reset_reason, get_wakeup_cause, SocResetReason},
     Cpu,
 };
@@ -38,7 +39,11 @@ pub async fn run(mut power: Power) {
             break;
         } else {
             KIA_EVENTS.send(KiaEvent::InitIgnitionOff).await;
-            sleep_timeout = Duration::from_secs(60);
+            if let SleepSource::Timer = wake_reason {
+                sleep_timeout = Duration::from_millis(200);
+            } else {
+                sleep_timeout = Duration::from_secs(60);
+            }
             if embassy_time::with_timeout(sleep_timeout, power.wait_for_ignition_on()).await.is_err() {
                 defmt::warn!("ignition is off");
                 internal_debug!("ignition already off");
@@ -54,7 +59,12 @@ pub async fn run(mut power: Power) {
     Timer::after(sleep_timeout).await;
     defmt::warn!("deep sleep in 100ms");
     Timer::after(Duration::from_millis(100)).await;
-    power.deep_sleep(sleep_duration);
+    if power.is_ignition_on() {
+        defmt::warn!("ignition is on, not deep sleeping");
+        esp_hal::reset::software_reset();
+    } else {
+        power.deep_sleep(sleep_duration);
+    }
 }
 
 pub fn get_shutdown_signal() -> embassy_sync::pubsub::Subscriber<'static, CriticalSectionRawMutex, (), 1, 16, 1> {

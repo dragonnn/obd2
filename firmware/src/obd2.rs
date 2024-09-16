@@ -57,6 +57,12 @@ impl Obd2 {
         self.mcp2515.apply_interrupts_config(interputs_config).await.unwrap();
     }
 
+    pub async fn shutdown(&mut self) {
+        self.mcp2515.reset().await.unwrap();
+        let config = crate::mcp2515::Config::default().mode(OperationMode::Sleep);
+        self.mcp2515.apply_config(&config).await.unwrap();
+    }
+
     pub async fn request_pid<PID: Pid>(&mut self) -> Result<PID, Obd2Error> {
         let mut _lock = Some(crate::locks::SPI_BUS.lock().await);
 
@@ -148,7 +154,7 @@ impl Obd2 {
                 .is_err()
             {
                 if _lock.is_some() {
-                    error!("timeout waiting for interrupt, drooping SPI lock");
+                    //error!("timeout waiting for interrupt, drooping SPI lock");
                     _lock = None;
                 }
             }
@@ -171,11 +177,11 @@ impl Obd2 {
             }
             Ok(Err(e)) => {
                 internal_debug!("error requesting pid");
-                error!("error requesting pid");
+                //error!("error requesting pid");
             }
             Err(_) => {
                 internal_debug!("timeout requesting pid");
-                error!("timeout requesting pid");
+                //error!("timeout requesting pid");
             }
         }
     }
