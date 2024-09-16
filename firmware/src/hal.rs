@@ -7,14 +7,14 @@ use esp_backtrace as _;
 use esp_hal::{
     clock::{ClockControl, Clocks},
     delay::Delay,
-    dma::{Dma, DmaPriority},
-    dma_descriptors,
+    dma::{Dma, DmaChannel0, DmaPriority, DmaRxBuf, DmaTxBuf},
+    dma_buffers, dma_descriptors,
     gpio::{Input, Io, Output, Pull},
     peripherals::Peripherals,
     prelude::*,
     rtc_cntl::Rtc,
     spi::{
-        master::{prelude::_esp_hal_spi_master_dma_WithDmaSpi2, Spi},
+        master::{Spi, SpiDmaBus},
         FullDuplexMode, SpiMode,
     },
     system::SystemControl,
@@ -50,25 +50,13 @@ macro_rules! mk_static {
 }
 
 pub struct SpiBus {
-    spi: esp_hal::spi::master::dma::SpiDma<
-        'static,
-        esp_hal::peripherals::SPI2,
-        esp_hal::dma::DmaChannel0,
-        FullDuplexMode,
-        Async,
-    >,
+    spi: SpiDmaBus<'static, esp_hal::peripherals::SPI2, DmaChannel0, FullDuplexMode, Async>,
     clocks: &'static Clocks<'static>,
 }
 
 impl SpiBus {
     pub fn new(
-        spi: esp_hal::spi::master::dma::SpiDma<
-            'static,
-            esp_hal::peripherals::SPI2,
-            esp_hal::dma::DmaChannel0,
-            FullDuplexMode,
-            Async,
-        >,
+        spi: SpiDmaBus<'static, esp_hal::peripherals::SPI2, DmaChannel0, FullDuplexMode, Async>,
         clocks: &'static Clocks<'static>,
     ) -> Self {
         Self { spi, clocks }
@@ -81,23 +69,23 @@ impl embedded_hal_async::spi::ErrorType for SpiBus {
 
 impl embedded_hal_async::spi::SpiBus for SpiBus {
     async fn read(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
-        self.spi.read(words).await
+        self.spi.read_async(words).await
     }
 
     async fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
-        self.spi.write(words).await
+        self.spi.write_async(words).await
     }
 
     async fn transfer(&mut self, read: &mut [u8], write: &[u8]) -> Result<(), Self::Error> {
-        self.spi.transfer(read, write).await
+        self.spi.transfer_async(read, write).await
     }
 
     async fn transfer_in_place(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
-        self.spi.transfer_in_place(words).await
+        self.spi.transfer_in_place_async(words).await
     }
 
     async fn flush(&mut self) -> Result<(), Self::Error> {
-        self.spi.flush().await
+        self.spi.flush_async().await
     }
 }
 
@@ -134,13 +122,16 @@ pub fn init() -> Hal {
     let mosi = io.pins.gpio7;
     let miso = io.pins.gpio2;
 
-    let (descriptors, rx_descriptors) = dma_descriptors!(32000);
+    let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(32000);
+    let dma_rx_buf = DmaRxBuf::new(rx_descriptors, rx_buffer).unwrap();
+    let dma_tx_buf = DmaTxBuf::new(tx_descriptors, tx_buffer).unwrap();
 
     let spi = Spi::new(peripherals.SPI2, 6.MHz(), SpiMode::Mode0, &clocks)
         .with_sck(sclk)
         .with_mosi(mosi)
         .with_miso(miso)
-        .with_dma(dma_channel.configure_for_async(false, DmaPriority::Priority0), descriptors, rx_descriptors);
+        .with_dma(dma_channel.configure_for_async(false, DmaPriority::Priority0))
+        .with_buffers(dma_tx_buf, dma_rx_buf);
 
     let mut dc = Output::new(io.pins.gpio23, false.into());
     let mut cs_display1 = Output::new(io.pins.gpio18, false.into());

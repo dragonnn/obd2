@@ -4,13 +4,7 @@ use esp_hal::{gpio::*, spi::FullDuplexMode, Async};
 
 pub type Spi = Mutex<
     CriticalSectionRawMutex,
-    esp_hal::spi::master::dma::SpiDma<
-        'static,
-        esp_hal::peripherals::SPI2,
-        esp_hal::dma::Channel0,
-        FullDuplexMode,
-        Async,
-    >,
+    esp_hal::spi::master::SpiDma<'static, esp_hal::peripherals::SPI2, esp_hal::dma::Channel0, FullDuplexMode, Async>,
 >;
 
 pub use crate::hal::SpiBus;

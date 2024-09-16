@@ -8,7 +8,7 @@ use esp_hal::{
     dma::*,
     gpio::*,
     peripherals::*,
-    spi::{master::dma::SpiDma, FullDuplexMode},
+    spi::{master::SpiDma, FullDuplexMode},
 };
 use sh1122::{async_display::buffered_graphics::AsyncBufferedGraphicsMode, AsyncDisplay};
 

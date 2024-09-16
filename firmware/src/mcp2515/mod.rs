@@ -9,7 +9,7 @@ use esp_hal::{
     dma::Channel0,
     gpio::InputPin,
     peripherals::SPI2,
-    spi::{master::dma::SpiDma, FullDuplexMode},
+    spi::{master::SpiDma, FullDuplexMode},
 };
 
 mod bitrates;
