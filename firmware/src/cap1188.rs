@@ -17,6 +17,20 @@ pub struct Cap1188Inputs {
     pub b7: bool,
 }
 
+#[bitfield]
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Format, Default)]
+pub struct Cap1188Configuration1 {
+    b0: bool,
+    b1: bool,
+    b2: bool,
+    pub max_dur_en: bool,
+    pub dis_ana_noise: bool,
+    pub dis_dig_noise: bool,
+    pub wake_cfg: bool,
+    pub smb_timeout: bool,
+}
+
 pub struct Cap1188<SPI, INT> {
     spi: SPI,
     int: INT,
@@ -41,6 +55,7 @@ const CAP1188_REV: u8 = 0xFF; // Revision register. Stores an 8-bit value that r
 const CAP1188_MAIN: u8 = 0x00; // Main Control register. Controls the primary power state of the device.
 const CAP1188_MAIN_INT: u8 = 0x01; // Main Control Int register. Indicates that there is an interrupt.
 const CAP1188_LEDPOL: u8 = 0x73; // LED Polarity. Controls the output polarity of LEDs.
+const CAP1188_CONFIGURATION_1: u8 = 0x20; // Configuration 1;
 
 impl<SPI, INT> Cap1188<SPI, INT>
 where
@@ -71,6 +86,12 @@ where
         self.write_register(CAP1188_MTBLK, &[0]).await?;
         self.write_register(CAP1188_LEDLINK, &[0xFF]).await?;
         self.write_register(CAP1188_STANDBYCFG, &[0x30]).await?;
+        self.write_register(CAP1188_MAIN, &[0b1000_0000]).await?;
+        self.write_register(
+            CAP1188_CONFIGURATION_1,
+            &Cap1188Configuration1::from_bytes([0x20]).with_dis_ana_noise(true).into_bytes(),
+        )
+        .await?;
 
         Ok(true)
     }
@@ -110,7 +131,7 @@ where
     }
 
     pub async fn shutdown(&mut self) -> Result<(), SPI::Error> {
-        self.write_register(0x00, &[0b0001_0000]).await
+        self.write_register(CAP1188_MAIN, &[0b0001_0000]).await
     }
 
     pub async fn wait_for_touched(&mut self) {

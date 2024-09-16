@@ -3,8 +3,8 @@ use embedded_graphics::geometry::{Point, Size};
 
 use crate::{
     display::widgets::{
-        Arrow, ArrowDirection, Battery, Battery12V, BatteryOrientation, GearboxGear, MotorElectric, MotorIce, Power,
-        Temperature,
+        Arrow, ArrowDirection, Battery, Battery12V, BatteryOrientation, GearboxGear, IceFuelRate, MotorElectric,
+        MotorIce, Power, Temperature, Value,
     },
     event::Obd2Event,
     pid::{BmsPid, GearboxGearPid, IceTemperaturePid},
@@ -17,6 +17,7 @@ pub struct LcdMainState {
     aux_battery: Battery12V,
 
     ice_temperature: Temperature,
+    ice_fuel_rate: IceFuelRate,
 
     electric_power: Power,
     electric_power_arrow: Arrow,
@@ -25,6 +26,7 @@ pub struct LcdMainState {
     motor_ice: MotorIce,
 
     gearbox_gear: GearboxGear,
+    vehicle_speed: Value,
 }
 
 impl LcdMainState {
@@ -41,6 +43,7 @@ impl LcdMainState {
             ),
             aux_battery: Battery12V::new(Point::new(256 - 41 - 22, 31)),
             ice_temperature: Temperature::new(Point::new(256 - 21, 0), Size::new(16, 64), 0.0, 130.0, 4),
+            ice_fuel_rate: IceFuelRate::new(Point::new(30, 63)),
 
             electric_power: Power::new(Point::new(128 + 36, 14)),
             electric_power_arrow: Arrow::new(
@@ -54,6 +57,7 @@ impl LcdMainState {
             motor_ice: MotorIce::new(Point::new(0, 0)),
 
             gearbox_gear: GearboxGear::new(Point::new(40, 14)),
+            vehicle_speed: Value::new(Point::new(58, 32), &profont::PROFONT_14_POINT, "km/h", 0),
         }
     }
 
@@ -63,10 +67,16 @@ impl LcdMainState {
                 self.update_bms_pid(bms_pid);
             }
             Obd2Event::IceTemperaturePid(ice_temperature_pid) => {
-                self.update_ice_temperature(ice_temperature_pid);
+                self.ice_temperature.update_temp(ice_temperature_pid.temperature);
             }
             Obd2Event::GearboxGearPid(gearbox_gear_pid) => {
-                self.update_gearbox_gear(gearbox_gear_pid);
+                self.gearbox_gear.update_gear(gearbox_gear_pid.gear);
+            }
+            Obd2Event::IceFuelRatePid(ice_fuel_rate_pid) => {
+                self.ice_fuel_rate.update_ice_fuel_rate(ice_fuel_rate_pid.fuel_rate);
+            }
+            Obd2Event::VehicleSpeedPid(vehicle_speed_pid) => {
+                self.vehicle_speed.update_value(vehicle_speed_pid.vehicle_speed as f64);
             }
             _ => {}
         }
@@ -89,14 +99,6 @@ impl LcdMainState {
         }
     }
 
-    pub fn update_ice_temperature(&mut self, ice_temperature_pid: &IceTemperaturePid) {
-        self.ice_temperature.update_temp(ice_temperature_pid.temperature);
-    }
-
-    pub fn update_gearbox_gear(&mut self, gearbox_gear_pid: &GearboxGearPid) {
-        self.gearbox_gear.update_gear(gearbox_gear_pid.gear);
-    }
-
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
         self.hv_battery.draw(display1).ok();
         self.aux_battery.draw(display2).ok();
@@ -106,6 +108,8 @@ impl LcdMainState {
         self.electric_power.draw(display1).ok();
         self.electric_power_arrow.draw(display1).ok();
         self.gearbox_gear.draw(display2).ok();
+        self.ice_fuel_rate.draw(display2).ok();
+        self.vehicle_speed.draw(display2).ok();
 
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);

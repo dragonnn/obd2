@@ -46,13 +46,13 @@ impl Pid for BmsPid {
 
         let hv_cell_voltage_deviation = data[22] as f64 / 50.0;
 
-        info!("hv_cell_voltage_deviation: {}", hv_cell_voltage_deviation);
+        //info!("hv_cell_voltage_deviation: {}", hv_cell_voltage_deviation);
         //0_Niro_Auxillary Battery Voltage	Aux Batt Volts	2101	ad*0.1
         let aux_dc_voltage = data[31] as f64 * 0.1;
-        info!("aux_dc_voltage: {}", aux_dc_voltage);
+        //info!("aux_dc_voltage: {}", aux_dc_voltage);
         //0_Niro_Battery Current	Batt Current	2101	((Signed(K)*256)+L)/10
         let hv_battery_current = (data[12] as i8 as i32 * 256 + data[13] as i32) as f64 / 10.0;
-        warn!("hv_battery_current: {}", hv_battery_current);
+        //warn!("hv_battery_current: {}", hv_battery_current);
         //0_Niro_Minimum Cell Voltage	Min Cell V	2101	z/50
         let hv_min_cell_voltage = (data[27] as f64) / 50.0;
         //0_Niro_Maximum Cell Voltage	Max Cell V	2101	x/50

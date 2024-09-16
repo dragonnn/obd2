@@ -95,7 +95,6 @@ impl Obd2 {
 
                 match obd2_frame_type {
                     0x02 => {
-                        info!("single frame: {}", can_frame.data);
                         internal_debug!("single frame {:x?}", can_frame.data);
                         obd2_data = Some(can_frame.data.as_slice());
                         break 'outer;
@@ -125,7 +124,7 @@ impl Obd2 {
                                 if self.obd2_message_buffer.len() >= obd2_message_length {
                                     //self.obd2_message_buffer.truncate(obd2_message_length);
                                     obd2_data = Some(self.obd2_message_buffer.as_slice());
-                                    info!("got last consecutive frame: {}", new_obd2_message_id);
+                                    //info!("got last consecutive frame: {}", new_obd2_message_id);
                                     break 'outer;
                                 }
                                 obd2_message_id = new_obd2_message_id;
@@ -139,7 +138,6 @@ impl Obd2 {
                     _ => {
                         if can_frame.data[0] == 0x03 {
                             internal_debug!("single frame in 0x03 {:x?}", can_frame.data);
-                            info!("single frame in _: {}", can_frame.data);
                             obd2_data = Some(can_frame.data.as_slice());
                             break 'outer;
                         } else {
@@ -159,8 +157,6 @@ impl Obd2 {
                 }
             }
         }
-
-        info!("obd2_data: {:?}", obd2_data);
 
         if let Some(obd2_data) = obd2_data {
             PID::parse(obd2_data)

@@ -54,7 +54,6 @@ impl KiaState {
 
     #[state()]
     async fn ignition_on(&mut self, context: &mut KiaContext, event: &KiaEvent) -> Response<State> {
-        info!("ignition_on got event: {:?}", event);
         match event {
             KiaEvent::Shutdown => {
                 LCD_EVENTS.send(LcdEvent::PowerOff).await;

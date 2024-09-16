@@ -79,7 +79,6 @@ impl Arrow {
         if self.speed > 4.5 {
             self.speed = 4.5;
         }
-        info!("color: {}, speed: {}", self.color, self.speed);
     }
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {

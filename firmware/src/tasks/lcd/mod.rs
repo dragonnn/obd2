@@ -137,9 +137,7 @@ impl LcdState {
 
     #[state(entry_action = "enter_main", superstate = "state_dispatch")]
     async fn main(&mut self, main: &mut LcdMainState, event: &LcdEvent) -> Response<State> {
-        info!("lcd main got event: {:?}", event);
         let lock = crate::locks::SPI_BUS.lock().await;
-        info!("lcd main got spi block");
         let ret = match event {
             LcdEvent::Obd2Event(obd2_event) => {
                 main.handle_obd2_event(obd2_event);
