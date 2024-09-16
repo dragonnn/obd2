@@ -35,10 +35,10 @@ pub struct Obd2 {
 
 impl Obd2 {
     pub fn new(mcp2515: Mcp2515) -> Self {
-        static obd2_message_buffer_static: static_cell::StaticCell<heapless::Vec<u8, 4095>> =
+        static OBD2_MESSAGE_BUFFER_STATIC: static_cell::StaticCell<heapless::Vec<u8, 4095>> =
             static_cell::StaticCell::new();
 
-        let obd2_message_buffer = obd2_message_buffer_static.init(heapless::Vec::new());
+        let obd2_message_buffer = OBD2_MESSAGE_BUFFER_STATIC.init(heapless::Vec::new());
 
         Self { mcp2515, obd2_message_buffer }
     }
@@ -63,11 +63,9 @@ impl Obd2 {
         self.mcp2515.clear_interrupts().await?;
         let request = PID::request();
 
-        internal_debug!("req pid: {:x?}", request.data);
-        //5 ms flow control
+        internal_debug!("req pid {:x}: {:x?}", request.id_header.get_i32(), request.data);
         let flow_control = CanFrame::new(request.id(), &[0x30, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap();
         self.mcp2515.load_tx_buffer(TxBuffer::TXB0, &request).await?;
-        error!("sending obd2 request");
         self.mcp2515.request_to_send(TxBuffer::TXB0).await?;
 
         let mut can_frames = [None, None];
@@ -172,12 +170,12 @@ impl Obd2 {
                 KIA_EVENTS.send(KiaEvent::Obd2Event(pid_result.into_event())).await;
             }
             Ok(Err(e)) => {
-                internal_debug!("error requesting bms pid");
-                error!("error requesting bms pid");
+                internal_debug!("error requesting pid");
+                error!("error requesting pid");
             }
             Err(_) => {
-                internal_debug!("timeout requesting bms pid");
-                error!("timeout requesting bms pid");
+                internal_debug!("timeout requesting pid");
+                error!("timeout requesting pid");
             }
         }
     }
