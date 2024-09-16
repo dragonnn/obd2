@@ -14,12 +14,7 @@ pub struct IdHeader {
 impl IdHeader {
     pub fn with_two_data_bytes(id: StandardId, bytes: [u8; 2]) -> Self {
         let id = id.as_raw();
-        IdHeader {
-            sidh: (id >> 3) as u8,
-            sidl: (id as u8 & 0b0000_0111) << 5,
-            eid8: bytes[0],
-            eid0: bytes[1],
-        }
+        IdHeader { sidh: (id >> 3) as u8, sidl: (id as u8 & 0b0000_0111) << 5, eid8: bytes[0], eid0: bytes[1] }
     }
 
     pub fn id(&self) -> Id {
@@ -48,6 +43,14 @@ impl IdHeader {
     pub(crate) fn into_bytes(self) -> [u8; 4] {
         [self.sidh, self.sidl, self.eid8, self.eid0]
     }
+
+    pub fn get_i32(&self) -> i32 {
+        let id = self.id();
+        match id {
+            Id::Standard(id) => id.as_raw() as i32,
+            Id::Extended(id) => id.as_raw() as i32,
+        }
+    }
 }
 
 impl From<Id> for IdHeader {
@@ -62,12 +65,7 @@ impl From<StandardId> for IdHeader {
     #[inline]
     fn from(id: StandardId) -> Self {
         let id = id.as_raw();
-        IdHeader {
-            sidh: (id >> 3) as u8,
-            sidl: (id as u8 & 0b0000_0111) << 5,
-            eid8: 0,
-            eid0: 0,
-        }
+        IdHeader { sidh: (id >> 3) as u8, sidl: (id as u8 & 0b0000_0111) << 5, eid8: 0, eid0: 0 }
     }
 }
 impl From<ExtendedId> for IdHeader {
@@ -77,9 +75,7 @@ impl From<ExtendedId> for IdHeader {
 
         IdHeader {
             sidh: (id >> 21) as u8,
-            sidl: (((id >> 13) & 0b11100000) as u8)
-                | 0b0000_1000
-                | (((id >> 16) & 0b0000_0011) as u8),
+            sidl: (((id >> 13) & 0b11100000) as u8) | 0b0000_1000 | (((id >> 16) & 0b0000_0011) as u8),
             eid8: (id >> 8) as u8,
             eid0: id as u8,
         }
