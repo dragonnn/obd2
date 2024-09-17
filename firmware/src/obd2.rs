@@ -13,7 +13,7 @@ use crate::{
     mcp2515::{
         clock_16mhz, clock_8mhz, CanFrame, OperationMode, RxBuffer, TxBuffer, CANINTE, CLKPRE, RXB0CTRL, RXB1CTRL, RXM,
     },
-    tasks::obd2::Obd2Debug,
+    tasks::{lcd::obd2_debug_pids_enabled, obd2::Obd2Debug},
     types::Mcp2515,
 };
 
@@ -164,8 +164,10 @@ impl Obd2 {
 
         if let Some(obd2_data) = obd2_data {
             let pid = PID::parse(obd2_data)?;
-            let mut buffer = alloc::vec::Vec::with_capacity(64);
-            buffer.extend_from_slice(obd2_data);
+            let mut buffer = alloc::vec::Vec::new();
+            if obd2_debug_pids_enabled() {
+                buffer.extend_from_slice(obd2_data);
+            }
             Ok((pid, buffer))
         } else {
             error!("no obd2_data found");
@@ -176,26 +178,36 @@ impl Obd2 {
     pub async fn handle_pid<PID: Pid + core::any::Any>(&mut self) {
         let type_id = TypeId::of::<PID>();
         let mut errors = self.obd2_pid_errors.get(&type_id).map(|errors| *errors).unwrap_or(0);
+        let obd2_debug_pids_enabled = obd2_debug_pids_enabled();
         if errors < 10 {
             match with_timeout(Duration::from_millis(250), self.request_pid::<PID>()).await {
                 Ok(Ok((pid_result, buffer))) => {
                     KIA_EVENTS.send(KiaEvent::Obd2Event(pid_result.into_event())).await;
-                    KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(Some(buffer)))).await;
+                    if obd2_debug_pids_enabled {
+                        KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(Some(buffer)))).await;
+                    }
+                    errors = 0;
                 }
                 Ok(Err(_e)) => {
                     internal_debug!("error requesting pid");
-                    KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;
+                    if obd2_debug_pids_enabled {
+                        KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;
+                    }
                     errors += 1;
                 }
                 Err(_) => {
                     internal_debug!("timeout requesting pid");
-                    KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;
+                    if obd2_debug_pids_enabled {
+                        KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;
+                    }
                     errors += 1;
                 }
             }
         } else {
             warn!("too many errors for pid");
-            KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;
+            if obd2_debug_pids_enabled {
+                KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;
+            }
         }
 
         self.obd2_pid_errors.insert(type_id, errors).ok();
