@@ -1,3 +1,5 @@
+use core::sync::atomic::AtomicBool;
+
 use defmt::*;
 
 use crate::{
@@ -6,6 +8,8 @@ use crate::{
     types::{Display1, Display2},
 };
 
+static OBD2_DEBUG_PIDS_ENABLED: AtomicBool = AtomicBool::new(false);
+
 #[derive(Default)]
 pub struct LcdObd2Pids {
     debug: Obd2DebugSelector,
@@ -13,6 +17,7 @@ pub struct LcdObd2Pids {
 
 impl LcdObd2Pids {
     pub fn new() -> Self {
+        OBD2_DEBUG_PIDS_ENABLED.store(true, core::sync::atomic::Ordering::Relaxed);
         Self { debug: Obd2DebugSelector::new() }
     }
 
@@ -25,4 +30,14 @@ impl LcdObd2Pids {
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);
     }
+}
+
+impl Drop for LcdObd2Pids {
+    fn drop(&mut self) {
+        OBD2_DEBUG_PIDS_ENABLED.store(false, core::sync::atomic::Ordering::Relaxed);
+    }
+}
+
+pub fn obd2_debug_pids_enabled() -> bool {
+    OBD2_DEBUG_PIDS_ENABLED.load(core::sync::atomic::Ordering::Relaxed)
 }
