@@ -19,6 +19,24 @@ pub enum Obd2Event {
     VehicleSpeedPid(pid::VehicleSpeedPid),
 }
 
+#[derive(PartialEq, Clone)]
+pub struct Obd2Debug {
+    pub type_id: &'static str,
+    pub data: Option<alloc::vec::Vec<u8>>,
+}
+
+impl Obd2Debug {
+    pub fn new<PID: Pid + core::any::Any>(data: Option<alloc::vec::Vec<u8>>) -> Self {
+        Self { type_id: core::any::type_name::<PID>().split("::").last().unwrap_or_default(), data }
+    }
+}
+
+impl defmt::Format for Obd2Debug {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "Obd2Debug {}", self.type_id);
+    }
+}
+
 #[embassy_executor::task]
 pub async fn run(mut obd2: Obd2) {
     info!("obd2 task started");

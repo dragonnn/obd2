@@ -16,12 +16,14 @@ use crate::{
 mod debug;
 mod main;
 mod menu;
+mod obd2_pids;
 
 use debug::LcdDebugState;
 use main::LcdMainState;
 use menu::LcdMenuState;
+use obd2_pids::LcdObd2Pids;
 
-use super::buttons::Action;
+use super::{buttons::Action, obd2::Obd2Debug};
 
 pub static EVENTS: Channel<CriticalSectionRawMutex, LcdEvent, 16> = Channel::new();
 
@@ -35,6 +37,7 @@ pub enum LcdEvent {
     Menu,
     DebugLine(String<DEBUG_STRING_LEN>),
     Obd2Event(Obd2Event),
+    Obd2Debug(Obd2Debug),
     Button(crate::tasks::buttons::Action),
 }
 
@@ -155,6 +158,8 @@ impl LcdState {
         let lock = crate::locks::SPI_BUS.lock().await;
         warn!("enter_debug");
         self.display_on().await;
+        self.display1.clear();
+        self.display2.clear();
         debug.draw(&mut self.display1, &mut self.display2).await;
     }
 
@@ -195,6 +200,34 @@ impl LcdState {
                     return transition;
                 }
                 menu.draw(&mut self.display1, &mut self.display2).await;
+                Handled
+            }
+            _ => Super,
+        }
+    }
+
+    #[action]
+    async fn enter_obd2_pids(&mut self, obd2_pids: &mut LcdObd2Pids) {
+        let lock = crate::locks::SPI_BUS.lock().await;
+        warn!("enter_debug");
+        self.display_on().await;
+        self.display1.clear();
+        self.display2.clear();
+        obd2_pids.draw(&mut self.display1, &mut self.display2).await;
+    }
+
+    #[state(entry_action = "enter_obd2_pids", superstate = "state_dispatch")]
+    async fn obd2_pids(
+        &mut self,
+        context: &mut LcdContext,
+        obd2_pids: &mut LcdObd2Pids,
+        event: &LcdEvent,
+    ) -> Response<State> {
+        let lock = crate::locks::SPI_BUS.lock().await;
+        match event {
+            LcdEvent::Obd2Debug(obd2_debug) => {
+                obd2_pids.handle_obd2_debug(obd2_debug);
+                obd2_pids.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }
             _ => Super,

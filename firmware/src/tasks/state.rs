@@ -2,6 +2,7 @@ use defmt::*;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 use statig::prelude::*;
 
+use super::obd2::Obd2Debug;
 use crate::{
     event::{LcdEvent, Obd2Event, LCD_EVENTS},
     tasks::buttons::{Action, Button},
@@ -18,6 +19,7 @@ pub enum KiaEvent {
     Shutdown,
     Button(crate::tasks::buttons::Action),
     Obd2Event(Obd2Event),
+    Obd2Debug(Obd2Debug),
 }
 
 #[derive(Default)]
@@ -61,6 +63,10 @@ impl KiaState {
             }
             KiaEvent::Obd2Event(obd2_event) => {
                 LCD_EVENTS.send(LcdEvent::Obd2Event(obd2_event.clone())).await;
+                Handled
+            }
+            KiaEvent::Obd2Debug(obd2_debug) => {
+                LCD_EVENTS.send(LcdEvent::Obd2Debug(obd2_debug.clone())).await;
                 Handled
             }
             KiaEvent::Button(action) => {

@@ -1,9 +1,10 @@
-use core::convert::Infallible;
+use core::{any::TypeId, convert::Infallible};
 
 use defmt::{error, info, unwrap, warn};
 use embassy_embedded_hal::shared_bus::SpiDeviceError;
 use embassy_time::{with_timeout, Duration};
 use embedded_can::Frame as _;
+use heapless::Entry;
 use static_cell::make_static;
 
 use crate::{
@@ -12,6 +13,7 @@ use crate::{
     mcp2515::{
         clock_16mhz, clock_8mhz, CanFrame, OperationMode, RxBuffer, TxBuffer, CANINTE, CLKPRE, RXB0CTRL, RXB1CTRL, RXM,
     },
+    tasks::obd2::Obd2Debug,
     types::Mcp2515,
 };
 
@@ -31,6 +33,7 @@ impl From<SpiDeviceError<esp_hal::spi::Error, Infallible>> for Obd2Error {
 pub struct Obd2 {
     mcp2515: Mcp2515,
     obd2_message_buffer: &'static mut heapless::Vec<u8, 4095>,
+    obd2_pid_errors: heapless::FnvIndexMap<TypeId, usize, 32>,
 }
 
 impl Obd2 {
@@ -39,8 +42,9 @@ impl Obd2 {
             static_cell::StaticCell::new();
 
         let obd2_message_buffer = OBD2_MESSAGE_BUFFER_STATIC.init(heapless::Vec::new());
+        let obd2_pid_errors = heapless::FnvIndexMap::new();
 
-        Self { mcp2515, obd2_message_buffer }
+        Self { mcp2515, obd2_message_buffer, obd2_pid_errors }
     }
 
     pub async fn init(&mut self) {
@@ -63,7 +67,7 @@ impl Obd2 {
         self.mcp2515.apply_config(&config).await.unwrap();
     }
 
-    pub async fn request_pid<PID: Pid>(&mut self) -> Result<PID, Obd2Error> {
+    pub async fn request_pid<PID: Pid>(&mut self) -> Result<(PID, alloc::vec::Vec<u8>), Obd2Error> {
         let mut _lock = Some(crate::locks::SPI_BUS.lock().await);
 
         self.mcp2515.clear_interrupts().await?;
@@ -159,27 +163,42 @@ impl Obd2 {
         }
 
         if let Some(obd2_data) = obd2_data {
-            PID::parse(obd2_data)
+            let pid = PID::parse(obd2_data)?;
+            let mut buffer = alloc::vec::Vec::with_capacity(64);
+            buffer.extend_from_slice(obd2_data);
+            Ok((pid, buffer))
         } else {
             error!("no obd2_data found");
             Err(Obd2Error::DataNotFound)
         }
     }
 
-    pub async fn handle_pid<PID: Pid>(&mut self) {
-        match with_timeout(Duration::from_millis(250), self.request_pid::<PID>()).await {
-            Ok(Ok(pid_result)) => {
-                KIA_EVENTS.send(KiaEvent::Obd2Event(pid_result.into_event())).await;
+    pub async fn handle_pid<PID: Pid + core::any::Any>(&mut self) {
+        let type_id = TypeId::of::<PID>();
+        let mut errors = self.obd2_pid_errors.get(&type_id).map(|errors| *errors).unwrap_or(0);
+        if errors < 10 {
+            match with_timeout(Duration::from_millis(250), self.request_pid::<PID>()).await {
+                Ok(Ok((pid_result, buffer))) => {
+                    KIA_EVENTS.send(KiaEvent::Obd2Event(pid_result.into_event())).await;
+                    KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(Some(buffer)))).await;
+                }
+                Ok(Err(_e)) => {
+                    internal_debug!("error requesting pid");
+                    KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;
+                    errors += 1;
+                }
+                Err(_) => {
+                    internal_debug!("timeout requesting pid");
+                    KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;
+                    errors += 1;
+                }
             }
-            Ok(Err(e)) => {
-                internal_debug!("error requesting pid");
-                //error!("error requesting pid");
-            }
-            Err(_) => {
-                internal_debug!("timeout requesting pid");
-                //error!("timeout requesting pid");
-            }
+        } else {
+            warn!("too many errors for pid");
+            KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;
         }
+
+        self.obd2_pid_errors.insert(type_id, errors).ok();
     }
 }
 
