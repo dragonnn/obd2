@@ -17,11 +17,13 @@ mod debug;
 mod main;
 mod menu;
 mod obd2_pids;
+mod settings;
 
 use debug::LcdDebugState;
 use main::LcdMainState;
 use menu::LcdMenuState;
 use obd2_pids::LcdObd2Pids;
+use settings::LcdSettingsState;
 
 use super::{buttons::Action, obd2::Obd2Debug};
 
@@ -231,6 +233,29 @@ impl LcdState {
                 obd2_pids.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }
+            _ => Super,
+        }
+    }
+
+    #[action]
+    async fn enter_settings(&mut self, settings: &mut LcdSettingsState) {
+        let lock = crate::locks::SPI_BUS.lock().await;
+        warn!("enter_debug");
+        self.display_on().await;
+        self.display1.clear();
+        self.display2.clear();
+        settings.draw(&mut self.display1, &mut self.display2).await;
+    }
+
+    #[state(entry_action = "enter_settings", superstate = "state_dispatch")]
+    async fn settings(
+        &mut self,
+        context: &mut LcdContext,
+        settings: &mut LcdSettingsState,
+        event: &LcdEvent,
+    ) -> Response<State> {
+        let lock = crate::locks::SPI_BUS.lock().await;
+        match event {
             _ => Super,
         }
     }

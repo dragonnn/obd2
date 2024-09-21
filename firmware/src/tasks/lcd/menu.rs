@@ -8,7 +8,7 @@ use crate::{
     display::widgets::DebugScroll,
     tasks::{
         buttons::{Action, Button},
-        lcd::{debug::LcdDebugState, main::LcdMainState, obd2_pids::LcdObd2Pids},
+        lcd::{debug::LcdDebugState, main::LcdMainState, obd2_pids::LcdObd2Pids, settings::LcdSettingsState},
     },
     types::{Display1, Display2},
 };
@@ -27,8 +27,9 @@ impl LcdMenuState {
             Action::Pressed(Button::B4) => Some(Transition(State::main(LcdMainState::new()))),
             Action::Pressed(Button::B2) => Some(Transition(State::debug(LcdDebugState::new()))),
             Action::Pressed(Button::B1) => Some(Transition(State::obd2_pids(LcdObd2Pids::new()))),
+            Action::Pressed(Button::B0) => Some(Transition(State::settings(LcdSettingsState::new()))),
             Action::Pressed(Button::B3) => {
-                esp_hal::reset::software_reset();
+                //esp_hal::reset::software_reset();
                 None
             }
             _ => None,
@@ -42,6 +43,9 @@ impl LcdMenuState {
         let icon = embedded_iconoir::icons::size48px::weather::SnowFlake::new(GrayColor::WHITE);
         let image = Image::new(&icon, Point { x: 52, y: 0 });
         image.draw(display1).unwrap();
+        let icon = embedded_iconoir::icons::size48px::system::Settings::new(GrayColor::WHITE);
+        let image = Image::new(&icon, Point { x: 52 * 1, y: 0 });
+        image.draw(display2).unwrap();
         let icon = embedded_iconoir::icons::size48px::editor::List::new(GrayColor::WHITE);
         let image = Image::new(&icon, Point { x: 52 * 2, y: 0 });
         image.draw(display2).unwrap();

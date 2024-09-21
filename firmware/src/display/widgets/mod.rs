@@ -9,7 +9,9 @@ mod motor_electric;
 mod motor_ice;
 mod obd2_debug_selector;
 mod power;
+mod slider;
 mod temperature;
+mod text;
 mod value;
 
 pub use arrow::{Arrow, ArrowDirection};
@@ -23,5 +25,7 @@ pub use motor_electric::MotorElectric;
 pub use motor_ice::MotorIce;
 pub use obd2_debug_selector::Obd2DebugSelector;
 pub use power::Power;
+pub use slider::Slider;
 pub use temperature::Temperature;
+pub use text::Text;
 pub use value::Value;

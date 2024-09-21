@@ -1521,6 +1521,7 @@ dependencies = [
  "embedded-graphics-core",
  "embedded-hal 1.0.0",
  "itertools",
+ "modular-bitfield",
  "nb 1.1.0",
 ]
 
