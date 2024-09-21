@@ -204,7 +204,6 @@ impl Obd2 {
                 }
             }
         } else {
-            warn!("too many errors for pid");
             if obd2_debug_pids_enabled {
                 KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;
             }

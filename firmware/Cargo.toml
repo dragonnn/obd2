@@ -21,6 +21,15 @@ esp-backtrace = { version = "0.14.1", features = [
     "exception-handler",
     "defmt",
 ] }
+esp-wifi = { version = "0.9.1", features = [
+    "esp32c6",
+    "wifi",
+    "ble",
+    "defmt",
+    "embassy-net",
+    "wifi-default",
+    "phy-enable-usb",
+], default-features = false }
 riscv = "0.11.1"
 defmt = "0.3.6"
 #defmt-serial = "0.8.0"
@@ -107,3 +116,6 @@ opt-level = "s"
 
 [features]
 usb_serial = []
+
+[profile.dev.package.esp-wifi]
+opt-level = 3
