@@ -39,22 +39,22 @@ impl LcdMenuState {
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
         let icon = embedded_iconoir::icons::size48px::devices::Computer::new(GrayColor::WHITE);
         let image = Image::new(&icon, Point::zero());
-        image.draw(display1).unwrap();
+        unwrap!(image.draw(display1));
         let icon = embedded_iconoir::icons::size48px::weather::SnowFlake::new(GrayColor::WHITE);
         let image = Image::new(&icon, Point { x: 52, y: 0 });
-        image.draw(display1).unwrap();
+        unwrap!(image.draw(display1));
         let icon = embedded_iconoir::icons::size48px::system::Settings::new(GrayColor::WHITE);
         let image = Image::new(&icon, Point { x: 52 * 1, y: 0 });
-        image.draw(display2).unwrap();
+        unwrap!(image.draw(display2));
         let icon = embedded_iconoir::icons::size48px::editor::List::new(GrayColor::WHITE);
         let image = Image::new(&icon, Point { x: 52 * 2, y: 0 });
-        image.draw(display2).unwrap();
+        unwrap!(image.draw(display2));
         let icon = embedded_iconoir::icons::size48px::development::CodeBrackets::new(GrayColor::WHITE);
         let image = Image::new(&icon, Point { x: 52 * 3, y: 0 });
-        image.draw(display2).unwrap();
+        unwrap!(image.draw(display2));
         let icon = embedded_iconoir::icons::size48px::actions::Restart::new(GrayColor::WHITE);
         let image = Image::new(&icon, Point { x: 52 * 4, y: 0 });
-        image.draw(display2).unwrap();
+        unwrap!(image.draw(display2));
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);
     }

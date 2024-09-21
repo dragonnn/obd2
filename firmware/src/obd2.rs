@@ -55,16 +55,16 @@ impl Obd2 {
             .receive_buffer_0(RXB0CTRL::default().with_rxm(RXM::ReceiveAny).with_bukt(true))
             .receive_buffer_1(RXB1CTRL::default().with_rxm(RXM::ReceiveAny));
 
-        self.mcp2515.apply_config(&config).await.unwrap();
+        unwrap!(self.mcp2515.apply_config(&config).await);
 
         let interputs_config = CANINTE::default().with_rx0ie(true).with_rx1ie(true);
-        self.mcp2515.apply_interrupts_config(interputs_config).await.unwrap();
+        unwrap!(self.mcp2515.apply_interrupts_config(interputs_config).await);
     }
 
     pub async fn shutdown(&mut self) {
-        self.mcp2515.reset().await.unwrap();
+        unwrap!(self.mcp2515.reset().await);
         let config = crate::mcp2515::Config::default().mode(OperationMode::Sleep);
-        self.mcp2515.apply_config(&config).await.unwrap();
+        unwrap!(self.mcp2515.apply_config(&config).await);
     }
 
     pub async fn request_pid<PID: Pid>(&mut self) -> Result<(PID, alloc::vec::Vec<u8>), Obd2Error> {
@@ -74,7 +74,7 @@ impl Obd2 {
         let request = PID::request();
 
         internal_debug!("req pid {:x}: {:x?}", request.id_header.get_i32(), request.data);
-        let flow_control = CanFrame::new(request.id(), &[0x30, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap();
+        let flow_control = unwrap!(CanFrame::new(request.id(), &[0x30, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
         self.mcp2515.load_tx_buffer(TxBuffer::TXB0, &request).await?;
         self.mcp2515.request_to_send(TxBuffer::TXB0).await?;
 

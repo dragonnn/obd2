@@ -1,6 +1,6 @@
 use core::{fmt::Write, str::FromStr as _};
 
-use defmt::info;
+use defmt::{info, unwrap};
 use display_interface::DisplayError;
 use embassy_time::Instant;
 use embedded_graphics::{
@@ -34,7 +34,7 @@ impl DebugScroll {
         for i in 0..self.text_buffer.len() - 1 {
             self.text_buffer[i] = self.text_buffer[i + 1].clone();
         }
-        self.text_buffer[self.text_buffer.len() - 1] = String::from_str(line).unwrap();
+        self.text_buffer[self.text_buffer.len() - 1] = String::from_str(line).unwrap_or_default();
         self.redraw = true;
     }
 
@@ -52,14 +52,14 @@ impl DebugScroll {
                 TextStyleBuilder::new().alignment(Alignment::Left).line_height(LineHeight::Percent(100)).build();
             let mut position = Point::new(0, 6);
             let mut text_buffer_chunks = self.text_buffer.chunks(DEBUG_CHANNEL_LEN / 2);
-            for text in text_buffer_chunks.next().unwrap() {
+            for text in unwrap!(text_buffer_chunks.next()) {
                 let text = Text::with_text_style(text, position, character_style, text_style);
                 text.draw(target).map_err(|_| ())?;
                 position += Point::new(0, 8);
             }
 
             let mut position = Point::new(0, 6);
-            for text in text_buffer_chunks.next().unwrap() {
+            for text in unwrap!(text_buffer_chunks.next()) {
                 let text = Text::with_text_style(text, position, character_style, text_style);
 
                 text.draw(target2).map_err(|_| ())?;

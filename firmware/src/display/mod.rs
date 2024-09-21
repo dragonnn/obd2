@@ -1,6 +1,5 @@
 use embedded_graphics::{prelude::*, primitives::Rectangle};
 
-pub mod task;
 pub mod widgets;
 
 #[derive(Debug)]
@@ -34,11 +33,7 @@ where
         let parent_width = self.parent.bounding_box().size.width as i32;
         //esp_println::println!("parent_width: {}", parent_width);
 
-        self.parent.draw_iter(
-            pixels
-                .into_iter()
-                .map(|Pixel(p, c)| Pixel(Point::new(parent_width - p.y, p.x), c)),
-        )
+        self.parent.draw_iter(pixels.into_iter().map(|Pixel(p, c)| Pixel(Point::new(parent_width - p.y, p.x), c)))
     }
 }
 
@@ -48,9 +43,6 @@ where
 {
     fn bounding_box(&self) -> Rectangle {
         let parent_bb = self.parent.bounding_box();
-        Rectangle::new(
-            parent_bb.top_left,
-            Size::new(parent_bb.size.height, parent_bb.size.width),
-        )
+        Rectangle::new(parent_bb.top_left, Size::new(parent_bb.size.height, parent_bb.size.width))
     }
 }

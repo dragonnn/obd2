@@ -1,4 +1,4 @@
-use defmt::info;
+use defmt::{info, unwrap};
 //use defmt_rtt as _;
 use display_interface_spi::SPIInterface;
 use embassy_embedded_hal::shared_bus::asynch::spi::{SpiDevice, SpiDeviceWithConfig};
@@ -123,8 +123,8 @@ pub fn init() -> Hal {
     let miso = io.pins.gpio2;
 
     let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(32000);
-    let dma_rx_buf = DmaRxBuf::new(rx_descriptors, rx_buffer).unwrap();
-    let dma_tx_buf = DmaTxBuf::new(tx_descriptors, tx_buffer).unwrap();
+    let dma_rx_buf = unwrap!(DmaRxBuf::new(rx_descriptors, rx_buffer).ok());
+    let dma_tx_buf = unwrap!(DmaTxBuf::new(tx_descriptors, tx_buffer).ok());
 
     let spi = Spi::new(peripherals.SPI2, 6.MHz(), SpiMode::Mode0, &clocks)
         .with_sck(sclk)

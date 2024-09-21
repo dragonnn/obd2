@@ -1,4 +1,4 @@
-use defmt::{debug, info, warn, Format};
+use defmt::{debug, info, unwrap, warn, Format};
 use embedded_can::{Frame as _, StandardId};
 
 use crate::{
@@ -29,8 +29,8 @@ pub struct BmsPid {
 
 impl Pid for BmsPid {
     fn request() -> CanFrame {
-        let can_id = StandardId::new(0x7e4).unwrap();
-        CanFrame::new(can_id, &[0x02, 0x21, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap()
+        let can_id = unwrap!(StandardId::new(0x7e4));
+        unwrap!(CanFrame::new(can_id, &[0x02, 0x21, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00]))
     }
 
     fn parse(data: &[u8]) -> Result<Self, Obd2Error> {

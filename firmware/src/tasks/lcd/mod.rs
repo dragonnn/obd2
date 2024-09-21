@@ -300,6 +300,9 @@ pub async fn run(mut display1: Display1, mut display2: Display2) {
     unwrap!(display1.init(None).await);
     unwrap!(display2.init(None).await);
 
+    display1.set_contrast(40).await.ok();
+    display2.set_contrast(40).await.ok();
+
     display1.clear();
     display2.clear();
 
