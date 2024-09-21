@@ -25,7 +25,10 @@ use menu::LcdMenuState;
 use obd2_pids::LcdObd2Pids;
 use settings::LcdSettingsState;
 
-use super::{buttons::Action, obd2::Obd2Debug};
+use super::{
+    buttons::{Action, Button},
+    obd2::Obd2Debug,
+};
 
 pub static EVENTS: Channel<CriticalSectionRawMutex, LcdEvent, 16> = Channel::new();
 pub use obd2_pids::obd2_debug_pids_enabled;
@@ -112,7 +115,14 @@ impl LcdState {
         match event {
             LcdEvent::Main => Transition(State::main(LcdMainState::new())),
             LcdEvent::Debug => Transition(State::debug(LcdDebugState::new())),
-            LcdEvent::Menu | LcdEvent::Button(Action::Pressed(_)) => Transition(State::menu(LcdMenuState::new())),
+            LcdEvent::Button(Action::Pressed(pressed)) => {
+                if *pressed != Button::B3 {
+                    Transition(State::menu(LcdMenuState::new()))
+                } else {
+                    Handled
+                }
+            }
+            LcdEvent::Menu => Transition(State::menu(LcdMenuState::new())),
             LcdEvent::PowerOff => Transition(State::init()),
             _ => Handled,
         }
@@ -256,6 +266,13 @@ impl LcdState {
     ) -> Response<State> {
         let lock = crate::locks::SPI_BUS.lock().await;
         match event {
+            LcdEvent::Button(action) => {
+                if let Some(transition) = settings.handle_button(action) {
+                    return transition;
+                }
+                settings.draw(&mut self.display1, &mut self.display2).await;
+                Handled
+            }
             _ => Super,
         }
     }

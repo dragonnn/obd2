@@ -66,11 +66,6 @@ pub async fn run(mut cap1188: Cap1188) {
                 let new_touched = unwrap!(cap1188.touched().await);
                 let new_touched_bytes = new_touched.into_bytes()[0];
                 if new_touched_bytes != old_touched_bytes {
-                    if new_touched_bytes > 0 {
-                        info!("touched: {:?}", new_touched_bytes);
-                    } else {
-                        info!("released: {:?}", new_touched_bytes);
-                    }
                     if new_touched.b0() != old_touched.b0() {
                         if new_touched.b0() {
                             info!("button b0 pressed");
