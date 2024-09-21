@@ -87,7 +87,9 @@ impl LcdMainState {
         self.hv_battery.update_voltage(bms_pid.hv_dc_voltage);
         self.hv_battery.update_max_temp(bms_pid.hv_max_temp);
         self.hv_battery.update_min_temp(bms_pid.hv_min_temp);
-        self.hv_battery.update_cell_voltage_deviation(bms_pid.hv_max_cell_voltage - bms_pid.hv_min_cell_voltage);
+        self.hv_battery.update_cell_voltage((bms_pid.hv_max_cell_voltage + bms_pid.hv_min_cell_voltage) / 2.0);
+        self.hv_battery
+            .update_cell_voltage_deviation((bms_pid.hv_max_cell_voltage - bms_pid.hv_min_cell_voltage) * 1000.0);
         self.aux_battery.update_voltage(bms_pid.aux_dc_voltage);
         self.electric_power_arrow.update_speed(50.0);
         self.electric_power.update_power(bms_pid.hv_battery_current * bms_pid.hv_dc_voltage);

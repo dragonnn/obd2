@@ -29,7 +29,8 @@ pub struct Battery {
     min_temp: f64,
     max_temp: f64,
     voltage: f64,
-    voltage_deviation: f64,
+    cell_voltage_deviation: f64,
+    cell_voltage: f64,
     percentage: f64,
     size: Size,
     position: Point,
@@ -58,7 +59,8 @@ impl Battery {
             min_temp: 0.0,
             max_temp: 0.0,
             voltage: 0.0,
-            voltage_deviation: 0.0,
+            cell_voltage_deviation: 0.0,
+            cell_voltage: 0.0,
             cap,
             bars,
             inited: None,
@@ -155,9 +157,16 @@ impl Battery {
         }
     }
 
-    pub fn update_cell_voltage_deviation(&mut self, voltage_deviation: f64) {
-        if self.voltage_deviation != voltage_deviation {
-            self.voltage_deviation = voltage_deviation;
+    pub fn update_cell_voltage_deviation(&mut self, cell_voltage_deviation: f64) {
+        if self.cell_voltage_deviation != cell_voltage_deviation {
+            self.cell_voltage_deviation = cell_voltage_deviation;
+            self.redraw = true;
+        }
+    }
+
+    pub fn update_cell_voltage(&mut self, cell_voltage: f64) {
+        if self.cell_voltage != cell_voltage {
+            self.cell_voltage = cell_voltage;
             self.redraw = true;
         }
     }
@@ -270,7 +279,7 @@ impl Battery {
                 text_position.x += 2;
                 text_position.y += org_size.height as i32 / 2 / 2 + org_size.height as i32 / 2 + 6;
                 text.clear();
-                write!(text, "{:.1}V {:.2}±", self.voltage, self.voltage_deviation).ok();
+                write!(text, "{:.1}V {:.2}±{:.0}", self.voltage, self.cell_voltage, self.cell_voltage_deviation).ok();
 
                 Text::with_text_style(text.as_str(), text_position, character_style, text_style).draw(target)?;
 
