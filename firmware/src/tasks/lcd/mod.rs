@@ -299,8 +299,10 @@ pub async fn run(mut display1: Display1, mut display2: Display2) {
     info!("lcd init start");
     unwrap!(display1.init(None).await);
     unwrap!(display2.init(None).await);
+
     display1.clear();
     display2.clear();
+
     display1.flush().await.ok();
     display2.flush().await.ok();
     info!("lcd init end");

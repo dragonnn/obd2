@@ -39,7 +39,6 @@ impl defmt::Format for Obd2Debug {
 
 #[embassy_executor::task]
 pub async fn run(mut obd2: Obd2) {
-    return;
     info!("obd2 task started");
     obd2.init().await;
     info!("obd2 init done");
