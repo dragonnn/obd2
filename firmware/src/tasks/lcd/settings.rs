@@ -91,6 +91,7 @@ impl LcdSettingsState {
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
         if self.init {
             self.contrast = display1.get_contrast();
+            self.contrast_slider.update_percentage(self.contrast as f64 / 255.0 * 100.0);
             self.init = false;
         }
         if self.current_contrast != self.contrast {
