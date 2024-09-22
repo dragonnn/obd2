@@ -9,14 +9,14 @@ use crate::{
 };
 
 #[derive(Debug, Format, PartialEq, Clone)]
-pub struct AcPid {
+pub struct HybridDcDcPid {
     pub gear: i32,
 }
 
-impl Pid for AcPid {
+impl Pid for HybridDcDcPid {
     fn request() -> CanFrame {
-        let can_id = unwrap!(StandardId::new(0x7b3));
-        unwrap!(CanFrame::new(can_id, &[0x02, 0x22, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00]))
+        let can_id = unwrap!(StandardId::new(0x7e2));
+        unwrap!(CanFrame::new(can_id, &[0x02, 0x21, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00]))
     }
 
     fn parse(data: &[u8]) -> Result<Self, Obd2Error> {
@@ -27,6 +27,6 @@ impl Pid for AcPid {
     }
 
     fn into_event(self) -> Obd2Event {
-        Obd2Event::AcPid(self)
+        Obd2Event::HybridDcDcPid(self)
     }
 }
