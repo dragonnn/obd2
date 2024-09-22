@@ -1,4 +1,5 @@
 use defmt::{debug, info, unwrap, warn, Format};
+use embassy_time::Duration;
 use embedded_can::{Frame as _, StandardId};
 
 use crate::{
@@ -16,7 +17,7 @@ pub struct AcPid {
 impl Pid for AcPid {
     fn request() -> CanFrame {
         let can_id = unwrap!(StandardId::new(0x7b3));
-        unwrap!(CanFrame::new(can_id, &[0x02, 0x22, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00]))
+        unwrap!(CanFrame::new(can_id, &[0x03, 0x22, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00]))
     }
 
     fn parse(data: &[u8]) -> Result<Self, Obd2Error> {
@@ -28,5 +29,9 @@ impl Pid for AcPid {
 
     fn into_event(self) -> Obd2Event {
         Obd2Event::AcPid(self)
+    }
+
+    fn period() -> Option<Duration> {
+        Some(Duration::from_secs(1))
     }
 }

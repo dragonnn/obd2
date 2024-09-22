@@ -2,7 +2,7 @@ use core::{any::TypeId, convert::Infallible};
 
 use defmt::{error, info, unwrap, warn};
 use embassy_embedded_hal::shared_bus::SpiDeviceError;
-use embassy_time::{with_timeout, Duration};
+use embassy_time::{with_timeout, Duration, Instant};
 use embedded_can::Frame as _;
 use heapless::Entry;
 use static_cell::make_static;
@@ -34,6 +34,7 @@ pub struct Obd2 {
     mcp2515: Mcp2515,
     obd2_message_buffer: &'static mut heapless::Vec<u8, 4095>,
     obd2_pid_errors: heapless::FnvIndexMap<TypeId, usize, 32>,
+    obd2_pid_periods: heapless::FnvIndexMap<TypeId, Instant, 32>,
 }
 
 impl Obd2 {
@@ -43,8 +44,9 @@ impl Obd2 {
 
         let obd2_message_buffer = OBD2_MESSAGE_BUFFER_STATIC.init(heapless::Vec::new());
         let obd2_pid_errors = heapless::FnvIndexMap::new();
+        let obd2_pid_periods = heapless::FnvIndexMap::new();
 
-        Self { mcp2515, obd2_message_buffer, obd2_pid_errors }
+        Self { mcp2515, obd2_message_buffer, obd2_pid_errors, obd2_pid_periods }
     }
 
     pub async fn init(&mut self) {
@@ -177,10 +179,17 @@ impl Obd2 {
 
     pub async fn handle_pid<PID: Pid + core::any::Any>(&mut self) {
         let type_id = TypeId::of::<PID>();
+        if let Some(period) = PID::period() {
+            let last_time = self.obd2_pid_periods.get(&type_id).map(|time| *time).unwrap_or(Instant::from_millis(0));
+            if Instant::now() - last_time < period {
+                return;
+            }
+            self.obd2_pid_periods.insert(type_id, Instant::now()).ok();
+        }
         let mut errors = self.obd2_pid_errors.get(&type_id).map(|errors| *errors).unwrap_or(0);
         let obd2_debug_pids_enabled = obd2_debug_pids_enabled();
         if errors < 10 {
-            match with_timeout(Duration::from_millis(250), self.request_pid::<PID>()).await {
+            match with_timeout(Duration::from_millis(350), self.request_pid::<PID>()).await {
                 Ok(Ok((pid_result, buffer))) => {
                     embassy_time::Timer::after(embassy_time::Duration::from_millis(10)).await;
                     KIA_EVENTS.send(KiaEvent::Obd2Event(pid_result.into_event())).await;
@@ -220,4 +229,7 @@ pub trait Pid {
     where
         Self: Sized;
     fn into_event(self) -> Obd2Event;
+    fn period() -> Option<Duration> {
+        None
+    }
 }

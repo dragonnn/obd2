@@ -1,4 +1,5 @@
 use defmt::{debug, info, unwrap, warn, Format};
+use embassy_time::Duration;
 use embedded_can::{Frame as _, StandardId};
 
 use crate::{
@@ -29,5 +30,9 @@ impl Pid for IceTemperaturePid {
 
     fn into_event(self) -> Obd2Event {
         Obd2Event::IceTemperaturePid(self)
+    }
+
+    fn period() -> Option<Duration> {
+        Some(Duration::from_secs(1))
     }
 }
