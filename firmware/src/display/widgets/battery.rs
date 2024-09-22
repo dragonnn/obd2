@@ -206,8 +206,8 @@ impl Battery {
             let org_size = size;
             let org_position = position;
             let mut bar_style = style;
-            bar_style.stroke_color = Some(Gray4::new(0x01));
-            bar_style.fill_color = Some(Gray4::new(0x01));
+            bar_style.stroke_color = Some(Gray4::new(0x02));
+            bar_style.fill_color = Some(Gray4::new(0x02));
             match self.orientation {
                 VerticalDown => {
                     size.height = ((size.height as f64 * self.percentage) / 100.0).round() as u32;

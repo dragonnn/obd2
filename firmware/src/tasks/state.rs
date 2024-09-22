@@ -103,7 +103,11 @@ impl KiaState {
         if let KiaEvent::Obd2Event(_) = event {
             trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
         } else {
-            info!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
+            if let KiaEvent::Obd2Debug(_) = event {
+                trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
+            } else {
+                info!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
+            }
         }
     }
 }

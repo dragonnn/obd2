@@ -98,8 +98,8 @@ impl Obd2 {
                 let obd2_frame_type = can_frame.data[0] & 0xF0;
 
                 match obd2_frame_type {
-                    0x02 => {
-                        internal_debug!("single frame {:x?}", can_frame.data);
+                    0x02 | 0x04 | 0x00 => {
+                        //internal_debug!("single frame {:x?}", can_frame.data);
                         obd2_data = Some(can_frame.data.as_slice());
                         break 'outer;
                     }
@@ -107,7 +107,7 @@ impl Obd2 {
                         self.obd2_message_buffer.clear();
                         obd2_message_length =
                             Some(((can_frame.data[0] & 0x0F) as usize) << 8 | can_frame.data[1] as usize);
-                        internal_debug!("first frame {:x?}", can_frame.data);
+                        //internal_debug!("first frame {:x?}", can_frame.data);
                         self.mcp2515.load_tx_buffer(TxBuffer::TXB0, &flow_control).await?;
                         self.mcp2515.request_to_send(TxBuffer::TXB0).await?;
 
@@ -141,12 +141,12 @@ impl Obd2 {
                     }
                     _ => {
                         if can_frame.data[0] == 0x03 {
-                            internal_debug!("single frame in 0x03 {:x?}", can_frame.data);
+                            //internal_debug!("single frame in 0x03 {:x?}", can_frame.data);
                             obd2_data = Some(can_frame.data.as_slice());
                             break 'outer;
                         } else {
                             internal_debug!("unknown frame {:x?}", can_frame.data);
-                            error!("unknown frame: {}", obd2_frame_type);
+                            error!("unknown frame: {} {=[u8]:#04x}", obd2_frame_type, can_frame.data);
                         }
                     }
                 }
@@ -182,6 +182,7 @@ impl Obd2 {
         if errors < 10 {
             match with_timeout(Duration::from_millis(250), self.request_pid::<PID>()).await {
                 Ok(Ok((pid_result, buffer))) => {
+                    embassy_time::Timer::after(embassy_time::Duration::from_millis(10)).await;
                     KIA_EVENTS.send(KiaEvent::Obd2Event(pid_result.into_event())).await;
                     if obd2_debug_pids_enabled {
                         KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(Some(buffer)))).await;

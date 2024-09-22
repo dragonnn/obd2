@@ -15,6 +15,7 @@ pub struct IceFuelRatePid {
 
 impl Pid for IceFuelRatePid {
     fn request() -> CanFrame {
+        //[0x04, 0x41, 0x5e, 0x00, 0x27, 0xaa, 0xaa, 0xaa]
         let can_id = unwrap!(StandardId::new(0x7df));
         unwrap!(CanFrame::new(can_id, &[0x02, 0x01, 0x5E, 0x00, 0x00, 0x00, 0x00, 0x00]))
     }
@@ -23,7 +24,7 @@ impl Pid for IceFuelRatePid {
         if data.len() < 7 {
             return Err(Obd2Error::FrameToShort);
         }
-
+        //info!("fuel rate: {=[u8]:#04x}", data);
         Ok(Self { fuel_rate: (data[3] as i32 * 256 + data[4] as i32) as f64 / 20.0 })
     }
 

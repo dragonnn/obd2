@@ -17,6 +17,7 @@ pub enum Obd2Event {
     GearboxGearPid(pid::GearboxGearPid),
     IceFuelRatePid(pid::IceFuelRatePid),
     VehicleSpeedPid(pid::VehicleSpeedPid),
+    AcPid(pid::AcPid),
 }
 
 #[derive(PartialEq, Clone)]
@@ -46,14 +47,11 @@ pub async fn run(mut obd2: Obd2) {
         async {
             loop {
                 obd2.handle_pid::<pid::BmsPid>().await;
-                embassy_time::Timer::after(embassy_time::Duration::from_millis(10)).await;
                 obd2.handle_pid::<pid::IceTemperaturePid>().await;
-                embassy_time::Timer::after(embassy_time::Duration::from_millis(10)).await;
                 obd2.handle_pid::<pid::GearboxGearPid>().await;
-                embassy_time::Timer::after(embassy_time::Duration::from_millis(10)).await;
                 obd2.handle_pid::<pid::IceFuelRatePid>().await;
-                embassy_time::Timer::after(embassy_time::Duration::from_millis(10)).await;
                 obd2.handle_pid::<pid::VehicleSpeedPid>().await;
+                obd2.handle_pid::<pid::AcPid>().await;
 
                 #[cfg(debug_assertions)]
                 embassy_time::Timer::after(embassy_time::Duration::from_secs(10)).await;

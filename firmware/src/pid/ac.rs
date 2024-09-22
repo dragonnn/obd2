@@ -9,16 +9,14 @@ use crate::{
 };
 
 #[derive(Debug, Format, PartialEq, Clone)]
-pub struct GearboxGearPid {
+pub struct AcPid {
     pub gear: i32,
 }
 
-impl Pid for GearboxGearPid {
+impl Pid for AcPid {
     fn request() -> CanFrame {
-        let can_id = StandardId::new(0x7df).unwrap();
-        CanFrame::new(can_id, &[0x02, 0x01, 0xA4, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap()
-        //let can_id = unwrap!(StandardId::new(0x7e2));
-        //unwrap!(CanFrame::new(can_id, &[0x02, 0x21, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00]))
+        let can_id = unwrap!(StandardId::new(0x7b3));
+        unwrap!(CanFrame::new(can_id, &[0x02, 0x22, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00]))
     }
 
     fn parse(data: &[u8]) -> Result<Self, Obd2Error> {
@@ -34,6 +32,6 @@ impl Pid for GearboxGearPid {
     }
 
     fn into_event(self) -> Obd2Event {
-        Obd2Event::GearboxGearPid(self)
+        Obd2Event::AcPid(self)
     }
 }
