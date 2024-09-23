@@ -1,5 +1,6 @@
 use defmt::warn;
 use embassy_time::Duration;
+use embedded_hal::delay::DelayNs;
 use esp_hal::{
     delay::Delay,
     gpio::{self, InputPin, Pin, RtcPin, RtcPinWithResistors},
@@ -9,17 +10,21 @@ use esp_hal::{
     },
 };
 
-use crate::{debug::internal_debug, types::IngGpio};
+use crate::{
+    debug::internal_debug,
+    types::{IngGpio, Rs},
+};
 
 pub struct Power {
     ing_gpio: IngGpio,
+    rs_gpio: Rs,
     delay: Delay,
     rtc: Rtc<'static>,
 }
 
 impl Power {
-    pub fn new(ing_gpio: IngGpio, delay: Delay, rtc: Rtc<'static>) -> Self {
-        Self { ing_gpio, delay, rtc }
+    pub fn new(ing_gpio: IngGpio, delay: Delay, rtc: Rtc<'static>, rs_gpio: Rs) -> Self {
+        Self { ing_gpio, delay, rtc, rs_gpio }
     }
 
     pub fn deep_sleep(&mut self, duration: Duration) {
@@ -30,6 +35,8 @@ impl Power {
         let wakeup_pins: &mut [(&mut dyn RtcPinWithResistors, WakeupLevel)] = &mut [(&mut ing_pin, WakeupLevel::High)];
 
         let rtcio = Ext1WakeupSource::new(wakeup_pins);
+        self.rs_gpio.set_low();
+        self.delay.delay_us(100);
         self.rtc.sleep_deep(&[&timer, &rtcio]);
     }
 

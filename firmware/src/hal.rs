@@ -195,7 +195,7 @@ pub fn init() -> Hal {
         obd2: obd2::Obd2::new(mcp2515),
         #[cfg(feature = "usb_serial")]
         usb_serial,
-        power: power::Power::new(ing, delay, rtc),
+        power: power::Power::new(ing, delay, rtc, rs),
         led,
     }
 }

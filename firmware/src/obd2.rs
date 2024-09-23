@@ -191,7 +191,7 @@ impl Obd2 {
         if errors < 10 {
             match with_timeout(Duration::from_millis(350), self.request_pid::<PID>()).await {
                 Ok(Ok((pid_result, buffer))) => {
-                    embassy_time::Timer::after(embassy_time::Duration::from_millis(10)).await;
+                    embassy_time::Timer::after(embassy_time::Duration::from_millis(25)).await;
                     KIA_EVENTS.send(KiaEvent::Obd2Event(pid_result.into_event())).await;
                     if obd2_debug_pids_enabled {
                         KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(Some(buffer)))).await;

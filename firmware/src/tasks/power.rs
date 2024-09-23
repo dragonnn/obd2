@@ -13,6 +13,23 @@ use crate::{debug::internal_debug, event::*, power::Power};
 
 #[embassy_executor::task]
 pub async fn run(mut power: Power) {
+    Timer::after(Duration::from_secs(5)).await;
+    KIA_EVENTS.send(KiaEvent::InitIgnitionOn).await;
+    Timer::after(Duration::from_secs(5)).await;
+    KIA_EVENTS.send(KiaEvent::Shutdown).await;
+    KIA_EVENTS.send(KiaEvent::InitIgnitionOff).await;
+    unwrap!(SHUTDOWN.publisher()).publish(()).await;
+    Timer::after(Duration::from_secs(5)).await;
+
+    let mut sleep_duration = Duration::from_secs(5 * 60);
+    if power.is_ignition_on() {
+        defmt::warn!("ignition is on, not deep sleeping");
+        esp_hal::reset::software_reset();
+    } else {
+        power.deep_sleep(sleep_duration);
+    }
+    return;
+
     let reason = get_reset_reason(Cpu::ProCpu).unwrap_or(SocResetReason::ChipPowerOn);
     error!("reset reason: {:?}", defmt::Debug2Format(&reason));
     let wake_reason = get_wakeup_cause();

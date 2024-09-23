@@ -35,3 +35,4 @@ pub type Display2 = Sh1122<19>;
 pub type Display1 = Sh1122<18>;
 
 pub type Led = Output<'static, GpioPin<0>>;
+pub type Rs = Output<'static, GpioPin<22>>;

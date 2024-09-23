@@ -62,7 +62,7 @@ pub async fn run(mut obd2: Obd2) {
                 #[cfg(debug_assertions)]
                 embassy_time::Timer::after(embassy_time::Duration::from_secs(10)).await;
                 #[cfg(not(debug_assertions))]
-                embassy_time::Timer::after(embassy_time::Duration::from_millis(200)).await;
+                embassy_time::Timer::after(embassy_time::Duration::from_millis(100)).await;
             }
         },
         get_shutdown_signal().next_message(),
