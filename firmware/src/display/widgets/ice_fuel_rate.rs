@@ -22,6 +22,7 @@ pub struct IceFuelRate {
     position: Point,
 
     ice_fuel_rate: f64,
+    vehicle_speed: f64,
 
     redraw: bool,
     bounding_box: Option<Rectangle>,
@@ -29,7 +30,7 @@ pub struct IceFuelRate {
 
 impl IceFuelRate {
     pub fn new(position: Point) -> Self {
-        Self { position, ice_fuel_rate: 0.0, redraw: true, bounding_box: None }
+        Self { position, ice_fuel_rate: 0.0, vehicle_speed: 0.0, redraw: true, bounding_box: None }
     }
 
     pub fn update_ice_fuel_rate(&mut self, ice_fuel_rate: f64) {
@@ -39,10 +40,22 @@ impl IceFuelRate {
         }
     }
 
+    pub fn update_vehicle_speed(&mut self, vehicle_speed: f64) {
+        if self.vehicle_speed != vehicle_speed {
+            self.vehicle_speed = vehicle_speed;
+            self.redraw = true;
+        }
+    }
+
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
             let mut text: String<16> = String::new();
-            write!(text, "{:.1} l/h", self.ice_fuel_rate).ok();
+
+            let mut fuel_per_100km = 0.0;
+            if self.vehicle_speed > 0.0 {
+                fuel_per_100km = self.ice_fuel_rate / self.vehicle_speed * 100.0;
+            }
+            write!(text, "{:.1} l/100km", fuel_per_100km).ok();
 
             let character_style = MonoTextStyle::new(&PROFONT_9_POINT, Gray4::WHITE);
 

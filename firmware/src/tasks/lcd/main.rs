@@ -7,7 +7,7 @@ use crate::{
         MotorIce, Power, Temperature, Value,
     },
     event::Obd2Event,
-    pid::{BmsPid, GearboxGearPid, IceTemperaturePid},
+    pid::{BmsPid, IceTemperaturePid},
     types::{Display1, Display2, Sh1122},
 };
 
@@ -27,6 +27,9 @@ pub struct LcdMainState {
 
     gearbox_gear: GearboxGear,
     vehicle_speed: Value,
+
+    ice_fuel_rate_value: f64,
+    hv_battery_current: f64,
 }
 
 impl LcdMainState {
@@ -58,6 +61,9 @@ impl LcdMainState {
 
             gearbox_gear: GearboxGear::new(Point::new(40, 14)),
             vehicle_speed: Value::new(Point::new(58, 32), &profont::PROFONT_14_POINT, "km/h", 0),
+
+            ice_fuel_rate_value: 0.0,
+            hv_battery_current: 0.0,
         }
     }
 
@@ -69,14 +75,13 @@ impl LcdMainState {
             Obd2Event::IceTemperaturePid(ice_temperature_pid) => {
                 self.ice_temperature.update_temp(ice_temperature_pid.temperature);
             }
-            Obd2Event::GearboxGearPid(gearbox_gear_pid) => {
-                self.gearbox_gear.update_gear(gearbox_gear_pid.gear);
-            }
             Obd2Event::IceFuelRatePid(ice_fuel_rate_pid) => {
                 self.ice_fuel_rate.update_ice_fuel_rate(ice_fuel_rate_pid.fuel_rate);
             }
             Obd2Event::VehicleSpeedPid(vehicle_speed_pid) => {
-                self.vehicle_speed.update_value(vehicle_speed_pid.vehicle_speed as f64);
+                let speed = vehicle_speed_pid.vehicle_speed as f64;
+                self.vehicle_speed.update_value(speed + speed * 0.1);
+                self.ice_fuel_rate.update_vehicle_speed(speed);
             }
             _ => {}
         }
@@ -89,7 +94,7 @@ impl LcdMainState {
         self.hv_battery.update_min_temp(bms_pid.hv_min_temp);
         self.hv_battery.update_cell_voltage((bms_pid.hv_max_cell_voltage + bms_pid.hv_min_cell_voltage) / 2.0);
         self.hv_battery
-            .update_cell_voltage_deviation((bms_pid.hv_max_cell_voltage - bms_pid.hv_min_cell_voltage) * 1000.0);
+            .update_cell_voltage_deviation((bms_pid.hv_max_cell_voltage - bms_pid.hv_min_cell_voltage) * 100.0);
         self.aux_battery.update_voltage(bms_pid.aux_dc_voltage);
         self.electric_power_arrow.update_speed(50.0);
         self.electric_power.update_power(bms_pid.hv_battery_current * bms_pid.hv_dc_voltage);
@@ -102,6 +107,13 @@ impl LcdMainState {
     }
 
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
+        self.motor_ice.update_on(self.ice_fuel_rate_value > 0.0);
+        self.motor_electric.update_on(if self.ice_fuel_rate_value == 0.0 {
+            true
+        } else {
+            self.hv_battery_current > 0.0
+        });
+
         self.hv_battery.draw(display1).ok();
         self.aux_battery.draw(display2).ok();
         self.ice_temperature.draw(display2).ok();

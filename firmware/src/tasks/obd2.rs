@@ -14,13 +14,13 @@ use crate::{
 pub enum Obd2Event {
     BmsPid(pid::BmsPid),
     IceTemperaturePid(pid::IceTemperaturePid),
-    GearboxGearPid(pid::GearboxGearPid),
     IceFuelRatePid(pid::IceFuelRatePid),
     VehicleSpeedPid(pid::VehicleSpeedPid),
     AcPid(pid::AcPid),
     HybridDcDcPid(pid::HybridDcDcPid),
     Icu(pid::IcuPid),
     IceEnginePid(pid::IceEnginePid),
+    TransaxlePid(pid::TransaxlePid),
 }
 
 #[derive(PartialEq, Clone)]
@@ -50,8 +50,8 @@ pub async fn run(mut obd2: Obd2) {
         async {
             loop {
                 obd2.handle_pid::<pid::BmsPid>().await;
+                obd2.handle_pid::<pid::TransaxlePid>().await;
                 obd2.handle_pid::<pid::IceTemperaturePid>().await;
-                //obd2.handle_pid::<pid::GearboxGearPid>().await;
                 obd2.handle_pid::<pid::IceFuelRatePid>().await;
                 obd2.handle_pid::<pid::VehicleSpeedPid>().await;
                 obd2.handle_pid::<pid::AcPid>().await;

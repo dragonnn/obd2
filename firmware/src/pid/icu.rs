@@ -29,4 +29,8 @@ impl Pid for IcuPid {
     fn into_event(self) -> Obd2Event {
         Obd2Event::Icu(self)
     }
+
+    fn period() -> Option<embassy_time::Duration> {
+        Some(embassy_time::Duration::from_secs(1))
+    }
 }

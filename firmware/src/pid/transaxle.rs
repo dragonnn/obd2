@@ -9,31 +9,24 @@ use crate::{
 };
 
 #[derive(Debug, Format, PartialEq, Clone)]
-pub struct GearboxGearPid {
+pub struct TransaxlePid {
     pub gear: i32,
 }
 
-impl Pid for GearboxGearPid {
+impl Pid for TransaxlePid {
     fn request() -> CanFrame {
-        //let can_id = StandardId::new(0x7df).unwrap();
-        //CanFrame::new(can_id, &[0x02, 0x01, 0xA4, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap()
-        let can_id = unwrap!(StandardId::new(0x7e2));
-        unwrap!(CanFrame::new(can_id, &[0x02, 0x21, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00]))
+        let can_id = unwrap!(StandardId::new(0x7e1));
+        unwrap!(CanFrame::new(can_id, &[0x03, 0x22, 0x01, 0xa4, 0x00, 0x00, 0x00, 0x00]))
     }
 
     fn parse(data: &[u8]) -> Result<Self, Obd2Error> {
         if data.len() < 7 {
             return Err(Obd2Error::FrameToShort);
         }
-        //3 - A
-        //4 - B
-        //5 - C
-        //6 - D
-        //info!("gearbox gear: {=[u8]:#04x}", data);
         Ok(Self { gear: data[2] as i32 })
     }
 
     fn into_event(self) -> Obd2Event {
-        Obd2Event::GearboxGearPid(self)
+        Obd2Event::TransaxlePid(self)
     }
 }
