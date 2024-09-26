@@ -83,6 +83,9 @@ impl LcdMainState {
                 self.vehicle_speed.update_value(speed + speed * 0.1);
                 self.ice_fuel_rate.update_vehicle_speed(speed);
             }
+            Obd2Event::TransaxlePid(transaxle_pid) => {
+                self.gearbox_gear.update_gear(transaxle_pid.gear);
+            }
             _ => {}
         }
     }

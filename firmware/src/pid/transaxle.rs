@@ -23,7 +23,7 @@ impl Pid for TransaxlePid {
         if data.len() < 7 {
             return Err(Obd2Error::FrameToShort);
         }
-        Ok(Self { gear: data[2] as i32 })
+        Ok(Self { gear: data[16] as i32 })
     }
 
     fn into_event(self) -> Obd2Event {
