@@ -178,6 +178,11 @@ impl Obd2 {
     }
 
     pub async fn handle_pid<PID: Pid + core::any::Any>(&mut self) {
+        if !self.obd2_pid_errors.is_empty() && self.obd2_pid_errors.iter().all(|(_, errors)| *errors >= 10) {
+            warn!("too many errors, clearing errors");
+            self.obd2_pid_errors.clear();
+        }
+
         let type_id = TypeId::of::<PID>();
         if let Some(period) = PID::period() {
             let last_time = self.obd2_pid_periods.get(&type_id).map(|time| *time).unwrap_or(Instant::from_millis(0));
