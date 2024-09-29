@@ -30,6 +30,7 @@ pub struct LcdMainState {
 
     ice_fuel_rate_value: f64,
     hv_battery_current: f64,
+    vehicle_speed_value: f64,
 }
 
 impl LcdMainState {
@@ -46,7 +47,7 @@ impl LcdMainState {
             ),
             aux_battery: Battery12V::new(Point::new(256 - 41 - 22, 31)),
             ice_temperature: Temperature::new(Point::new(256 - 21, 0), Size::new(16, 64), 0.0, 130.0, 4),
-            ice_fuel_rate: IceFuelRate::new(Point::new(30, 63)),
+            ice_fuel_rate: IceFuelRate::new(Point::new(60, 44)),
 
             electric_power: Power::new(Point::new(128 + 36, 14)),
             electric_power_arrow: Arrow::new(
@@ -64,6 +65,7 @@ impl LcdMainState {
 
             ice_fuel_rate_value: 0.0,
             hv_battery_current: 0.0,
+            vehicle_speed_value: 0.0,
         }
     }
 
@@ -76,12 +78,14 @@ impl LcdMainState {
                 self.ice_temperature.update_temp(ice_temperature_pid.temperature);
             }
             Obd2Event::IceFuelRatePid(ice_fuel_rate_pid) => {
+                self.ice_fuel_rate_value = ice_fuel_rate_pid.fuel_rate;
                 self.ice_fuel_rate.update_ice_fuel_rate(ice_fuel_rate_pid.fuel_rate);
             }
             Obd2Event::VehicleSpeedPid(vehicle_speed_pid) => {
                 let speed = vehicle_speed_pid.vehicle_speed as f64;
                 self.vehicle_speed.update_value(speed + speed * 0.1);
                 self.ice_fuel_rate.update_vehicle_speed(speed);
+                self.vehicle_speed_value = speed;
             }
             Obd2Event::TransaxlePid(transaxle_pid) => {
                 self.gearbox_gear.update_gear(transaxle_pid.gear);
@@ -107,6 +111,7 @@ impl LcdMainState {
         } else {
             self.electric_power_arrow.update_direction(ArrowDirection::Reverse);
         }
+        self.hv_battery_current = bms_pid.hv_battery_current;
     }
 
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {

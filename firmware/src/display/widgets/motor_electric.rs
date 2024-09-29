@@ -60,7 +60,6 @@ impl MotorElectric {
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.needs_update {
-            esp_println::println!("motor electric redraw");
             self.motor_im.draw(&mut target.color_converted())?;
             if self.on {
                 self.motor_on_im.draw(&mut target.color_converted())?;

@@ -57,7 +57,7 @@ impl IceFuelRate {
             }
             write!(text, "{:.1} l/100km", fuel_per_100km).ok();
 
-            let character_style = MonoTextStyle::new(&PROFONT_9_POINT, Gray4::WHITE);
+            let character_style = MonoTextStyle::new(&PROFONT_12_POINT, Gray4::WHITE);
 
             // Create a new text style.
             let text_style =
