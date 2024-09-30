@@ -49,15 +49,15 @@ pub async fn run(mut obd2: Obd2) {
     select(
         async {
             loop {
-                obd2.handle_pid::<pid::BmsPid>().await;
-                obd2.handle_pid::<pid::TransaxlePid>().await;
+                // obd2.handle_pid::<pid::BmsPid>().await;
+                //obd2.handle_pid::<pid::TransaxlePid>().await;
                 obd2.handle_pid::<pid::IceTemperaturePid>().await;
-                obd2.handle_pid::<pid::IceFuelRatePid>().await;
-                obd2.handle_pid::<pid::VehicleSpeedPid>().await;
-                obd2.handle_pid::<pid::AcPid>().await;
-                obd2.handle_pid::<pid::HybridDcDcPid>().await;
-                obd2.handle_pid::<pid::IcuPid>().await;
-                obd2.handle_pid::<pid::IceEnginePid>().await;
+                //obd2.handle_pid::<pid::IceFuelRatePid>().await;
+                //obd2.handle_pid::<pid::VehicleSpeedPid>().await;
+                //obd2.handle_pid::<pid::AcPid>().await;
+                //obd2.handle_pid::<pid::HybridDcDcPid>().await;
+                //obd2.handle_pid::<pid::IcuPid>().await;
+                //obd2.handle_pid::<pid::IceEnginePid>().await;
 
                 #[cfg(debug_assertions)]
                 embassy_time::Timer::after(embassy_time::Duration::from_secs(10)).await;

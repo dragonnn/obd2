@@ -88,12 +88,12 @@ impl Obd2 {
             let rx_status = self.mcp2515.rx_status().await?;
             if rx_status.rx0if() {
                 let frame = self.mcp2515.read_rx_buffer(RxBuffer::RXB0).await?;
-                //internal_debug!("rx0if: {:x?}", frame.data);
+                info!("rx0if: {=[u8]:x} {=i32:x}", frame.data, frame.id_header.get_i32());
                 can_frames[0] = Some(frame);
             }
             if rx_status.rx1if() {
                 let frame = self.mcp2515.read_rx_buffer(RxBuffer::RXB1).await?;
-                //internal_debug!("rx1if: {:x?}", frame.data);
+                info!("rx1if: {=[u8]:x} {=i32:x}", frame.data, frame.id_header.get_i32());
                 can_frames[1] = Some(frame);
             }
             for can_frame in can_frames.iter().flatten() {

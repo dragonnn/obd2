@@ -1,26 +1,9 @@
+#include <Arduino.h>
+
 #include "mcp2515v2.h"
+#include <PacketSerial.h>
 #include <SPI.h>
 #include <Wire.h>
-
-// misc placeholders
-#define log_all_codes false
-#define PID_RPM 0x0C
-#define PID_OutsideTemp 0x46
-#define PID_FuelTank 0x2F
-#define PID_EngineLoad 0x04
-#define PID_CoolantTemp 0x05
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 32
-#define OLED_RESET 4    // not sure what this is hahahaha
-#define init_delay 3000 // duration that the startup screen is displayed.
-
-// vanity placeholders
-#define DEVICE_SERIAL_NUMBER "G0101"
-#define DEVICE_NAME "OBD Scan Gauge Device"
-#define HARDWARE_VERSION "Hw2.0"
-#define DATE_OF_MFG "11/01/2020"
-#define FIRMWARE_VERSION "2.0"
-#define FIRMWARE_BUILD "01"
 
 // frame structures
 struct can_frame canMsg;
@@ -29,70 +12,14 @@ struct can_frame canMsgOutgoing;
 // create objects/init board
 MCP2515v2 mcp2515v2(10);
 
-// timer vars
-// max value of an unsigned long is ~2^32...this arduino will run for 50 days
-// and then who knows what will happen when the millis() exceeds the max!
-unsigned long last_rpm = 0;
-unsigned long last_temp = 0;
-bool last_read = false;
-
-// display coordinate calculation vars
-int16_t xs1, ys1;
-uint16_t w, h;
-
-// data vars
-int rpm = 9999;
-int eng_temp = 999;
-int consecutive_ms_button_pressed = 0;
-int incoming_byte_serial[11];
-
-String BuildMessage = "";
-
-// function to request OBD data
-void requestDataOBD(unsigned long int pid) {
-  canMsgOutgoing.can_id = 0x7DF; // request
-  canMsgOutgoing.can_dlc = 8;    // length of data frame
-  canMsgOutgoing.data[0] = 0x02; // ?
-  canMsgOutgoing.data[1] = 0x01; // ?
-  canMsgOutgoing.data[2] = pid;  // OBD PID that we are requesting
-  canMsgOutgoing.data[3] = 0x00; // zeros
-  canMsgOutgoing.data[4] = 0x00;
-  canMsgOutgoing.data[5] = 0x00;
-  canMsgOutgoing.data[6] = 0x00;
-  canMsgOutgoing.data[7] = 0x00;
-  Serial.println("sending can msg\n");
-  for (uint8_t i = 0; i <= 7; i++) {
-    Serial.print(canMsgOutgoing.data[i] < 16 ? "0" : "");
-    Serial.print(canMsgOutgoing.data[i], HEX);
-    Serial.print(" ");
-  }
-  mcp2515v2.sendMessage(&canMsgOutgoing);
-  Serial.println("end sending");
-}
-
-// 014 0: 49 02 01 FF FF FF 1: FF FF FF FF FF FF FF 2: FF FF FF FF FF FF FF
 void responseDataOBD(unsigned char data[], int size) {
-  // return;
+
   canMsgOutgoing.can_id = 0x7E8; // response
   canMsgOutgoing.can_dlc = size; // length of data frame
   for (uint8_t i = 0; i <= size; i++) {
     canMsgOutgoing.data[i] = data[i];
   }
-  /*Serial.println("sending can msg\n");
-  for (uint8_t i = 0; i <= 7; i++) {
-    Serial.print(canMsgOutgoing.data[i] < 16 ? "0" : "");
-    Serial.print(canMsgOutgoing.data[i], HEX);
-    Serial.print(" ");
-  }
-  Serial.println("end sending");*/
-  BuildMessage = "";
-  Serial.print("T: ");
-  Serial.print(canMsgOutgoing.can_id);
-  Serial.print(",");
-  for (int i = 0; i < canMsgOutgoing.can_dlc; i++) {
-    BuildMessage = BuildMessage + canMsgOutgoing.data[i] + ",";
-  }
-  Serial.println(BuildMessage);
+
   mcp2515v2.sendMessage(&canMsgOutgoing);
 }
 

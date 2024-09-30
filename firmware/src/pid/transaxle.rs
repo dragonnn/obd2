@@ -1,4 +1,4 @@
-use defmt::{debug, info, unwrap, warn, Format};
+use defmt::{debug, error, info, unwrap, warn, Format};
 use embedded_can::{Frame as _, StandardId};
 
 use crate::{
@@ -37,16 +37,22 @@ impl Pid for TransaxlePid {
             return Err(Obd2Error::FrameToShort);
         }
 
-        let gear = match data[16] {
-            0x04 => Gear::PN,
-            0x69 => Gear::R,
-            0x68 => Gear::D1,
-            0x39 => Gear::D2,
-            0x24 => Gear::D3,
-            0x16 => Gear::D4,
-            0x12 => Gear::D5,
-            0x09 => Gear::D6,
-            _ => Gear::U,
+        let gear_byte = data[16];
+
+        let gear = match gear_byte {
+            04 => Gear::PN,
+            69 => Gear::R,
+            68 => Gear::D1,
+            39 => Gear::D2,
+            24 => Gear::D3,
+            16 => Gear::D4,
+            12 => Gear::D5,
+            09 => Gear::D6,
+            _ => {
+                internal_debug!("unknown gear byte: {}", gear_byte);
+                error!("unknown gear byte: {}", gear_byte);
+                Gear::U
+            }
         };
 
         Ok(Self { gear })
