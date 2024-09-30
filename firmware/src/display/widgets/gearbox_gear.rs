@@ -21,7 +21,7 @@ use crate::display::RotatedDrawTarget;
 pub struct GearboxGear {
     position: Point,
 
-    gear: i32,
+    gear: &'static str,
 
     redraw: bool,
     bounding_box: Option<Rectangle>,
@@ -29,10 +29,10 @@ pub struct GearboxGear {
 
 impl GearboxGear {
     pub fn new(position: Point) -> Self {
-        Self { position, gear: 0, redraw: true, bounding_box: None }
+        Self { position, gear: "U", redraw: true, bounding_box: None }
     }
 
-    pub fn update_gear(&mut self, gear: i32) {
+    pub fn update_gear(&mut self, gear: &'static str) {
         if self.gear != gear {
             self.gear = gear;
             self.redraw = true;

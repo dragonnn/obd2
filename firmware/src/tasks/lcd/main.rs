@@ -88,7 +88,7 @@ impl LcdMainState {
                 self.vehicle_speed_value = speed;
             }
             Obd2Event::TransaxlePid(transaxle_pid) => {
-                self.gearbox_gear.update_gear(transaxle_pid.gear);
+                self.gearbox_gear.update_gear(transaxle_pid.gear.into());
             }
             _ => {}
         }
