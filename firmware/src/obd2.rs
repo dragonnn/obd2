@@ -88,12 +88,12 @@ impl Obd2 {
             let rx_status = self.mcp2515.rx_status().await?;
             if rx_status.rx0if() {
                 let frame = self.mcp2515.read_rx_buffer(RxBuffer::RXB0).await?;
-                info!("rx0if: {=[u8]:x} {=i32:x}", frame.data, frame.id_header.get_i32());
+                //info!("rx0if: {=[u8]:x} {=i32:x}", frame.data, frame.id_header.get_i32());
                 can_frames[0] = Some(frame);
             }
             if rx_status.rx1if() {
                 let frame = self.mcp2515.read_rx_buffer(RxBuffer::RXB1).await?;
-                info!("rx1if: {=[u8]:x} {=i32:x}", frame.data, frame.id_header.get_i32());
+                //info!("rx1if: {=[u8]:x} {=i32:x}", frame.data, frame.id_header.get_i32());
                 can_frames[1] = Some(frame);
             }
             for can_frame in can_frames.iter().flatten() {
@@ -204,6 +204,7 @@ impl Obd2 {
                     errors = 0;
                 }
                 Ok(Err(_e)) => {
+                    error!("error requesting pid");
                     internal_debug!("error requesting pid");
                     if obd2_debug_pids_enabled {
                         KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;
@@ -211,6 +212,7 @@ impl Obd2 {
                     errors += 1;
                 }
                 Err(_) => {
+                    error!("timeout requesting pid");
                     internal_debug!("timeout requesting pid");
                     if obd2_debug_pids_enabled {
                         KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;

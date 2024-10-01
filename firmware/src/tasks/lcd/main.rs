@@ -23,6 +23,7 @@ pub struct LcdMainState {
     electric_power_arrow: Arrow,
 
     motor_electric: MotorElectric,
+    motor_electric_rpm: Value,
     motor_ice: MotorIce,
 
     gearbox_gear: GearboxGear,
@@ -58,6 +59,8 @@ impl LcdMainState {
             ),
 
             motor_electric: MotorElectric::new(Point::new(256 - 60, 0)),
+            motor_electric_rpm: Value::new(Point::new(128 + 12, 55), &profont::PROFONT_10_POINT, "rpm", 0),
+
             motor_ice: MotorIce::new(Point::new(0, 0)),
 
             gearbox_gear: GearboxGear::new(Point::new(40, 14)),
@@ -112,6 +115,7 @@ impl LcdMainState {
             self.electric_power_arrow.update_direction(ArrowDirection::Reverse);
         }
         self.hv_battery_current = bms_pid.hv_battery_current;
+        self.motor_electric_rpm.update_value(bms_pid.motor_electric_rpm);
     }
 
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
@@ -132,6 +136,7 @@ impl LcdMainState {
         self.gearbox_gear.draw(display2).ok();
         self.ice_fuel_rate.draw(display2).ok();
         self.vehicle_speed.draw(display2).ok();
+        self.motor_electric_rpm.draw(display1).ok();
 
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);

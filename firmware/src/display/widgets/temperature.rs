@@ -62,7 +62,7 @@ impl Temperature {
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
-            let color = Gray4::new(4);
+            let color = Gray4::new(6);
 
             let mut style = PrimitiveStyleBuilder::new()
                 .stroke_width(2)

@@ -19,7 +19,7 @@ void onPacketReceived(const uint8_t *buffer, size_t size) {
       buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
   canMsgOutgoing.can_dlc = buffer[4];
   memcpy(canMsgOutgoing.data, &buffer[5], canMsgOutgoing.can_dlc);
-  mcp2515v2.sendMessage(&canMsgOutgoing);
+  mcp2515v2.sendMessage(MCP2515v2::TXB0, &canMsgOutgoing);
 }
 
 void setup() {

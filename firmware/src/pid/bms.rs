@@ -20,6 +20,8 @@ pub struct BmsPid {
     pub hv_battery_current: f64,
 
     pub aux_dc_voltage: f64,
+
+    pub motor_electric_rpm: f64,
 }
 
 /*const fn toruge_pro_index_to_right_index(index: usize) -> usize {
@@ -58,6 +60,8 @@ impl Pid for BmsPid {
         //0_Niro_Maximum Cell Voltage	Max Cell V	2101	x/50
         let hv_max_cell_voltage = (data[25] as f64) / 50.0;
 
+        let motor_electric_rpm = (data[55] as i32 * 256) as f64 + data[56] as f64;
+
         Ok(Self {
             hv_max_temp,
             hv_min_temp,
@@ -68,6 +72,7 @@ impl Pid for BmsPid {
             hv_max_cell_voltage,
             hv_battery_current,
             aux_dc_voltage,
+            motor_electric_rpm,
         })
     }
 

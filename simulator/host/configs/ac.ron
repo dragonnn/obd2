@@ -1,0 +1,34 @@
+[
+    Request(
+        can_id: 0x7b3,
+        message: [0x02, 0x10, 0x3, 0x00, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Raw(RawResponse(
+                can_id: 0x7bb,
+                message: [0x02, 0x50, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00]
+            )),            
+        ]
+    ),
+
+    Request(
+        can_id: 0x7b3,
+        message: [0x03, 0x22, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x7bb,
+                message: [
+                    0x62, 0x1, 0x0, 0x7f, 0xd0, 0x7,
+                    //          VEHICLE FRONT TEMP SURROUND TEMP  EVAPORATOR TEMP FOTOELECTRIC DRIVER SENSOR? % DRIVER MIXING AIR
+                    0xe8, 0xff, 0x77,              0x70,          0x75,           0x9,                        0x84,
+                    // % PASSENGER MIX FOTOELECTRIC PASSENGER SENSOR?   % PASSENGER MIXING AIR  % WIND DIRECTOR POSITION PASSANGER       % INPUT  
+                       0x11,           0x9,                             0x85,                   0x10,                              0xff, 0xf,    0xFF,
+                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                    //    % HUMIDITY % UNFROST OPEN DRIVER VENT TEMP DRIVER FLOOR TEMP SPEED ICE COOLING TEMP
+                    0xff, 0x3f,      0xf2,          0x79,            0x77,             0x00, 0x5d,
+                    //    COMPRESOR ON
+                    0xff, 0x1,          0xff
+                ]
+            )),
+        ]
+    )
+]
