@@ -6,6 +6,7 @@
 #![feature(stdarch_arm_hints)]
 #![feature(stdarch_arm_neon_intrinsics)]
 #![allow(clippy::uninlined_format_args)]
+#![feature(impl_trait_in_assoc_type)]
 extern crate tinyrlibc;
 
 //use core::panic::PanicInfo;

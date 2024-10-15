@@ -1,4 +1,4 @@
 [toolchain]
-channel = "nightly-2024-10-12"
+channel = "nightly-2024-09-04"
 components = ["rustfmt", "clippy", "rust-src", "llvm-tools"]
 targets = ["thumbv8m.base-none-eabi"]

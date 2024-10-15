@@ -1,5 +1,5 @@
 [target.'cfg(all(target_arch = "arm", target_os = "none"))']
-runner = "probe-rs run --chip nRF9160_xxAA"
+runner = "probe-rs-thingy91 run --chip nRF9160_xxAA"
 
 
 [build]
