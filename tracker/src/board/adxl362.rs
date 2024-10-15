@@ -27,7 +27,7 @@ const VALUE_RESET: u8 = 0x52;
 
 pub struct Adxl362<S> {
     spi_device: S,
-    irq: Input<'static, AnyPin>,
+    irq: Input<'static>,
 }
 
 #[bitfield(u8)]

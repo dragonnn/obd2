@@ -3,7 +3,8 @@
 #![feature(type_alias_impl_trait)]
 #![feature(iter_array_chunks)]
 #![feature(array_chunks)]
-#![feature(stdsimd)]
+#![feature(stdarch_arm_hints)]
+#![feature(stdarch_arm_neon_intrinsics)]
 #![allow(clippy::uninlined_format_args)]
 extern crate tinyrlibc;
 
@@ -22,6 +23,7 @@ use embassy_time::{Duration, Timer};
 //use panic_probe as _;
 use panic_persist as _;
 use panic_persist::get_panic_message_utf8;
+use tinyrlibc as _;
 
 mod board;
 mod config;

@@ -59,8 +59,8 @@ impl ChargetStatus {
 
 pub struct Adp5360<I2C> {
     i2c: I2C,
-    irq: Input<'static, AnyPin>,
-    reset: Output<'static, AnyPin>,
+    irq: Input<'static>,
+    reset: Output<'static>,
 }
 
 impl<I2C> Adp5360<I2C>

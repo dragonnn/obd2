@@ -1,6 +1,6 @@
 use embassy_nrf::gpio::{AnyPin, Input, Pull};
 
-pub struct Button(Input<'static, AnyPin>);
+pub struct Button(Input<'static>);
 
 impl Button {
     pub async fn new(pin: AnyPin) -> Self {

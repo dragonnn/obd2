@@ -32,7 +32,7 @@ pub async fn send_signle(modem: &Modem) -> Result<(), NrfError> {
 
     let request = modbus.generate_set_holdings_bulk(IDENTITY_WRITE_ADDRESS, &[120, 120], &mut buffer);
 
-    defmt::info!("modbus buffer: {:?}", buffer);
+    //defmt::info!("modbus buffer: {:?}", buffer);
 
     socket.send(&buffer).await?;
 

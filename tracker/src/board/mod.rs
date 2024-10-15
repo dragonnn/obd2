@@ -41,9 +41,8 @@ pub type Battery = Adp5360<
     embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice<'static, ThreadModeRawMutex, Twim<'static, SERIAL2>>,
 >;
 pub type LowPowerAccelerometer =
-    Adxl362<SpiDevice<'static, ThreadModeRawMutex, Spim<'static, SERIAL3>, Output<'static, P0_08>>>;
-pub type HiGAccelerometer =
-    Adxl372<SpiDevice<'static, ThreadModeRawMutex, Spim<'static, SERIAL3>, Output<'static, P0_07>>>;
+    Adxl362<SpiDevice<'static, ThreadModeRawMutex, Spim<'static, SERIAL3>, Output<'static>>>;
+pub type HiGAccelerometer = Adxl372<SpiDevice<'static, ThreadModeRawMutex, Spim<'static, SERIAL3>, Output<'static>>>;
 pub type LightSensor = Bh1749nuc<
     embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice<'static, ThreadModeRawMutex, Twim<'static, SERIAL2>>,
 >;

@@ -77,7 +77,7 @@ pub struct ModeControl2 {
 
 pub struct Bh1749nuc<I2C> {
     i2c: I2C,
-    irq: Input<'static, AnyPin>,
+    irq: Input<'static>,
     enabled: bool,
 }
 
