@@ -119,7 +119,9 @@ impl LcdMainState {
     }
 
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
-        self.motor_ice.update_on(self.ice_fuel_rate_value > 0.0);
+        if self.motor_ice.update_on(self.ice_fuel_rate_value > 0.0) {
+            self.gearbox_gear.force_redraw();
+        }
         self.motor_electric.update_on(if self.ice_fuel_rate_value == 0.0 {
             true
         } else {

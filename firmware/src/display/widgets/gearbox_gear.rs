@@ -39,6 +39,10 @@ impl GearboxGear {
         }
     }
 
+    pub fn force_redraw(&mut self) {
+        self.redraw = true;
+    }
+
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
             let mut text: String<16> = String::new();

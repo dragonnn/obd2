@@ -49,11 +49,16 @@ impl MotorIce {
         Self { motor_im, motor_on_im, motor_off_im, on: false, needs_update: true }
     }
 
-    pub fn update_on(&mut self, on: bool) {
+    pub fn update_on(&mut self, on: bool) -> bool {
         if self.on != on {
             self.on = on;
             self.needs_update = true;
         }
+        self.needs_update
+    }
+
+    pub fn is_redraw(&self) -> bool {
+        self.needs_update
     }
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
