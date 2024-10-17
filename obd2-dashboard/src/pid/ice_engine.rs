@@ -1,17 +1,12 @@
-use defmt::{debug, info, unwrap, warn, Format};
+use defmt::*;
 use embedded_can::{Frame as _, StandardId};
+pub use types::IceEnginePid;
 
 use crate::{
-    debug::internal_debug,
     event::Obd2Event,
     mcp2515::CanFrame,
     obd2::{Obd2Error, Pid},
 };
-
-#[derive(Debug, Format, PartialEq, Clone)]
-pub struct IceEnginePid {
-    pub gear: i32,
-}
 
 impl Pid for IceEnginePid {
     fn request() -> CanFrame {

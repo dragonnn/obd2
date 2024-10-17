@@ -1,17 +1,12 @@
-use defmt::{debug, info, unwrap, warn, Format};
+use defmt::*;
 use embedded_can::{Frame as _, StandardId};
+pub use types::VehicleSpeedPid;
 
 use crate::{
-    debug::internal_debug,
     event::Obd2Event,
     mcp2515::CanFrame,
     obd2::{Obd2Error, Pid},
 };
-
-#[derive(Debug, Format, PartialEq, Clone)]
-pub struct VehicleSpeedPid {
-    pub vehicle_speed: u8,
-}
 
 impl Pid for VehicleSpeedPid {
     fn request() -> CanFrame {

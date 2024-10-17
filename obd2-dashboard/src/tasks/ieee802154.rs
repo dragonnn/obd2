@@ -4,15 +4,6 @@ use esp_ieee802154::{Config, Frame, Ieee802154};
 use ieee802154::mac::{Address, FrameContent, FrameType, FrameVersion, Header, PanId, ShortAddress};
 use serde::{Deserialize, Serialize};
 
-use super::obd2::Obd2Event;
-
-#[derive(Serialize, Deserialize, Format)]
-pub enum TxIeee802154Frame {
-    Obd2Event(Obd2Event),
-}
-
-pub enum RxIeee802154Frame {}
-
 #[embassy_executor::task]
 pub async fn run(mut ieee802154: Ieee802154<'static>) {
     ieee802154.set_config(Config {

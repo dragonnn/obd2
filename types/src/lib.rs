@@ -73,7 +73,7 @@ pub struct VehicleSpeedPid {
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
-pub enum Obd2Event {
+pub enum Pid {
     BmsPid(BmsPid),
     IceTemperaturePid(IceTemperaturePid),
     IceFuelRatePid(IceFuelRatePid),
@@ -84,3 +84,11 @@ pub enum Obd2Event {
     IceEnginePid(IceEnginePid),
     TransaxlePid(TransaxlePid),
 }
+
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+pub enum TxFrame {
+    Obd2Pid(Pid),
+}
+
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+pub enum RxFrame {}

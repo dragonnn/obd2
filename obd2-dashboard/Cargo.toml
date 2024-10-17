@@ -98,6 +98,8 @@ strum = { version = "0.26", features = ["derive"], default-features = false }
 enum_dispatch = "0.3.13"
 statig = { path = "./crates/statig/statig", features = ["async", "alloc"] }
 
+types = { path = "../types" }
+
 
 [dependencies.num-traits]
 version = "0.2"

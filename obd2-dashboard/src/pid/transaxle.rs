@@ -1,5 +1,6 @@
-use defmt::{debug, error, info, unwrap, warn, Format};
+use defmt::*;
 use embedded_can::{Frame as _, StandardId};
+pub use types::{Gear, TransaxlePid};
 
 use crate::{
     debug::internal_debug,
@@ -7,24 +8,6 @@ use crate::{
     mcp2515::CanFrame,
     obd2::{Obd2Error, Pid},
 };
-
-#[derive(Debug, Format, PartialEq, Clone, Copy, strum::IntoStaticStr)]
-pub enum Gear {
-    PN,
-    R,
-    D1,
-    D2,
-    D3,
-    D4,
-    D5,
-    D6,
-    U,
-}
-
-#[derive(Debug, Format, PartialEq, Clone)]
-pub struct TransaxlePid {
-    pub gear: Gear,
-}
 
 impl Pid for TransaxlePid {
     fn request() -> CanFrame {

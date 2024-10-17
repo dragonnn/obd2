@@ -1,17 +1,12 @@
-use defmt::{debug, info, unwrap, warn, Format};
+use defmt::*;
 use embedded_can::{Frame as _, StandardId};
+pub use types::IceFuelRatePid;
 
 use crate::{
-    debug::internal_debug,
     event::Obd2Event,
     mcp2515::CanFrame,
     obd2::{Obd2Error, Pid},
 };
-
-#[derive(Debug, Format, PartialEq, Clone)]
-pub struct IceFuelRatePid {
-    pub fuel_rate: f64,
-}
 
 impl Pid for IceFuelRatePid {
     fn request() -> CanFrame {

@@ -1,18 +1,13 @@
-use defmt::{debug, info, unwrap, warn, Format};
+use defmt::*;
 use embassy_time::Duration;
 use embedded_can::{Frame as _, StandardId};
+pub use types::IceTemperaturePid;
 
 use crate::{
-    debug::internal_debug,
     event::Obd2Event,
     mcp2515::CanFrame,
     obd2::{Obd2Error, Pid},
 };
-
-#[derive(Debug, Format, PartialEq, Clone)]
-pub struct IceTemperaturePid {
-    pub temperature: f64,
-}
 
 impl Pid for IceTemperaturePid {
     fn request() -> CanFrame {
