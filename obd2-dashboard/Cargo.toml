@@ -38,6 +38,10 @@ esp-alloc = { version = "0.5.0" }
 esp-ieee802154 = { version = "0.3.1", features = ["esp32c6", "defmt"] }
 ieee802154 = "0.6.1"
 serde-encrypt = { version = "0.7.0", default-features = false }
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "alloc",
+] }
 #esp-wifi  = { git = "https://github.com/esp-rs/esp-wifi/", rev = "7632e74", features = ["esp32c3", "wifi"] }
 
 # Embeded hal

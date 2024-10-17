@@ -1192,6 +1192,7 @@ dependencies = [
  "panic-persist",
  "profont",
  "riscv",
+ "serde",
  "serde-encrypt",
  "sh1122",
  "static_cell",

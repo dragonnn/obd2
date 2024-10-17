@@ -1,6 +1,7 @@
 use defmt::{error, info, Format};
 use embassy_futures::select::select;
 use embassy_time::{with_timeout, Duration};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     debug::internal_debug,
@@ -10,7 +11,7 @@ use crate::{
     tasks::power::get_shutdown_signal,
 };
 
-#[derive(Format, PartialEq, Clone)]
+#[derive(Format, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Obd2Event {
     BmsPid(pid::BmsPid),
     IceTemperaturePid(pid::IceTemperaturePid),
