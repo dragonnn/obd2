@@ -6,7 +6,6 @@ use embedded_can::{Frame as _, StandardId};
 use embedded_hal_async::spi::{Operation, SpiDevice};
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use esp_hal::{
-    dma::Channel0,
     gpio::InputPin,
     peripherals::SPI2,
     spi::{master::SpiDma, FullDuplexMode},

@@ -28,15 +28,16 @@ mod power;
 mod tasks;
 mod types;
 
-#[global_allocator]
-pub(crate) static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
-
 fn init_heap() {
     const HEAP_SIZE: usize = 8 * 1024;
     static mut HEAP: MaybeUninit<[u8; HEAP_SIZE]> = MaybeUninit::uninit();
 
     unsafe {
-        ALLOCATOR.init(HEAP.as_mut_ptr() as *mut u8, HEAP_SIZE);
+        esp_alloc::HEAP.add_region(esp_alloc::HeapRegion::new(
+            HEAP.as_mut_ptr() as *mut u8,
+            HEAP_SIZE,
+            esp_alloc::MemoryCapability::Internal.into(),
+        ));
     }
 }
 
@@ -58,6 +59,7 @@ async fn main(spawner: Spawner) {
     spawner.spawn(tasks::power::run(hal.power)).ok();
     #[cfg(feature = "usb_serial")]
     spawner.spawn(tasks::usb::run(hal.usb_serial)).ok();
+    spawner.spawn(tasks::ieee802154::run(hal.ieee802154)).ok();
 
     tasks::state::run().await;
 }

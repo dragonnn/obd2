@@ -5,7 +5,8 @@ use embassy_embedded_hal::shared_bus::asynch::spi::{SpiDevice, SpiDeviceWithConf
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 use esp_backtrace as _;
 use esp_hal::{
-    clock::{ClockControl, Clocks},
+    aes::dma::AesDma,
+    clock::Clocks,
     delay::Delay,
     dma::{Dma, DmaChannel0, DmaPriority, DmaRxBuf, DmaTxBuf},
     dma_buffers, dma_descriptors,
@@ -17,11 +18,11 @@ use esp_hal::{
         master::{Spi, SpiDmaBus},
         FullDuplexMode, SpiMode,
     },
-    system::SystemControl,
-    timer::{timg::TimerGroup, ErasedTimer, OneShotTimer},
+    timer::{timg::TimerGroup, OneShotTimer},
     usb_serial_jtag::UsbSerialJtag,
     Async,
 };
+use esp_ieee802154::{Config, Frame, Ieee802154};
 use sh1122::{display::DisplayRotation, AsyncDisplay, PixelCoord};
 use static_cell::StaticCell;
 
@@ -38,6 +39,7 @@ pub struct Hal {
     pub usb_serial: types::UsbSerial,
     pub power: power::Power,
     pub led: types::Led,
+    pub ieee802154: Ieee802154<'static>,
 }
 
 macro_rules! mk_static {
@@ -50,16 +52,12 @@ macro_rules! mk_static {
 }
 
 pub struct SpiBus {
-    spi: SpiDmaBus<'static, esp_hal::peripherals::SPI2, DmaChannel0, FullDuplexMode, Async>,
-    clocks: &'static Clocks<'static>,
+    spi: SpiDmaBus<'static, esp_hal::peripherals::SPI2, FullDuplexMode, Async>,
 }
 
 impl SpiBus {
-    pub fn new(
-        spi: SpiDmaBus<'static, esp_hal::peripherals::SPI2, DmaChannel0, FullDuplexMode, Async>,
-        clocks: &'static Clocks<'static>,
-    ) -> Self {
-        Self { spi, clocks }
+    pub fn new(spi: SpiDmaBus<'static, esp_hal::peripherals::SPI2, FullDuplexMode, Async>) -> Self {
+        Self { spi }
     }
 }
 
@@ -85,7 +83,8 @@ impl embedded_hal_async::spi::SpiBus for SpiBus {
     }
 
     async fn flush(&mut self) -> Result<(), Self::Error> {
-        self.spi.flush_async().await
+        //self.spi.flush_async().await
+        Ok(())
     }
 }
 
@@ -95,23 +94,23 @@ impl embassy_embedded_hal::SetConfig for SpiBus {
     type ConfigError = ();
 
     fn set_config(&mut self, config: &Self::Config) -> Result<(), Self::ConfigError> {
-        self.spi.change_bus_frequency(config.MHz(), self.clocks);
+        self.spi.change_bus_frequency(config.MHz());
         Ok(())
     }
 }
 
 pub fn init() -> Hal {
-    let peripherals = Peripherals::take();
-    let system = SystemControl::new(peripherals.SYSTEM);
-    let clocks = ClockControl::max(system.clock_control).freeze();
-    let delay = Delay::new(&clocks);
+    let mut config = esp_hal::Config::default();
+    config.cpu_clock = CpuClock::max();
+    let peripherals = esp_hal::init(config);
+    //let system = SystemControl::new(peripherals.SYSTEM);
+    //let clocks = ClockControl::max(system.clock_control).freeze();
+    let delay = Delay::new();
     delay.delay_micros(100u32);
 
-    let timg0 = TimerGroup::new(peripherals.TIMG0, &clocks);
-    let timer0: ErasedTimer = timg0.timer0.into();
-    let timers = [OneShotTimer::new(timer0)];
-    let timers = mk_static!([OneShotTimer<ErasedTimer>; 1], timers);
-    esp_hal_embassy::init(&clocks, timers);
+    let timg0 = TimerGroup::new(peripherals.TIMG0);
+
+    esp_hal_embassy::init(timg0.timer0);
     let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
     let rtc = Rtc::new(peripherals.LPWR);
 
@@ -126,12 +125,12 @@ pub fn init() -> Hal {
     let dma_rx_buf = unwrap!(DmaRxBuf::new(rx_descriptors, rx_buffer).ok());
     let dma_tx_buf = unwrap!(DmaTxBuf::new(tx_descriptors, tx_buffer).ok());
 
-    let spi = Spi::new(peripherals.SPI2, 6.MHz(), SpiMode::Mode0, &clocks)
+    let spi = Spi::new(peripherals.SPI2, 6.MHz(), SpiMode::Mode0)
         .with_sck(sclk)
         .with_mosi(mosi)
         .with_miso(miso)
         .with_dma(dma_channel.configure_for_async(false, DmaPriority::Priority0))
-        .with_buffers(dma_tx_buf, dma_rx_buf);
+        .with_buffers(dma_rx_buf, dma_tx_buf);
 
     let mut dc = Output::new(io.pins.gpio23, false.into());
     let mut cs_display1 = Output::new(io.pins.gpio18, false.into());
@@ -162,10 +161,8 @@ pub fn init() -> Hal {
 
     let dc2 = unsafe { core::ptr::read(&dc) };
 
-    static CLOCKS: StaticCell<Clocks> = StaticCell::new();
-    let clocks = CLOCKS.init(clocks);
     static SPI_BUS: StaticCell<Mutex<CriticalSectionRawMutex, SpiBus>> = StaticCell::new();
-    let spi_bus = SPI_BUS.init(Mutex::new(SpiBus::new(spi, clocks)));
+    let spi_bus = SPI_BUS.init(Mutex::new(SpiBus::new(spi)));
 
     let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, 20);
     let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, 20);
@@ -188,6 +185,8 @@ pub fn init() -> Hal {
 
     info!("HAL initialized");
 
+    let ieee802154 = Ieee802154::new(peripherals.IEEE802154, peripherals.RADIO_CLK);
+
     Hal {
         display1,
         display2,
@@ -197,5 +196,6 @@ pub fn init() -> Hal {
         usb_serial,
         power: power::Power::new(ing, delay, rtc, rs),
         led,
+        ieee802154,
     }
 }

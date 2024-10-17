@@ -30,7 +30,7 @@ impl Power {
     pub fn deep_sleep(&mut self, duration: Duration) {
         let timer = TimerWakeupSource::new(duration.into());
 
-        let mut ing_pin = unsafe { esp_hal::gpio::Gpio5::steal() };
+        let mut ing_pin: esp_hal::gpio::GpioPin<5> = unsafe { esp_hal::gpio::GpioPin::steal() };
 
         let wakeup_pins: &mut [(&mut dyn RtcPinWithResistors, WakeupLevel)] = &mut [(&mut ing_pin, WakeupLevel::High)];
 
