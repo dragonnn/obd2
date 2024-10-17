@@ -11,7 +11,7 @@ use crate::{
     tasks::power::get_shutdown_signal,
 };
 
-#[derive(Format, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Format, PartialEq, Clone)]
 pub enum Obd2Event {
     BmsPid(pid::BmsPid),
     IceTemperaturePid(pid::IceTemperaturePid),
