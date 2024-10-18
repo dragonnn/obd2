@@ -1,4 +1,12 @@
 {
     "rust-analyzer.cargo.target": "thumbv8m.base-none-eabi",
-    "rust-analyzer.checkOnSave.allTargets": false
+    "rust-analyzer.checkOnSave.allTargets": false,
+    "cSpell.words": [
+        "Adxl",
+        "gnss",
+        "lightwell",
+        "spim",
+        "TWIM",
+        "uarte"
+    ]
 }

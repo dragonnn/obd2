@@ -3,7 +3,7 @@ use embassy_nrf::gpio::{AnyPin, Input, Pull};
 use embassy_time::{with_timeout, Duration, Timer};
 use embedded_hal_async::i2c::I2c;
 
-use super::twi2_reset;
+use crate::board::twi2_reset;
 
 const I2C_ADDRESS: u8 = 0x38;
 const I2C_TIMEOUT: Duration = Duration::from_millis(100);

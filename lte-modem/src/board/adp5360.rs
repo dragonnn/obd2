@@ -85,12 +85,6 @@ where
     }
 
     async fn reset(&mut self) {
-        /*for _ in 0..4 {
-            self.reset.set_low();
-            embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
-            self.reset.set_high();
-            embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
-        }*/
         twi2_reset().await
     }
 

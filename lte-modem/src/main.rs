@@ -48,15 +48,18 @@ async fn main(spawner: Spawner) {
 
     Timer::after(Duration::from_secs(1)).await;
 
-    let gnss = board.modem.gnss().await.unwrap();
+    let gnss = unwrap!(board.modem.gnss().await);
 
-    let sense = board.sense.take().unwrap();
-    let lightwell = board.lightwell.take().unwrap();
-    let battery = board.battery.take().unwrap();
-    let low_power_accelerometer = board.low_power_accelerometer.take().unwrap();
-    let button = board.button.take().unwrap();
-    let wdg = board.wdg.take().unwrap();
-    let light_sensor = board.light_sensor.take().unwrap();
+    let sense = unwrap!(board.sense.take());
+    let lightwell = unwrap!(board.lightwell.take());
+    let battery = unwrap!(board.battery.take());
+    let low_power_accelerometer = unwrap!(board.low_power_accelerometer.take());
+    let button = unwrap!(board.button.take());
+    let wdg = unwrap!(board.wdg.take());
+    let light_sensor = unwrap!(board.light_sensor.take());
+    let uarte = unwrap!(board.uarte.take());
+    let uarte_send = unwrap!(board.uarte_send.take());
+    let uarte_receive = unwrap!(board.uarte_receive.take());
 
     if let Some(panic) = panic_message {
         if !panic.contains("twi reset") {
@@ -71,6 +74,7 @@ async fn main(spawner: Spawner) {
     unwrap!(spawner.spawn(tasks::state::task(sense, lightwell, wdg, light_sensor)));
     unwrap!(spawner.spawn(tasks::montion_detection::task(low_power_accelerometer)));
     unwrap!(spawner.spawn(tasks::button::task(button)));
+    tasks::uarte::run(&spawner, uarte, uarte_send, uarte_receive);
 
     defmt::info!("entering main loop");
 

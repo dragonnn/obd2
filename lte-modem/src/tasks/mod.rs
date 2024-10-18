@@ -6,3 +6,4 @@ pub mod gnss;
 pub mod modem;
 pub mod montion_detection;
 pub mod state;
+pub mod uarte;

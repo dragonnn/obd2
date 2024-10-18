@@ -15,13 +15,16 @@ pub use adxl362::Adxl362;
 pub use adxl372::Adxl372;
 pub use bh1749nuc::Bh1749nuc;
 pub use button::Button;
+use defmt::error;
 use embassy_embedded_hal::shared_bus::asynch::{i2c::I2cDevice, spi::SpiDevice};
 use embassy_nrf::{
     bind_interrupts,
-    gpio::{Level, Output, OutputDrive, Pin},
-    peripherals::{P0_07, P0_08, PWM0, PWM1, PWM2, SERIAL2, SERIAL3},
+    gpio::{Input, Level, Output, OutputDrive, Pin, Pull},
+    pac::UARTE0,
+    peripherals::{P0_07, P0_08, PWM0, PWM1, PWM2, SERIAL1, SERIAL2, SERIAL3},
     spim::{self, Spim},
     twim::{self, Twim},
+    uarte::{self, Uarte},
 };
 use embassy_sync::{blocking_mutex::raw::ThreadModeRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer};
@@ -55,6 +58,10 @@ bind_interrupts!(struct SpiIrqs {
     UARTE3_SPIM3_SPIS3_TWIM3_TWIS3 => spim::InterruptHandler<SERIAL3>;
 });
 
+bind_interrupts!(struct UartIrqs {
+    UARTE1_SPIM1_SPIS1_TWIM1_TWIS1 => uarte::InterruptHandler<SERIAL1>;
+});
+
 pub struct Board {
     pub buzzer: Buzzer,
     pub lightwell: Option<Lightwell>,
@@ -69,31 +76,34 @@ pub struct Board {
     pub light_sensor: Option<LightSensor>,
 
     pub wdg: Option<Wdg>,
+    pub uarte: Option<Uarte<'static, SERIAL1>>,
+    pub uarte_send: Option<Output<'static>>,
+    pub uarte_receive: Option<Input<'static>>,
 }
 
 impl Board {
     pub async fn new() -> Board {
         let p = embassy_nrf::init(Default::default());
 
-        defmt::info!("lightwell initalizing");
+        defmt::info!("lightwell initializing");
         let mut lightwell = Rgb::new(p.PWM1, p.P0_29, p.P0_30, p.P0_31, true);
         lightwell.r(64);
 
-        defmt::info!("wdg initalizing");
+        defmt::info!("wdg initializing");
         let wdg = Wdg::new(p.WDT).await;
 
-        defmt::info!("buzzer initalizing");
+        defmt::info!("buzzer initializing");
         let buzzer = Buzzer::new(p.PWM0, p.P0_28);
 
-        defmt::info!("sense initalizing");
+        defmt::info!("sense initializing");
         let sense = Rgb::new(p.PWM2, p.P0_00, p.P0_01, p.P0_02, true);
-        defmt::info!("modem initalizing");
+        defmt::info!("modem initializing");
         let modem = Modem::new().await;
 
         embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
-        defmt::info!("battery initalizing");
+        defmt::info!("battery initializing");
 
-        twi2_reset_gpio().await;
+        twi2_reset().await;
         Timer::after(Duration::from_millis(200)).await;
 
         let mut twi2_config = twim::Config::default();
@@ -131,6 +141,11 @@ impl Board {
 
         let button = Button::new(p.P0_26.degrade()).await;
 
+        let uarte = Uarte::new(p.SERIAL1, UartIrqs, p.P0_25, p.P0_24, uarte::Config::default());
+
+        let uarte_send = Output::new(p.P0_23, Level::Low, OutputDrive::Standard);
+        let uarte_receive = Input::new(p.P0_22, Pull::Down);
+
         lightwell.r(0);
 
         Self {
@@ -144,95 +159,25 @@ impl Board {
             light_sensor: Some(light_sensor),
             hi_g_accelerometer,
             wdg: Some(wdg),
+            uarte: Some(uarte),
+            uarte_send: Some(uarte_send),
+            uarte_receive: Some(uarte_receive),
         }
     }
 }
 
-pub async fn twi2_reset_true() {
-    /*let _lock = TWIM2_RESET_MUTEX.lock().await;
-
-    let now = embassy_time::Instant::now();
-    unsafe {
-        let _twim2_lock = TWIM2_API.as_ref().unwrap().lock().await;
-
-        let _critical = embassy_nrf::interrupt::CriticalSection::new();
-        let twim2_scl = &mut TWIM2_SCL;
-        let mut state_high = true;
-        for _ in 0..9 {
-            if state_high {
-                twim2_scl.as_mut().unwrap().set_low();
-                state_high = false;
-            } else {
-                twim2_scl.as_mut().unwrap().set_high();
-                state_high = true;
-            }
-            for _ in 0..160 {
-                core::arch::arm::__nop();
-            }
-        }
-    }*/
-
-    //defmt::info!("i2c reset took: {}", now.elapsed().as_micros());
-}
-
-pub async fn twi2_init() -> Twim<'static, SERIAL2> {
-    todo!()
-    /*unsafe {
-        let p = Peripherals::steal();
-        let twi2_irq = &TWI2_IRQ;
-        let twim2_irq_owned = ptr::read(twi2_irq).unwrap();
-        let mut twi2_config = twim::Config::default();
-        twi2_config.scl_high_drive = true;
-        twi2_config.sda_high_drive = true;
-        twi2_config.scl_pullup = true;
-        twi2_config.sda_pullup = true;
-        Twim::new(p.SERIAL2, twim2_irq_owned, p.P0_11, p.P0_12, twi2_config)
-    }*/
-}
-
-use core::sync::atomic::{AtomicU32, Ordering};
-
-pub static TWI2_RESETS: AtomicU32 = AtomicU32::new(0);
 pub async fn twi2_reset() {
-    panic!("twi reset");
-    TWI2_RESETS.fetch_add(1, Ordering::SeqCst);
-
-    /*let _lock = TWIM2_RESET_MUTEX.lock().await;
-    unsafe {
-        let mut _twim2_lock = TWIM2_API.as_ref().unwrap().lock().await;
-        let twim2_old = &mut *_twim2_lock;
-        let twim2_owned = ptr::read(twim2_old);
-        drop(twim2_owned);
-        twi2_reset_gpio();
-        let twi2 = twi2_init().await;
-        //core::mem::forget(twi2);
-        core::ptr::replace(twim2_old, twi2);
-    }*/
-
-    twi2_reset_gpio().await;
-
-    if TWI2_RESETS.load(Ordering::Relaxed) > 10 {
-        panic!("twi2 resets over 10");
-    }
-
-    //panic!("twi2 error");
-}
-
-pub async fn twi2_reset_gpio() {
+    error!("twi2_reset");
     unsafe {
         let mut twim2_scl = Output::new(embassy_nrf::peripherals::P0_12::steal(), Level::High, OutputDrive::Standard);
-        let mut state_high = true;
-        for _ in 0..9 {
-            if state_high {
-                twim2_scl.set_low();
-                state_high = false;
-            } else {
-                twim2_scl.set_high();
-                state_high = true;
-            }
-            for _ in 0..160 {
-                core::arch::arm::__nop();
-            }
+        let mut twim2_sda = Output::new(embassy_nrf::peripherals::P0_11::steal(), Level::High, OutputDrive::Standard);
+        for _ in 0..10 {
+            twim2_scl.set_low();
+            Timer::after(Duration::from_micros(5)).await;
+            twim2_scl.set_high();
+            Timer::after(Duration::from_micros(5)).await;
         }
+        embassy_nrf::gpio::Input::new(embassy_nrf::peripherals::P0_12::steal(), embassy_nrf::gpio::Pull::Up);
+        embassy_nrf::gpio::Input::new(embassy_nrf::peripherals::P0_11::steal(), embassy_nrf::gpio::Pull::Up);
     }
 }

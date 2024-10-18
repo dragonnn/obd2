@@ -67,6 +67,9 @@ name = "at-commands"
 version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d535a7e70f2244f8e1fa6bd34c6ad54d873b92797917cc6df7e88d76b64249ba"
+dependencies = [
+ "defmt",
+]
 
 [[package]]
 name = "atomic-polyfill"
@@ -1055,6 +1058,7 @@ dependencies = [
  "at-commands",
  "cortex-m",
  "critical-section",
+ "defmt",
  "embassy-sync 0.6.0",
  "futures",
  "grounded",
