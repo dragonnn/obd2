@@ -6,24 +6,29 @@ use embassy_nrf::{
     uarte::{Uarte, UarteRx, UarteTx},
 };
 
+use crate::board::{BoardUarteRx, BoardUarteTx};
+
 pub fn run(
     spawner: &Spawner,
-    uarte: Uarte<'static, SERIAL1>,
+    uarte: (BoardUarteTx, BoardUarteRx),
     uarte_send: Output<'static>,
     uarte_receive: Input<'static>,
 ) {
-    let (send, receive) = uarte.split();
-    spawner.spawn(send_task(send, uarte_send)).unwrap();
-    spawner.spawn(receive_task(receive, uarte_receive)).unwrap();
+    spawner.spawn(send_task(uarte.0, uarte_send)).unwrap();
+    spawner.spawn(receive_task(uarte.1, uarte_receive)).unwrap();
 }
 
 #[embassy_executor::task]
-async fn send_task(send: UarteTx<'static, SERIAL1>, mut uarte_send: Output<'static>) {}
+async fn send_task(send: BoardUarteTx, mut uarte_send: Output<'static>) {}
 
 #[embassy_executor::task]
-async fn receive_task(receive: UarteRx<'static, SERIAL1>, mut uarte_receive: Input<'static>) {
+async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'static>) {
+    let mut buffer = [0u8; 4096];
     loop {
         uarte_receive.wait_for_high().await;
         info!("uarte_receive high");
+        let result = receive.read_until_idle(&mut buffer).await;
+        info!("uarte_receive read_until_idle {:?}", result);
+        uarte_receive.wait_for_low().await;
     }
 }

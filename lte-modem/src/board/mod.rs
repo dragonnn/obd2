@@ -21,10 +21,10 @@ use embassy_nrf::{
     bind_interrupts,
     gpio::{Input, Level, Output, OutputDrive, Pin, Pull},
     pac::UARTE0,
-    peripherals::{P0_07, P0_08, PWM0, PWM1, PWM2, SERIAL1, SERIAL2, SERIAL3},
+    peripherals::{P0_07, P0_08, PWM0, PWM1, PWM2, SERIAL1, SERIAL2, SERIAL3, TIMER0},
     spim::{self, Spim},
     twim::{self, Twim},
-    uarte::{self, Uarte},
+    uarte::{self, Uarte, UarteRxWithIdle, UarteTx},
 };
 use embassy_sync::{blocking_mutex::raw::ThreadModeRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer};
@@ -62,6 +62,9 @@ bind_interrupts!(struct UartIrqs {
     UARTE1_SPIM1_SPIS1_TWIM1_TWIS1 => uarte::InterruptHandler<SERIAL1>;
 });
 
+pub type BoardUarteTx = UarteTx<'static, SERIAL1>;
+pub type BoardUarteRx = UarteRxWithIdle<'static, SERIAL1, TIMER0>;
+
 pub struct Board {
     pub buzzer: Buzzer,
     pub lightwell: Option<Lightwell>,
@@ -76,7 +79,7 @@ pub struct Board {
     pub light_sensor: Option<LightSensor>,
 
     pub wdg: Option<Wdg>,
-    pub uarte: Option<Uarte<'static, SERIAL1>>,
+    pub uarte: Option<(BoardUarteTx, UarteRxWithIdle<'static, SERIAL1, TIMER0>)>,
     pub uarte_send: Option<Output<'static>>,
     pub uarte_receive: Option<Input<'static>>,
 }
@@ -141,7 +144,8 @@ impl Board {
 
         let button = Button::new(p.P0_26.degrade()).await;
 
-        let uarte = Uarte::new(p.SERIAL1, UartIrqs, p.P0_25, p.P0_24, uarte::Config::default());
+        let uarte = Uarte::new(p.SERIAL1, UartIrqs, p.P0_25, p.P0_24, uarte::Config::default())
+            .split_with_idle(p.TIMER0, p.PPI_CH0, p.PPI_CH1);
 
         let uarte_send = Output::new(p.P0_23, Level::Low, OutputDrive::Standard);
         let uarte_receive = Input::new(p.P0_22, Pull::Down);

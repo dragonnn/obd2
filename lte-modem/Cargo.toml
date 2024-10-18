@@ -96,6 +96,5 @@ opt-level = 's'
 
 [profile.release]
 opt-level = 's'
-strip = "debuginfo"
 lto = 'fat'
 debug = 2
