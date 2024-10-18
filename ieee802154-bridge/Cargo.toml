@@ -46,6 +46,8 @@ embedded-hal = { version = "1.0" }
 embedded-hal-async = { version = "1.0" }
 embedded-hal-bus = { version = "0.1", features = ["async"] }
 num-integer = { version = "0.1.45", default-features = false }
+ieee802154 = { version = "0.6.1", features = ["defmt"] }
+byte = "0.2.7"
 
 [profile.release]
 debug = 2

@@ -28,7 +28,9 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
         uarte_receive.wait_for_high().await;
         info!("uarte_receive high");
         let result = receive.read_until_idle(&mut buffer).await;
-        info!("uarte_receive read_until_idle {:?}", result);
+        if let Ok(result) = result {
+            info!("uarte_receive read_until_idle {:?} {=[u8]:a}", result, buffer[..result]);
+        }
         uarte_receive.wait_for_low().await;
     }
 }

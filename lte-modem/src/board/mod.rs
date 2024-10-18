@@ -143,10 +143,18 @@ impl Board {
         let hi_g_accelerometer = Adxl372::new(spim3_dev2, p.P0_06.degrade()).await;
 
         let button = Button::new(p.P0_26.degrade()).await;
-
-        let uarte = Uarte::new(p.SERIAL1, UartIrqs, p.P0_25, p.P0_24, uarte::Config::default())
-            .split_with_idle(p.TIMER0, p.PPI_CH0, p.PPI_CH1);
-
+        //rxd - p0.25 -> MCU_IF7
+        //txd - p0.24 -> MCU_IF6
+        let uarte = Uarte::new(
+            p.SERIAL1,
+            UartIrqs,
+            p.P0_24, //rxd
+            p.P0_25, //txd
+            uarte::Config::default(),
+        )
+        .split_with_idle(p.TIMER0, p.PPI_CH0, p.PPI_CH1);
+        //send - p0.23 -> MCU_IF5
+        //receive - p0.22 -> MCU_IF4
         let uarte_send = Output::new(p.P0_23, Level::Low, OutputDrive::Standard);
         let uarte_receive = Input::new(p.P0_22, Pull::Down);
 
