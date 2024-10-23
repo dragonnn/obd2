@@ -5,5 +5,6 @@ pub mod button;
 pub mod gnss;
 pub mod modem;
 pub mod montion_detection;
+pub mod reset;
 pub mod state;
 pub mod uarte;

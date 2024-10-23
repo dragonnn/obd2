@@ -74,6 +74,7 @@ async fn main(spawner: Spawner) {
     unwrap!(spawner.spawn(tasks::state::task(sense, lightwell, wdg, light_sensor)));
     unwrap!(spawner.spawn(tasks::montion_detection::task(low_power_accelerometer)));
     unwrap!(spawner.spawn(tasks::button::task(button)));
+    unwrap!(spawner.spawn(tasks::reset::task()));
     tasks::uarte::run(&spawner, uarte, uarte_send, uarte_receive);
 
     defmt::info!("entering main loop");

@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": "types"
+		},
+		{
+			"path": "lte-modem"
+		},
+		{
+			"path": "ieee802154-bridge"
+		},
+		{
+			"path": "obd2-dashboard"
+		}
+	],
+	"settings": {
+		"cSpell.words": [
+			"spim"
+		]
+	}
+}

@@ -10,6 +10,7 @@ use heapless::String;
 use nrf_modem::{ConnectionPreference, LteLink, SystemMode};
 
 use super::gnss::Gnss;
+use crate::tasks::reset::ResetGuard;
 
 #[interrupt]
 fn IPC() {
@@ -62,6 +63,7 @@ impl Modem {
     }
 
     pub async fn send_sms(&self, numbers: &[&str], text: &str) -> Result<(), nrf_modem::Error> {
+        let _guard = ResetGuard::new();
         for number in numbers {
             embassy_time::with_timeout(Duration::from_secs(120), nrf_modem::Sms::new(number, text).send::<354>())
                 .await

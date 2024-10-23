@@ -8,12 +8,12 @@ use embassy_sync::{
 use embassy_time::{Duration, Timer};
 
 use super::TASKS_SUBSCRIBERS;
-use crate::board::{Battery, ChargetStatus, InterputEvent};
+use crate::board::{Battery, ChargerStatus, InterputEvent};
 
 #[derive(Format, Clone, Default)]
 pub struct State {
     pub charging: bool,
-    pub charger_state: ChargetStatus,
+    pub charger_state: ChargerStatus,
     pub low_voltage: bool,
     pub capacity: u8,
     pub voltage: u16,
@@ -41,7 +41,7 @@ impl State {
 
 static STATE: Mutex<ThreadModeRawMutex, State> = Mutex::new(State {
     charging: false,
-    charger_state: ChargetStatus::Off,
+    charger_state: ChargerStatus::Off,
     low_voltage: false,
     capacity: 0,
     voltage: 0,

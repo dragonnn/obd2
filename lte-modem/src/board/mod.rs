@@ -10,7 +10,7 @@ mod rgb;
 mod rtc;
 mod wdg;
 
-pub use adp5360::{Adp5360, ChargetStatus, InterputEvent};
+pub use adp5360::{Adp5360, ChargerStatus, InterputEvent};
 pub use adxl362::Adxl362;
 pub use adxl372::Adxl372;
 pub use bh1749nuc::Bh1749nuc;
@@ -178,8 +178,14 @@ impl Board {
     }
 }
 
+use core::sync::atomic::{AtomicUsize, Ordering};
+
+use crate::tasks::reset::request_reset;
+pub static TWI2_ERROS: AtomicUsize = AtomicUsize::new(0);
+
 pub async fn twi2_reset() {
     error!("twi2_reset");
+    let current_errors = TWI2_ERROS.fetch_add(1, Ordering::Relaxed);
     unsafe {
         let mut twim2_scl = Output::new(embassy_nrf::peripherals::P0_12::steal(), Level::High, OutputDrive::Standard);
         let mut twim2_sda = Output::new(embassy_nrf::peripherals::P0_11::steal(), Level::High, OutputDrive::Standard);
@@ -191,5 +197,8 @@ pub async fn twi2_reset() {
         }
         embassy_nrf::gpio::Input::new(embassy_nrf::peripherals::P0_12::steal(), embassy_nrf::gpio::Pull::Up);
         embassy_nrf::gpio::Input::new(embassy_nrf::peripherals::P0_11::steal(), embassy_nrf::gpio::Pull::Up);
+    }
+    if current_errors > 10 {
+        request_reset();
     }
 }

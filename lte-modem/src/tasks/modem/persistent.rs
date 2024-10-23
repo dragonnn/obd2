@@ -2,7 +2,7 @@ use defmt::Format;
 use persistent_buff::PersistentBuff;
 use serde::{Deserialize, Serialize};
 
-use crate::tasks::gnss::Fix;
+use crate::tasks::{gnss::Fix, reset::ResetGuard};
 
 #[derive(Format, Default, Deserialize, Serialize)]
 pub struct PeristentState {
@@ -82,6 +82,7 @@ impl PeristentManager {
     }
 
     fn serialize(&mut self) {
+        let _guard = ResetGuard::new();
         embedded_msgpack::encode::serde::to_array(&self.persistent_state, self.persistent_buff).unwrap();
     }
 }
