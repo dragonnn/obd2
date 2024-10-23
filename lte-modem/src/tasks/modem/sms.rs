@@ -54,7 +54,7 @@ pub async fn send_state(
         writeln!(&mut sms, "fix: none").map_err(|_| nrf_modem::Error::OutOfMemory)?;
     }
     defmt::info!("starting sms send");
-    let _link = modem.link(Duration::from_secs(120)).await?;
+    let link = modem.link(Duration::from_secs(120)).await?;
     if let Some(dbm) = modem.dbm().await.unwrap() {
         writeln!(&mut sms, "dbm: {}", dbm).map_err(|_| nrf_modem::Error::OutOfMemory)?;
     } else {
@@ -65,5 +65,6 @@ pub async fn send_state(
     //    .map_err(|_| nrf_modem::Error::OutOfMemory)?;
     modem.send_sms(crate::config::SMS_NUMBERS, &sms).await?;
     defmt::info!("sms send ok");
+    link.deactivate().await?;
     Ok(())
 }
