@@ -176,6 +176,10 @@ async fn gnss_set_duration(battery_state: &BatteryState, gnss: &mut Gnss) {
         defmt::debug!("gnss in charging state");
     } else {
         defmt::debug!("gnss in batter state");
-        gnss.conf(Duration::from_secs(15 * 60), true).await;
+        if battery_state.capacity < 50 {
+            gnss.conf(Duration::from_secs(60 * 60), true).await;
+        } else {
+            gnss.conf(Duration::from_secs(15 * 60), true).await;
+        }
     }
 }
