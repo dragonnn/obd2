@@ -9,7 +9,7 @@ use static_cell::make_static;
 
 use crate::{
     debug::internal_debug,
-    event::{KiaEvent, Obd2Event, KIA_EVENTS},
+    event::{event_bus_pub, Event, EventBusPub, KiaEvent, Obd2Event, KIA_EVENTS},
     mcp2515::{
         clock_16mhz, clock_8mhz, CanFrame, OperationMode, RxBuffer, TxBuffer, CANINTE, CLKPRE, RXB0CTRL, RXB1CTRL, RXM,
     },
@@ -35,6 +35,8 @@ pub struct Obd2 {
     obd2_message_buffer: &'static mut heapless::Vec<u8, 4095>,
     obd2_pid_errors: heapless::FnvIndexMap<TypeId, usize, 32>,
     obd2_pid_periods: heapless::FnvIndexMap<TypeId, Instant, 32>,
+
+    event_bus_pub: EventBusPub,
 }
 
 impl Obd2 {
@@ -46,7 +48,7 @@ impl Obd2 {
         let obd2_pid_errors = heapless::FnvIndexMap::new();
         let obd2_pid_periods = heapless::FnvIndexMap::new();
 
-        Self { mcp2515, obd2_message_buffer, obd2_pid_errors, obd2_pid_periods }
+        Self { mcp2515, obd2_message_buffer, obd2_pid_errors, obd2_pid_periods, event_bus_pub: event_bus_pub() }
     }
 
     pub async fn init(&mut self) {
@@ -194,11 +196,13 @@ impl Obd2 {
         if errors < 10 {
             match with_timeout(Duration::from_millis(350), self.request_pid::<PID>()).await {
                 Ok(Ok((pid_result, buffer))) => {
-                    embassy_time::Timer::after(embassy_time::Duration::from_millis(25)).await;
-                    KIA_EVENTS.send(KiaEvent::Obd2Event(pid_result.into_event())).await;
+                    let event = KiaEvent::Obd2Event(pid_result.into_event());
+                    KIA_EVENTS.send(event.clone()).await;
+                    self.event_bus_pub.publish(Event::Kia(event)).await;
                     if obd2_debug_pids_enabled {
                         KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(Some(buffer)))).await;
                     }
+                    embassy_time::Timer::after(embassy_time::Duration::from_millis(25)).await;
                     errors = 0;
                 }
                 Ok(Err(_e)) => {

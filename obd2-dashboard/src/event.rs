@@ -19,10 +19,13 @@ pub enum Event {
 
 static EVENT_BUS: PubSubChannel<CriticalSectionRawMutex, Event, 32, 32, 32> = PubSubChannel::new();
 
-pub fn event_bus_pub() -> DynPublisher<'static, Event> {
+pub fn event_bus_pub() -> EventBusPub {
     unwrap!(EVENT_BUS.dyn_publisher())
 }
 
-pub fn event_bus_sub() -> DynSubscriber<'static, Event> {
+pub fn event_bus_sub() -> EventBusSub {
     unwrap!(EVENT_BUS.dyn_subscriber())
 }
+
+pub type EventBusPub = DynPublisher<'static, Event>;
+pub type EventBusSub = DynSubscriber<'static, Event>;
