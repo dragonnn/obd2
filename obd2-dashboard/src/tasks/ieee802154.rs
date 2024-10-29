@@ -3,10 +3,14 @@ use esp_hal::aes::{dma::AesDma, Aes, Mode};
 use esp_ieee802154::{Config, Frame, Ieee802154};
 use ieee802154::mac::{Address, FrameContent, FrameType, FrameVersion, Header, PanId, ShortAddress};
 use serde::{Deserialize, Serialize};
-use serde_encrypt::{serialize::impls::PostcardSerializer, traits::SerdeEncryptSharedKey};
+use serde_encrypt::{serialize::impls::PostcardSerializer, shared_key::SharedKey, traits::SerdeEncryptSharedKey};
 
 #[embassy_executor::task]
 pub async fn run(mut ieee802154: Ieee802154<'static>) {
+    let shared_key_bytes = include_bytes!("../../../shared_key.bin");
+    info!("shared_key_bytes: {:?}", shared_key_bytes);
+    let shared_key: SharedKey = SharedKey::new(shared_key_bytes.clone());
+
     ieee802154.set_config(Config {
         channel: 15,
         promiscuous: false,
