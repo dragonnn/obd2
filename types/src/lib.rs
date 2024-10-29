@@ -73,7 +73,7 @@ pub struct VehicleSpeedPid {
     pub vehicle_speed: u8,
 }
 
-#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Debug, Format, Clone, Deserialize, Serialize)]
 pub enum Pid {
     BmsPid(BmsPid),
     IceTemperaturePid(IceTemperaturePid),
@@ -85,6 +85,20 @@ pub enum Pid {
     IceEnginePid(IceEnginePid),
     TransaxlePid(TransaxlePid),
 }
+
+impl core::hash::Hash for Pid {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+    }
+}
+
+impl PartialEq for Pid {
+    fn eq(&self, other: &Self) -> bool {
+        core::mem::discriminant(self) == core::mem::discriminant(other)
+    }
+}
+
+impl Eq for Pid {}
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub enum TxFrame {
