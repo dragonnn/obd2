@@ -37,6 +37,29 @@ where
         Self { spi, int }
     }
 
+    pub async fn apply_canctrl(&mut self, canctrl: CANCTRL) -> bool {
+        info!("Applying canctrl config: {:?}", canctrl.reqop());
+        self.write_register(canctrl).await.ok();
+        let mut canctrl_read = [0u8; 1];
+        self.read_registers(CANCTRL::ADDRESS, &mut canctrl_read).await.ok();
+        let written_canctrl: u8 = canctrl.into();
+        let canctrl_read_parsed = CANCTRL::from_bytes(canctrl_read);
+        if canctrl_read[0] != written_canctrl
+            && !(canctrl_read_parsed.reqop() == OperationMode::ListenOnly && canctrl.reqop() == OperationMode::Sleep)
+        {
+            error!(
+                "MCP2515 canctrl config failed, expected: {:b}, got: {:b} with mode: {:?}",
+                written_canctrl,
+                canctrl_read[0],
+                canctrl_read_parsed.reqop()
+            );
+            false
+        } else {
+            info!("MCP2515 canctrl config success with mode: {:?}", canctrl_read_parsed.reqop());
+            true
+        }
+    }
+
     pub async fn apply_config(&mut self, config: &Config<'_>) -> Result<(), SPI::Error> {
         self.reset().await?;
         let mut canctrl = [0u8; 1];
@@ -53,13 +76,12 @@ where
         for &(filter, id_header) in config.filters {
             self.set_filter(filter, id_header).await?;
         }
-        self.write_register(config.canctrl).await?;
-
-        let written_canctrl: u8 = config.canctrl.into();
-        self.read_registers(0x0F, &mut canctrl).await?;
-        info!("written_canctrl: {:b}", written_canctrl);
-        if canctrl[0] != written_canctrl {
-            error!("MCP2515 config failed");
+        loop {
+            if self.apply_canctrl(config.canctrl).await {
+                break;
+            } else {
+                Timer::after(Duration::from_millis(100)).await;
+            }
         }
         Ok(())
     }
@@ -83,7 +105,8 @@ where
     }
 
     pub async fn set_bitrate(&mut self, cnf: CNF) -> Result<(), SPI::Error> {
-        self.write_registers(CNF3::ADDRESS, &cnf.into_bytes()).await?;
+        let bytes = cnf.into_bytes();
+        self.write_registers(CNF3::ADDRESS, &bytes).await?;
         Ok(())
     }
 
@@ -97,7 +120,28 @@ where
         reset_buf[0] = Instruction::Reset as u8;
 
         self.spi.write(&reset_buf).await?;
+        embassy_time::Timer::after_millis(50).await;
         Ok(())
+    }
+
+    pub async fn shutdown(&mut self) {
+        self.reset().await;
+
+        let mut config = crate::mcp2515::Config::default().mode(OperationMode::Configuration);
+        config.canctrl.set_abat(true);
+        info!("Set config mode");
+        self.apply_canctrl(config.canctrl).await;
+        info!("Set config mode end");
+        self.write_registers(CNF3::ADDRESS, &[0]).await;
+        self.write_registers(CNF2::ADDRESS, &[0]).await;
+        self.write_registers(CNF1::ADDRESS, &[0]).await;
+        config.canctrl.set_reqop(OperationMode::Sleep);
+        info!("Shutting down MCP2515");
+        info!("config.canctrl.clken: {:?}", config.canctrl.clken());
+        while !self.apply_canctrl(config.canctrl).await {
+            self.reset().await;
+            Timer::after(Duration::from_millis(100)).await;
+        }
     }
 
     pub async fn rx_status(&mut self) -> Result<RxStatusResponse, SPI::Error> {

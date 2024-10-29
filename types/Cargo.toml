@@ -5,5 +5,6 @@ edition = "2021"
 
 [dependencies]
 serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde-encrypt = { version = "0.7.0", default-features = false }
 defmt = "0.3.7"
 strum = { version = "0.26", features = ["derive"], default-features = false }

@@ -2,6 +2,7 @@
 
 use defmt::Format;
 use serde::{Deserialize, Serialize};
+use serde_encrypt::{serialize::impls::PostcardSerializer, traits::SerdeEncryptSharedKey};
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub struct AcPid {
@@ -90,5 +91,13 @@ pub enum TxFrame {
     Obd2Pid(Pid),
 }
 
+impl SerdeEncryptSharedKey for TxFrame {
+    type S = PostcardSerializer<Self>;
+}
+
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub enum RxFrame {}
+
+impl SerdeEncryptSharedKey for RxFrame {
+    type S = PostcardSerializer<Self>;
+}

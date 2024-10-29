@@ -13,13 +13,15 @@ use crate::{debug::internal_debug, event::*, power::Power};
 
 #[embassy_executor::task]
 pub async fn run(mut power: Power) {
+    let mut sleep_duration = Duration::from_secs(5 * 60);
+
     let reason = get_reset_reason(Cpu::ProCpu).unwrap_or(SocResetReason::ChipPowerOn);
     error!("reset reason: {:?}", defmt::Debug2Format(&reason));
     let wake_reason = get_wakeup_cause();
     error!("wake reason: {:?}", defmt::Debug2Format(&wake_reason));
 
     let mut sleep_timeout = Duration::from_secs(5);
-    let mut sleep_duration = Duration::from_secs(5 * 60);
+
     //testing
     if esp_hal::debugger::debugger_connected() {
         warn!("debugger connected");

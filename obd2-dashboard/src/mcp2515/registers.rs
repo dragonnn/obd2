@@ -85,7 +85,7 @@ pub struct CANCTRL {
 }
 
 /// Request Operation mode
-#[derive(BitfieldSpecifier, Copy, Clone, Debug)]
+#[derive(BitfieldSpecifier, Copy, Clone, Debug, Format, PartialEq, Eq)]
 #[bits = 3]
 pub enum OperationMode {
     NormalOperation = 0b000,
@@ -119,7 +119,7 @@ pub enum CLKPRE {
 /// ```
 impl Default for CANCTRL {
     fn default() -> Self {
-        0b1000_0111.into()
+        0b1000_0011.into()
     }
 }
 
@@ -163,7 +163,7 @@ impl Default for CANSTAT {
 /// Configuration Registers
 ///
 /// Note: Write operations require Configuration mode
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, Format)]
 pub struct CNF {
     /// Configuration 3 Register
     pub cnf3: CNF3,
@@ -182,11 +182,7 @@ impl CNF {
         }
     }
     pub const fn into_bytes(self) -> [u8; 3] {
-        [
-            self.cnf3.into_bytes()[0],
-            self.cnf2.into_bytes()[0],
-            self.cnf1.into_bytes()[0],
-        ]
+        [self.cnf3.into_bytes()[0], self.cnf2.into_bytes()[0], self.cnf1.into_bytes()[0]]
     }
 }
 
@@ -195,7 +191,7 @@ impl CNF {
 /// Note: Write operations require Configuration mode
 #[bitfield]
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, Format)]
 pub struct CNF1 {
     /// Baud Rate Prescaler
     pub brp: B6,
@@ -208,7 +204,7 @@ pub struct CNF1 {
 /// Note: Write operations require Configuration mode
 #[bitfield]
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, Format)]
 pub struct CNF2 {
     /// Propagation Segment Length
     pub prseg: B3,
@@ -225,7 +221,7 @@ pub struct CNF2 {
 /// Note: Write operations require Configuration mode
 #[bitfield]
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, Format)]
 pub struct CNF3 {
     /// PS2 Length
     /// Note: Minimum valid setting is 1

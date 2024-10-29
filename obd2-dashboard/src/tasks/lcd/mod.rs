@@ -35,12 +35,13 @@ pub use obd2_pids::obd2_debug_pids_enabled;
 
 pub struct LcdContext {}
 
-#[derive(Format, PartialEq)]
+#[derive(Format, PartialEq, Clone)]
 pub enum LcdEvent {
     PowerOff,
     Main,
     Debug,
     Menu,
+    Render,
     DebugLine(String<DEBUG_STRING_LEN>),
     Obd2Event(Obd2Event),
     Obd2Debug(Obd2Debug),
@@ -157,6 +158,9 @@ impl LcdState {
         let ret = match event {
             LcdEvent::Obd2Event(obd2_event) => {
                 main.handle_obd2_event(obd2_event);
+                Handled
+            }
+            LcdEvent::Render => {
                 main.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }
@@ -313,6 +317,7 @@ pub async fn run(mut display1: Display1, mut display2: Display2) {
     let mut state =
         LcdState::new(display1, display2).uninitialized_state_machine().init_with_context(&mut context).await;
     info!("lcd state machine initialized");
+    let mut render_ticker = embassy_time::Ticker::every(Duration::from_millis(1000 / 12));
     loop {
         match state.state() {
             State::Debug { debug: _ } => match select(EVENTS.receive(), crate::debug::receive()).await {
@@ -320,7 +325,13 @@ pub async fn run(mut display1: Display1, mut display2: Display2) {
                 Second(line) => state.handle_with_context(&LcdEvent::DebugLine(line), &mut context).await,
             },
             _ => {
-                let event = EVENTS.receive().await;
+                let event = match select(EVENTS.receive(), render_ticker.next()).await {
+                    First(event) => {
+                        render_ticker.reset();
+                        event
+                    }
+                    Second(_) => LcdEvent::Render,
+                };
                 state.handle_with_context(&event, &mut context).await;
             }
         }

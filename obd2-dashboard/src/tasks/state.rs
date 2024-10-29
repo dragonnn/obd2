@@ -20,6 +20,7 @@ pub enum KiaEvent {
     Button(crate::tasks::buttons::Action),
     Obd2Event(Obd2Event),
     Obd2Debug(Obd2Debug),
+    Render,
 }
 
 #[derive(Default)]
@@ -67,6 +68,10 @@ impl KiaState {
             }
             KiaEvent::Obd2Debug(obd2_debug) => {
                 LCD_EVENTS.send(LcdEvent::Obd2Debug(obd2_debug.clone())).await;
+                Handled
+            }
+            KiaEvent::Render => {
+                LCD_EVENTS.send(LcdEvent::Render).await;
                 Handled
             }
             KiaEvent::Button(action) => {

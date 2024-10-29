@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "obd2-dashboard"
+		},
+		{
+			"path": "obd2-simulator/host"
 		}
 	],
 	"settings": {

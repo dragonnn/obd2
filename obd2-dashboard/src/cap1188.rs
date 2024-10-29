@@ -131,7 +131,7 @@ where
     }
 
     pub async fn shutdown(&mut self) -> Result<(), SPI::Error> {
-        self.write_register(CAP1188_MAIN, &[0b0001_0000]).await
+        self.write_register(CAP1188_MAIN, &[0b0011_0000]).await
     }
 
     pub async fn wait_for_touched(&mut self) {

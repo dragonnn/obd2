@@ -64,9 +64,7 @@ impl Obd2 {
     }
 
     pub async fn shutdown(&mut self) {
-        unwrap!(self.mcp2515.reset().await);
-        let config = crate::mcp2515::Config::default().mode(OperationMode::Sleep);
-        unwrap!(self.mcp2515.apply_config(&config).await);
+        self.mcp2515.shutdown().await;
     }
 
     pub async fn request_pid<PID: Pid>(&mut self) -> Result<(PID, alloc::vec::Vec<u8>), Obd2Error> {

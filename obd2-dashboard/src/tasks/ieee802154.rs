@@ -3,6 +3,7 @@ use esp_hal::aes::{dma::AesDma, Aes, Mode};
 use esp_ieee802154::{Config, Frame, Ieee802154};
 use ieee802154::mac::{Address, FrameContent, FrameType, FrameVersion, Header, PanId, ShortAddress};
 use serde::{Deserialize, Serialize};
+use serde_encrypt::{serialize::impls::PostcardSerializer, traits::SerdeEncryptSharedKey};
 
 #[embassy_executor::task]
 pub async fn run(mut ieee802154: Ieee802154<'static>) {
@@ -37,7 +38,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
             payload: heapless::Vec::from_slice(b"Hello World").unwrap(),
             footer: [0u8; 2],
         });
-        info!("result: {:?}", defmt::Debug2Format(&result));
+        //info!("result: {:?}", defmt::Debug2Format(&result));
         seq_number = seq_number.wrapping_add(1);
         embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     }

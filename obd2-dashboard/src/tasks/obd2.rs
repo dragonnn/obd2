@@ -48,6 +48,8 @@ pub async fn run(mut obd2: Obd2) {
                 obd2.handle_pid::<pid::HybridDcDcPid>().await;
                 obd2.handle_pid::<pid::IcuPid>().await;
                 obd2.handle_pid::<pid::IceEnginePid>().await;
+
+                KIA_EVENTS.send(KiaEvent::Render).await;
                 //error!("obd2 task loop end");
 
                 #[cfg(debug_assertions)]
