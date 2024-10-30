@@ -3,6 +3,7 @@
 #![feature(impl_trait_in_assoc_type)]
 
 use byte::TryRead;
+use byte::TryWrite;
 use defmt::*;
 use embassy_executor::Spawner;
 use embassy_nrf::{
@@ -49,6 +50,7 @@ async fn main(_spawner: Spawner) {
     //send - p1.00 -> MCU_IF4
     let mut uarte_send = Output::new(p.P1_00, Level::Low, OutputDrive::Standard);
     let mut uarte_receive = Input::new(p.P0_25, Pull::Down);
+    let mut ctx = ieee802154::mac::frame::FrameSerDesContext::no_security(FooterMode::None);
 
     loop {
         let mut rx_packet = radio::ieee802154::Packet::new();
@@ -59,10 +61,28 @@ async fn main(_spawner: Spawner) {
                 rx_packet.lqi(),
                 *rx_packet
             );
-            let mut frame = ieee802154::mac::Frame::try_read(&rx_packet, FooterMode::None).unwrap();
-            info!("Frame: {:?} Payload: {=[u8]:a}", frame.0, frame.0.payload);
+            let (mut frame, size) =
+                ieee802154::mac::Frame::try_read(&rx_packet, FooterMode::Explicit).unwrap();
+            info!("Frame: {:?} Payload: {=[u8]:a}", frame, frame.payload);
+            frame.header.frame_type = ieee802154::mac::FrameType::Acknowledgement;
+            let ack_frame = ieee802154::mac::Frame {
+                header: frame.header,
+                payload: &[],
+                footer: frame.footer,
+                content: ieee802154::mac::FrameContent::Acknowledgement,
+            };
+            let mut ack_packet_bytes = [0; 127];
+            let ack_size = ack_frame
+                .try_write(&mut ack_packet_bytes, &mut ctx)
+                .unwrap();
+            let mut ack_packet = embassy_nrf::radio::ieee802154::Packet::new();
+            ack_packet.copy_from_slice(&ack_packet_bytes[0..ack_size]);
+            if ieee802154.try_send(&mut ack_packet).await.is_err() {
+                error!("Send failed");
+            }
+
             uarte_send.set_high();
-            send.write(&frame.0.payload).await.unwrap();
+            send.write(&frame.payload).await.unwrap();
             uarte_send.set_low();
         } else {
             error!("Receive failed");
