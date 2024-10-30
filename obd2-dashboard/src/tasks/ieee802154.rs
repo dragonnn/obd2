@@ -43,6 +43,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                     info!("pid: {:?}", pid);
                     if let Some(encrypted_pid) = types::TxFrame::Obd2Pid(pid.clone()).encrypt(&shared_key).ok() {
                         let encrypted_pid_bytes = encrypted_pid.serialize();
+                        info!("sending encrypted_pid_bytes: {}", encrypted_pid_bytes.len());
                         if let Err(err) =
                             ieee802154.transmit_buffer(&encrypted_pid_bytes, 2, Duration::from_secs(5)).await
                         {
@@ -51,7 +52,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                     } else {
                         error!("types::TxFrame::Obd2Pid(pid.clone()).encrypt(&shared_key).ok() failed");
                     }
-                    embassy_time::Timer::after(Duration::from_millis(5000)).await;
+                    //embassy_time::Timer::after(Duration::from_millis(5000)).await;
                 }
             }
             Second(event) => {
@@ -146,12 +147,13 @@ impl AsyncIeee802154 {
                 payload: unwrap!(heapless::Vec::from_slice(chunk)),
                 footer: [0, 0],
             };
+            info!("sending chunk with payload: {:x}", chunk);
             self.transmit_raw(&frame, retry, timeout).await?;
             info!("transmit raw end");
             self.seq_number = self.seq_number.wrapping_add(1);
-            if chunks_count > 1 {
-                embassy_time::Timer::after(Duration::from_millis(10)).await;
-            }
+            //if chunks_count > 1 {
+            //    embassy_time::Timer::after(Duration::from_millis(10)).await;
+            //}
         }
         info!("transmit_buffer end");
         Ok(())
