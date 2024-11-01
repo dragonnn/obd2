@@ -198,7 +198,7 @@ impl Obd2 {
                 Ok(Ok((pid_result, buffer))) => {
                     let event = KiaEvent::Obd2Event(pid_result.into_event());
                     KIA_EVENTS.send(event.clone()).await;
-                    self.event_bus_pub.publish(Event::Kia(event)).await;
+                    self.event_bus_pub.try_publish(Event::Kia(event)).ok();
                     if obd2_debug_pids_enabled {
                         KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(Some(buffer)))).await;
                     }

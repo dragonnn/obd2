@@ -51,6 +51,7 @@ async fn main(spawner: Spawner) {
 
     info!("init");
     hal.led.set_low();
+    hal.can_listen.shutdown().await;
 
     spawner.spawn(tasks::led::run(hal.led)).ok();
     spawner.spawn(tasks::buttons::run(hal.buttons)).ok();

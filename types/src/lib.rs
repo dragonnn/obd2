@@ -9,7 +9,7 @@ pub struct AcPid {
     pub gear: i32,
 }
 
-#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct BmsPid {
     pub hv_max_temp: f64,
     pub hv_min_temp: f64,

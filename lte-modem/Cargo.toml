@@ -47,6 +47,7 @@ embedded-io-async = { version = "0.6.1", optional = true, features = [
     "defmt-03",
 ] }
 embedded-hal-bus = { version = "0.2.0", features = ["async"] }
+embedded-alloc = "0.6.0"
 
 #nrf-modem = { path = "../nrf-modem",  features = [] }
 #nrf-modem = { git = "https://github.com/dragonnn/nrf-modem", features = [] }
@@ -72,6 +73,7 @@ arbitrary-int = "1.2.7"
 
 embedded-msgpack = "0.3.1"
 serde = { version = "1.0.147", default-features = false, features = ["derive"] }
+serde-encrypt = { version = "0.7.0", default-features = false }
 bitfield-struct = "0.9.0"
 
 array-macro = "2.1.5"
@@ -84,6 +86,8 @@ rmodbus = { version = "*", default-features = false, features = ["heapless"] }
 panic-persist = { version = "0.3.0", features = ["utf8"] }
 
 persistent-buff = "0.2.6"
+
+types = { path = "../types" }
 
 [build-dependencies]
 dotenv-build = "0.1"

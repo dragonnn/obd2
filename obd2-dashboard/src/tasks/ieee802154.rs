@@ -29,7 +29,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
         ..Default::default()
     });
 
-    let mut send_ticker = embassy_time::Ticker::every(embassy_time::Duration::from_secs(60));
+    let mut send_ticker = embassy_time::Ticker::every(embassy_time::Duration::from_secs(15));
     let mut event_bus_sub = event_bus_sub();
 
     let mut obd2_pids: heapless::FnvIndexSet<Pid, 32> = heapless::FnvIndexSet::new();

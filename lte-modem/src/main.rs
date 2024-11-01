@@ -7,6 +7,7 @@
 #![feature(stdarch_arm_neon_intrinsics)]
 #![allow(clippy::uninlined_format_args)]
 #![feature(impl_trait_in_assoc_type)]
+extern crate alloc;
 extern crate tinyrlibc;
 
 //use core::panic::PanicInfo;
@@ -21,6 +22,7 @@ use defmt::*;
 use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
+use embedded_alloc::LlffHeap as Heap;
 //use panic_probe as _;
 use panic_persist as _;
 use panic_persist::get_panic_message_utf8;
@@ -31,8 +33,18 @@ mod config;
 mod led;
 mod tasks;
 
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
+
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
+    {
+        use core::mem::MaybeUninit;
+        const HEAP_SIZE: usize = 16 * 1024;
+        static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
+        unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
+    }
+
     let panic_message = get_panic_message_utf8();
     if let Some(panic) = panic_message {
         defmt::error!("{}", panic);

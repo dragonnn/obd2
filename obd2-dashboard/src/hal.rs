@@ -35,6 +35,7 @@ pub struct Hal {
     pub display2: types::Display2,
     pub buttons: types::Cap1188,
     pub obd2: obd2::Obd2,
+    pub can_listen: types::Mcp2515,
     #[cfg(feature = "usb_serial")]
     pub usb_serial: types::UsbSerial,
     pub power: power::Power,
@@ -137,7 +138,9 @@ pub fn init() -> Hal {
     let mut cs_display2 = Output::new(io.pins.gpio19, false.into());
     let mut cs_cap1188 = Output::new(io.pins.gpio20, false.into());
     let mut cs_mcp2515 = Output::new(io.pins.gpio17, false.into());
+    let mut cs_mcp2515_2 = Output::new(io.pins.gpio16, false.into());
     let int_mcp2515 = Input::new(io.pins.gpio4, Pull::Up);
+    let int_mcp2515_2 = Input::new(io.pins.gpio13, Pull::Up);
     let mut rs = Output::new(io.pins.gpio22, true.into());
     let ing = Input::new(io.pins.gpio5, Pull::Up);
     let int_cap1188 = Input::new(io.pins.gpio3, Pull::Up);
@@ -149,6 +152,7 @@ pub fn init() -> Hal {
     cs_display2.set_high();
     cs_cap1188.set_high();
     cs_mcp2515.set_high();
+    cs_mcp2515_2.set_high();
     delay.delay_micros(2u32);
     rs.set_high();
 
@@ -168,6 +172,7 @@ pub fn init() -> Hal {
     let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, 20);
     let cap1188_spi = SpiDeviceWithConfig::new(spi_bus, cs_cap1188, 5);
     let mcp2515_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515, 10);
+    let mcp2515_2_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515_2, 10);
     let interface1 = SPIInterface::new(display1_spi, dc);
     let interface2 = SPIInterface::new(display2_spi, dc2);
 
@@ -179,6 +184,7 @@ pub fn init() -> Hal {
 
     let cap1188 = Cap1188::new(cap1188_spi, int_cap1188);
     let mcp2515 = Mcp2515::new(mcp2515_spi, int_mcp2515);
+    let mcp2515_2 = Mcp2515::new(mcp2515_2_spi, int_mcp2515_2);
 
     #[cfg(feature = "usb_serial")]
     let usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
@@ -192,6 +198,7 @@ pub fn init() -> Hal {
         display2,
         buttons: cap1188,
         obd2: obd2::Obd2::new(mcp2515),
+        can_listen: mcp2515_2,
         #[cfg(feature = "usb_serial")]
         usb_serial,
         power: power::Power::new(ing, delay, rtc, rs),
