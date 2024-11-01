@@ -18,7 +18,7 @@ pub struct Gnss {
 impl Gnss {
     pub fn new() -> Self {
         let duration = Duration::from_secs(20);
-        let timeout = Duration::from_secs(240);
+        let timeout = Duration::from_secs(60);
 
         Self { stream: None, duration, timeout, ticker: Ticker::every(duration), low_accuracy: false }
     }

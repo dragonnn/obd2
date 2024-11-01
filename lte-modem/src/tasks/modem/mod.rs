@@ -1,6 +1,7 @@
 use core::{fmt::Write, write};
 
-use defmt::Format;
+use defmt::*;
+use embassy_executor::Spawner;
 use embassy_futures::select;
 use embassy_time::{Duration, Instant, Ticker};
 use futures::StreamExt;
@@ -8,8 +9,8 @@ use heapless::String;
 use persistent_buff::PersistentBuff;
 use serde::{Deserialize, Serialize};
 
+pub mod link;
 mod persistent;
-mod send;
 mod sms;
 
 use persistent::PeristentManager;
@@ -25,7 +26,9 @@ use crate::{
 };
 
 // /#[embassy_executor::task]
-pub async fn task(mut modem: Modem) {
+pub async fn task(mut modem: Modem, spawner: &Spawner) {
+    unwrap!(spawner.spawn(link::task()));
+
     let mut persistent_manager = PeristentManager::new();
 
     let imei = modem.imei().await.unwrap();

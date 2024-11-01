@@ -75,7 +75,7 @@ async fn main(spawner: Spawner) {
 
     if let Some(panic) = panic_message {
         if !panic.contains("twi reset") {
-            board.modem.send_sms(crate::config::SMS_NUMBERS, panic).await.ok();
+            board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, panic).await.ok();
         }
     }
 
@@ -91,7 +91,7 @@ async fn main(spawner: Spawner) {
 
     defmt::info!("entering main loop");
 
-    tasks::modem::task(board.modem).await;
+    tasks::modem::task(board.modem, &spawner).await;
 }
 
 //#[link_section = ".spm"]

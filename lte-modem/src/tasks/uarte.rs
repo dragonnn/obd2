@@ -26,6 +26,8 @@ async fn send_task(send: BoardUarteTx, mut uarte_send: Output<'static>) {}
 
 #[embassy_executor::task]
 async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'static>) {
+    let tx_channel_pub = crate::tasks::modem::link::tx_channel_pub();
+
     let shared_key_bytes = include_bytes!("../../../shared_key.bin");
     let shared_key: SharedKey = SharedKey::new(shared_key_bytes.clone());
 
@@ -39,9 +41,20 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
             info!("uarte_receive read_until_idle {:?} {=[u8]:a}", result, buffer[..result]);
             vec_buffer.extend_from_slice(&buffer[..result]);
 
-            let encrypted_message = EncryptedMessage::deserialize(vec_buffer).unwrap();
-            let msg = types::TxFrame::decrypt_owned(&encrypted_message, &shared_key).unwrap();
-            info!("uarte_receive decrypted {:?}", msg);
+            match EncryptedMessage::deserialize(vec_buffer) {
+                Ok(encrypted_message) => match types::TxFrame::decrypt_owned(&encrypted_message, &shared_key) {
+                    Ok(msg) => {
+                        info!("uarte_receive decrypted {:?}", msg);
+                        tx_channel_pub.publish(msg).await;
+                    }
+                    Err(e) => {
+                        error!("uarte_receive decrypt error {:?}", defmt::Debug2Format(&e));
+                    }
+                },
+                Err(e) => {
+                    error!("uarte_receive deserialize error {:?}", defmt::Debug2Format(&e));
+                }
+            }
         } else {
             error!("uarte_receive read_until_idle error {:?}", result);
         }
