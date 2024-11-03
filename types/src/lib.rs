@@ -1,10 +1,14 @@
 #![no_std]
 
+extern crate alloc;
+
 use crc::{Crc, CRC_32_ISCSI};
 use defmt::Format;
 use postcard::to_vec_crc32;
 use serde::{Deserialize, Serialize};
 use serde_encrypt::{serialize::impls::PostcardSerializer, traits::SerdeEncryptSharedKey};
+
+mod serializer;
 
 static CRC: Crc<u32> = Crc::<u32>::new(&CRC_32_ISCSI);
 
@@ -144,7 +148,7 @@ impl PartialEq for Modem {
 }
 
 impl SerdeEncryptSharedKey for TxFrame {
-    type S = PostcardSerializer<Self>;
+    type S = serializer::PostcardSerializer<Self>;
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
@@ -163,5 +167,5 @@ impl RxFrame {
 }
 
 impl SerdeEncryptSharedKey for RxFrame {
-    type S = PostcardSerializer<Self>;
+    type S = serializer::PostcardSerializer<Self>;
 }

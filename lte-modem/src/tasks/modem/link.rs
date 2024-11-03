@@ -78,10 +78,8 @@ trait TxFrameSend {
 }
 
 impl TxFrameSend for DtlsSocket {
-    async fn tx_frame_send(&self, frame: &TxFrame) -> Result<(), NrfError> {
-        let frame = unwrap!(to_vec::<_, 512>(&frame));
-        info!("sending {}", frame.len());
-        self.send(&frame).await
+    async fn tx_frame_send(&self, frame: &TxFrame) -> Result<(), nrf_modem::Error> {
+        self.send(&frame.to_vec().map_err(|_| nrf_modem::Error::Utf8Error)?).await
     }
 }
 

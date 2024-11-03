@@ -8,6 +8,6 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde-encrypt = { version = "0.7.0", default-features = false }
 defmt = "0.3.7"
 strum = { version = "0.26", features = ["derive"], default-features = false }
-postcard = { version = "1.0.10", features = ["use-crc"] }
+postcard = { version = "1.0.10", features = ["use-crc", "alloc"] }
 crc = "3.2.1"
 heapless = "0.7.0"
