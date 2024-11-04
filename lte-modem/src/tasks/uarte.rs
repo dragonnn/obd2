@@ -28,23 +28,19 @@ async fn send_task(send: BoardUarteTx, mut uarte_send: Output<'static>) {}
 async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'static>) {
     let tx_channel_pub = crate::tasks::modem::link::tx_channel_pub();
 
-    let shared_key_bytes = include_bytes!("../../../shared_key.bin");
-    let shared_key: SharedKey = SharedKey::new(shared_key_bytes.clone());
+    let shared_key: SharedKey = SharedKey::new(crate::SHARED_KEY.clone());
 
-    let mut buffer = [0u8; 4096];
+    let mut buffer = [0u8; 1024];
     loop {
-        let mut vec_buffer = Vec::with_capacity(4096);
+        let mut vec_buffer = Vec::with_capacity(1024);
         uarte_receive.wait_for_high().await;
-        info!("uarte_receive high");
         let result = receive.read_until_idle(&mut buffer).await;
         if let Ok(result) = result {
-            info!("uarte_receive read_until_idle {:?} {=[u8]:a}", result, buffer[..result]);
             vec_buffer.extend_from_slice(&buffer[..result]);
 
             match EncryptedMessage::deserialize(vec_buffer) {
                 Ok(encrypted_message) => match types::TxFrame::decrypt_owned(&encrypted_message, &shared_key) {
                     Ok(msg) => {
-                        info!("uarte_receive decrypted {:?}", msg);
                         tx_channel_pub.publish(msg).await;
                     }
                     Err(e) => {
@@ -58,7 +54,7 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
         } else {
             error!("uarte_receive read_until_idle error {:?}", result);
         }
-        info!("uarte_receive low");
+        //info!("uarte_receive low");
         uarte_receive.wait_for_low().await;
     }
 }

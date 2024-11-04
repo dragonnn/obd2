@@ -36,6 +36,8 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
 
     let dbm = modem.dbm().await.unwrap();
     defmt::info!("dbm: {}", dbm);
+    let hw = modem.hw().await.unwrap();
+    defmt::info!("hw: {}", hw);
 
     let mut battery_state_sub = BatteryState::subscribe().await;
     let mut battery_state = BatteryState::get().await;
@@ -105,8 +107,8 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                     distance += (old_fix - new_fix) / 1000.0;
                     persistent_manager.update_distance(distance);
 
-                    let old_instant = Instant::from_ticks(old_fix.elpased);
-                    let new_instant = Instant::from_ticks(new_fix.elpased);
+                    let old_instant = Instant::from_ticks(old_fix.elapsed);
+                    let new_instant = Instant::from_ticks(new_fix.elapsed);
                     if new_instant > old_instant {
                         secs += (new_instant - old_instant).as_millis() as f64 / 1000.0;
                         persistent_manager.update_secs(secs);

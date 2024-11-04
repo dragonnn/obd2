@@ -12,11 +12,14 @@ use heapless::Vec;
 use nrf_modem::nrfxlib_sys::nrf_modem_gnss_pvt_data_frame;
 use num_traits::real::Real;
 use serde::{Deserialize, Serialize};
+use types::{Modem, TxFrame};
 
-use super::TASKS_SUBSCRIBERS;
+use super::{modem::link::tx_channel_pub, TASKS_SUBSCRIBERS};
 use crate::{board::Gnss, tasks::battery::State as BatteryState};
 
 const FIXES_BUFFER_SIZE: usize = 10;
+
+pub use types::GnssFix as Fix;
 
 #[derive(Format, Clone)]
 pub struct State {
@@ -49,46 +52,11 @@ impl State {
 pub type FixSubscriper =
     Subscriber<'static, ThreadModeRawMutex, Fix, TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, FIXES_BUFFER_SIZE>;
 
-#[derive(Format, PartialEq, Clone, Copy, Deserialize, Serialize)]
-pub struct Fix {
-    pub latitude: f64,
-    pub longitude: f64,
-    pub altitude: f32,
-    pub accuracy: f32,
+pub struct FromFix(Fix);
 
-    pub year: u16,
-    pub month: u8,
-    pub day: u8,
-
-    pub hour: u8,
-    pub minute: u8,
-    pub seconds: u8,
-    pub ms: u16,
-    pub elpased: u64,
-}
-
-impl core::ops::Sub for Fix {
-    type Output = f64;
-
-    fn sub(self, other: Self) -> Self::Output {
-        let r = 6378.137;
-        let d_lat = (other.latitude * core::f64::consts::PI / 180.0) - (self.latitude * core::f64::consts::PI / 180.0);
-        let d_lon =
-            (other.longitude * core::f64::consts::PI / 180.0) - (self.longitude * core::f64::consts::PI / 180.0);
-        let a = (d_lat / 2.0).sin() * (d_lat / 2.0).sin()
-            + (self.latitude * core::f64::consts::PI / 180.0).cos()
-                * (other.latitude * core::f64::consts::PI / 180.0).cos()
-                * (d_lon / 2.0).sin()
-                * (d_lon / 2.0).sin();
-        let c = 2.0 * a.sqrt().atan2((1.0 - a).sqrt());
-        let d = r * c;
-        d * 1000.0
-    }
-}
-
-impl From<nrf_modem_gnss_pvt_data_frame> for Fix {
+impl From<nrf_modem_gnss_pvt_data_frame> for FromFix {
     fn from(value: nrf_modem_gnss_pvt_data_frame) -> Self {
-        Fix {
+        FromFix(Fix {
             latitude: value.latitude,
             longitude: value.longitude,
             altitude: value.altitude,
@@ -102,8 +70,8 @@ impl From<nrf_modem_gnss_pvt_data_frame> for Fix {
             minute: value.datetime.minute,
             seconds: value.datetime.seconds,
             ms: value.datetime.ms,
-            elpased: Instant::now().as_ticks(),
-        }
+            elapsed: Instant::now().as_ticks(),
+        })
     }
 }
 
@@ -116,6 +84,7 @@ static REQUEST: Signal<ThreadModeRawMutex, ()> = Signal::new();
 
 #[embassy_executor::task]
 pub async fn task(mut gnss: Gnss) {
+    let tx_channel_pub = tx_channel_pub();
     let mut battery_state_sub = BatteryState::subscribe().await;
     let mut battery_state = BatteryState::get().await;
 
@@ -129,7 +98,8 @@ pub async fn task(mut gnss: Gnss) {
         match result {
             select::Either3::First(new_gnss_frame) => {
                 if let Ok(Some(new_gnss_frame)) = new_gnss_frame {
-                    let fix: Fix = new_gnss_frame.into();
+                    let fix: FromFix = new_gnss_frame.into();
+                    let fix = fix.0;
                     defmt::info!("fix: {:?}", fix);
                     let mut state = STATE.lock().await;
                     if state.fix != Some(fix) {
@@ -139,6 +109,7 @@ pub async fn task(mut gnss: Gnss) {
                         }
                         state.fixes.push(fix).ok();
                         fix_pub.publish(fix).await;
+                        tx_channel_pub.publish(TxFrame::Modem(Modem::GnssFix(fix))).await;
                     } else {
                         defmt::warn!("found duplicated fix");
                     }
@@ -157,10 +128,12 @@ pub async fn task(mut gnss: Gnss) {
                 defmt::info!("got request for new fix");
                 gnss.conf(Duration::from_secs(1), false).await;
                 if let Ok(Some(new_gnss_frame)) = gnss.next().await {
-                    let fix: Fix = new_gnss_frame.into();
+                    let fix: FromFix = new_gnss_frame.into();
+                    let fix = fix.0;
                     let mut state = STATE.lock().await;
                     state.fix = Some(fix);
                     fix_pub.publish(fix).await;
+                    tx_channel_pub.publish(TxFrame::Modem(Modem::GnssFix(fix))).await;
 
                     battery_state = BatteryState::get().await;
                     gnss_set_duration(&battery_state, &mut gnss).await;

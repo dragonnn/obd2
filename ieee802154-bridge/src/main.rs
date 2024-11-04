@@ -40,12 +40,15 @@ async fn main(spawner: Spawner) {
     info!("Radio initialized");
     //txd - p0.19 -> MCU_IF7
     //rxd - p0.22 -> MCU_IF6
+    let mut uart_config = uarte::Config::default();
+    uart_config.baudrate = uarte::Baudrate::BAUD1M;
+    uart_config.parity = uarte::Parity::INCLUDED;
     let (mut send, mut receive) = Uarte::new(
         p.UARTE0,
         UartIrqs,
         p.P0_22, //rxd
         p.P0_19, //txd
-        uarte::Config::default(),
+        uart_config,
     )
     .split_with_idle(p.TIMER0, p.PPI_CH0, p.PPI_CH1);
 
@@ -142,7 +145,7 @@ async fn main(spawner: Spawner) {
     }
 }
 
-static UARTE_SEND_CHANNEL: channel::Channel<CriticalSectionRawMutex, heapless::Vec<u8, 512>, 4> =
+static UARTE_SEND_CHANNEL: channel::Channel<CriticalSectionRawMutex, heapless::Vec<u8, 512>, 128> =
     channel::Channel::new();
 
 #[embassy_executor::task]
@@ -155,7 +158,7 @@ pub async fn uarte_send_task(
         let data = uarte_send_channel_sub.receive().await;
         info!("Sending data: {=[u8]:a} with len: {}", data, data.len());
         uarte_send_gpio.set_high();
-        embassy_time::Timer::after(embassy_time::Duration::from_millis(1)).await;
+        embassy_time::Timer::after(embassy_time::Duration::from_millis(2)).await;
         unwrap!(uarte_send.write(&data).await);
         uarte_send_gpio.set_low();
         embassy_time::Timer::after(embassy_time::Duration::from_millis(2)).await;

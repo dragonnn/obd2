@@ -99,4 +99,13 @@ impl Modem {
             Err(nrf_modem::Error::NrfError(0))
         }
     }
+
+    pub async fn hw(&self) -> Result<String<32>, nrf_modem::Error> {
+        let hwversion = nrf_modem::send_at::<64>("AT%HWVERSION").await.unwrap();
+        if hwversion.ends_with("OK\r\n") && hwversion.len() >= 14 {
+            Ok(unwrap!(String::try_from(&hwversion[8..14])))
+        } else {
+            Err(nrf_modem::Error::NrfError(0))
+        }
+    }
 }

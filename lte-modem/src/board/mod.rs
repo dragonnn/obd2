@@ -145,12 +145,15 @@ impl Board {
         let button = Button::new(p.P0_26.degrade()).await;
         //rxd - p0.25 -> MCU_IF7
         //txd - p0.24 -> MCU_IF6
+        let mut uart_config = uarte::Config::default();
+        uart_config.baudrate = uarte::Baudrate::BAUD1M;
+        uart_config.parity = uarte::Parity::INCLUDED;
         let uarte = Uarte::new(
             p.SERIAL1,
             UartIrqs,
             p.P0_24, //rxd
             p.P0_25, //txd
-            uarte::Config::default(),
+            uart_config,
         )
         .split_with_idle(p.TIMER0, p.PPI_CH0, p.PPI_CH1);
         //send - p0.23 -> MCU_IF5

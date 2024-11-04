@@ -5,9 +5,10 @@ use embassy_sync::{
     mutex::Mutex,
     pubsub::{PubSubChannel, Subscriber},
 };
-use embassy_time::{Duration, Timer};
+use embassy_time::{Duration, Instant, Timer};
+use types::{Modem, TxFrame};
 
-use super::TASKS_SUBSCRIBERS;
+use super::{modem::link::tx_channel_pub, TASKS_SUBSCRIBERS};
 use crate::board::{Battery, ChargerStatus, InterputEvent};
 
 #[derive(Format, Clone, Default)]
@@ -55,8 +56,9 @@ pub async fn task(mut battery: Battery) {
     let mut timeout = Duration::from_secs(60);
     let mut low_voltage = false;
     let mut state = State::new(&mut battery, low_voltage).await;
+    let tx_channel_pub = tx_channel_pub();
 
-    //STATE.init(Mutex::new(State::new(&mut battery).await));
+    let mut last_modem_battery_send: Option<Instant> = None;
     let charging_pub = CHANNEL.publisher().unwrap();
 
     loop {
@@ -83,11 +85,19 @@ pub async fn task(mut battery: Battery) {
             }
             select::Either::Second(_) => {}
         }
-        defmt::info!(
-            "battery voltage: {} soc: {} low_voltage: {}",
-            battery.voltage().await,
-            battery.battery_soc().await,
-            low_voltage
-        );
+        let battery_voltage = battery.voltage().await;
+        let battery_soc = battery.battery_soc().await;
+        defmt::info!("battery voltage: {} soc: {} low_voltage: {}", battery_voltage, battery_soc, low_voltage);
+        if last_modem_battery_send.map(|l| l.elapsed().as_secs() > 60).unwrap_or(true) {
+            last_modem_battery_send = Some(Instant::now());
+            tx_channel_pub
+                .try_publish(TxFrame::Modem(Modem::Battery {
+                    voltage: battery_voltage as f64 / 1000.0,
+                    low_voltage,
+                    soc: battery_soc,
+                    charging: state.charging,
+                }))
+                .ok();
+        }
     }
 }

@@ -2024,6 +2024,7 @@ dependencies = [
  "crc",
  "defmt",
  "heapless 0.7.17",
+ "num-traits",
  "postcard 1.0.10",
  "serde",
  "serde-encrypt",
