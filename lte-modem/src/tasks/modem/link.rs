@@ -27,10 +27,9 @@ pub async fn task() {
         match select(tx_channel_sub.next_message_pure(), timeout_ticker.next()).await {
             First(txframe) => {
                 defmt::info!("tx_channel_sub recv {:?}", txframe);
-                if socket.is_none() && !txframe.is_modem_battery() {
-                    //info!("connecting to {}:{}", hostname, port);
-                    let cancel_token = CancellationToken::new();
-
+                let is_modem_battery = txframe.is_modem_battery();
+                info!("is_modem_battery: {:?}", is_modem_battery);
+                if socket.is_none() && !is_modem_battery {
                     match with_timeout(
                         Duration::from_secs(30),
                         UdpSocket::bind(nrf_modem::no_std_net::SocketAddr::V4(
@@ -45,17 +44,16 @@ pub async fn task() {
                         Ok(Ok(s)) => {
                             info!("connected");
                             s.tx_frame_send(&TxFrame::Modem(Modem::Connected)).await.ok();
+                            Timer::after_secs(1).await;
                             timeout_ticker.reset();
                             socket = Some(s);
                             starting_port = starting_port.wrapping_add(1);
                         }
                         Ok(Err(e)) => {
                             error!("link socket connect error {:?}", e);
-                            cancel_token.cancel();
                         }
                         Err(_) => {
                             error!("link socket connect timeout");
-                            cancel_token.cancel();
                         }
                     }
                 }

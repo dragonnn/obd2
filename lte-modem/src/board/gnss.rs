@@ -1,3 +1,4 @@
+use defmt::*;
 use embassy_time::{with_timeout, Duration, Ticker};
 use futures::StreamExt;
 use nrf_modem::{
@@ -18,7 +19,7 @@ pub struct Gnss {
 impl Gnss {
     pub fn new() -> Self {
         let duration = Duration::from_secs(20);
-        let timeout = Duration::from_secs(60);
+        let timeout = Duration::from_secs(5 * 60);
 
         Self { stream: None, duration, timeout, ticker: Ticker::every(duration), low_accuracy: false }
     }
@@ -76,9 +77,36 @@ impl Gnss {
         } else {
             let handler = self.handler().await?;
             let mut stream = handler.start_continuous_fix(self.get_config())?;
+            info!("start continuous fix");
 
             loop {
                 let gnss_frame = stream.next().await.map_or(Ok(None), |v| v.map(Some))?;
+                match gnss_frame {
+                    Some(ModemGnssData::PositionVelocityTime(postion_gnss_frame)) => {
+                        info!("got fix with accuracy: {}", postion_gnss_frame.accuracy);
+                        if postion_gnss_frame.accuracy != 0.0
+                            && postion_gnss_frame.accuracy < 250.0
+                            && postion_gnss_frame.altitude > -50.0
+                            && postion_gnss_frame.altitude < 8000.0
+                        {
+                            return Ok(Some(postion_gnss_frame));
+                        }
+                    }
+                    Some(ModemGnssData::Nmea(nmea)) => {
+                        info!("got nmea: {:?}", nmea.as_str());
+                    }
+                    Some(ModemGnssData::Agps(agps)) => {
+                        info!(
+                            "got agps: data_flags: {} system_count: {} system: {:?}",
+                            agps.data_flags,
+                            agps.system_count,
+                            defmt::Debug2Format(&agps.system)
+                        );
+                    }
+                    None => {
+                        info!("got none");
+                    }
+                }
                 if let Some(ModemGnssData::PositionVelocityTime(postion_gnss_frame)) = gnss_frame {
                     if postion_gnss_frame.accuracy != 0.0
                         && postion_gnss_frame.accuracy < 250.0

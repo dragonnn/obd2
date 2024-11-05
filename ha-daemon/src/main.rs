@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use futures_util::{future, pin_mut, SinkExt as _, StreamExt};
-use ha::device::UpdateSensor;
+use ha::device::{UpdateLocation, UpdateSensor};
 use ha::ws::HaWs;
 use serde::{Deserialize, Serialize};
 use statig::prelude::*;
@@ -32,7 +32,7 @@ pub struct HaState {
 
     event_sender: Arc<UnboundedSender<HaStateEvent>>,
 
-    ha_sensors: HashMap<String, Arc<sensor::HaSensorHandler>>,
+    ha_sensors: Arc<HashMap<String, Arc<sensor::HaSensorHandler>>>,
 
     sensor_register: bool,
 }
@@ -41,6 +41,7 @@ pub struct HaState {
 pub enum HaStateEvent {
     Step,
     UpdateSensor(UpdateSensor),
+    UpdateLocation(UpdateLocation),
 }
 
 #[state_machine(
@@ -148,9 +149,7 @@ impl HaState {
     #[action]
     async fn entry_connected(&mut self) {
         self.event_sender.send(HaStateEvent::Step).unwrap();
-        for (_, sensor) in self.ha_sensors.iter() {
-            sensor.clone().run().await;
-        }
+        for (_, sensor) in self.ha_sensors.iter() {}
     }
 
     #[state(entry_action = "entry_connected")]
@@ -164,6 +163,21 @@ impl HaState {
                             ha::device::WebHookHandle::update(
                                 self.webhook.as_ref().unwrap().webhook_id.to_owned(),
                                 update_sensor.clone(),
+                            ),
+                        ))
+                        .await
+                        .let_log()
+                        .is_err()
+                    {
+                        return Transition(State::load());
+                    }
+                }
+                HaStateEvent::UpdateLocation(update_location) => {
+                    if ws
+                        .send(ha::OutgoingMessage::DeviceWebHookHandle(
+                            ha::device::WebHookHandle::update_location(
+                                self.webhook.as_ref().unwrap().webhook_id.to_owned(),
+                                update_location.clone(),
                             ),
                         ))
                         .await
@@ -244,13 +258,14 @@ async fn main() {
             )
         })
         .collect::<HashMap<_, _>>();
+    let ha_sensors = Arc::new(ha_sensors);
     let mut ha_state_machine = HaState {
         config: config.clone(),
         rest: reqwest::Client::new(),
         ws: None,
         webhook: None,
         event_sender: event_sender.clone(),
-        ha_sensors,
+        ha_sensors: ha_sensors.clone(),
         sensor_register: false,
     }
     .state_machine();
@@ -258,7 +273,7 @@ async fn main() {
 
     event_sender.send(HaStateEvent::Step).unwrap();
 
-    let kia = kia::KiaHandler::new(config);
+    let kia = kia::KiaHandler::new(config, ha_sensors, event_sender);
     kia.run().await;
 
     loop {

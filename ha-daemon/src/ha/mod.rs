@@ -18,3 +18,6 @@ pub enum OutgoingMessage {
     DeviceWebHookHandle(device::WebHookHandle),
     Pong,
 }
+
+#[derive(Serialize, Debug)]
+pub struct UpdateLocation {}

@@ -55,6 +55,15 @@ pub enum WebHookBody {
     RegisterSensor(RegisterSensor),
     #[serde(rename = "update_sensor_states")]
     UpdateSensor(UpdateSensor),
+    #[serde(rename = "update_location")]
+    UpdateLocation(UpdateLocation),
+}
+
+#[derive(Serialize, Clone, Deserialize, Debug)]
+pub struct UpdateLocation {
+    pub gps: (f64, f64),
+    pub gps_accuracy: i32,
+    pub battery: u8,
 }
 
 use std::fmt;
@@ -125,6 +134,20 @@ impl WebHookHandle {
             webhook_id,
             method: "POST".to_owned(),
             body: WebHookBody::UpdateSensor(update_sensor),
+            headers,
+        }
+    }
+
+    pub fn update_location(webhook_id: String, update_location: UpdateLocation) -> Self {
+        let counter = COUNTER.fetch_add(1, Ordering::SeqCst);
+        let mut headers = HashMap::new();
+        headers.insert("Content-Type".to_owned(), "application/json".to_owned());
+        Self {
+            r#type: "webhook/handle".to_owned(),
+            id: counter,
+            webhook_id,
+            method: "POST".to_owned(),
+            body: WebHookBody::UpdateLocation(update_location),
             headers,
         }
     }

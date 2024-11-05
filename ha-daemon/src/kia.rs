@@ -1,10 +1,13 @@
-use crate::config::Config;
+use crate::{config::Config, ha::device::UpdateLocation, sensor, HaStateEvent};
 use openssl::ssl::{Ssl, SslContext, SslFiletype, SslMethod};
 use postcard::{from_bytes, to_stdvec, to_vec};
 use serde_encrypt::{shared_key::SharedKey, traits::SerdeEncryptSharedKey as _, EncryptedMessage};
-use std::{net::SocketAddr, path::PathBuf, pin::Pin, sync::Arc, time::Duration};
+use std::{
+    collections::HashMap, net::SocketAddr, path::PathBuf, pin::Pin, sync::Arc, time::Duration,
+};
 use tokio::{
     io::{AsyncReadExt as _, AsyncWriteExt as _},
+    sync::mpsc::UnboundedSender,
     time::timeout,
 };
 use tokio_openssl::SslStream;
@@ -14,11 +17,21 @@ use udp_stream::{UdpListener, UdpStream};
 #[derive(Debug, Clone)]
 pub struct KiaHandler {
     config: Arc<Config>,
+    ha_sensors: Arc<HashMap<String, Arc<sensor::HaSensorHandler>>>,
+    event_sender: Arc<UnboundedSender<HaStateEvent>>,
 }
 
 impl KiaHandler {
-    pub fn new(config: Arc<Config>) -> Arc<Self> {
-        Arc::new(KiaHandler { config })
+    pub fn new(
+        config: Arc<Config>,
+        ha_sensors: Arc<HashMap<String, Arc<sensor::HaSensorHandler>>>,
+        event_sender: Arc<UnboundedSender<HaStateEvent>>,
+    ) -> Arc<Self> {
+        Arc::new(KiaHandler {
+            config,
+            ha_sensors,
+            event_sender,
+        })
     }
 
     pub async fn run(self: Arc<Self>) {
@@ -29,6 +42,27 @@ impl KiaHandler {
                 }
             }
         });
+    }
+
+    fn dispatch_txframe(&self, txframe: TxFrame) {
+        match txframe {
+            TxFrame::Obd2Pid(types::Pid::BmsPid(bms_pid)) => {
+                self.ha_sensors
+                    .get("hv_soc")
+                    .unwrap()
+                    .update(bms_pid.hv_soc.into());
+            }
+            TxFrame::Modem(types::Modem::GnssFix(fix)) => {
+                self.event_sender
+                    .send(HaStateEvent::UpdateLocation(UpdateLocation {
+                        gps: (fix.latitude, fix.longitude),
+                        gps_accuracy: fix.accuracy as i32,
+                        battery: 0,
+                    }))
+                    .unwrap();
+            }
+            _ => {}
+        }
     }
 
     async fn inner(&self) -> anyhow::Result<()> {
@@ -52,6 +86,7 @@ impl KiaHandler {
                     match TxFrame::decrypt_owned(&encrypted_message, &shared_key) {
                         Ok(txframe) => {
                             info!("Received txframe: {:?} from: {:?}", txframe, peer);
+                            self.dispatch_txframe(txframe);
                         }
                         Err(err) => {
                             error!("Error decrypting message: {:?}", err);
@@ -64,88 +99,6 @@ impl KiaHandler {
             }
         }
 
-        Ok(())
-    }
-}
-
-pub struct KiaSessionHandler {
-    //session: tokio_dtls_stream_sink::Session,
-    session: Option<SslStream<UdpStream>>,
-    handler: KiaHandler,
-    ssl_context: SslContext,
-}
-
-impl KiaSessionHandler {
-    pub fn new(handler: KiaHandler, ssl_context: SslContext) -> Self {
-        KiaSessionHandler {
-            session: None,
-            handler,
-            ssl_context,
-        }
-    }
-
-    pub async fn run(mut self, session: UdpStream) {
-        tokio::spawn(async move {
-            timeout(Duration::from_secs(5), async {
-                let mut dtls = SslStream::new(Ssl::new(&self.ssl_context)?, session)?;
-                Pin::new(&mut dtls).accept().await?;
-                self.session = Some(dtls);
-                Ok::<(), anyhow::Error>(())
-            })
-            .await
-            .unwrap()
-            .unwrap();
-            loop {
-                if let Err(err) = self.inner().await {
-                    error!("KiaSessionHandler error: {:?}", err);
-                } else {
-                    break;
-                }
-            }
-            self.session.unwrap().shutdown().await.unwrap();
-            info!("Session closed");
-        });
-    }
-
-    async fn inner(&mut self) -> anyhow::Result<()> {
-        let mut buf = [0u8; 1024];
-        let session = self.session.as_mut().unwrap();
-        loop {
-            match timeout(
-                Duration::from_secs(self.handler.config.kia.timeout),
-                session.read(&mut buf),
-            )
-            .await
-            {
-                Ok(Ok(n)) => {
-                    let data = &buf[..n];
-                    info!("Received {} bytes: {:?}", n, data);
-                    match from_bytes::<types::TxFrame>(data) {
-                        Ok(tx_frame) => {
-                            session
-                                .write(&to_stdvec(&RxFrame::TxFrameAck).unwrap())
-                                .await?;
-                            info!("Received TxFrame: {:?}", tx_frame);
-                            if tx_frame.is_disconnect() {
-                                info!("Disconnecting...");
-                                break;
-                            }
-                        }
-                        Err(err) => {
-                            error!("Error parsing TxFrame: {:?}", err);
-                        }
-                    }
-                }
-                Ok(Err(err)) => {
-                    error!("Error reading data: {:?}", err);
-                    break;
-                }
-                Err(_err) => {
-                    error!("Connection timeout");
-                    break;
-                }
-            }
-        }
         Ok(())
     }
 }

@@ -41,9 +41,14 @@ impl HaSensorHandler {
         self.ha.ha.clone()
     }
 
-    pub async fn run(self: Arc<Self>) {
-        tokio::spawn(async move {
-            return;
-        });
+    pub fn update(&self, value: serde_json::Value) {
+        self.event_sender
+            .send(HaStateEvent::UpdateSensor(UpdateSensor {
+                unique_id: self.unique_id.clone(),
+                state: value,
+                r#type: self.ha.ha.r#type.clone(),
+                icon: self.ha.ha.icon.clone(),
+            }))
+            .unwrap();
     }
 }
