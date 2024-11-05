@@ -30,6 +30,7 @@ pub struct HaConfig {
 pub struct KiaConfig {
     pub port: u16,
     pub timeout: u64,
+    pub duplicated: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

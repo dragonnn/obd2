@@ -30,7 +30,7 @@ use super::{
     obd2::Obd2Debug,
 };
 
-pub static EVENTS: Channel<CriticalSectionRawMutex, LcdEvent, 16> = Channel::new();
+pub static EVENTS: Channel<CriticalSectionRawMutex, LcdEvent, 128> = Channel::new();
 pub use obd2_pids::obd2_debug_pids_enabled;
 
 pub struct LcdContext {}

@@ -60,7 +60,6 @@ impl ChargerStatus {
 pub struct Adp5360<I2C> {
     i2c: I2C,
     irq: Input<'static>,
-    reset: Output<'static>,
 
     last_voltage: u16,
     last_soc: u8,
@@ -71,12 +70,10 @@ impl<I2C> Adp5360<I2C>
 where
     I2C: I2c,
 {
-    pub async fn new(i2c: I2C, irq: AnyPin, reset: AnyPin) -> Self {
+    pub async fn new(i2c: I2C, irq: AnyPin) -> Self {
         let irq = Input::new(irq, Pull::Up);
-        let reset = Output::new(reset, Level::High, OutputDrive::Standard);
         defmt::info!("adp5360 reset done");
-        let mut adp5360 =
-            Self { i2c, irq, reset, last_voltage: 0, last_soc: 0, last_charger_status: ChargerStatus::Off };
+        let mut adp5360 = Self { i2c, irq, last_voltage: 0, last_soc: 0, last_charger_status: ChargerStatus::Off };
         adp5360.set_u8_value(REG_BAT_CAP, 0xFF).await;
         adp5360.set_u8_bit(REG_FUEL_GAUGE_MODE, FUEL_GAUGE_MODE_ENABLE_BIT, true).await;
         adp5360.set_u8_bit(REG_FUEL_GAUGE_MODE, FUEL_GAUGE_MODE_SLEEP_MODE_BIT, true).await;

@@ -82,6 +82,7 @@ pub struct Board {
     pub uarte: Option<(BoardUarteTx, UarteRxWithIdle<'static, SERIAL1, TIMER0>)>,
     pub uarte_send: Option<Output<'static>>,
     pub uarte_receive: Option<Input<'static>>,
+    pub uarte_reset: Option<Output<'static>>,
 }
 
 impl Board {
@@ -120,7 +121,7 @@ impl Board {
 
         let twim2_dev1 = I2cDevice::new(twim2);
 
-        let battery = Adp5360::new(twim2_dev1, p.P0_17.degrade(), p.P0_10.degrade()).await;
+        let battery = Adp5360::new(twim2_dev1, p.P0_17.degrade()).await;
 
         let twim2_dev2 = I2cDevice::new(twim2);
 
@@ -160,6 +161,7 @@ impl Board {
         //receive - p0.22 -> MCU_IF4
         let uarte_send = Output::new(p.P0_23, Level::Low, OutputDrive::Standard);
         let uarte_receive = Input::new(p.P0_22, Pull::Down);
+        let uarte_reset = Output::new(p.P0_10, Level::High, OutputDrive::Standard);
 
         lightwell.r(0);
 
@@ -177,6 +179,7 @@ impl Board {
             uarte: Some(uarte),
             uarte_send: Some(uarte_send),
             uarte_receive: Some(uarte_receive),
+            uarte_reset: Some(uarte_reset),
         }
     }
 }

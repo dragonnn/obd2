@@ -93,6 +93,9 @@ impl KiaHandler {
         loop {
             let (n, peer) = socket.recv_from(&mut buffer).await?;
             let data = buffer[..n].to_vec();
+            if let Some(duplicated) = &self.config.kia.duplicated {
+                socket.send_to(&data, duplicated).await?;
+            }
             match EncryptedMessage::deserialize(data) {
                 Ok(encrypted_message) => {
                     match TxFrame::decrypt_owned(&encrypted_message, &shared_key) {

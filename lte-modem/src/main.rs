@@ -74,6 +74,7 @@ async fn main(spawner: Spawner) {
     let uarte = unwrap!(board.uarte.take());
     let uarte_send = unwrap!(board.uarte_send.take());
     let uarte_receive = unwrap!(board.uarte_receive.take());
+    let uarte_reset = unwrap!(board.uarte_reset.take());
 
     if let Some(panic) = panic_message {
         if !panic.contains("twi reset") {
@@ -89,7 +90,7 @@ async fn main(spawner: Spawner) {
     unwrap!(spawner.spawn(tasks::montion_detection::task(low_power_accelerometer)));
     unwrap!(spawner.spawn(tasks::button::task(button)));
     unwrap!(spawner.spawn(tasks::reset::task()));
-    tasks::uarte::run(&spawner, uarte, uarte_send, uarte_receive);
+    tasks::uarte::run(&spawner, uarte, uarte_send, uarte_receive, uarte_reset);
 
     defmt::info!("entering main loop");
 

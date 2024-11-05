@@ -65,9 +65,25 @@ impl Modem {
     pub async fn send_sms(&self, numbers: &[&str], text: &str) -> Result<(), nrf_modem::Error> {
         let _guard = ResetGuard::new();
         for number in numbers {
-            embassy_time::with_timeout(Duration::from_secs(120), nrf_modem::Sms::new(number, text).send::<354>())
+            let mut ret = Ok(Ok(()));
+            for _ in 0..5 {
+                ret = embassy_time::with_timeout(
+                    Duration::from_secs(120),
+                    nrf_modem::Sms::new(number, text).send::<354>(),
+                )
                 .await
-                .map_err(|_| nrf_modem::Error::NrfError(0))??;
+                .map_err(|_| nrf_modem::Error::NrfError(0));
+                if let Ok(Ok(())) = ret {
+                    break;
+                }
+                embassy_time::Timer::after_secs(10).await;
+            }
+            if let Err(err) = ret {
+                return Err(err);
+            }
+            if let Ok(Err(err)) = ret {
+                return Err(err);
+            }
         }
         Ok(())
     }
