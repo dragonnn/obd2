@@ -5,6 +5,7 @@ mod ice_engine;
 mod ice_fuel_rate;
 mod ice_temperature;
 mod icu;
+mod on_board_charger;
 mod transaxle;
 mod vehicle_speed;
 
@@ -15,5 +16,6 @@ pub use ice_engine::IceEnginePid;
 pub use ice_fuel_rate::IceFuelRatePid;
 pub use ice_temperature::IceTemperaturePid;
 pub use icu::IcuPid;
+pub use on_board_charger::OnBoardChargerPid;
 pub use transaxle::TransaxlePid;
 pub use vehicle_speed::VehicleSpeedPid;

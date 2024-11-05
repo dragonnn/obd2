@@ -91,6 +91,26 @@ pub struct VehicleSpeedPid {
     pub vehicle_speed: u8,
 }
 
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
+pub struct OnBoardChargerPid {
+    pub ac_input_voltage: f64,
+    pub input_voltage: f64,
+    pub pfc_output_voltage: f64,
+    pub obc_output_voltage: f64,
+    pub input_current: f64,
+    pub obc_output_current: f64,
+    pub ac_input_frequency: u8,
+    pub obc_temperature_a: u8,
+    pub cp_voltage: f64,
+    pub cp_duty: f64,
+    pub cp_frequency: f64,
+    pub pd_voltage: f64,
+    pub interlock_voltage: f64,
+    pub aux_dc_voltage: f64,
+    pub ig3_voltage: f64,
+    pub pfc1_current_sensor_offset: f64,
+}
+
 #[derive(Debug, Format, Clone, Deserialize, Serialize)]
 pub enum Pid {
     BmsPid(BmsPid),
@@ -102,6 +122,7 @@ pub enum Pid {
     IcuPid(IcuPid),
     IceEnginePid(IceEnginePid),
     TransaxlePid(TransaxlePid),
+    OnBoardChargerPid(OnBoardChargerPid),
 }
 
 impl core::hash::Hash for Pid {

@@ -60,7 +60,7 @@ impl KiaState {
         match event {
             KiaEvent::Shutdown => {
                 LCD_EVENTS.send(LcdEvent::PowerOff).await;
-                Transition(State::init())
+                Transition(State::check_charging())
             }
             KiaEvent::Obd2Event(obd2_event) => {
                 LCD_EVENTS.send(LcdEvent::Obd2Event(obd2_event.clone())).await;
@@ -95,6 +95,11 @@ impl KiaState {
 
             _ => Handled,
         }
+    }
+
+    #[state()]
+    async fn check_charging(&mut self, context: &mut KiaContext, event: &KiaEvent) -> Response<State> {
+        Handled
     }
 }
 

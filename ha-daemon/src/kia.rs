@@ -55,6 +55,10 @@ impl KiaHandler {
                     .get("hv_soc")
                     .unwrap()
                     .update(bms_pid.hv_soc.into());
+                self.ha_sensors
+                    .get("aux_voltage")
+                    .unwrap()
+                    .update(bms_pid.aux_dc_voltage.into());
             }
             TxFrame::Modem(types::Modem::GnssFix(fix)) => {
                 self.event_sender
@@ -72,6 +76,10 @@ impl KiaHandler {
                 charging,
             }) => {
                 self.ha_sensors.get("modem_soc").unwrap().update(soc.into());
+                self.ha_sensors
+                    .get("modem_voltage")
+                    .unwrap()
+                    .update(voltage.into());
             }
             _ => {}
         }
