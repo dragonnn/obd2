@@ -41,7 +41,7 @@ pub struct KiaState {}
 impl KiaState {
     #[state()]
     async fn init(&mut self, context: &mut KiaContext, event: &KiaEvent) -> Response<State> {
-        info!("init got event: {:?}", event);
+        //info!("init got event: {:?}", event);
         match event {
             KiaEvent::InitIgnitionOff => {
                 LCD_EVENTS.send(LcdEvent::PowerOff).await;
