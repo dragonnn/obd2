@@ -9,7 +9,7 @@ use nrf_modem::{CancellationToken, DtlsSocket, Error as NrfError, LteLink, PeerV
 use postcard::{from_bytes, from_bytes_crc32, to_vec, to_vec_crc32};
 use types::{Modem, TxFrame};
 
-static TX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, TxFrame, 128, 1, 16> = PubSubChannel::new();
+static TX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, TxFrame, 256, 1, 16> = PubSubChannel::new();
 
 #[embassy_executor::task]
 pub async fn task() {

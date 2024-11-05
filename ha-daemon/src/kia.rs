@@ -45,6 +45,10 @@ impl KiaHandler {
     }
 
     fn dispatch_txframe(&self, txframe: TxFrame) {
+        self.ha_sensors
+            .get("last_communication")
+            .unwrap()
+            .update(chrono::Local::now().format("%+").to_string().into());
         match txframe {
             TxFrame::Obd2Pid(types::Pid::BmsPid(bms_pid)) => {
                 self.ha_sensors
@@ -60,6 +64,14 @@ impl KiaHandler {
                         battery: 0,
                     }))
                     .unwrap();
+            }
+            TxFrame::Modem(types::Modem::Battery {
+                voltage,
+                low_voltage,
+                soc,
+                charging,
+            }) => {
+                self.ha_sensors.get("modem_soc").unwrap().update(soc.into());
             }
             _ => {}
         }

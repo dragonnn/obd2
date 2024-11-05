@@ -94,8 +94,8 @@ pub struct RegisterSensor {
     pub r#type: String,
     #[serde(default)]
     pub unique_id: String,
-    pub unit_of_measurement: String,
-    pub state_class: String,
+    pub unit_of_measurement: Option<String>,
+    pub state_class: Option<String>,
     pub entity_category: String,
     #[serde(default)]
     pub disabled: bool,

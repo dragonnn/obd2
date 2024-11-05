@@ -37,7 +37,7 @@ pub struct HaState {
     sensor_register: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum HaStateEvent {
     Step,
     UpdateSensor(UpdateSensor),
@@ -66,6 +66,11 @@ impl HaState {
 
     #[state(entry_action = "entry_load")]
     async fn load(&mut self, event: &HaStateEvent) -> Response<State> {
+        if let HaStateEvent::Step = event {
+        } else {
+            self.event_sender.send(event.clone()).log();
+        }
+
         info!("webhook: {:?}", self.webhook);
         if self.webhook.is_some() {
             Transition(State::connect())
@@ -135,6 +140,11 @@ impl HaState {
 
     #[state(entry_action = "entry_connect")]
     async fn connect(&mut self, event: &HaStateEvent) -> Response<State> {
+        if let HaStateEvent::Step = event {
+        } else {
+            self.event_sender.send(event.clone()).log();
+        }
+
         if self.ws.is_some() {
             if self.sensor_register {
                 Transition(State::sensors_register())
@@ -157,7 +167,6 @@ impl HaState {
         if let Some(ws) = &mut self.ws {
             match event {
                 HaStateEvent::UpdateSensor(update_sensor) => {
-                    info!("update sensor: {:?}", update_sensor);
                     if ws
                         .send(ha::OutgoingMessage::DeviceWebHookHandle(
                             ha::device::WebHookHandle::update(
@@ -169,6 +178,8 @@ impl HaState {
                         .let_log()
                         .is_err()
                     {
+                        self.event_sender.send(HaStateEvent::Step).log();
+                        self.event_sender.send(event.clone()).log();
                         return Transition(State::load());
                     }
                 }
@@ -184,6 +195,8 @@ impl HaState {
                         .let_log()
                         .is_err()
                     {
+                        self.event_sender.send(HaStateEvent::Step).log();
+                        self.event_sender.send(event.clone()).log();
                         return Transition(State::load());
                     }
                 }
