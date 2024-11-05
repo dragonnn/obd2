@@ -52,9 +52,9 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
             vec_buffer.extend_from_slice(&buffer[..result]);
 
             match EncryptedMessage::deserialize(vec_buffer) {
-                Ok(encrypted_message) => match types::TxFrame::decrypt_owned(&encrypted_message, &shared_key) {
+                Ok(encrypted_message) => match types::TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
                     Ok(msg) => {
-                        tx_channel_pub.publish(msg).await;
+                        tx_channel_pub.publish(msg.frame).await;
                     }
                     Err(e) => {
                         error!("uarte_receive decrypt error {:?}", defmt::Debug2Format(&e));

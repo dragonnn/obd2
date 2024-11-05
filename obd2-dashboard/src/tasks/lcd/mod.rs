@@ -327,7 +327,7 @@ pub async fn run(mut display1: Display1, mut display2: Display2) {
             _ => {
                 let event = match select(EVENTS.receive(), render_ticker.next()).await {
                     First(event) => {
-                        render_ticker.reset();
+                        //render_ticker.reset();
                         event
                     }
                     Second(_) => LcdEvent::Render,

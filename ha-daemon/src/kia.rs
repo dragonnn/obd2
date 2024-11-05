@@ -11,7 +11,7 @@ use tokio::{
     time::timeout,
 };
 use tokio_openssl::SslStream;
-use types::{RxFrame, TxFrame};
+use types::{RxFrame, TxFrame, TxMessage};
 use udp_stream::{UdpListener, UdpStream};
 
 #[derive(Debug, Clone)]
@@ -98,10 +98,10 @@ impl KiaHandler {
             }
             match EncryptedMessage::deserialize(data) {
                 Ok(encrypted_message) => {
-                    match TxFrame::decrypt_owned(&encrypted_message, &shared_key) {
-                        Ok(txframe) => {
-                            info!("Received txframe: {:?} from: {:?}", txframe, peer);
-                            self.dispatch_txframe(txframe);
+                    match TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
+                        Ok(txmessage) => {
+                            info!("Received txmessage: {:?} from: {:?}", txmessage, peer);
+                            self.dispatch_txframe(txmessage.frame);
                         }
                         Err(err) => {
                             error!("Error decrypting message: {:?}", err);

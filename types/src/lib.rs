@@ -2,6 +2,7 @@
 
 extern crate alloc;
 
+use core::sync::atomic::{AtomicUsize, Ordering};
 use crc::{Crc, CRC_32_ISCSI};
 use defmt::Format;
 use postcard::to_vec_crc32;
@@ -11,12 +12,14 @@ use serde_encrypt::{
     EncryptedMessage,
 };
 
+pub static ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
+
 mod serializer;
 
 static CRC: Crc<u32> = Crc::<u32>::new(&CRC_32_ISCSI);
 static SHARED_KEY: &[u8; 32] = include_bytes!("../../shared_key.bin");
 
-#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Default, Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub struct AcPid {
     pub gear: i32,
 }
@@ -37,32 +40,34 @@ pub struct BmsPid {
     pub motor_electric_rpm: f64,
 }
 
-#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct HybridDcDcPid {
     pub gear: i32,
 }
 
-#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct IceEnginePid {
     pub gear: i32,
 }
 
-#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct IceFuelRatePid {
     pub fuel_rate: f64,
 }
 
-#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct IceTemperaturePid {
     pub temperature: f64,
 }
 
-#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct IcuPid {
     pub gear: i32,
 }
 
-#[derive(Debug, Format, PartialEq, Clone, Copy, strum::IntoStaticStr, Deserialize, Serialize)]
+#[derive(
+    Debug, Format, PartialEq, Clone, Copy, strum::IntoStaticStr, Deserialize, Serialize, Default,
+)]
 pub enum Gear {
     PN,
     R,
@@ -72,15 +77,16 @@ pub enum Gear {
     D4,
     D5,
     D6,
+    #[default]
     U,
 }
 
-#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct TransaxlePid {
     pub gear: Gear,
 }
 
-#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct VehicleSpeedPid {
     pub vehicle_speed: u8,
 }
@@ -93,7 +99,7 @@ pub enum Pid {
     VehicleSpeedPid(VehicleSpeedPid),
     AcPid(AcPid),
     HybridDcDcPid(HybridDcDcPid),
-    Icu(IcuPid),
+    IcuPid(IcuPid),
     IceEnginePid(IceEnginePid),
     TransaxlePid(TransaxlePid),
 }
@@ -119,6 +125,39 @@ pub enum TxFrame {
 }
 
 impl TxFrame {
+    pub fn is_modem(&self) -> bool {
+        matches!(self, TxFrame::Modem(_))
+    }
+
+    pub fn is_modem_battery(&self) -> bool {
+        matches!(self, TxFrame::Modem(Modem::Battery { .. }))
+    }
+
+    pub fn is_disconnect(&self) -> bool {
+        matches!(self, TxFrame::Modem(Modem::Disconnected))
+    }
+
+    pub fn is_connect(&self) -> bool {
+        matches!(self, TxFrame::Modem(Modem::Connected))
+    }
+}
+
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+pub struct TxMessage {
+    pub id: u64,
+    pub frame: TxFrame,
+    pub timestamp: u64,
+}
+
+impl TxMessage {
+    pub fn new(frame: TxFrame) -> Self {
+        Self {
+            id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
+            frame,
+            timestamp: 0,
+        }
+    }
+
     pub fn to_vec(&self) -> Result<heapless::Vec<u8, 512>, postcard::Error> {
         to_vec_crc32::<_, 512>(self, CRC.digest())
     }
@@ -137,22 +176,10 @@ impl TxFrame {
         let shared_key = SharedKey::new(SHARED_KEY.clone());
         Self::decrypt_owned(&EncryptedMessage::deserialize(bytes)?, &shared_key)
     }
+}
 
-    pub fn is_modem(&self) -> bool {
-        matches!(self, TxFrame::Modem(_))
-    }
-
-    pub fn is_modem_battery(&self) -> bool {
-        matches!(self, TxFrame::Modem(Modem::Battery { .. }))
-    }
-
-    pub fn is_disconnect(&self) -> bool {
-        matches!(self, TxFrame::Modem(Modem::Disconnected))
-    }
-
-    pub fn is_connect(&self) -> bool {
-        matches!(self, TxFrame::Modem(Modem::Connected))
-    }
+impl SerdeEncryptSharedKey for TxMessage {
+    type S = serializer::PostcardSerializer<Self>;
 }
 
 #[derive(Debug, Format, Clone, Deserialize, Serialize)]
@@ -219,16 +246,27 @@ impl PartialEq for Modem {
     }
 }
 
-impl SerdeEncryptSharedKey for TxFrame {
-    type S = serializer::PostcardSerializer<Self>;
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+pub enum RxFrame {
+    TxFrameAck(u64),
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
-pub enum RxFrame {
-    TxFrameAck,
+pub struct RxMessage {
+    pub id: u64,
+    pub frame: RxFrame,
+    pub timestamp: u64,
 }
 
-impl RxFrame {
+impl RxMessage {
+    pub fn new(frame: RxFrame) -> Self {
+        Self {
+            id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
+            frame,
+            timestamp: 0,
+        }
+    }
+
     pub fn to_vec(&self) -> Result<heapless::Vec<u8, 512>, postcard::Error> {
         to_vec_crc32::<_, 512>(self, CRC.digest())
     }
@@ -249,6 +287,6 @@ impl RxFrame {
     }
 }
 
-impl SerdeEncryptSharedKey for RxFrame {
+impl SerdeEncryptSharedKey for RxMessage {
     type S = serializer::PostcardSerializer<Self>;
 }

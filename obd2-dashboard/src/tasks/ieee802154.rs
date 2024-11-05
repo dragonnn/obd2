@@ -33,17 +33,28 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
     let mut event_bus_sub = event_bus_sub();
 
     let mut obd2_pids: heapless::FnvIndexSet<Pid, 32> = heapless::FnvIndexSet::new();
+    /*obd2_pids.insert(Pid::AcPid(types::AcPid::default())).ok();
+    obd2_pids.insert(Pid::BmsPid(types::BmsPid::default())).ok();
+    obd2_pids.insert(Pid::HybridDcDcPid(types::HybridDcDcPid::default())).ok();
+    obd2_pids.insert(Pid::IceEnginePid(types::IceEnginePid::default())).ok();
+    obd2_pids.insert(Pid::IceFuelRatePid(types::IceFuelRatePid::default())).ok();
+    obd2_pids.insert(Pid::IceTemperaturePid(types::IceTemperaturePid::default())).ok();
+    obd2_pids.insert(Pid::IcuPid(types::IcuPid::default())).ok();
+    obd2_pids.insert(Pid::TransaxlePid(types::TransaxlePid::default())).ok();
+    obd2_pids.insert(Pid::VehicleSpeedPid(types::VehicleSpeedPid::default())).ok();*/
 
     let mut ieee802154 = AsyncIeee802154::new(ieee802154);
 
     loop {
         match select(send_ticker.next(), event_bus_sub.next_message_pure()).await {
             First(_) => {
+                let now = embassy_time::Instant::now();
                 for pid in obd2_pids.iter() {
                     info!("pid: {:?}", pid);
-                    if let Some(encrypted_pid) = types::TxFrame::Obd2Pid(pid.clone()).encrypt(&shared_key).ok() {
+                    if let Some(encrypted_pid) =
+                        types::TxMessage::new(types::TxFrame::Obd2Pid(pid.clone())).encrypt(&shared_key).ok()
+                    {
                         let encrypted_pid_bytes = encrypted_pid.serialize();
-                        info!("sending encrypted_pid_bytes: {}", encrypted_pid_bytes.len());
                         if let Err(err) =
                             ieee802154.transmit_buffer(&encrypted_pid_bytes, 2, Duration::from_secs(5)).await
                         {
@@ -52,8 +63,9 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                     } else {
                         error!("types::TxFrame::Obd2Pid(pid.clone()).encrypt(&shared_key).ok() failed");
                     }
-                    //embassy_time::Timer::after(Duration::from_millis(5000)).await;
                 }
+                info!("send_ticker elapsed: {:?}ms", now.elapsed().as_millis());
+                send_ticker.reset();
             }
             Second(event) => {
                 //info!("event_bus_sub: {:?}", event);
@@ -108,11 +120,9 @@ impl AsyncIeee802154 {
         static RX_AVAILABLE_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 
         ieee802154.set_rx_available_callback_fn(|| {
-            info!("ieee802154.set_rx_available_callback_fn");
             TX_DONE_SIGNAL.signal(());
         });
         ieee802154.set_tx_done_callback_fn(|| {
-            info!("ieee802154.set_tx_done_callback_fn");
             RX_AVAILABLE_SIGNAL.signal(());
         });
         ieee802154.start_receive();
@@ -147,15 +157,9 @@ impl AsyncIeee802154 {
                 payload: unwrap!(heapless::Vec::from_slice(chunk)),
                 footer: [0, 0],
             };
-            info!("sending chunk with payload: {:x}", chunk);
             self.transmit_raw(&frame, retry, timeout).await?;
-            info!("transmit raw end");
             self.seq_number = self.seq_number.wrapping_add(1);
-            //if chunks_count > 1 {
-            //    embassy_time::Timer::after(Duration::from_millis(10)).await;
-            //}
         }
-        info!("transmit_buffer end");
         Ok(())
     }
 
@@ -180,7 +184,6 @@ impl AsyncIeee802154 {
                     if response.frame.header.frame_type == FrameType::Acknowledgement
                         && response.frame.header.destination == frame.header.destination
                     {
-                        info!("raw transmit success");
                         return Ok(());
                     } else {
                         error!(

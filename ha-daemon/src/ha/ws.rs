@@ -36,8 +36,8 @@ impl HaWs {
                 .ok_or(anyhow::anyhow!("EOF"))??;
             match msg {
                 Message::Text(text) => {
-                    info!("text: {}", text);
                     let ret = serde_json::from_str(&text)?;
+                    trace!("recv: {}", text);
                     return Ok(ret);
                 }
                 Message::Ping(ping) => {
@@ -50,7 +50,7 @@ impl HaWs {
 
     pub async fn send(&mut self, msg: crate::ha::OutgoingMessage) -> anyhow::Result<()> {
         let text = serde_json::to_string(&msg)?;
-        info!("send: {}", text);
+        trace!("send: {}", text);
         self.ws.send(Message::Text(text)).await?;
         Ok(())
     }

@@ -238,11 +238,11 @@ impl HaState {
 
 impl HaState {
     fn on_transition(&mut self, source: &State, target: &State) {
-        info!("transitioned from `{:?}` to `{:?}`", source, target);
+        trace!("transitioned from `{:?}` to `{:?}`", source, target);
     }
 
     fn on_dispatch(&mut self, state: StateOrSuperstate<HaState>, event: &HaStateEvent) {
-        info!("dispatched `{:?}` to `{:?}`", event, state);
+        trace!("dispatched `{:?}` to `{:?}`", event, state);
     }
 }
 
@@ -291,7 +291,7 @@ async fn main() {
 
     loop {
         let event = event_receiver.recv().await.unwrap();
-        info!("event: {:?}", event);
+        trace!("event: {:?}", event);
         ha_state_machine.handle(&event).await;
     }
 }

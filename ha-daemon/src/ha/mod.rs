@@ -8,6 +8,12 @@ pub mod ws;
 #[serde(untagged)]
 pub enum IncomingMessage {
     Auth(auth::IncomingAuth),
+    //{"id":8,"type":"result","success":true,"result":{"body":null,"status":200,"headers":{"Content-Type":"application/octet-stream"}}}
+    Result {
+        id: u64,
+        r#type: String,
+        success: bool,
+    },
     Ping,
 }
 
