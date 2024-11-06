@@ -62,6 +62,23 @@ impl KiaHandler {
                     .unwrap()
                     .update(bms_pid.aux_dc_voltage.into())
                     .await;
+                self.ha_sensors
+                    .get("hv_temperature_max")
+                    .unwrap()
+                    .update(bms_pid.hv_max_temp.into())
+                    .await;
+                self.ha_sensors
+                    .get("hv_power")
+                    .unwrap()
+                    .update((bms_pid.hv_dc_voltage * bms_pid.hv_battery_current).into())
+                    .await;
+            }
+            TxFrame::Obd2Pid(types::Pid::OnBoardChargerPid(on_board_charger_pid)) => {
+                self.ha_sensors
+                    .get("obc_temperature")
+                    .unwrap()
+                    .update(on_board_charger_pid.obc_temperature_a.into())
+                    .await;
             }
             TxFrame::Modem(types::Modem::GnssFix(fix)) => {
                 self.event_sender

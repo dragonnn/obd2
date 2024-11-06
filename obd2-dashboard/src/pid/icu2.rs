@@ -52,7 +52,6 @@ impl Pid for Icu2Pid {
             ignition_2_on,
             signal_back_av,
         };
-        info!("Icu2Pid: {:?}", ret);
         Ok(ret)
     }
 
