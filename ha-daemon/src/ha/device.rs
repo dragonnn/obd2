@@ -89,7 +89,7 @@ pub struct RegisterSensor {
     pub icon: String,
     pub name: String,
     #[serde(default)]
-    pub state: String,
+    pub state: Option<serde_json::Value>,
     #[serde(default)]
     pub r#type: String,
     #[serde(default)]

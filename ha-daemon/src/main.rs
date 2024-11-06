@@ -14,6 +14,7 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
 mod config;
+mod db;
 mod ha;
 mod kia;
 mod prelude;
@@ -158,6 +159,7 @@ impl HaState {
 
     #[action]
     async fn entry_connected(&mut self) {
+        info!("connected");
         self.event_sender.send(HaStateEvent::Step).unwrap();
         for (_, sensor) in self.ha_sensors.iter() {}
     }
@@ -215,7 +217,6 @@ impl HaState {
         if self.sensor_register {
             warn!("registering sensors");
             for (_, sensor) in self.ha_sensors.iter() {
-                warn!("registering sensor: {:?}", sensor);
                 let webhook_id = self.webhook.as_ref().unwrap().webhook_id.to_owned();
                 let register_sensor = sensor.register();
                 if let Some(ws) = &mut self.ws {
@@ -252,25 +253,27 @@ async fn main() {
     env_logger::init();
 
     let config = Arc::new(config::Config::load());
+    let db = db::DbHandle::new().await;
+    let db_join_handle = db.run().await;
     info!("found config: {:?}", config);
     let (event_sender, mut event_receiver) = unbounded_channel::<HaStateEvent>();
     let event_sender = Arc::new(event_sender);
 
-    let ha_sensors = config
-        .sensors
-        .iter()
-        .map(|(unique_id, ha)| {
-            (
-                unique_id.clone(),
-                sensor::HaSensorHandler::new(
-                    config.clone(),
-                    unique_id,
-                    ha.clone(),
-                    event_sender.clone(),
-                ),
+    let mut ha_sensors = HashMap::new();
+    for (unique_id, ha) in config.sensors.iter() {
+        ha_sensors.insert(
+            unique_id.clone(),
+            sensor::HaSensorHandler::new(
+                config.clone(),
+                unique_id,
+                ha.clone(),
+                db.clone(),
+                event_sender.clone(),
             )
-        })
-        .collect::<HashMap<_, _>>();
+            .await,
+        );
+    }
+
     let ha_sensors = Arc::new(ha_sensors);
     let mut ha_state_machine = HaState {
         config: config.clone(),
@@ -279,7 +282,7 @@ async fn main() {
         webhook: None,
         event_sender: event_sender.clone(),
         ha_sensors: ha_sensors.clone(),
-        sensor_register: false,
+        sensor_register: true,
     }
     .state_machine();
     info!("initial state: {:?}", ha_state_machine.state());
@@ -288,10 +291,15 @@ async fn main() {
 
     let kia = kia::KiaHandler::new(config, ha_sensors, event_sender);
     kia.run().await;
+    tokio::spawn(async move {
+        loop {
+            let event = event_receiver.recv().await.unwrap();
+            trace!("event: {:?}", event);
+            ha_state_machine.handle(&event).await;
+        }
+    });
 
-    loop {
-        let event = event_receiver.recv().await.unwrap();
-        trace!("event: {:?}", event);
-        ha_state_machine.handle(&event).await;
-    }
+    tokio::signal::ctrl_c().await.unwrap();
+    db.stop().await;
+    db_join_handle.await.unwrap();
 }

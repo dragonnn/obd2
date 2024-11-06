@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::config::Config;
 use crate::config::HaSensor;
+use crate::db::DbHandle;
 use crate::ha::device::RegisterSensor;
 use crate::ha::device::UpdateSensor;
 use crate::HaStateEvent;
@@ -14,19 +15,20 @@ pub struct HaSensorHandler {
     config: Arc<Config>,
     unique_id: String,
     ha: HaSensor,
-
+    db: DbHandle,
     event_sender: Arc<UnboundedSender<HaStateEvent>>,
 }
 
 impl HaSensorHandler {
-    pub fn new(
+    pub async fn new(
         config: Arc<Config>,
         unique_id: &str,
         mut ha: HaSensor,
+        db: DbHandle,
         event_sender: Arc<UnboundedSender<HaStateEvent>>,
     ) -> Arc<Self> {
         ha.ha.unique_id = unique_id.to_string();
-        ha.ha.state = "0".to_string();
+        ha.ha.state = db.get(&unique_id).await;
         ha.ha.disabled = false;
         ha.ha.r#type = "sensor".to_string();
         Arc::new(HaSensorHandler {
@@ -34,6 +36,7 @@ impl HaSensorHandler {
             unique_id: unique_id.to_string(),
             ha,
             event_sender,
+            db,
         })
     }
 
@@ -41,7 +44,8 @@ impl HaSensorHandler {
         self.ha.ha.clone()
     }
 
-    pub fn update(&self, value: serde_json::Value) {
+    pub async fn update(&self, value: serde_json::Value) {
+        self.db.set(&self.unique_id, value.clone()).await;
         self.event_sender
             .send(HaStateEvent::UpdateSensor(UpdateSensor {
                 unique_id: self.unique_id.clone(),

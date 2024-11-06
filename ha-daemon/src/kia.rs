@@ -44,21 +44,24 @@ impl KiaHandler {
         });
     }
 
-    fn dispatch_txframe(&self, txframe: TxFrame) {
+    async fn dispatch_txframe(&self, txframe: TxFrame) {
         self.ha_sensors
             .get("last_communication")
             .unwrap()
-            .update(chrono::Local::now().format("%+").to_string().into());
+            .update(chrono::Local::now().format("%+").to_string().into())
+            .await;
         match txframe {
             TxFrame::Obd2Pid(types::Pid::BmsPid(bms_pid)) => {
                 self.ha_sensors
                     .get("hv_soc")
                     .unwrap()
-                    .update(bms_pid.hv_soc.into());
+                    .update(bms_pid.hv_soc.into())
+                    .await;
                 self.ha_sensors
                     .get("aux_voltage")
                     .unwrap()
-                    .update(bms_pid.aux_dc_voltage.into());
+                    .update(bms_pid.aux_dc_voltage.into())
+                    .await;
             }
             TxFrame::Modem(types::Modem::GnssFix(fix)) => {
                 self.event_sender
@@ -75,11 +78,16 @@ impl KiaHandler {
                 soc,
                 charging,
             }) => {
-                self.ha_sensors.get("modem_soc").unwrap().update(soc.into());
+                self.ha_sensors
+                    .get("modem_soc")
+                    .unwrap()
+                    .update(soc.into())
+                    .await;
                 self.ha_sensors
                     .get("modem_voltage")
                     .unwrap()
-                    .update(voltage.into());
+                    .update(voltage.into())
+                    .await;
             }
             _ => {}
         }
@@ -92,7 +100,7 @@ impl KiaHandler {
         info!("Shared key: {:?}", shared_key_bytes);
         let shared_key = SharedKey::new(shared_key_bytes.clone());
 
-        let mut socket =
+        let socket =
             tokio::net::UdpSocket::bind(SocketAddr::from(([0, 0, 0, 0], self.config.kia.port)))
                 .await?;
 
@@ -109,7 +117,7 @@ impl KiaHandler {
                     match TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
                         Ok(txmessage) => {
                             info!("Received txmessage: {:?} from: {:?}", txmessage, peer);
-                            self.dispatch_txframe(txmessage.frame);
+                            self.dispatch_txframe(txmessage.frame).await;
                         }
                         Err(err) => {
                             error!("Error decrypting message: {:?}", err);
