@@ -98,7 +98,7 @@ async fn main(spawner: Spawner) {
     let mut uarte_receive = Input::new(p.P0_25, Pull::Down);
     let mut ctx = ieee802154::mac::frame::FrameSerDesContext::no_security(FooterMode::None);
 
-    let mut uarte_rx_packet: heapless::Vec<u8, 512> = heapless::Vec::new();
+    let mut uarte_rx_packet: heapless::Vec<u8, 1024> = heapless::Vec::new();
     let mut uarte_send_channel_pub = UARTE_SEND_CHANNEL.sender();
 
     let mut current_chunk_count = 0;
@@ -110,85 +110,97 @@ async fn main(spawner: Spawner) {
         let mut rx_packet = radio::ieee802154::Packet::new();
         let packet = ieee802154.receive(&mut rx_packet).await;
         wdg0.pet().await;
-        if packet.is_ok() {
-            info!("Received packet: {:?}", rx_packet.lqi(),);
-            match ieee802154::mac::Frame::try_read(&rx_packet, FooterMode::None) {
-                Ok((mut frame, size)) => {
-                    info!("Frame: {:?} Payload: {:x}", frame, frame.payload);
-                    frame.header.frame_type = ieee802154::mac::FrameType::Acknowledgement;
-                    let ack_frame = ieee802154::mac::Frame {
-                        header: frame.header,
-                        payload: &[],
-                        footer: frame.footer,
-                        content: ieee802154::mac::FrameContent::Acknowledgement,
-                    };
-                    let mut ack_packet_bytes = [0; 127];
-                    let ack_size = ack_frame
-                        .try_write(&mut ack_packet_bytes, &mut ctx)
-                        .unwrap();
-                    let mut ack_packet = embassy_nrf::radio::ieee802154::Packet::new();
-                    ack_packet.copy_from_slice(&ack_packet_bytes[0..ack_size]);
-                    if ieee802154.try_send(&mut ack_packet).await.is_err() {
-                        error!("Send failed");
-                    }
-
-                    match frame.header.destination {
-                        Some(ieee802154::mac::Address::Short(chunk_count, chunk)) => {
-                            let chunk_count = chunk_count.0 as u8;
-                            let chunk = chunk.0 as u8;
-                            info!(
-                                "New Chunk count: {} Chunk: {} with payload: {}",
-                                chunk_count,
-                                chunk,
-                                frame.payload.len()
-                            );
-                            if current_chunk_count == 0 {
-                                current_chunk_count = chunk_count;
-                                current_chunk = chunk;
+        match ieee802154.receive(&mut rx_packet).await {
+            Ok(_) => {
+                info!("Received packet: {:?}", rx_packet.lqi(),);
+                match ieee802154::mac::Frame::try_read(&rx_packet, FooterMode::None) {
+                    Ok((mut frame, size)) => {
+                        info!("Frame: {:?} Payload: {:x}", frame, frame.payload);
+                        frame.header.frame_type = ieee802154::mac::FrameType::Acknowledgement;
+                        let ack_frame = ieee802154::mac::Frame {
+                            header: frame.header,
+                            payload: &[],
+                            footer: frame.footer,
+                            content: ieee802154::mac::FrameContent::Acknowledgement,
+                        };
+                        let mut ack_packet_bytes = [0; 256];
+                        match ack_frame.try_write(&mut ack_packet_bytes, &mut ctx) {
+                            Ok(ack_size) => {
+                                let mut ack_packet = embassy_nrf::radio::ieee802154::Packet::new();
+                                ack_packet.copy_from_slice(&ack_packet_bytes[0..ack_size]);
+                                if ieee802154.try_send(&mut ack_packet).await.is_err() {
+                                    error!("Send failed");
+                                }
                             }
+                            Err(err) => {
+                                error!("Error writing ack frame: {:?}", defmt::Debug2Format(&err));
+                            }
+                        }
 
-                            if current_chunk_count == chunk_count
-                                && (current_chunk == chunk || current_chunk + 1 == chunk)
-                            {
-                                if let Err(err) = uarte_rx_packet.extend_from_slice(&frame.payload)
-                                {
-                                    error!("Error extending uarte_rx_packet: {:?}", err);
-                                    uarte_rx_packet.clear();
-                                    current_chunk_count = 0;
-                                } else {
+                        match frame.header.destination {
+                            Some(ieee802154::mac::Address::Short(chunk_count, chunk)) => {
+                                let chunk_count = chunk_count.0 as u8;
+                                let chunk = chunk.0 as u8;
+                                info!(
+                                    "New Chunk count: {} Chunk: {} with payload: {}",
+                                    chunk_count,
+                                    chunk,
+                                    frame.payload.len()
+                                );
+                                if current_chunk_count == 0 {
+                                    current_chunk_count = chunk_count;
                                     current_chunk = chunk;
-                                    if current_chunk_count == chunk + 1 {
-                                        info!("Got all chunks, sending to uarte_send_channel_pub");
-                                        uarte_send_channel_pub.send(uarte_rx_packet.clone()).await;
+                                }
+
+                                if current_chunk_count == chunk_count
+                                    && (current_chunk == chunk || current_chunk + 1 == chunk)
+                                {
+                                    if let Err(err) =
+                                        uarte_rx_packet.extend_from_slice(&frame.payload)
+                                    {
+                                        error!("Error extending uarte_rx_packet: {:?}", err);
                                         uarte_rx_packet.clear();
                                         current_chunk_count = 0;
+                                    } else {
+                                        current_chunk = chunk;
+                                        if current_chunk_count == chunk + 1 {
+                                            info!(
+                                                "Got all chunks, sending to uarte_send_channel_pub"
+                                            );
+                                            uarte_send_channel_pub
+                                                .send(uarte_rx_packet.clone())
+                                                .await;
+                                            uarte_rx_packet.clear();
+                                            current_chunk_count = 0;
+                                        }
                                     }
+                                } else {
+                                    error!(
+                                        "Invalid chunk count or chunk, current: {} {} got: {} {}",
+                                        current_chunk_count, current_chunk, chunk_count, chunk
+                                    );
+                                    uarte_rx_packet.clear();
+                                    current_chunk_count = 0;
                                 }
-                            } else {
-                                error!(
-                                    "Invalid chunk count or chunk, current: {} {} got: {} {}",
-                                    current_chunk_count, current_chunk, chunk_count, chunk
-                                );
-                                uarte_rx_packet.clear();
-                                current_chunk_count = 0;
+                            }
+                            _ => {
+                                error!("Invalid destination");
                             }
                         }
-                        _ => {
-                            error!("Invalid destination");
-                        }
+                    }
+                    Err(err) => {
+                        error!("Error reading frame: {:?}", defmt::Debug2Format(&err));
                     }
                 }
-                Err(err) => {
-                    error!("Error reading frame: {:?}", defmt::Debug2Format(&err));
-                }
             }
-        } else {
-            error!("Receive failed");
+            Err(err) => {
+                error!("Error receiving packet: {:?}", err);
+            }
         }
     }
 }
 
-static UARTE_SEND_CHANNEL: channel::Channel<CriticalSectionRawMutex, heapless::Vec<u8, 512>, 128> =
+static UARTE_SEND_CHANNEL: channel::Channel<CriticalSectionRawMutex, heapless::Vec<u8, 1024>, 16> =
     channel::Channel::new();
 
 #[embassy_executor::task]

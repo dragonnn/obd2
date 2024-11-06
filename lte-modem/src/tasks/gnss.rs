@@ -91,7 +91,7 @@ pub async fn task(mut gnss: Gnss) {
     gnss_set_duration(&battery_state, &mut gnss).await;
 
     let fix_pub = CHANNEL.publisher().unwrap();
-    let mut last_modem_fix_send: Option<Instant> = None;
+    //let mut last_modem_fix_send: Option<Instant> = None;
 
     loop {
         gnss_set_duration(&battery_state, &mut gnss).await;
@@ -110,10 +110,10 @@ pub async fn task(mut gnss: Gnss) {
                         }
                         state.fixes.push(fix).ok();
                         fix_pub.publish(fix).await;
-                        if last_modem_fix_send.map(|l| l.elapsed().as_secs() > 60).unwrap_or(true) {
-                            tx_channel_pub.publish(TxFrame::Modem(Modem::GnssFix(fix))).await;
-                            last_modem_fix_send = Some(Instant::now());
-                        }
+                        //if last_modem_fix_send.map(|l| l.elapsed().as_secs() > 60).unwrap_or(true) {
+                        tx_channel_pub.publish(TxFrame::Modem(Modem::GnssFix(fix))).await;
+                        //    last_modem_fix_send = Some(Instant::now());
+                        //}
                     } else {
                         defmt::warn!("found duplicated fix");
                     }
@@ -137,10 +137,10 @@ pub async fn task(mut gnss: Gnss) {
                     let mut state = STATE.lock().await;
                     state.fix = Some(fix);
                     fix_pub.publish(fix).await;
-                    if last_modem_fix_send.map(|l| l.elapsed().as_secs() > 60).unwrap_or(true) {
-                        tx_channel_pub.publish(TxFrame::Modem(Modem::GnssFix(fix))).await;
-                        last_modem_fix_send = Some(Instant::now());
-                    }
+                    //if last_modem_fix_send.map(|l| l.elapsed().as_secs() > 60).unwrap_or(true) {
+                    tx_channel_pub.publish(TxFrame::Modem(Modem::GnssFix(fix))).await;
+                    //    last_modem_fix_send = Some(Instant::now());
+                    //}
 
                     battery_state = BatteryState::get().await;
                     gnss_set_duration(&battery_state, &mut gnss).await;
