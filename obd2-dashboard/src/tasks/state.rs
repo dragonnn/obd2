@@ -2,7 +2,7 @@ use defmt::*;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 use statig::prelude::*;
 
-use super::obd2::Obd2Debug;
+use super::obd2::{set_obd2_sets, Obd2Debug, Obd2PidSets};
 use crate::{
     event::{LcdEvent, Obd2Event, LCD_EVENTS},
     tasks::buttons::{Action, Button},
@@ -20,7 +20,7 @@ pub enum KiaEvent {
     Button(crate::tasks::buttons::Action),
     Obd2Event(Obd2Event),
     Obd2Debug(Obd2Debug),
-    Render,
+    Obd2LoopEnd,
 }
 
 #[derive(Default)]
@@ -40,7 +40,7 @@ pub struct KiaState {}
 )]
 impl KiaState {
     #[state()]
-    async fn init(&mut self, context: &mut KiaContext, event: &KiaEvent) -> Response<State> {
+    async fn init(&mut self, event: &KiaEvent) -> Response<State> {
         //info!("init got event: {:?}", event);
         match event {
             KiaEvent::InitIgnitionOff => {
@@ -55,8 +55,13 @@ impl KiaState {
         }
     }
 
-    #[state()]
-    async fn ignition_on(&mut self, context: &mut KiaContext, event: &KiaEvent) -> Response<State> {
+    #[action]
+    async fn enter_ignition_on(&mut self) {
+        set_obd2_sets(Obd2PidSets::IgnitionOn).await;
+    }
+
+    #[state(entry_action = "enter_ignition_on")]
+    async fn ignition_on(&mut self, event: &KiaEvent) -> Response<State> {
         match event {
             KiaEvent::Shutdown => {
                 LCD_EVENTS.send(LcdEvent::PowerOff).await;
@@ -70,7 +75,7 @@ impl KiaState {
                 LCD_EVENTS.send(LcdEvent::Obd2Debug(obd2_debug.clone())).await;
                 Handled
             }
-            KiaEvent::Render => {
+            KiaEvent::Obd2LoopEnd => {
                 LCD_EVENTS.send(LcdEvent::Render).await;
                 Handled
             }
@@ -97,8 +102,23 @@ impl KiaState {
         }
     }
 
-    #[state()]
-    async fn check_charging(&mut self, context: &mut KiaContext, event: &KiaEvent) -> Response<State> {
+    #[action]
+    async fn enter_charging(&mut self) {
+        set_obd2_sets(Obd2PidSets::Charging).await;
+    }
+
+    #[state(entry_action = "enter_charging")]
+    async fn check_charging(&mut self, event: &KiaEvent) -> Response<State> {
+        Handled
+    }
+
+    #[action]
+    async fn enter_ignition_off(&mut self) {
+        set_obd2_sets(Obd2PidSets::IgnitionOff).await;
+    }
+
+    #[state(entry_action = "enter_ignition_off")]
+    async fn ignition_off(&mut self, event: &KiaEvent) -> Response<State> {
         Handled
     }
 }
@@ -114,7 +134,7 @@ impl KiaState {
             trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
         } else {
             match event {
-                KiaEvent::Obd2Debug(_) | KiaEvent::Render => {
+                KiaEvent::Obd2Debug(_) | KiaEvent::Obd2LoopEnd => {
                     trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
                 }
                 _ => {
@@ -126,11 +146,10 @@ impl KiaState {
 }
 
 pub async fn run() {
-    let mut context = KiaContext {};
-    let mut state = KiaState::default().uninitialized_state_machine().init_with_context(&mut context).await;
+    let mut state = KiaState::default().uninitialized_state_machine().init().await;
 
     loop {
         let event = EVENTS.receive().await;
-        state.handle_with_context(&event, &mut context).await;
+        state.handle(&event).await;
     }
 }
