@@ -68,6 +68,26 @@ pub struct IcuPid {
     pub bat_discharge_warning_final_event_soc: u8,
 }
 
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
+pub struct Icu2Pid {
+    pub back_door_driver_side_open: bool,
+    pub actuator_back_dor_driver_side_unlock: bool,
+    pub back_door_passenger_side_open: bool,
+    pub actuator_back_door_passenger_side_unlock: bool,
+    pub front_door_passenger_side_open: bool,
+    pub front_door_driver_side_open: bool,
+    pub trunk_open: bool,
+
+    pub engine_hood_open: bool,
+    pub driver_buckled: bool,
+    pub passenger_buckled: bool,
+    pub breaking_fluid: bool,
+    pub ignition_1_on: bool,
+    pub ignition_2_on: bool,
+
+    pub signal_back_av: bool,
+}
+
 #[derive(
     Debug, Format, PartialEq, Clone, Copy, strum::IntoStaticStr, Deserialize, Serialize, Default,
 )]
@@ -96,11 +116,11 @@ pub struct VehicleSpeedPid {
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct OnBoardChargerPid {
-    pub ac_input_voltage: f64,
-    pub input_voltage: f64,
+    pub ac_input_voltage_instant: f64,
+    pub ac_input_voltage_rms: f64,
     pub pfc_output_voltage: f64,
     pub obc_output_voltage: f64,
-    pub input_current: f64,
+    pub ac_input_current: f64,
     pub obc_output_current: f64,
     pub ac_input_frequency: u8,
     pub obc_temperature_a: u8,
@@ -123,6 +143,7 @@ pub enum Pid {
     AcPid(AcPid),
     HybridDcDcPid(HybridDcDcPid),
     IcuPid(IcuPid),
+    Icu2Pid(Icu2Pid),
     IceEnginePid(IceEnginePid),
     TransaxlePid(TransaxlePid),
     OnBoardChargerPid(OnBoardChargerPid),

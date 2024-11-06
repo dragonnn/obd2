@@ -62,6 +62,7 @@ impl Obd2PidSets {
         obd2.handle_pid::<pid::AcPid>().await;
         obd2.handle_pid::<pid::HybridDcDcPid>().await;
         obd2.handle_pid::<pid::IcuPid>().await;
+        obd2.handle_pid::<pid::Icu2Pid>().await;
         obd2.handle_pid::<pid::IceEnginePid>().await;
         obd2.handle_pid::<pid::OnBoardChargerPid>().await;
     }
@@ -70,12 +71,14 @@ impl Obd2PidSets {
         obd2.handle_pid::<pid::BmsPid>().await;
         obd2.handle_pid::<pid::IceTemperaturePid>().await;
         obd2.handle_pid::<pid::IcuPid>().await;
+        obd2.handle_pid::<pid::Icu2Pid>().await;
         obd2.handle_pid::<pid::OnBoardChargerPid>().await;
     }
 
     async fn handle_ignition_off(obd2: &mut Obd2) {
         obd2.handle_pid::<pid::BmsPid>().await;
         obd2.handle_pid::<pid::IcuPid>().await;
+        obd2.handle_pid::<pid::Icu2Pid>().await;
     }
 }
 

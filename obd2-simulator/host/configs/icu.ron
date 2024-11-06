@@ -34,9 +34,49 @@
                 //  EVENT SoC
                 //  SAME AS FIRST EVENT SoC
                 //   8
-                    0x23, 
+                    0x43, 
                 //   9     10    11    12    13
                     0xaa, 0xaa, 0xaa, 0xaa, 0xaa
+                ]
+            )),
+        ]
+    ),
+
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0xbc, 0x03, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                //   0     1     2     3     4     5
+                    0x62, 0xbc, 0x03, 0xfd, 0xee, 0x20,
+                //   6
+                    0x00, 
+                //   7    
+                    0b00000000, 
+                    //0b00000001 -> switch open back door driver side CLOSE = 0, OPEN = 1
+                    //0b00000010 -> actuator back door driver side UNLOCK = 1, LOCK = 0
+                    //0b00000100 -> switch open back door passenger side CLOSE = 0, OPEN = 1
+                    //0b00001000 -> actuator back door passenger side UNLOCK = 1, LOCK = 0
+                    //0b00010000 -> switch open front door passenger side CLOSE = 0, OPEN = 1
+                    //0b00100000 -> switch open front door driver side CLOSE = 0, OPEN = 1
+                    //0b10000000 -> switch open trunk CLOSE = 0, OPEN = 1
+
+
+                    0b00000000, 
+                    //0b00000001 -> switch open engine hood CLOSE = 0, OPEN = 1
+                    //0b00000010 -> switch driver buckle BUCKLED = 1, UNBUCKLED = 0
+                    //0b00000100 -> switch passenger buckle BUCKLED = 1, UNBUCKLED = 0
+                    //0b00010000 -> switch breaking fluid? ON = 1, OFF = 0
+                    //0b00100000 -> switch ignition 1 ON = 1, OFF = 0
+                    //0b01000000 -> switch ignition 2 ON = 1, OFF = 0
+
+                    0b00000100, 
+                    //0b00000100 -> input signal back AV??
+                    
+                    
+                    0x00, 0xaa, 0xaa
                 ]
             )),
         ]

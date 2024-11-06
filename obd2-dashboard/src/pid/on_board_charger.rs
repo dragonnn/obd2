@@ -20,11 +20,11 @@ impl Pid for OnBoardChargerPid {
             return Err(Obd2Error::FrameToShort);
         }
 
-        let ac_input_voltage = data[6] as f64 * 2.56 + data[7] as f64 / 100.0;
-        let input_voltage = data[8] as f64 * 2.56 + data[9] as f64 / 100.0;
+        let ac_input_voltage_instant = data[6] as f64 * 2.56 + data[7] as f64 / 100.0;
+        let ac_input_voltage_rms = data[8] as f64 * 2.56 + data[9] as f64 / 100.0;
         let pfc_output_voltage = data[10] as f64 * 25.6 + data[11] as f64 / 10.0;
         let obc_output_voltage = data[12] as f64 * 25.6 + data[13] as f64 / 10.0;
-        let input_current = data[14] as f64 * 2.56 + data[15] as f64 / 100.0;
+        let ac_input_current = data[14] as f64 * 2.56 + data[15] as f64 / 100.0;
         let obc_output_current = data[16] as f64 * 2.56 + data[17] as f64 / 100.0;
         let ac_input_frequency = data[18];
         let obc_temperature_a = data[19] - 100;
@@ -38,11 +38,11 @@ impl Pid for OnBoardChargerPid {
         let pfc1_current_sensor_offset = data[51] as f64 - data[36] as f64 / 100.0;
 
         let ret = Self {
-            ac_input_voltage,
-            input_voltage,
+            ac_input_voltage_instant,
+            ac_input_voltage_rms,
             pfc_output_voltage,
             obc_output_voltage,
-            input_current,
+            ac_input_current,
             obc_output_current,
             ac_input_frequency,
             obc_temperature_a,

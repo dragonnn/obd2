@@ -32,7 +32,7 @@ impl Pid for IcuPid {
             bat_discharge_warning_final_event_milage,
             bat_discharge_warning_final_event_soc,
         };
-        info!("IcuPid: {:?}", ret);
+        //info!("IcuPid: {:?}", ret);
         Ok(ret)
     }
 

@@ -109,7 +109,7 @@ impl KiaState {
 
     #[state(entry_action = "enter_charging")]
     async fn check_charging(&mut self, event: &KiaEvent) -> Response<State> {
-        Handled
+        Transition(State::ignition_off())
     }
 
     #[action]
