@@ -62,7 +62,10 @@ pub struct IceTemperaturePid {
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct IcuPid {
-    pub gear: i32,
+    pub bat_discharge_warning_first_event_milage: f64,
+    pub bat_discharge_warning_first_event_soc: u8,
+    pub bat_discharge_warning_final_event_milage: f64,
+    pub bat_discharge_warning_final_event_soc: u8,
 }
 
 #[derive(

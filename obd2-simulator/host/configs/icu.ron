@@ -1,0 +1,44 @@
+[
+    Request(
+        can_id: 0x770,
+        message: [0x02, 0x10, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Raw(RawResponse(
+                can_id: 0x778,
+                message: [0x06, 0x50, 0x03, 0x00, 0x32, 0x01, 0xf4, 0xaa]
+            )),            
+        ]
+    ),
+
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                //   0     1     2     3     4     5
+                    0x62, 0x00, 0x0b, 0xf0, 0x00, 0x00,
+                //        BAT DISCHARGE WARNING FIRST                                     BATTERY DISCHARGE FIRST
+                //        EVENT MILEAGE                                                   EVENT SoC
+                //        0x01 = 6553.6     0x01 = 25.6     0x01 = 0.1                    0-100 directly
+                //        0xFF = 1671168    0xFF = 6528     0xFF = 25.5
+                //    0    1                 2               3                             4
+                    0x00, 0x00,             0x00,           0x00,                         0x00, 
+                //  BAT DISCHARGE WARNING FINAL
+                //  EVENT MILAGE
+                //  SAME AS FIRST EVENT MILAGE
+                //   5      6     7
+                    0x00, 0x00, 0x00, 
+                //  BATTERTY DISCHARGE FINAL
+                //  EVENT SoC
+                //  SAME AS FIRST EVENT SoC
+                //   8
+                    0x23, 
+                //   9     10    11    12    13
+                    0xaa, 0xaa, 0xaa, 0xaa, 0xaa
+                ]
+            )),
+        ]
+    )
+]
