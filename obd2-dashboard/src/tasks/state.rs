@@ -45,7 +45,7 @@ impl KiaState {
         match event {
             KiaEvent::InitIgnitionOff => {
                 LCD_EVENTS.send(LcdEvent::PowerOff).await;
-                Handled
+                Transition(State::ignition_off())
             }
             KiaEvent::InitIgnitionOn => {
                 LCD_EVENTS.send(LcdEvent::Main).await;
