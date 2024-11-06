@@ -71,6 +71,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                 //info!("event_bus_sub: {:?}", event);
                 match event {
                     Event::Kia(KiaEvent::Obd2Event(pid)) => {
+                        obd2_pids.remove(&pid);
                         if obd2_pids.insert(pid).is_err() {
                             info!("obd2_pids.insert(pid) failed");
                         }
