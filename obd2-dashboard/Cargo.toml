@@ -17,6 +17,7 @@ esp-backtrace = { version = "0.14.2", features = [
     "panic-handler",
     "exception-handler",
     "defmt",
+    "custom-halt",
 ] }
 #esp-wifi = { version = "0.10.1", features = [
 #    "esp32c6",

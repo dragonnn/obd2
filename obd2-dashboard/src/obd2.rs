@@ -34,6 +34,7 @@ pub struct Obd2 {
     mcp2515: Mcp2515,
     obd2_message_buffer: &'static mut heapless::Vec<u8, 4095>,
     obd2_pid_errors: heapless::FnvIndexMap<TypeId, usize, 32>,
+    obd2_pid_errors_periods: heapless::FnvIndexMap<TypeId, Instant, 32>,
     obd2_pid_periods: heapless::FnvIndexMap<TypeId, Instant, 32>,
 
     event_bus_pub: EventBusPub,
@@ -44,11 +45,19 @@ impl Obd2 {
         static OBD2_MESSAGE_BUFFER_STATIC: static_cell::StaticCell<heapless::Vec<u8, 4095>> =
             static_cell::StaticCell::new();
 
-        let obd2_message_buffer = OBD2_MESSAGE_BUFFER_STATIC.init(heapless::Vec::new());
+        let obd2_message_buffer = OBD2_MESSAGE_BUFFER_STATIC.init_with(|| heapless::Vec::new());
         let obd2_pid_errors = heapless::FnvIndexMap::new();
+        let obd2_pid_errors_periods = heapless::FnvIndexMap::new();
         let obd2_pid_periods = heapless::FnvIndexMap::new();
 
-        Self { mcp2515, obd2_message_buffer, obd2_pid_errors, obd2_pid_periods, event_bus_pub: event_bus_pub() }
+        Self {
+            mcp2515,
+            obd2_message_buffer,
+            obd2_pid_errors_periods,
+            obd2_pid_errors,
+            obd2_pid_periods,
+            event_bus_pub: event_bus_pub(),
+        }
     }
 
     pub async fn init(&mut self) {
@@ -226,6 +235,13 @@ impl Obd2 {
             if obd2_debug_pids_enabled {
                 KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).await;
             }
+            let last_time =
+                self.obd2_pid_errors_periods.get(&type_id).map(|time| *time).unwrap_or(Instant::from_millis(0));
+            if Instant::now() - last_time < Duration::from_secs(60) {
+                error!("last error was more then 60s ago, clearing errors");
+                errors = 0;
+            }
+            self.obd2_pid_errors_periods.insert(type_id, Instant::now()).ok();
         }
 
         self.obd2_pid_errors.insert(type_id, errors).ok();

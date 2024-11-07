@@ -79,6 +79,7 @@ impl Obd2PidSets {
         obd2.handle_pid::<pid::BmsPid>().await;
         obd2.handle_pid::<pid::IcuPid>().await;
         obd2.handle_pid::<pid::Icu2Pid>().await;
+        obd2.handle_pid::<pid::OnBoardChargerPid>().await;
     }
 }
 

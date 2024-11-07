@@ -64,3 +64,9 @@ async fn main(spawner: Spawner) {
 
     tasks::state::run().await;
 }
+
+#[no_mangle]
+pub extern "Rust" fn custom_halt() -> ! {
+    esp_hal::reset::software_reset();
+    loop {}
+}
