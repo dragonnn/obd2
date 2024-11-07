@@ -237,14 +237,20 @@ impl Obd2 {
             }
             let last_time =
                 self.obd2_pid_errors_periods.get(&type_id).map(|time| *time).unwrap_or(Instant::from_millis(0));
-            if Instant::now() - last_time < Duration::from_secs(60) {
-                error!("last error was more then 60s ago, clearing errors");
+            if last_time.elapsed() > Duration::from_secs(5 * 60) {
+                error!("last error was more then 5*60s ago, clearing errors");
                 errors = 0;
             }
             self.obd2_pid_errors_periods.insert(type_id, Instant::now()).ok();
         }
 
         self.obd2_pid_errors.insert(type_id, errors).ok();
+    }
+
+    pub fn clear_pids_cache(&mut self) {
+        self.obd2_pid_errors.clear();
+        self.obd2_pid_errors_periods.clear();
+        self.obd2_pid_periods.clear();
     }
 }
 

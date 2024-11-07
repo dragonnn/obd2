@@ -20,6 +20,7 @@
         "PROFONT",
         "repr",
         "rtcio",
+        "Rwdt",
         "statig",
         "timg",
         "unlisten"

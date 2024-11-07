@@ -34,7 +34,7 @@ impl defmt::Format for Obd2Debug {
     }
 }
 
-#[derive(Format, Clone, Copy)]
+#[derive(Format, Clone, Copy, PartialEq, Eq)]
 pub enum Obd2PidSets {
     IgnitionOn,
     IgnitionOff,
@@ -91,8 +91,13 @@ pub async fn run(mut obd2: Obd2) {
     OBD2_SETS_CHANGED.wait().await;
     select(
         async {
+            let mut old_sets = *OBD2_SETS.lock().await;
             loop {
                 let sets = *OBD2_SETS.lock().await;
+                if old_sets != sets {
+                    old_sets = sets;
+                    obd2.clear_pids_cache();
+                }
                 sets.handle(&mut obd2).await;
 
                 KIA_EVENTS.send(KiaEvent::Obd2LoopEnd).await;

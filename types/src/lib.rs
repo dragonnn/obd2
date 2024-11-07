@@ -167,6 +167,7 @@ impl Eq for Pid {}
 pub enum TxFrame {
     Obd2Pid(Pid),
     Modem(Modem),
+    Shutdown,
 }
 
 impl TxFrame {

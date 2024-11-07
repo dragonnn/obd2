@@ -1,4 +1,5 @@
-use defmt::{error, unwrap, warn};
+use defmt::*;
+use embassy_futures::select::{select, Either::*};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, pubsub::PubSubChannel};
 use embassy_time::{Duration, Timer};
 use esp_hal::{
@@ -7,15 +8,26 @@ use esp_hal::{
     Cpu,
 };
 
-static SHUTDOWN: PubSubChannel<CriticalSectionRawMutex, (), 1, 16, 1> = PubSubChannel::new();
+#[derive(Debug, Clone)]
+pub enum PowerEvent {
+    Shutdown(embassy_time::Duration),
+    RwdtFeed,
+}
 
-use crate::{debug::internal_debug, event::*, power::Power};
+static SHUTDOWN: PubSubChannel<CriticalSectionRawMutex, (), 1, 16, 1> = PubSubChannel::new();
+static POWER_EVENTS: PubSubChannel<CriticalSectionRawMutex, PowerEvent, 1, 1, 16> = PubSubChannel::new();
+
+use crate::{
+    debug::internal_debug,
+    event::*,
+    power::{Ignition, Power},
+};
 
 #[embassy_executor::task]
 pub async fn run(mut power: Power) {
-    let sleep_duration = Duration::from_secs(15 * 60);
+    //let sleep_duration = Duration::from_secs(15 * 60);
 
-    let reason = get_reset_reason(Cpu::ProCpu).unwrap_or(SocResetReason::ChipPowerOn);
+    /*let reason = get_reset_reason(Cpu::ProCpu).unwrap_or(SocResetReason::ChipPowerOn);
     error!("reset reason: {:?}", defmt::Debug2Format(&reason));
     let wake_reason = get_wakeup_cause();
     error!("wake reason: {:?}", defmt::Debug2Format(&wake_reason));
@@ -24,55 +36,53 @@ pub async fn run(mut power: Power) {
 
     if let SleepSource::Timer = wake_reason {
         sleep_timeout = Duration::from_secs(30);
-    }
-
-    //testing
-    /*if esp_hal::debugger::debugger_connected() {
-        warn!("debugger connected");
-        KIA_EVENTS.send(KiaEvent::InitIgnitionOn).await;
-        Timer::after(Duration::from_secs(5)).await;
-        sleep_duration = Duration::from_secs(5);
-        //return;
     }*/
 
-    loop {
-        if power.is_ignition_on() {
-            internal_debug!("wait for ignition off");
-            KIA_EVENTS.send(KiaEvent::InitIgnitionOn).await;
-            power.wait_for_ignition_off().await;
-            error!("got low ignition signal");
-            internal_debug!("got ignition off");
-            break;
-        } else {
-            KIA_EVENTS.send(KiaEvent::InitIgnitionOff).await;
-            if let SleepSource::Timer = wake_reason {
-                sleep_timeout = Duration::from_secs(30);
-            } else {
-                sleep_timeout = Duration::from_secs(60);
-            }
-            if embassy_time::with_timeout(sleep_timeout, power.wait_for_ignition_on()).await.is_err() {
-                defmt::warn!("ignition is off");
-                internal_debug!("ignition already off");
-                break;
-            }
-            defmt::warn!("ignition is off");
-            internal_debug!("ignition already off");
-        }
+    if power.is_ignition_on() {
+        KIA_EVENTS.send(KiaEvent::IgnitionOn).await;
+    } else {
+        KIA_EVENTS.send(KiaEvent::IgnitionOff).await;
     }
 
-    KIA_EVENTS.send(KiaEvent::Shutdown).await;
-    Timer::after(sleep_timeout).await;
-    unwrap!(SHUTDOWN.publisher()).publish(()).await;
-    defmt::warn!("deep sleep in 100ms");
-    Timer::after(Duration::from_millis(100)).await;
-    if power.is_ignition_on() {
-        defmt::warn!("ignition is on, not deep sleeping");
-        esp_hal::reset::software_reset();
-    } else {
-        power.deep_sleep(sleep_duration);
+    let mut power_events_sub = unwrap!(POWER_EVENTS.subscriber());
+
+    warn!("power task select");
+    loop {
+        match select(power.wait_for_ignition_change(), power_events_sub.next_message_pure()).await {
+            First(ignition) => match ignition {
+                Ignition::On => {
+                    KIA_EVENTS.send(KiaEvent::IgnitionOn).await;
+                }
+                Ignition::Off => {
+                    KIA_EVENTS.send(KiaEvent::IgnitionOff).await;
+                }
+            },
+            Second(power_event) => match power_event {
+                PowerEvent::Shutdown(duration) => {
+                    warn!("shutdown event received for {:?}", duration.as_secs());
+                    unwrap!(SHUTDOWN.publisher()).publish(()).await;
+                    Timer::after(Duration::from_millis(200)).await;
+                    if power.is_ignition_on() {
+                        warn!("ignition is on, not deep sleeping");
+                        esp_hal::reset::software_reset();
+                    } else {
+                        power.deep_sleep(duration);
+                    }
+                }
+                PowerEvent::RwdtFeed => {
+                    power.rwdt_feed();
+                }
+            },
+        }
     }
 }
 
 pub fn get_shutdown_signal() -> embassy_sync::pubsub::Subscriber<'static, CriticalSectionRawMutex, (), 1, 16, 1> {
     unwrap!(SHUTDOWN.subscriber())
+}
+
+pub type PowerEventPublisher = embassy_sync::pubsub::DynPublisher<'static, PowerEvent>;
+
+pub fn get_power_events_pub() -> PowerEventPublisher {
+    unwrap!(POWER_EVENTS.dyn_publisher())
 }

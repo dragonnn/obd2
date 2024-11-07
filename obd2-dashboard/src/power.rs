@@ -22,6 +22,11 @@ pub struct Power {
     rtc: Rtc<'static>,
 }
 
+pub enum Ignition {
+    On,
+    Off,
+}
+
 impl Power {
     pub fn new(ing_gpio: IngGpio, delay: Delay, rtc: Rtc<'static>, rs_gpio: Rs) -> Self {
         Self { ing_gpio, delay, rtc, rs_gpio }
@@ -44,11 +49,30 @@ impl Power {
         self.ing_gpio.is_high()
     }
 
+    pub fn is_ignition_off(&self) -> bool {
+        self.ing_gpio.is_low()
+    }
+
     pub async fn wait_for_ignition_off(&mut self) {
         self.ing_gpio.wait_for_falling_edge().await;
     }
 
     pub async fn wait_for_ignition_on(&mut self) {
         self.ing_gpio.wait_for_rising_edge().await;
+    }
+
+    pub async fn wait_for_ignition_change(&mut self) -> Ignition {
+        self.ing_gpio.wait_for_any_edge().await;
+        if self.is_ignition_on() {
+            warn!("ignition on");
+            Ignition::On
+        } else {
+            warn!("ignition off");
+            Ignition::Off
+        }
+    }
+
+    pub fn rwdt_feed(&mut self) {
+        self.rtc.rwdt.feed();
     }
 }

@@ -24,8 +24,21 @@ pub async fn task() {
         if starting_port < 10000 {
             starting_port = 10000;
         }
-        match select(tx_channel_sub.next_message_pure(), timeout_ticker.next()).await {
+        let mut txframe_shutdown = false;
+
+        match select(tx_channel_sub.next_message_pure(), async {
+            if txframe_shutdown {
+                txframe_shutdown = false;
+            } else {
+                timeout_ticker.next().await;
+            }
+        })
+        .await
+        {
             First(txframe) => {
+                if let types::TxFrame::Shutdown = txframe {
+                    txframe_shutdown = true;
+                }
                 info!("tx_channel_sub recv {:?}", txframe);
                 let is_modem_battery = txframe.is_modem_battery();
                 let txmessage = TxMessage::new(txframe);

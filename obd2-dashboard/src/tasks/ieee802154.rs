@@ -1,5 +1,5 @@
 use defmt::{error, info, unwrap, Format};
-use embassy_futures::select::{select, Either::*};
+use embassy_futures::select::{select, select3, Either3::*};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use embassy_time::{with_timeout, Duration};
 use esp_hal::aes::{dma::AesDma, Aes, Mode};
@@ -10,7 +10,12 @@ use serde_encrypt::{serialize::impls::PostcardSerializer, shared_key::SharedKey,
 use static_cell::StaticCell;
 use types::Pid;
 
-use crate::event::{event_bus_sub, Event, KiaEvent};
+use crate::{
+    event::{event_bus_sub, Event, KiaEvent},
+    tasks::power::get_shutdown_signal,
+};
+
+static SEND_NOW_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 
 #[embassy_executor::task]
 pub async fn run(mut ieee802154: Ieee802154<'static>) {
@@ -45,8 +50,18 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
 
     let mut ieee802154 = AsyncIeee802154::new(ieee802154);
 
+    let mut shutdown_signal = get_shutdown_signal();
+
     loop {
-        match select(send_ticker.next(), event_bus_sub.next_message_pure()).await {
+        match select3(
+            async {
+                select(send_ticker.next(), SEND_NOW_SIGNAL.wait()).await;
+            },
+            event_bus_sub.next_message_pure(),
+            shutdown_signal.next_message_pure(),
+        )
+        .await
+        {
             First(_) => {
                 let now = embassy_time::Instant::now();
                 for pid in obd2_pids.iter() {
@@ -56,7 +71,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                     {
                         let encrypted_pid_bytes = encrypted_pid.serialize();
                         if let Err(err) =
-                            ieee802154.transmit_buffer(&encrypted_pid_bytes, 2, Duration::from_secs(5)).await
+                            ieee802154.transmit_buffer(&encrypted_pid_bytes, 2, Duration::from_secs(1)).await
                         {
                             error!("ieee802154.transmit_buffer(&encrypted_pid_bytes, 2, Duration::from_secs(5)) failed: {:?}", err);
                         }
@@ -78,6 +93,11 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                     }
                     _ => {}
                 }
+            }
+            Third(_) => {
+                info!("ieee802154 shutdown");
+                types::TxMessage::new(types::TxFrame::Shutdown).encrypt(&shared_key).ok();
+                break;
             }
         }
     }
@@ -195,7 +215,7 @@ impl AsyncIeee802154 {
                     }
                 }
                 Err(_) => {
-                    error!("timeout transmitting frame: {:?}", defmt::Debug2Format(&frame));
+                    error!("Ieee802154 timeout transmitting frame");
                 }
                 Ok(Err(err)) => {
                     error!("error transmitting frame: {:?}", defmt::Debug2Format(&err));
@@ -214,4 +234,8 @@ impl AsyncIeee802154 {
             Err(esp_ieee802154::Error::Incomplete)
         }
     }
+}
+
+pub fn send_now() {
+    SEND_NOW_SIGNAL.signal(());
 }

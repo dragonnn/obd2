@@ -13,7 +13,7 @@ use esp_hal::{
     gpio::{Input, Io, Output, Pull},
     peripherals::Peripherals,
     prelude::*,
-    rtc_cntl::Rtc,
+    rtc_cntl::{Rtc, Rwdt},
     spi::{
         master::{Spi, SpiDmaBus},
         FullDuplexMode, SpiMode,
@@ -113,7 +113,7 @@ pub fn init() -> Hal {
 
     esp_hal_embassy::init(timg0.timer0);
     let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
-    let rtc = Rtc::new(peripherals.LPWR);
+    let mut rtc = Rtc::new(peripherals.LPWR);
 
     let dma = Dma::new(peripherals.DMA);
     let dma_channel = dma.channel0;
@@ -192,6 +192,13 @@ pub fn init() -> Hal {
     info!("HAL initialized");
 
     let ieee802154 = Ieee802154::new(peripherals.IEEE802154, peripherals.RADIO_CLK);
+
+    //let mut rtc = Rtc::new(peripherals.LPWR);
+    //rtc.set_interrupt_handler(interrupt_handler);
+
+    rtc.rwdt.enable();
+    rtc.rwdt.set_timeout(5 * 60.secs());
+    rtc.rwdt.listen();
 
     Hal {
         display1,
