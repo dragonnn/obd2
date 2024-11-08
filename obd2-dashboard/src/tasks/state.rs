@@ -52,14 +52,8 @@ impl KiaState {
     async fn init(&mut self, event: &KiaEvent) -> Response<State> {
         //info!("init got event: {:?}", event);
         match event {
-            KiaEvent::IgnitionOff => {
-                LCD_EVENTS.send(LcdEvent::PowerOff).await;
-                Transition(State::ignition_off(Instant::now()))
-            }
-            KiaEvent::IgnitionOn => {
-                LCD_EVENTS.send(LcdEvent::Main).await;
-                Transition(State::ignition_on())
-            }
+            KiaEvent::IgnitionOff => Transition(State::ignition_off(Instant::now())),
+            KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             _ => Handled,
         }
     }
@@ -67,6 +61,7 @@ impl KiaState {
     #[action]
     async fn enter_ignition_on(&mut self) {
         ieee802154::send_now();
+        LCD_EVENTS.send(LcdEvent::Main).await;
         set_obd2_sets(Obd2PidSets::IgnitionOn).await;
     }
 
@@ -181,6 +176,7 @@ impl KiaState {
     #[action]
     async fn enter_ignition_off(&mut self) {
         ieee802154::send_now();
+        LCD_EVENTS.send(LcdEvent::PowerOff).await;
         set_obd2_sets(Obd2PidSets::IgnitionOff).await;
     }
 
