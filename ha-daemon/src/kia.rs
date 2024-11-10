@@ -51,16 +51,18 @@ impl KiaHandler {
             .update(chrono::Local::now().format("%+").to_string().into())
             .await;
         match txframe {
+            TxFrame::Obd2Pid(types::Pid::Icu1Smk(icu_smk_1)) => {
+                self.ha_sensors
+                    .get("aux_voltage")
+                    .unwrap()
+                    .update(icu_smk_1.aux_battery_voltage_power_load.into())
+                    .await;
+            }
             TxFrame::Obd2Pid(types::Pid::BmsPid(bms_pid)) => {
                 self.ha_sensors
                     .get("hv_soc")
                     .unwrap()
                     .update(bms_pid.hv_soc.into())
-                    .await;
-                self.ha_sensors
-                    .get("aux_voltage")
-                    .unwrap()
-                    .update(bms_pid.aux_dc_voltage.into())
                     .await;
                 self.ha_sensors
                     .get("hv_temperature_max")
@@ -89,6 +91,20 @@ impl KiaHandler {
                     }))
                     .unwrap();
             }
+            TxFrame::Modem(types::Modem::GnssState(state)) => {
+                let state = match state {
+                    types::GnssState::PeriodicFix => "PeriodicFix".to_string(),
+                    types::GnssState::TickerFix(_period) => "TickerFix".to_string(),
+                    types::GnssState::TimeoutFix => "TimeoutFix".to_string(),
+                    types::GnssState::WaitingForFix => "WaitingForFix".to_string(),
+                };
+                info!("GnssState: {}", state);
+                self.ha_sensors
+                    .get("modem_gnss_state")
+                    .unwrap()
+                    .update(state.into())
+                    .await;
+            }
             TxFrame::Modem(types::Modem::Battery {
                 voltage,
                 low_voltage,
@@ -114,7 +130,6 @@ impl KiaHandler {
         //let mut listener =
         //    UdpListener::bind(SocketAddr::from(([0, 0, 0, 0], self.config.kia.port))).await?;
         let shared_key_bytes = include_bytes!("../../shared_key.bin");
-        info!("Shared key: {:?}", shared_key_bytes);
         let shared_key = SharedKey::new(shared_key_bytes.clone());
 
         let socket =
