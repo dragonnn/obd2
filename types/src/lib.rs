@@ -88,6 +88,20 @@ pub struct Icu2Pid {
     pub signal_back_av: bool,
 }
 
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
+pub struct Icu1Smk {
+    pub aux_battery_voltage_power_load: f32,
+    pub aux_battery_voltage_signal_cpu: f32,
+    pub ground_voltage_power: f32,
+    pub ground_voltage_ecu: f32,
+    pub ign1_voltage: f32,
+    pub ign2_voltage: f32,
+    pub acc_voltage: f32,
+
+    pub engine_rpm: u16,
+    pub vehicle_speed: u8,
+}
+
 #[derive(
     Debug, Format, PartialEq, Clone, Copy, strum::IntoStaticStr, Deserialize, Serialize, Default,
 )]
@@ -144,6 +158,7 @@ pub enum Pid {
     HybridDcDcPid(HybridDcDcPid),
     IcuPid(IcuPid),
     Icu2Pid(Icu2Pid),
+    Icu1Smk(Icu1Smk),
     IceEnginePid(IceEnginePid),
     TransaxlePid(TransaxlePid),
     OnBoardChargerPid(OnBoardChargerPid),
@@ -168,6 +183,16 @@ pub enum TxFrame {
     Obd2Pid(Pid),
     Modem(Modem),
     Shutdown,
+    State(State),
+}
+
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+pub enum State {
+    IgnitionOff,
+    IgnitionOn,
+    Shutdown,
+    Charging,
+    CheckCharging,
 }
 
 impl TxFrame {
@@ -239,6 +264,13 @@ pub enum Modem {
     Connected,
     Disconnected,
     GnssFix(GnssFix),
+    GnssState(GnssState),
+}
+
+#[derive(Debug, Format, Clone, Deserialize, Serialize)]
+pub enum GnssState {
+    PeriodicFix,
+    TickerFix(u32),
 }
 
 #[derive(Debug, PartialEq, Format, Clone, Copy, Deserialize, Serialize)]

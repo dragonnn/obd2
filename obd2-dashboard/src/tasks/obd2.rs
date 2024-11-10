@@ -65,6 +65,7 @@ impl Obd2PidSets {
         obd2.handle_pid::<pid::Icu2Pid>().await;
         obd2.handle_pid::<pid::IceEnginePid>().await;
         obd2.handle_pid::<pid::OnBoardChargerPid>().await;
+        obd2.handle_pid::<pid::Icu1Smk>().await;
     }
 
     async fn handle_charging(obd2: &mut Obd2) {
@@ -73,13 +74,22 @@ impl Obd2PidSets {
         obd2.handle_pid::<pid::IcuPid>().await;
         obd2.handle_pid::<pid::Icu2Pid>().await;
         obd2.handle_pid::<pid::OnBoardChargerPid>().await;
+        obd2.handle_pid::<pid::Icu1Smk>().await;
     }
 
     async fn handle_ignition_off(obd2: &mut Obd2) {
-        obd2.handle_pid::<pid::BmsPid>().await;
         obd2.handle_pid::<pid::IcuPid>().await;
         obd2.handle_pid::<pid::Icu2Pid>().await;
-        obd2.handle_pid::<pid::OnBoardChargerPid>().await;
+        obd2.handle_pid::<pid::Icu1Smk>().await;
+    }
+
+    pub async fn loop_delay(&self) {
+        let delay = match self {
+            Self::Charging => embassy_time::Duration::from_secs(1),
+            Self::IgnitionOff => embassy_time::Duration::from_secs(5),
+            Self::IgnitionOn | Self::None => embassy_time::Duration::from_millis(100),
+        };
+        embassy_time::Timer::after(delay).await;
     }
 }
 
@@ -94,6 +104,7 @@ pub async fn run(mut obd2: Obd2) {
             let mut old_sets = *OBD2_SETS.lock().await;
             loop {
                 let sets = *OBD2_SETS.lock().await;
+
                 if old_sets != sets {
                     old_sets = sets;
                     obd2.clear_pids_cache();
@@ -102,7 +113,8 @@ pub async fn run(mut obd2: Obd2) {
 
                 KIA_EVENTS.send(KiaEvent::Obd2LoopEnd).await;
 
-                embassy_time::Timer::after(embassy_time::Duration::from_millis(100)).await;
+                //embassy_time::Timer::after(embassy_time::Duration::from_millis(100)).await;
+                sets.loop_delay().await;
             }
         },
         get_shutdown_signal().next_message(),

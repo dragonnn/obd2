@@ -1,0 +1,233 @@
+[
+    //init
+    Request(
+        can_id: 0x7a0,
+        message: [0x02, 0x10, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Raw(RawResponse(
+                can_id: 0x7a8,
+                message: [0x06, 0x50, 0x03, 0x00, 0x32, 0x01, 0xf4, 0xaa]
+            )),            
+        ]
+    ),
+
+    Request(
+        can_id: 0x7a0,
+        message: [0x03, 0x22, 0xd0, 0x05, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x7a8,
+                message: [
+                    0x62, 0xd0, 0x05, 0xe3, 0x58, 0xc0,
+                    0x00, 
+                    
+                    
+                    0b00000000, 
+                    //0b00000001 -> Ingnition 1 signal ON = 1, OFF = 0
+                    //0b00000010 -> Ingnition 2 signal ON = 1, OFF = 0
+                    //0b00000100 -> Accesory signal ON = 1, OFF = 0
+                    //0b00001000 -> 
+                    //0b00010000 -> 
+                    //0b00100000 -> 
+                    //0b01000000 -> Start/Stop button SSB switch 1 ON = 1, OFF = 0
+                    //0b10000000 -> Start/Stop button SSB switch 2 ON = 1, OFF = 0
+                    
+                    0b00000000, 
+                    //0b00000001 -> 
+                    //0b00000010 -> Brake pedal pressing signal ON = 1, OFF = 0
+                    //0b00000100 -> 
+                    //0b00001000 -> Electronic steering lock ESCL unlock switch signal ON = 1, OFF = 0
+                    //0b00010000 -> Input for P/N inhibit start switch acqustion ON = 1, OFF = 0
+                    //0b00100000 -> 
+                    //0b01000000 -> 
+                    //0b10000000 -> 
+                    
+                    
+                    
+                    0b00000000, 
+                    //0b00000001 -> Driver door toggle switch ON = 1, OFF = 0
+                    //0b00000010 -> Assitance door toggle switch ON = 1, OFF = 0
+                    //0b00000100 -> 
+                    //0b00001000 -> 
+                    //0b00010000 -> 
+                    //0b00100000 -> 
+                    //0b01000000 -> 
+                    //0b10000000 -> 
+                    
+                    0x00, 0x00, 0x00,
+                    0x00, 0x00, 
+                    
+                    0b00000000, 
+                    //Gear P signal (A/T)
+                    //0b00000000 -> No TP
+                    //0b00000001 -> P
+                    //0b00000010 -> Invalid
+                    //0b00000100 -> No TP
+                    //0b00001000 -> No TP
+                    //0b00010000 -> No TP
+                    //0b00100000 -> No TP
+                    //0b01000000 -> No TP
+                    //0b10000000 -> No TP
+                    //0x03 -> Not used?
+                    
+                    0x00, 0x00, 0x00, 0xaa
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x7a0,
+        message: [0x03, 0x22, 0xd0, 0x06, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x7a8,
+                message: [
+                    //0    1      2     3     4    5
+                    0x62, 0xd0, 0x00, 0xfe, 0xff, 0x00,
+                    //6
+                    0x00, 
+                    //7
+                    0x7F, //Battery voltage monitoring (B+ Power/Load) 0xFF = 20.4V 0x01 = 0.08V 0x7F = 10.16V
+                    0xbc, //Battery voltage monitoring (B+ Signal/CPU), scaling samve as above
+                    
+                    0x00, //Ground voltage monitoring (Ground Power), scaling same as above
+                    0x00, //Ground voltage monitoring (Group ECU), scaling same as above
+                    0xff, //IGN1 Voltage monitoring, scaling same as above
+                    0xb3, //IGN2 Voltage monitoring, scaling same as above
+                    0xff, //ACC Voltage monitoring, scaling same as above
+                    
+                    0x00, 
+                    0x01, //Engine rotation speed expressed in RPM, 0xFF = 8160 RPM, 0x01 = 32 RPM
+                    0x00, //Vehicel speed acqustion pulse width modulation PWM signal of main motor control unit MCU 0xFF = 255km/h
+                    0x00, //Analog acqustion of IGN1 relay power activation (Main MCU)  0xFF = 20.4V 0x01 = 0.08V 0x7F = 10.16V
+                    0x00, //Analog acqustion of IGN2 relay power activation (Main MCU), scaling same as above
+                    0x00, //Analog acqustion of ACC relay power activation (Main MCU), scaling same as above
+                    0x00, //Analog acqustion of starter relay power activation scaling same as above
+                    0x00, //Analog acqustion of ESCL  power activation scaling same as above
+                    0x00, //Analog acqustion of ESCL  ground activation scaling same as above
+                    
+                    0xaa, 0xaa, 0xaa, 0xaa,
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x7a0,
+        message: [0x03, 0x22, 0xd0, 0x07, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x7a8,
+                message: [
+                    0x62, 0xd0, 0x07, 0x80, 0xf0, 0xc0,
+                    0x00, 
+                    0x01, //Start/Stop button illumination signal 0x01 = ON, 0x00 = OFF
+                    0b00000001,
+                    //0b00000001 -> Power supply to IGN1 releay (Main MCU) ON = 1, OFF = 0
+                    //0b00000010 -> Power supply to IGN2 releay (Main MCU) ON = 1, OFF = 0
+                    //0b00000100 -> Power supply to ACC releay (Main MCU) ON = 1, OFF = 0
+                    //0b00001000 -> Power supply to starter releay (Main MCU) ON = 1, OFF = 0
+                    //0b00010000 -> 
+                    //0b00100000 -> 
+                    //0b01000000 -> 
+                    //0b10000000 -> 
+
+                    0b00000001,
+                    //0b00000001 -> External buzzer ON = 1, OFF = 0
+                    //0b00000010 -> Fob search output to wireless power charger ON = 1, OFF = 0
+                    //0b00000100 -> 
+                    //0b00001000 -> 
+                    //0b00010000 -> 
+                    //0b00100000 -> 
+                    //0b01000000 -> 
+                    //0b10000000 ->  
+
+                    0x00, 
+                    0xff, 0xfe,
+                    0x00, 0x00, 
+
+                    0b00000000,
+                    //0b00000001 -> ACC output circut short to battery (present) ON = 1, OFF = 0
+                    //0b00000010 -> ACC output circut short to ground (present) ON = 1, OFF = 0
+                    //0b00000100 -> ACC input circut short to ground (present) ON = 1, OFF = 0
+                    //0b00001000 -> ACC input open (present) ON = 1, OFF = 0
+                    //0b00010000 -> Ignition 1 output circut short to battery (present) ON = 1, OFF = 0
+                    //0b00100000 -> Ignition 1 output circut short to ground (present) ON = 1, OFF = 0
+                    //0b01000000 -> Ignition 1 input circut short to battery (present) ON = 1, OFF = 0
+                    //0b10000000 -> Intiion 1 input open (present) ON = 1, OFF = 0  
+                    0b10000000, 
+                    //0b00000001 -> Ignition 2 output circut short to battery (present) ON = 1, OFF = 0
+                    //0b00000010 -> Ignition 2 output circut short to ground (present) ON = 1, OFF = 0
+                    //0b00000100 -> Ignition 2 input circut short to battery (present) ON = 1, OFF = 0
+                    //0b00001000 -> Ignition 2 input open (present) ON = 1, OFF = 0
+                    //0b00010000 -> Starter output circuit short to battery (present) ON = 1, OFF = 0
+                    //0b00100000 -> Starter output circuit short to ground (present) ON = 1, OFF = 0
+                    //0b01000000 -> Starter P/N switch circuit short to battery (present) ON = 1, OFF = 0
+                    //0b10000000 -> 
+
+                    0x00, 
+                    0x00, 0xaa,
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x7a0,
+        message: [0x03, 0x22, 0xd0, 0x0a, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x7a8,
+                message: [
+                    0x62, 0xd0, 0x0a, 0x00, 0x00, 0xf0,
+                    0x38, 0x00, 0x05, 
+                    0x01, //Button status -> 0x01 = Lock, 0x02 = Unlock any other is -
+                    0x07, //Smart key module status -> 0x08, 0x09 = Learnt, 0x04, 0x05, 0x06, 0x07 = Virgin, 0x10 - 0x14 = Neutral
+                    0x07, 
+                    0x02,
+                    0x00, 0x00, 
+                    0b10000000, 
+                    //0b00000001 -> 
+                    //0b00000010 -> 
+                    //0b00000100 -> 
+                    //0b00001000 -> 
+                    //0b00010000 -> 
+                    //0b00100000 -> Electronic steering lock ESCL unlocked ON = 1, OFF = 0
+                    //0b01000000 -> Electronic steering lock ESCL locked ON = 1, OFF = 0
+                    //0b10000000 -> Electronic steering lock ESCL intermidate ON = 1, OFF = 0
+
+                    0b01000000, // -< Smart key module response status to electronic steering column ESCL
+
+                    0x00, 0x00,
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x7a0,
+        message: [0x03, 0x22, 0xd0, 0x0b, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x7a8,
+                message: [
+                    0x62, 0xd0, 0x0b, 0x80, 0x04, 0x00,
+                    0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0xaa, 0xaa, 0xaa, 0xaa,
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x7a0,
+        message: [0x03, 0x22, 0xd0, 0x0c, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x7a8,
+                message: [
+                    0x62, 0xd0, 0x0c, 0xc0, 0x00, 0x00,
+                    0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xaa,
+                ]
+            )),
+        ]
+    ),
+]
