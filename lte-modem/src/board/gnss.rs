@@ -139,8 +139,10 @@ impl Gnss {
             self.ticker.next().await;
         }
 
+        self.tx_channel_pub.try_publish(TxFrame::Modem(Modem::GnssState(GnssState::WaitingForFix))).ok();
         with_timeout(self.timeout, self.get_fix()).await.map_err(|_| {
             defmt::error!("gnss timeout");
+            self.tx_channel_pub.try_publish(TxFrame::Modem(Modem::GnssState(GnssState::TimeoutFix))).ok();
             ModemError::NrfError(0)
         })?
     }
