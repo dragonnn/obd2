@@ -1,6 +1,10 @@
 use defmt::{error, info, unwrap, Format};
-use embassy_futures::select::{select, select3, Either3::*};
-use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
+use embassy_futures::select::{select, select4, Either4::*};
+use embassy_sync::{
+    blocking_mutex::raw::CriticalSectionRawMutex,
+    pubsub::{DynPublisher, PubSubChannel},
+    signal::Signal,
+};
 use embassy_time::{with_timeout, Duration};
 use esp_hal::aes::{dma::AesDma, Aes, Mode};
 use esp_ieee802154::{Config, Frame, Ieee802154, ReceivedFrame};
@@ -16,6 +20,7 @@ use crate::{
 };
 
 static SEND_NOW_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
+static EXTRA_SEND: PubSubChannel<CriticalSectionRawMutex, types::TxFrame, 64, 1, 32> = PubSubChannel::new();
 
 #[embassy_executor::task]
 pub async fn run(mut ieee802154: Ieee802154<'static>) {
@@ -38,34 +43,26 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
     let mut event_bus_sub = event_bus_sub();
 
     let mut obd2_pids: heapless::FnvIndexSet<Pid, 32> = heapless::FnvIndexSet::new();
-    /*obd2_pids.insert(Pid::AcPid(types::AcPid::default())).ok();
-    obd2_pids.insert(Pid::BmsPid(types::BmsPid::default())).ok();
-    obd2_pids.insert(Pid::HybridDcDcPid(types::HybridDcDcPid::default())).ok();
-    obd2_pids.insert(Pid::IceEnginePid(types::IceEnginePid::default())).ok();
-    obd2_pids.insert(Pid::IceFuelRatePid(types::IceFuelRatePid::default())).ok();
-    obd2_pids.insert(Pid::IceTemperaturePid(types::IceTemperaturePid::default())).ok();
-    obd2_pids.insert(Pid::IcuPid(types::IcuPid::default())).ok();
-    obd2_pids.insert(Pid::TransaxlePid(types::TransaxlePid::default())).ok();
-    obd2_pids.insert(Pid::VehicleSpeedPid(types::VehicleSpeedPid::default())).ok();*/
-
     let mut ieee802154 = AsyncIeee802154::new(ieee802154);
 
     let mut shutdown_signal = get_shutdown_signal();
+    let mut extra_send_sub = unwrap!(EXTRA_SEND.subscriber());
 
     loop {
-        match select3(
+        match select4(
             async {
                 select(send_ticker.next(), SEND_NOW_SIGNAL.wait()).await;
             },
             event_bus_sub.next_message_pure(),
             shutdown_signal.next_message_pure(),
+            extra_send_sub.next_message_pure(),
         )
         .await
         {
             First(_) => {
                 let now = embassy_time::Instant::now();
                 for pid in obd2_pids.iter() {
-                    info!("pid: {:?}", pid);
+                    //info!("pid: {:?}", pid);
                     if let Some(encrypted_pid) =
                         types::TxMessage::new(types::TxFrame::Obd2Pid(pid.clone())).encrypt(&shared_key).ok()
                     {
@@ -80,6 +77,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                     }
                 }
                 info!("send_ticker elapsed: {:?}ms", now.elapsed().as_millis());
+                obd2_pids.clear();
                 send_ticker.reset();
             }
             Second(event) => {
@@ -98,6 +96,18 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                 info!("ieee802154 shutdown");
                 types::TxMessage::new(types::TxFrame::Shutdown).encrypt(&shared_key).ok();
                 break;
+            }
+            Fourth(extra_txframe) => {
+                if let Some(encrypted_extra) = types::TxMessage::new(extra_txframe).encrypt(&shared_key).ok() {
+                    let encrypted_extra_bytes = encrypted_extra.serialize();
+                    if let Err(err) =
+                        ieee802154.transmit_buffer(&encrypted_extra_bytes, 2, Duration::from_secs(1)).await
+                    {
+                        error!("ieee802154.transmit_buffer(&encrypted_extra_bytes, 2, Duration::from_secs(5)) failed: {:?}", err);
+                    }
+                } else {
+                    error!("types::TxFrame::Extra(extra_txframe).encrypt(&shared_key).ok() failed");
+                }
             }
         }
     }
@@ -238,4 +248,10 @@ impl AsyncIeee802154 {
 
 pub fn send_now() {
     SEND_NOW_SIGNAL.signal(());
+}
+
+pub type TxFramePub = DynPublisher<'static, types::TxFrame>;
+
+pub fn extra_txframes_pub() -> TxFramePub {
+    unwrap!(EXTRA_SEND.dyn_publisher())
 }
