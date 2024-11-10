@@ -85,10 +85,11 @@ impl FromStr for WebHookBody {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RegisterSensor {
-    pub device_class: String,
+    pub device_class: Option<String>,
     pub icon: String,
     pub name: String,
     #[serde(default)]
+    #[serde(serialize_with = "serialize_option_with_round_down")]
     pub state: Option<serde_json::Value>,
     #[serde(default)]
     pub r#type: String,
@@ -104,9 +105,44 @@ pub struct RegisterSensor {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UpdateSensor {
     pub icon: String,
+    #[serde(serialize_with = "serialize_with_round_down")]
     pub state: serde_json::Value,
     pub r#type: String,
     pub unique_id: String,
+}
+
+fn serialize_option_with_round_down<S>(
+    value: &Option<serde_json::Value>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    if let Some(value) = value {
+        serialize_with_round_down(value, serializer)
+    } else {
+        serializer.serialize_none()
+    }
+}
+
+fn serialize_with_round_down<S>(value: &serde_json::Value, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    fn round_down_to_precision(value: f64, precision: usize) -> f64 {
+        let factor = 10f64.powi(precision as i32);
+        (value * factor).floor() / factor
+    }
+
+    if let serde_json::Value::Number(n) = value {
+        if let Some(n) = n.as_f64() {
+            serializer.serialize_f64(round_down_to_precision(n, 2))
+        } else {
+            serializer.serialize_none()
+        }
+    } else {
+        serializer.serialize_some(value)
+    }
 }
 
 impl WebHookHandle {
