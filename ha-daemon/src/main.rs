@@ -255,7 +255,6 @@ async fn main() {
     let config = Arc::new(config::Config::load());
     let db = db::DbHandle::new().await;
     let db_join_handle = db.run().await;
-    info!("found config: {:?}", config);
     let (event_sender, mut event_receiver) = unbounded_channel::<HaStateEvent>();
     let event_sender = Arc::new(event_sender);
 
