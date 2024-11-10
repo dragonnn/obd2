@@ -57,6 +57,8 @@ pub async fn task() {
                         Ok(Ok(s)) => {
                             info!("connected");
                             s.tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::Connected))).await.ok();
+                            let battery = crate::tasks::battery::State::get().await;
+                            s.tx_frame_send(&TxMessage::new(TxFrame::Modem(battery.into()))).await.ok();
                             Timer::after_secs(1).await;
                             timeout_ticker.reset();
                             socket = Some(s);
@@ -127,6 +129,8 @@ impl TxMessageSend for UdpSocket {
     }
 }
 
-pub fn tx_channel_pub() -> DynPublisher<'static, TxFrame> {
+pub type TxChannelPub = DynPublisher<'static, TxFrame>;
+
+pub fn tx_channel_pub() -> TxChannelPub {
     unwrap!(TX_CHANNEL.dyn_publisher())
 }
