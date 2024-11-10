@@ -5,6 +5,9 @@ use nrf_modem::{
     nrfxlib_sys, Error as ModemError, Gnss as ModemGnss, GnssConfig as ModemGnssConfig, GnssData as ModemGnssData,
     GnssPowerSaveMode as ModemGnssPowerSaveMode, GnssStream as ModemGnssStream, GnssUsecase as ModemGnssUsecase,
 };
+use types::{GnssState, Modem, TxFrame};
+
+use crate::tasks::modem::link::{tx_channel_pub, TxChannelPub};
 
 pub struct Gnss {
     //handler: Option<ModemGnss>,
@@ -14,14 +17,16 @@ pub struct Gnss {
     timeout: Duration,
     ticker: Ticker,
     low_accuracy: bool,
+    tx_channel_pub: TxChannelPub,
 }
 
 impl Gnss {
     pub fn new() -> Self {
         let duration = Duration::from_secs(20);
         let timeout = Duration::from_secs(5 * 60);
+        let tx_channel_pub = tx_channel_pub();
 
-        Self { stream: None, duration, timeout, ticker: Ticker::every(duration), low_accuracy: false }
+        Self { stream: None, duration, timeout, ticker: Ticker::every(duration), low_accuracy: false, tx_channel_pub }
     }
 
     async fn handler(&mut self) -> Result<ModemGnss, ModemError> {
@@ -34,10 +39,15 @@ impl Gnss {
 
     async fn start(&mut self) -> Result<(), ModemError> {
         if self.duration.as_millis() < 20000 {
+            info!("start periodic fix");
             self.stream =
                 Some(self.handler().await?.start_periodic_fix(self.get_config(), self.duration.as_secs() as u16)?);
+            self.tx_channel_pub.try_publish(TxFrame::Modem(Modem::GnssState(GnssState::PeriodicFix))).ok();
         } else {
             self.stream = None;
+            self.tx_channel_pub
+                .try_publish(TxFrame::Modem(Modem::GnssState(GnssState::TickerFix(self.duration.as_secs() as u32))))
+                .ok();
             self.ticker = Ticker::every(self.duration);
         }
         Ok(())
@@ -46,7 +56,11 @@ impl Gnss {
     fn get_config(&self) -> ModemGnssConfig {
         ModemGnssConfig {
             use_case: ModemGnssUsecase { low_accuracy: self.low_accuracy, ..Default::default() },
-            power_mode: ModemGnssPowerSaveMode::DutyCycling,
+            power_mode: if self.low_accuracy {
+                ModemGnssPowerSaveMode::DutyCycling
+            } else {
+                ModemGnssPowerSaveMode::Disabled
+            },
             ..Default::default()
         }
     }
