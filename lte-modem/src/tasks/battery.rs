@@ -40,6 +40,17 @@ impl State {
     }
 }
 
+impl Into<types::Modem> for State {
+    fn into(self) -> types::Modem {
+        types::Modem::Battery {
+            voltage: self.voltage as f64 / 1000.0,
+            low_voltage: self.low_voltage,
+            soc: self.capacity,
+            charging: self.charging,
+        }
+    }
+}
+
 static STATE: Mutex<ThreadModeRawMutex, State> = Mutex::new(State {
     charging: false,
     charger_state: ChargerStatus::Off,
