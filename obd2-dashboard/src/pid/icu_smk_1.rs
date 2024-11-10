@@ -46,7 +46,7 @@ impl Pid for Icu1Smk {
             vehicle_speed,
         };
 
-        info!("Icu1Smk {:?}", ret);
+        //info!("{:?}", ret);
         Ok(ret)
     }
 
