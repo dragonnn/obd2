@@ -55,6 +55,7 @@ impl Pid for OnBoardChargerPid {
             ig3_voltage,
             pfc1_current_sensor_offset,
         };
+        //info!("{:?}", ret);
         Ok(ret)
     }
 

@@ -42,7 +42,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
     let mut send_ticker = embassy_time::Ticker::every(embassy_time::Duration::from_secs(15));
     let mut event_bus_sub = event_bus_sub();
 
-    let mut obd2_pids: heapless::FnvIndexSet<Pid, 32> = heapless::FnvIndexSet::new();
+    let mut obd2_pids: heapless::FnvIndexSet<Pid, 64> = heapless::FnvIndexSet::new();
     let mut ieee802154 = AsyncIeee802154::new(ieee802154);
 
     let mut shutdown_signal = get_shutdown_signal();
@@ -70,7 +70,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                         if let Err(err) =
                             ieee802154.transmit_buffer(&encrypted_pid_bytes, 2, Duration::from_secs(1)).await
                         {
-                            error!("ieee802154.transmit_buffer(&encrypted_pid_bytes, 2, Duration::from_secs(5)) failed: {:?}", err);
+                            error!("ieee802154.transmit_buffer(&encrypted_pid_bytes, 2, Duration::from_secs(5)) failed: {:?} {:?}", err, pid);
                         }
                     } else {
                         error!("types::TxFrame::Obd2Pid(pid.clone()).encrypt(&shared_key).ok() failed");
@@ -224,9 +224,7 @@ impl AsyncIeee802154 {
                         );
                     }
                 }
-                Err(_) => {
-                    error!("Ieee802154 timeout transmitting frame");
-                }
+                Err(_) => {}
                 Ok(Err(err)) => {
                     error!("error transmitting frame: {:?}", defmt::Debug2Format(&err));
                 }

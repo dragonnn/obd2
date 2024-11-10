@@ -236,6 +236,7 @@ impl KiaState {
     async fn enter_shutdown(&mut self, duration: &embassy_time::Duration) {
         ieee802154::send_now();
         self.tx_frame_pub.publish(types::TxFrame::State(types::State::Shutdown)).await;
+        embassy_time::Timer::after_millis(100).await;
         self.power_events_pub.publish(PowerEvent::Shutdown(*duration)).await;
     }
 
