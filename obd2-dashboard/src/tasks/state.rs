@@ -6,6 +6,7 @@ use statig::prelude::*;
 use types::OnBoardChargerPid;
 
 use super::{
+    ieee802154::{extra_txframes_pub, TxFramePub},
     obd2::{set_obd2_sets, Obd2Debug, Obd2PidSets},
     power::{get_power_events_pub, PowerEvent, PowerEventPublisher},
 };
@@ -33,6 +34,7 @@ pub enum KiaEvent {
 #[derive()]
 pub struct KiaState {
     pub power_events_pub: PowerEventPublisher,
+    pub tx_frame_pub: TxFramePub,
 }
 
 #[state_machine(
@@ -63,6 +65,7 @@ impl KiaState {
         ieee802154::send_now();
         LCD_EVENTS.send(LcdEvent::Main).await;
         set_obd2_sets(Obd2PidSets::IgnitionOn).await;
+        self.tx_frame_pub.publish(types::TxFrame::State(types::State::IgnitionOn)).await;
     }
 
     #[state(entry_action = "enter_ignition_on")]
@@ -108,12 +111,13 @@ impl KiaState {
     }
 
     #[action]
-    async fn enter_charging(&mut self) {
+    async fn enter_check_charging(&mut self) {
         ieee802154::send_now();
         set_obd2_sets(Obd2PidSets::Charging).await;
+        self.tx_frame_pub.publish(types::TxFrame::State(types::State::CheckCharging)).await;
     }
 
-    #[state(entry_action = "enter_charging")]
+    #[state(entry_action = "enter_check_charging")]
     async fn check_charging(
         &mut self,
         event: &KiaEvent,
@@ -121,6 +125,7 @@ impl KiaState {
         timeout: &Instant,
     ) -> Response<State> {
         match event {
+            KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             KiaEvent::Obd2Event(Obd2Event::OnBoardChargerPid(new_obc_pid)) => {
                 *obc_pid = Some(new_obc_pid.clone());
                 Handled
@@ -128,7 +133,7 @@ impl KiaState {
             KiaEvent::Obd2LoopEnd => {
                 if let Some(obc_pid) = obc_pid {
                     if obc_pid.ac_input_current > 0.0 {
-                        Transition(State::charging(None))
+                        Transition(State::charging(None, 0))
                     } else {
                         if timeout.elapsed().as_secs() > 5 * 60 {
                             Transition(State::ignition_off(Instant::now()))
@@ -148,26 +153,44 @@ impl KiaState {
         }
     }
 
+    #[action]
+    async fn enter_charging(&mut self) {
+        ieee802154::send_now();
+        set_obd2_sets(Obd2PidSets::Charging).await;
+        self.tx_frame_pub.publish(types::TxFrame::State(types::State::Charging)).await;
+    }
+
     #[state(entry_action = "enter_charging")]
-    async fn charging(&mut self, event: &KiaEvent, obc_pid: &mut Option<OnBoardChargerPid>) -> Response<State> {
+    async fn charging(
+        &mut self,
+        event: &KiaEvent,
+        obc_pid: &mut Option<OnBoardChargerPid>,
+        obc_pid_wait: &mut u8,
+    ) -> Response<State> {
         match event {
-            KiaEvent::IgnitionOn => Transition(State::ignition_on()),
-            KiaEvent::Obd2LoopEnd => {
-                if obc_pid.is_none() {
-                    Transition(State::check_charging(None, Instant::now()))
-                } else {
-                    *obc_pid = None;
-                    Handled
-                }
-            }
             KiaEvent::Obd2Event(Obd2Event::OnBoardChargerPid(new_obc_pid)) => {
                 let ret = if new_obc_pid.ac_input_current == 0.0 {
+                    warn!("ac input current is zero");
                     Transition(State::check_charging(None, Instant::now()))
                 } else {
                     Handled
                 };
                 *obc_pid = Some(new_obc_pid.clone());
                 ret
+            }
+            KiaEvent::IgnitionOn => Transition(State::ignition_on()),
+            KiaEvent::Obd2LoopEnd => {
+                if obc_pid.is_none() {
+                    if *obc_pid_wait > 50 {
+                        Transition(State::check_charging(None, Instant::now()))
+                    } else {
+                        *obc_pid_wait += 1;
+                        Handled
+                    }
+                } else {
+                    *obc_pid = None;
+                    Handled
+                }
             }
             _ => Handled,
         }
@@ -178,31 +201,47 @@ impl KiaState {
         ieee802154::send_now();
         LCD_EVENTS.send(LcdEvent::PowerOff).await;
         set_obd2_sets(Obd2PidSets::IgnitionOff).await;
+        self.tx_frame_pub.publish(types::TxFrame::State(types::State::IgnitionOff)).await;
     }
 
     #[state(entry_action = "enter_ignition_off")]
     async fn ignition_off(&mut self, event: &KiaEvent, timeout: &Instant) -> Response<State> {
         match event {
+            KiaEvent::Obd2Event(Obd2Event::OnBoardChargerPid(obc_pid)) => {
+                if obc_pid.ac_input_current > 0.0 {
+                    Transition(State::check_charging(None, Instant::now()))
+                } else {
+                    Handled
+                }
+            }
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             KiaEvent::Obd2LoopEnd => {
                 if timeout.elapsed().as_secs() > 1 * 60 {
-                    ieee802154::send_now();
-                    self.power_events_pub
-                        .publish(PowerEvent::Shutdown(embassy_time::Duration::from_secs(15 * 60)))
-                        .await;
+                    Transition(State::shutdown(embassy_time::Duration::from_secs(15 * 60)))
+                } else {
+                    Handled
                 }
-                Handled
             }
             _ => {
                 if timeout.elapsed().as_secs() > 5 * 60 {
-                    ieee802154::send_now();
-                    self.power_events_pub
-                        .publish(PowerEvent::Shutdown(embassy_time::Duration::from_secs(5 * 60)))
-                        .await;
+                    Transition(State::shutdown(embassy_time::Duration::from_secs(15 * 60)))
+                } else {
+                    Handled
                 }
-                Handled
             }
         }
+    }
+
+    #[action]
+    async fn enter_shutdown(&mut self, duration: &embassy_time::Duration) {
+        ieee802154::send_now();
+        self.tx_frame_pub.publish(types::TxFrame::State(types::State::Shutdown)).await;
+        self.power_events_pub.publish(PowerEvent::Shutdown(*duration)).await;
+    }
+
+    #[state(entry_action = "enter_shutdown")]
+    async fn shutdown(&mut self, duration: &embassy_time::Duration) -> Response<State> {
+        Handled
     }
 }
 
@@ -230,7 +269,10 @@ impl KiaState {
 }
 
 pub async fn run() {
-    let mut state = KiaState { power_events_pub: get_power_events_pub() }.uninitialized_state_machine().init().await;
+    let mut state = KiaState { power_events_pub: get_power_events_pub(), tx_frame_pub: extra_txframes_pub() }
+        .uninitialized_state_machine()
+        .init()
+        .await;
 
     loop {
         match with_timeout(Duration::from_secs(5), EVENTS.receive()).await {
