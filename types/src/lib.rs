@@ -184,7 +184,11 @@ pub enum TxFrame {
     Modem(Modem),
     Shutdown,
     State(State),
+    Error(Error),
 }
+
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+pub enum Error {}
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub enum State {

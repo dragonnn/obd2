@@ -43,44 +43,55 @@ pub enum Obd2PidSets {
 }
 
 impl Obd2PidSets {
-    pub async fn handle(&self, obd2: &mut Obd2) {
+    pub async fn handle(&self, obd2: &mut Obd2) -> bool {
         match self {
             Self::IgnitionOn => Self::handle_ignition_on(obd2).await,
             Self::IgnitionOff => Self::handle_ignition_off(obd2).await,
             Self::Charging => Self::handle_charging(obd2).await,
 
-            Self::None => {}
+            Self::None => true,
         }
     }
 
-    async fn handle_ignition_on(obd2: &mut Obd2) {
-        obd2.handle_pid::<pid::BmsPid>().await;
-        obd2.handle_pid::<pid::TransaxlePid>().await;
-        obd2.handle_pid::<pid::IceTemperaturePid>().await;
-        obd2.handle_pid::<pid::IceFuelRatePid>().await;
-        obd2.handle_pid::<pid::VehicleSpeedPid>().await;
-        obd2.handle_pid::<pid::AcPid>().await;
-        obd2.handle_pid::<pid::HybridDcDcPid>().await;
-        obd2.handle_pid::<pid::IcuPid>().await;
-        obd2.handle_pid::<pid::Icu2Pid>().await;
-        obd2.handle_pid::<pid::IceEnginePid>().await;
-        obd2.handle_pid::<pid::OnBoardChargerPid>().await;
-        obd2.handle_pid::<pid::Icu1Smk>().await;
+    async fn handle_ignition_on(obd2: &mut Obd2) -> bool {
+        let mut ret = true;
+        obd2.enable_obd2_pid_periods();
+        ret = ret && obd2.handle_pid::<pid::BmsPid>().await;
+        ret = ret && obd2.handle_pid::<pid::TransaxlePid>().await;
+        ret = ret && obd2.handle_pid::<pid::IceTemperaturePid>().await;
+        ret = ret && obd2.handle_pid::<pid::IceFuelRatePid>().await;
+        ret = ret && obd2.handle_pid::<pid::VehicleSpeedPid>().await;
+        ret = ret && obd2.handle_pid::<pid::AcPid>().await;
+        ret = ret && obd2.handle_pid::<pid::HybridDcDcPid>().await;
+        ret = ret && obd2.handle_pid::<pid::IcuPid>().await;
+        ret = ret && obd2.handle_pid::<pid::Icu2Pid>().await;
+        ret = ret && obd2.handle_pid::<pid::IceEnginePid>().await;
+        ret = ret && obd2.handle_pid::<pid::OnBoardChargerPid>().await;
+        ret = ret && obd2.handle_pid::<pid::Icu1Smk>().await;
+
+        ret
     }
 
-    async fn handle_charging(obd2: &mut Obd2) {
-        obd2.handle_pid::<pid::BmsPid>().await;
-        obd2.handle_pid::<pid::IceTemperaturePid>().await;
-        obd2.handle_pid::<pid::IcuPid>().await;
-        obd2.handle_pid::<pid::Icu2Pid>().await;
-        obd2.handle_pid::<pid::OnBoardChargerPid>().await;
-        obd2.handle_pid::<pid::Icu1Smk>().await;
+    async fn handle_charging(obd2: &mut Obd2) -> bool {
+        let mut ret = true;
+        obd2.disable_obd2_pid_periods();
+        ret = ret && obd2.handle_pid::<pid::BmsPid>().await;
+        ret = ret && obd2.handle_pid::<pid::IceTemperaturePid>().await;
+        ret = ret && obd2.handle_pid::<pid::IcuPid>().await;
+        ret = ret && obd2.handle_pid::<pid::Icu2Pid>().await;
+        ret = ret && obd2.handle_pid::<pid::OnBoardChargerPid>().await;
+        ret = ret && obd2.handle_pid::<pid::Icu1Smk>().await;
+
+        ret
     }
 
-    async fn handle_ignition_off(obd2: &mut Obd2) {
-        obd2.handle_pid::<pid::IcuPid>().await;
-        obd2.handle_pid::<pid::Icu2Pid>().await;
-        obd2.handle_pid::<pid::Icu1Smk>().await;
+    async fn handle_ignition_off(obd2: &mut Obd2) -> bool {
+        let mut ret = true;
+        obd2.disable_obd2_pid_periods();
+        ret = ret && obd2.handle_pid::<pid::IcuPid>().await;
+        ret = ret && obd2.handle_pid::<pid::Icu2Pid>().await;
+        ret = ret && obd2.handle_pid::<pid::Icu1Smk>().await;
+        ret
     }
 
     pub async fn loop_delay(&self) {
@@ -109,11 +120,9 @@ pub async fn run(mut obd2: Obd2) {
                     old_sets = sets;
                     obd2.clear_pids_cache();
                 }
-                sets.handle(&mut obd2).await;
+                let all = sets.handle(&mut obd2).await;
 
-                KIA_EVENTS.send(KiaEvent::Obd2LoopEnd).await;
-
-                //embassy_time::Timer::after(embassy_time::Duration::from_millis(100)).await;
+                KIA_EVENTS.send(KiaEvent::Obd2LoopEnd(all)).await;
                 sets.loop_delay().await;
             }
         },

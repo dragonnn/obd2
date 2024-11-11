@@ -3,6 +3,7 @@ use embassy_futures::select::{select, Either::*};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, pubsub::PubSubChannel};
 use embassy_time::{Duration, Timer};
 use esp_hal::{
+    debugger::debugger_connected,
     reset::SleepSource,
     rtc_cntl::{get_reset_reason, get_wakeup_cause, SocResetReason},
     Cpu,
@@ -61,7 +62,14 @@ pub async fn run(mut power: Power) {
                 PowerEvent::Shutdown(duration) => {
                     warn!("shutdown event received for {:?}", duration.as_secs());
                     unwrap!(SHUTDOWN.publisher()).publish(()).await;
-                    Timer::after(Duration::from_millis(200)).await;
+                    let duration = if debugger_connected() {
+                        warn!("debugger connected, deep sleeping in 5s");
+                        Duration::from_secs(5)
+                    } else {
+                        warn!("debugger not connected, deep sleeping in 200ms");
+                        Duration::from_millis(200)
+                    };
+                    Timer::after(duration).await;
                     if power.is_ignition_on() {
                         warn!("ignition is on, not deep sleeping");
                         esp_hal::reset::software_reset();

@@ -36,6 +36,7 @@ pub struct Obd2 {
     obd2_pid_errors: heapless::FnvIndexMap<TypeId, usize, 32>,
     obd2_pid_errors_periods: heapless::FnvIndexMap<TypeId, Instant, 32>,
     obd2_pid_periods: heapless::FnvIndexMap<TypeId, Instant, 32>,
+    obd2_pid_periods_disable: bool,
 
     event_bus_pub: EventBusPub,
 }
@@ -57,7 +58,16 @@ impl Obd2 {
             obd2_pid_errors,
             obd2_pid_periods,
             event_bus_pub: event_bus_pub(),
+            obd2_pid_periods_disable: false,
         }
+    }
+
+    pub fn enable_obd2_pid_periods(&mut self) {
+        self.obd2_pid_periods_disable = false;
+    }
+
+    pub fn disable_obd2_pid_periods(&mut self) {
+        self.obd2_pid_periods_disable = true;
     }
 
     pub async fn init(&mut self) {
@@ -186,7 +196,7 @@ impl Obd2 {
         }
     }
 
-    pub async fn handle_pid<PID: Pid + core::any::Any>(&mut self) {
+    pub async fn handle_pid<PID: Pid + core::any::Any>(&mut self) -> bool {
         if !self.obd2_pid_errors.is_empty() && self.obd2_pid_errors.iter().all(|(_, errors)| *errors >= 10) {
             warn!("too many errors, clearing errors");
             self.obd2_pid_errors.clear();
@@ -194,14 +204,18 @@ impl Obd2 {
 
         let type_id = TypeId::of::<PID>();
         if let Some(period) = PID::period() {
-            let last_time = self.obd2_pid_periods.get(&type_id).map(|time| *time).unwrap_or(Instant::from_millis(0));
-            if Instant::now() - last_time < period {
-                return;
+            if !self.obd2_pid_periods_disable {
+                let last_time =
+                    self.obd2_pid_periods.get(&type_id).map(|time| *time).unwrap_or(Instant::from_millis(0));
+                if Instant::now() - last_time < period {
+                    return false;
+                }
+                self.obd2_pid_periods.insert(type_id, Instant::now()).ok();
             }
-            self.obd2_pid_periods.insert(type_id, Instant::now()).ok();
         }
         let mut errors = self.obd2_pid_errors.get(&type_id).map(|errors| *errors).unwrap_or(0);
         let obd2_debug_pids_enabled = obd2_debug_pids_enabled();
+        let mut ret = false;
         if errors < 10 {
             match with_timeout(Duration::from_millis(350), self.request_pid::<PID>()).await {
                 Ok(Ok((pid_result, buffer))) => {
@@ -213,6 +227,7 @@ impl Obd2 {
                     }
                     embassy_time::Timer::after(embassy_time::Duration::from_millis(25)).await;
                     errors = 0;
+                    ret = true;
                 }
                 Ok(Err(_e)) => {
                     error!("error requesting pid");
@@ -245,6 +260,7 @@ impl Obd2 {
         }
 
         self.obd2_pid_errors.insert(type_id, errors).ok();
+        return ret;
     }
 
     pub fn clear_pids_cache(&mut self) {

@@ -27,7 +27,7 @@ pub enum KiaEvent {
     Button(crate::tasks::buttons::Action),
     Obd2Event(Obd2Event),
     Obd2Debug(Obd2Debug),
-    Obd2LoopEnd,
+    Obd2LoopEnd(bool),
     Ticker,
 }
 
@@ -83,7 +83,7 @@ impl KiaState {
                 LCD_EVENTS.send(LcdEvent::Obd2Debug(obd2_debug.clone())).await;
                 Handled
             }
-            KiaEvent::Obd2LoopEnd => {
+            KiaEvent::Obd2LoopEnd(_all) => {
                 LCD_EVENTS.send(LcdEvent::Render).await;
                 Handled
             }
@@ -130,7 +130,7 @@ impl KiaState {
                 *obc_pid = Some(new_obc_pid.clone());
                 Handled
             }
-            KiaEvent::Obd2LoopEnd => {
+            KiaEvent::Obd2LoopEnd(_all) => {
                 if let Some(obc_pid) = obc_pid {
                     if obc_pid.ac_input_current > 0.0 {
                         Transition(State::charging(None, 0))
@@ -179,7 +179,7 @@ impl KiaState {
                 ret
             }
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
-            KiaEvent::Obd2LoopEnd => {
+            KiaEvent::Obd2LoopEnd(_all) => {
                 if obc_pid.is_none() {
                     if *obc_pid_wait > 50 {
                         Transition(State::check_charging(None, Instant::now()))
@@ -215,8 +215,8 @@ impl KiaState {
                 }
             }
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
-            KiaEvent::Obd2LoopEnd => {
-                if timeout.elapsed().as_secs() > 1 * 60 {
+            KiaEvent::Obd2LoopEnd(all) => {
+                if timeout.elapsed().as_secs() > 1 * 60 || *all {
                     Transition(State::shutdown(embassy_time::Duration::from_secs(15 * 60)))
                 } else {
                     Handled
@@ -258,7 +258,7 @@ impl KiaState {
             trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
         } else {
             match event {
-                KiaEvent::Obd2Debug(_) | KiaEvent::Obd2LoopEnd => {
+                KiaEvent::Obd2Debug(_) | KiaEvent::Obd2LoopEnd(_) => {
                     trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
                 }
                 _ => {
