@@ -216,7 +216,7 @@ impl KiaState {
             }
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             KiaEvent::Obd2LoopEnd(all) => {
-                if timeout.elapsed().as_secs() > 1 * 60 || *all {
+                if timeout.elapsed().as_secs() > 60 || *all {
                     Transition(State::shutdown(embassy_time::Duration::from_secs(15 * 60)))
                 } else {
                     Handled

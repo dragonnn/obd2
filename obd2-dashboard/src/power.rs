@@ -1,4 +1,4 @@
-use defmt::warn;
+use defmt::*;
 use embassy_time::Duration;
 use embedded_hal::delay::DelayNs;
 use esp_hal::{
@@ -34,6 +34,7 @@ impl Power {
 
     pub fn deep_sleep(&mut self, duration: Duration) {
         let timer = TimerWakeupSource::new(duration.into());
+        info!("going to deep sleep with timer wakeup: {:?}", defmt::Debug2Format(&timer));
 
         let mut ing_pin: esp_hal::gpio::GpioPin<5> = unsafe { esp_hal::gpio::GpioPin::steal() };
 
@@ -41,7 +42,6 @@ impl Power {
 
         let rtcio = Ext1WakeupSource::new(wakeup_pins);
         self.rs_gpio.set_low();
-        self.delay.delay_us(100);
         self.rtc.sleep_deep(&[&timer, &rtcio]);
     }
 

@@ -4,6 +4,7 @@ use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, pubsub::PubSubC
 use embassy_time::{Duration, Timer};
 use esp_hal::{
     debugger::debugger_connected,
+    macros::ram,
     reset::SleepSource,
     rtc_cntl::{get_reset_reason, get_wakeup_cause, SocResetReason},
     Cpu,
@@ -24,6 +25,9 @@ use crate::{
     power::{Ignition, Power},
 };
 
+//#[ram(rtc_fast, persistent)]
+//static mut LAST_WAKEUP_CAUSE_STR: [u8; 32] = [0; 32];
+
 #[embassy_executor::task]
 pub async fn run(mut power: Power) {
     //let sleep_duration = Duration::from_secs(15 * 60);
@@ -38,6 +42,19 @@ pub async fn run(mut power: Power) {
     if let SleepSource::Timer = wake_reason {
         sleep_timeout = Duration::from_secs(30);
     }*/
+    //unsafe {
+    //    error!("last wakeup cause: {=[u8]:a}", LAST_WAKEUP_CAUSE_STR);
+    //}
+
+    //let wake_reason = get_wakeup_cause();
+    //error!("wake reason: {:?}", defmt::Debug2Format(&wake_reason));
+
+    //unsafe {
+    //    use core::{fmt::Write, sync::atomic::Ordering, write};
+    //    let mut buffer = heapless::String::<32>::new();
+    //    write!(buffer, "{:?}", wake_reason);
+    //    LAST_WAKEUP_CAUSE_STR[0..buffer.len()].clone_from_slice(buffer.as_bytes());
+    //}
 
     if power.is_ignition_on() {
         KIA_EVENTS.send(KiaEvent::IgnitionOn).await;
@@ -60,20 +77,21 @@ pub async fn run(mut power: Power) {
             },
             Second(power_event) => match power_event {
                 PowerEvent::Shutdown(duration) => {
-                    warn!("shutdown event received for {:?}", duration.as_secs());
+                    warn!("shutdown event received for {:?}s", duration.as_secs());
                     unwrap!(SHUTDOWN.publisher()).publish(()).await;
-                    let duration = if debugger_connected() {
+                    let delay_duration = if debugger_connected() {
                         warn!("debugger connected, deep sleeping in 5s");
                         Duration::from_secs(5)
                     } else {
                         warn!("debugger not connected, deep sleeping in 200ms");
                         Duration::from_millis(200)
                     };
-                    Timer::after(duration).await;
+                    Timer::after(delay_duration).await;
                     if power.is_ignition_on() {
                         warn!("ignition is on, not deep sleeping");
                         esp_hal::reset::software_reset();
                     } else {
+                        info!("deep sleeping for {:?}", duration);
                         power.deep_sleep(duration);
                     }
                 }
