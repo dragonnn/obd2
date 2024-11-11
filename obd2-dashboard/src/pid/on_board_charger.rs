@@ -27,7 +27,7 @@ impl Pid for OnBoardChargerPid {
         let ac_input_current = data[14] as f64 * 2.56 + data[15] as f64 / 100.0;
         let obc_output_current = data[16] as f64 * 2.56 + data[17] as f64 / 100.0;
         let ac_input_frequency = data[18];
-        let obc_temperature_a = data[19] - 100;
+        let obc_temperature_a = data[19] as i8 - 100;
         let cp_voltage = data[21] as f64 * 2.56 + data[22] as f64 / 100.0;
         let cp_duty = data[23] as f64 * 25.6 + data[24] as f64 / 10.0;
         let cp_frequency = data[25] as f64 * 25.6 + data[26] as f64 / 10.0;

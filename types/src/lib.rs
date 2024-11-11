@@ -137,7 +137,7 @@ pub struct OnBoardChargerPid {
     pub ac_input_current: f64,
     pub obc_output_current: f64,
     pub ac_input_frequency: u8,
-    pub obc_temperature_a: u8,
+    pub obc_temperature_a: i8,
     pub cp_voltage: f64,
     pub cp_duty: f64,
     pub cp_frequency: f64,

@@ -6,6 +6,7 @@ use embassy_futures::select;
 use embassy_time::{Duration, Instant, Ticker};
 use futures::StreamExt;
 use heapless::String;
+use link::tx_channel_pub;
 use persistent_buff::PersistentBuff;
 use serde::{Deserialize, Serialize};
 
@@ -60,6 +61,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
     let mut ticker = Ticker::every(Duration::from_secs(30));
 
     let mut button_sub = button_subscribe().await;
+    let tx_channel_pub = tx_channel_pub();
 
     let mut distance = persistent_manager.get_distance();
     let mut secs = persistent_manager.get_secs();
@@ -103,6 +105,8 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                 }
             }
             select::Either4::Third(new_fix) => {
+                fix =
+                    process_new_fix(&battery_state, &fix, new_fix, &mut modem, persistent_manager.get_restarts()).await;
                 if let (Some(old_fix), Some(new_fix)) = (fix, new_fix) {
                     distance += (old_fix - new_fix) / 1000.0;
                     persistent_manager.update_distance(distance);
@@ -114,8 +118,9 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                         persistent_manager.update_secs(secs);
                     }
                 }
-                fix =
-                    process_new_fix(&battery_state, &fix, new_fix, &mut modem, persistent_manager.get_restarts()).await;
+                if let Some(fix) = fix {
+                    tx_channel_pub.publish(types::TxFrame::Modem(types::Modem::GnssFix(fix))).await;
+                }
                 persistent_manager.update_fix(fix);
             }
             select::Either4::Fourth(_) => {

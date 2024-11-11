@@ -84,7 +84,6 @@ static REQUEST: Signal<ThreadModeRawMutex, ()> = Signal::new();
 
 #[embassy_executor::task]
 pub async fn task(mut gnss: Gnss) {
-    let tx_channel_pub = tx_channel_pub();
     let mut battery_state_sub = BatteryState::subscribe().await;
     let mut battery_state = BatteryState::get().await;
 
@@ -110,7 +109,6 @@ pub async fn task(mut gnss: Gnss) {
                         }
                         state.fixes.push(fix).ok();
                         fix_pub.publish(fix).await;
-                        tx_channel_pub.publish(TxFrame::Modem(Modem::GnssFix(fix))).await;
                     } else {
                         defmt::warn!("found duplicated fix");
                     }
@@ -134,7 +132,6 @@ pub async fn task(mut gnss: Gnss) {
                     let mut state = STATE.lock().await;
                     state.fix = Some(fix);
                     fix_pub.publish(fix).await;
-                    tx_channel_pub.publish(TxFrame::Modem(Modem::GnssFix(fix))).await;
 
                     battery_state = BatteryState::get().await;
                     gnss_set_duration(&battery_state, &mut gnss).await;

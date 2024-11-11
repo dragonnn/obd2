@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "LED_0602")(type "KiCad")(uri "/home/mateusz/Kia/kia-obd2-esp32c3-v2/pcb/KIA-OBD2-DISPLAY/LED_0602")(options "")(descr ""))
+)

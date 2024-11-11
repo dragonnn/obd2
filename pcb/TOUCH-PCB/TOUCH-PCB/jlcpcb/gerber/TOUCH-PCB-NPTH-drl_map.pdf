@@ -1,0 +1,156 @@
+%PDF-1.5
+%€‚ƒ
+5 0 obj
+<< /Length 6 0 R /Filter /FlateDecode >>
+stream
+xÚ••ËnÔ@E÷ó½„¦ß–ˆ‡bÌDA Dc_OUÛã¾UDd¢ÑØ§o×-W•;v²¶xcùo\^ÏÆ™wô½]VÌİ·õâÓ[ãC¼7»¥Cj“MÉÑš÷­$“¼ÏÙÌl8ßŸ/ì\ô9ÄÚõ°û²¾…–´~¹{HÎwß“d<‹İ¬ ¥N%ÚLk¿Œ£Šò§—¶_<Û®¶5JğS3ÉÖT§Äµy4Ïßß\_}yóãûoãlË¿š`wtoÍñ¯yòêîætzj·æõñğñ¿ír­”üãí>\ı|1Ü.U¬Ïu–~g ¥•é\9ÉHM–*ÅXåiŸc’-ı.*ÉXbé$×´©$ëª{ôìF,ÉXı=‚£d¨b—¬TCGÏ(fïhVÙ/+ai¥¨J,«ºtCVuß!T­ÚH
+£ªg¶ªr¯t½$cU‘ÆTB2V5Û:AGÉºªF­Jä‰¹¯÷{Å6YÉ¯qa²qÊèŒ ]±f#â6+÷{òÙ9ªOO•©úQÎ€b]åŸ,8OŠ¡
+rÊÔ°Î6ÇlË¢GÅºjÍC8K7rIµU«êO°VŒU‰2UuWUğ6Tî Ã¼6Ç3*ÖU”i–s®«9ª7K1VY¿WIÆÙ7Š^´ã9ûs‡*O¶ÓÏ(:¢J2t„™P¬«ÖnÀL(&TĞ!ÉĞ‘Ï»¬†Ù‡q¾+†•@•dØm8ß+¿iNth%¶ŒJlªÑm~ê£d¬ª5*V´ÔTŸ‘tıOò,VŒTŞÃíïA†Â(‚ “QÃœ2ç	V5’A'Ğ«z£D>-Z• 3înŠuUˆÚ+ÄËq Êû|rÛººæ=ãÀÙ¤ØÈã ™wŞ÷å³wû8¸kÜ
+endstream
+endobj
+6 0 obj
+710
+endobj
+7 0 obj
+<<
+/Type /Page
+/Parent 1 0 R
+/Resources <<
+    /ProcSet [/PDF /Text /ImageC /ImageB]
+    /Font 2 0 R
+    /XObject 3 0 R >>
+/MediaBox [0 0 841.896 595.296]
+/Contents 5 0 R
+>>
+endobj
+8 0 obj
+<</S /GoTo /D [7 0 R /Fit]
+>>
+endobj
+10 0 obj
+<< /BaseFont /Helvetica
+   /Type /Font
+   /Subtype /Type1
+   /Encoding /WinAnsiEncoding
+>>
+endobj
+11 0 obj
+<< /BaseFont /Helvetica-Oblique
+   /Type /Font
+   /Subtype /Type1
+   /Encoding /WinAnsiEncoding
+>>
+endobj
+12 0 obj
+<< /BaseFont /Helvetica-Bold
+   /Type /Font
+   /Subtype /Type1
+   /Encoding /WinAnsiEncoding
+>>
+endobj
+13 0 obj
+<< /BaseFont /Helvetica-BoldOblique
+   /Type /Font
+   /Subtype /Type1
+   /Encoding /WinAnsiEncoding
+>>
+endobj
+2 0 obj
+<<
+    /KicadFont 10 0 R
+    /KicadFontI 11 0 R
+    /KicadFontB 12 0 R
+    /KicadFontBI 13 0 R
+>>
+endobj
+3 0 obj
+<<
+>>
+endobj
+4 0 obj
+<< /JavaScript
+ << /Names
+    [ (JSInit) << /Type /Action /S /JavaScript /JS (
+function ShM\(aEntries\) {
+    var aParams = [];
+    for \(var i in aEntries\) {
+        aParams.push\({
+            cName: aEntries[i][0],
+            cReturn: aEntries[i][1]
+        }\)
+    }
+
+    var cChoice = app.popUpMenuEx.apply\(app, aParams\);
+    if \(cChoice != null && cChoice.substring\(0, 1\) == '#'\) this.pageNum = parseInt\(cChoice.slice\(1\)\);
+    else if \(cChoice != null && cChoice.substring\(0, 4\) == 'http'\) app.launchURL\(cChoice\);
+}
+) >> ]
+ >>
+>>
+endobj
+1 0 obj
+<<
+/Type /Pages
+/Kids [
+7 0 R
+]
+/Count 1
+>>
+endobj
+14 0 obj
+<<
+/Producer (KiCad PDF)
+/CreationDate (D:20241111180130)
+/Creator (PCBNEW)
+/Title (TOUCH-PCB-NPTH-drl_map.pdf)
+>>
+endobj
+9 0 obj
+<<
+/Title (Page 1)
+/Parent 15 0 R
+/A 8 0 R
+>>
+endobj
+15 0 obj
+<< /Type /Outlines
+   /Count 1
+   /First 9 0 R
+   /Last 9 0 R
+>>
+endobj
+16 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+/Version /1.5
+/PageMode /UseOutlines
+/Outlines 15 0 R
+/Names 4 0 R
+/PageLayout /SinglePage
+>>
+endobj
+xref
+0 17
+0000000000 65535 f 
+0000002208 00000 n 
+0000001505 00000 n 
+0000001618 00000 n 
+0000001639 00000 n 
+0000000015 00000 n 
+0000000799 00000 n 
+0000000818 00000 n 
+0000001007 00000 n 
+0000002398 00000 n 
+0000001052 00000 n 
+0000001159 00000 n 
+0000001274 00000 n 
+0000001386 00000 n 
+0000002267 00000 n 
+0000002459 00000 n 
+0000002540 00000 n 
+trailer
+<< /Size 17 /Root 16 0 R /Info 14 0 R >>
+startxref
+2681
+%%EOF

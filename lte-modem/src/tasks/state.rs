@@ -2,11 +2,12 @@ use defmt::Format;
 use embassy_futures::select;
 use embassy_time::{Duration, Instant, Timer};
 use futures::StreamExt;
+use types::GnssFix;
 
 use super::TASKS_SUBSCRIBERS;
 use crate::{
     board::{LightSensor, Lightwell, Sense, Wdg},
-    tasks::{battery::State as BatteryState, montion_detection::State as MontionDetectionState},
+    tasks::{battery::State as BatteryState, gnss::Fix, montion_detection::State as MontionDetectionState},
 };
 
 #[derive(Format, Clone, Default)]
