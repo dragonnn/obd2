@@ -250,6 +250,8 @@ impl HaState {
 #[tokio::main]
 async fn main() {
     std::env::set_var("RUST_LOG", "debug");
+    std::env::set_var("RUST_LOG_STYLE", "always");
+
     env_logger::init();
 
     let config = Arc::new(config::Config::load());

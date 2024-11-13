@@ -51,6 +51,22 @@ impl KiaHandler {
             .update(chrono::Local::now().format("%+").to_string().into())
             .await;
         match txframe {
+            TxFrame::State(state) => {
+                let state = match state {
+                    types::State::IgnitionOff => "IgnitionOff",
+                    types::State::IgnitionOn => "IgnitionOn",
+                    types::State::Shutdown => "Shutdown",
+                    types::State::Charging => "Charging",
+                    types::State::CheckCharging => "CheckCharging",
+                }
+                .to_string();
+
+                self.ha_sensors
+                    .get("state")
+                    .unwrap()
+                    .update(state.into())
+                    .await;
+            }
             TxFrame::Obd2Pid(types::Pid::Icu1Smk(icu_smk_1)) => {
                 self.ha_sensors
                     .get("aux_voltage")
@@ -73,6 +89,11 @@ impl KiaHandler {
                     .get("hv_power")
                     .unwrap()
                     .update((bms_pid.hv_dc_voltage * bms_pid.hv_battery_current).into())
+                    .await;
+                self.ha_sensors
+                    .get("hv_voltage")
+                    .unwrap()
+                    .update(bms_pid.hv_dc_voltage.into())
                     .await;
             }
             TxFrame::Obd2Pid(types::Pid::OnBoardChargerPid(on_board_charger_pid)) => {
