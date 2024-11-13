@@ -61,7 +61,13 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
         {
             First(_) => {
                 let now = embassy_time::Instant::now();
-                let obd2_pids = PIDS_SEND.lock().await.clone();
+                let obd2_pids;
+                {
+                    let mut obd2_pids_lock = PIDS_SEND.lock().await;
+                    obd2_pids = obd2_pids_lock.clone();
+                    obd2_pids_lock.clear();
+                }
+
                 for pid in obd2_pids.iter() {
                     //info!("pid: {:?}", pid);
                     if let Some(encrypted_pid) =
@@ -79,7 +85,6 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                     embassy_time::Timer::after(embassy_time::Duration::from_millis(25)).await;
                 }
                 info!("send_ticker elapsed: {:?}ms", now.elapsed().as_millis());
-                PIDS_SEND.lock().await.clear();
                 send_ticker.reset();
             }
             Second(_) => {
