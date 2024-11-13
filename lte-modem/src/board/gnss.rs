@@ -146,4 +146,8 @@ impl Gnss {
             ModemError::NrfError(0)
         })?
     }
+
+    pub fn ticker_reset(&mut self) {
+        self.ticker.reset();
+    }
 }

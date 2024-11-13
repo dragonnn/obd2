@@ -107,8 +107,10 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
             select::Either4::Third(new_fix) => {
                 fix =
                     process_new_fix(&battery_state, &fix, new_fix, &mut modem, persistent_manager.get_restarts()).await;
+                let mut current_distance = 0.0;
                 if let (Some(old_fix), Some(new_fix)) = (fix, new_fix) {
-                    distance += (old_fix - new_fix) / 1000.0;
+                    current_distance = (old_fix - new_fix) / 1000.0;
+                    distance += current_distance;
                     persistent_manager.update_distance(distance);
 
                     let old_instant = Instant::from_ticks(old_fix.elapsed);
@@ -119,7 +121,9 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                     }
                 }
                 if let Some(fix) = fix {
-                    tx_channel_pub.publish(types::TxFrame::Modem(types::Modem::GnssFix(fix))).await;
+                    if link::connected() || current_distance > 0.5 {
+                        tx_channel_pub.publish(types::TxFrame::Modem(types::Modem::GnssFix(fix))).await;
+                    }
                 }
                 persistent_manager.update_fix(fix);
             }

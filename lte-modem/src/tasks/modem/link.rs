@@ -1,3 +1,5 @@
+use core::sync::atomic::{AtomicBool, Ordering};
+
 use defmt::*;
 use embassy_futures::select::{select, Either::*};
 use embassy_sync::{
@@ -9,7 +11,10 @@ use nrf_modem::{CancellationToken, DtlsSocket, Error as NrfError, LteLink, PeerV
 use postcard::{from_bytes, from_bytes_crc32, to_vec, to_vec_crc32};
 use types::{Modem, TxFrame, TxMessage};
 
+use crate::board::Gnss;
+
 static TX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, TxFrame, 256, 1, 16> = PubSubChannel::new();
+static CONNECTED: AtomicBool = AtomicBool::new(false);
 
 #[embassy_executor::task]
 pub async fn task() {
@@ -18,7 +23,7 @@ pub async fn task() {
 
     let mut tx_channel_sub = unwrap!(TX_CHANNEL.dyn_subscriber());
     let mut socket: Option<UdpSocket> = None;
-    let mut timeout_ticker = Ticker::every(Duration::from_secs(60));
+    let mut timeout_ticker: Option<Ticker> = None;
     let mut starting_port: u16 = 10000;
     loop {
         if starting_port < 10000 {
@@ -30,7 +35,11 @@ pub async fn task() {
             if txframe_shutdown {
                 txframe_shutdown = false;
             } else {
-                timeout_ticker.next().await;
+                if let Some(timeout_ticker) = &mut timeout_ticker {
+                    timeout_ticker.next().await;
+                } else {
+                    futures::pending!()
+                }
             }
         })
         .await
@@ -56,13 +65,14 @@ pub async fn task() {
                     {
                         Ok(Ok(s)) => {
                             info!("connected");
+                            timeout_ticker = Some(Ticker::every(Duration::from_secs(60)));
                             s.tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::Connected))).await.ok();
                             let battery = crate::tasks::battery::State::get().await;
                             s.tx_frame_send(&TxMessage::new(TxFrame::Modem(battery.into()))).await.ok();
-                            Timer::after_secs(1).await;
-                            timeout_ticker.reset();
+                            Timer::after_millis(100).await;
                             socket = Some(s);
                             starting_port = starting_port.wrapping_add(1);
+                            CONNECTED.store(true, Ordering::Relaxed);
                         }
                         Ok(Err(e)) => {
                             error!("link socket connect error {:?}", e);
@@ -74,7 +84,7 @@ pub async fn task() {
                 }
                 if let Some(current_socket) = &mut socket {
                     if !txmessage.frame.is_modem() {
-                        timeout_ticker.reset();
+                        timeout_ticker.as_mut().map(|t| t.reset());
                     }
                     match current_socket.tx_frame_send(&txmessage).await {
                         Ok(_) => {}
@@ -88,10 +98,12 @@ pub async fn task() {
             Second(_) => {
                 error!("tx_channel_sub timeout");
                 if let Some(socket) = &mut socket {
+                    if let Some(gnss) = crate::tasks::gnss::State::get_current_fix().await {
+                        socket.tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::GnssFix(gnss)))).await.ok();
+                    }
                     socket.tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::Disconnected))).await.ok();
                 }
                 if let Some(socket) = socket.take() {
-                    embassy_time::Timer::after(Duration::from_secs(20)).await;
                     match socket.deactivate().await {
                         Ok(_) => {
                             info!("socket closed");
@@ -100,6 +112,8 @@ pub async fn task() {
                             error!("link socket close error {:?}", e);
                         }
                     }
+                    CONNECTED.store(false, Ordering::Relaxed);
+                    timeout_ticker = None;
                 }
             }
         }
@@ -133,4 +147,8 @@ pub type TxChannelPub = DynPublisher<'static, TxFrame>;
 
 pub fn tx_channel_pub() -> TxChannelPub {
     unwrap!(TX_CHANNEL.dyn_publisher())
+}
+
+pub fn connected() -> bool {
+    CONNECTED.load(Ordering::Relaxed)
 }

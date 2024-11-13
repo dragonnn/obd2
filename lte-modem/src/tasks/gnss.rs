@@ -14,7 +14,10 @@ use num_traits::real::Real;
 use serde::{Deserialize, Serialize};
 use types::{Modem, TxFrame};
 
-use super::{modem::link::tx_channel_pub, TASKS_SUBSCRIBERS};
+use super::{
+    modem::{link, link::tx_channel_pub},
+    TASKS_SUBSCRIBERS,
+};
 use crate::{board::Gnss, tasks::battery::State as BatteryState};
 
 const FIXES_BUFFER_SIZE: usize = 10;
@@ -125,6 +128,7 @@ pub async fn task(mut gnss: Gnss) {
             }
             select::Either3::Third(_) => {
                 defmt::info!("got request for new fix");
+                gnss.ticker_reset();
                 gnss.conf(Duration::from_secs(1), false).await;
                 if let Ok(Some(new_gnss_frame)) = gnss.next().await {
                     let fix: FromFix = new_gnss_frame.into();
