@@ -17,11 +17,12 @@ pub enum Event {
     Kia(KiaEvent),
 }
 
-static EVENT_BUS: PubSubChannel<CriticalSectionRawMutex, Event, 32, 32, 32> = PubSubChannel::new();
+static EVENT_BUS: PubSubChannel<CriticalSectionRawMutex, Event, 128, 32, 32> = PubSubChannel::new();
 
-pub fn event_bus_pub() -> EventBusPub {
-    unwrap!(EVENT_BUS.dyn_publisher())
-}
+//TODO: make pub to it via without_timeout and not try_send
+//pub fn event_bus_pub() -> EventBusPub {
+//    unwrap!(EVENT_BUS.dyn_publisher())
+//}
 
 pub fn event_bus_sub() -> EventBusSub {
     unwrap!(EVENT_BUS.dyn_subscriber())

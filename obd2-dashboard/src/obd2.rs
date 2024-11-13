@@ -9,11 +9,11 @@ use static_cell::make_static;
 
 use crate::{
     debug::internal_debug,
-    event::{event_bus_pub, Event, EventBusPub, KiaEvent, Obd2Event, KIA_EVENTS},
+    event::{Event, EventBusPub, KiaEvent, Obd2Event, KIA_EVENTS},
     mcp2515::{
         clock_16mhz, clock_8mhz, CanFrame, OperationMode, RxBuffer, TxBuffer, CANINTE, CLKPRE, RXB0CTRL, RXB1CTRL, RXM,
     },
-    tasks::{lcd::obd2_debug_pids_enabled, obd2::Obd2Debug},
+    tasks::{ieee802154::insert_send_pid, lcd::obd2_debug_pids_enabled, obd2::Obd2Debug},
     types::Mcp2515,
 };
 
@@ -37,8 +37,6 @@ pub struct Obd2 {
     obd2_pid_errors_periods: heapless::FnvIndexMap<TypeId, Instant, 32>,
     obd2_pid_periods: heapless::FnvIndexMap<TypeId, Instant, 32>,
     obd2_pid_periods_disable: bool,
-
-    event_bus_pub: EventBusPub,
 }
 
 impl Obd2 {
@@ -57,7 +55,6 @@ impl Obd2 {
             obd2_pid_errors_periods,
             obd2_pid_errors,
             obd2_pid_periods,
-            event_bus_pub: event_bus_pub(),
             obd2_pid_periods_disable: false,
         }
     }
@@ -219,9 +216,10 @@ impl Obd2 {
         if errors < 10 {
             match with_timeout(Duration::from_millis(350), self.request_pid::<PID>()).await {
                 Ok(Ok((pid_result, buffer))) => {
-                    let event = KiaEvent::Obd2Event(pid_result.into_event());
+                    let pid_result = pid_result.into_event();
+                    insert_send_pid(&pid_result).await;
+                    let event = KiaEvent::Obd2Event(pid_result);
                     KIA_EVENTS.send(event.clone()).await;
-                    self.event_bus_pub.try_publish(Event::Kia(event)).ok();
                     if obd2_debug_pids_enabled {
                         KIA_EVENTS.send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(Some(buffer)))).await;
                     }

@@ -1,7 +1,8 @@
 use defmt::{error, info, unwrap, Format};
-use embassy_futures::select::{select, select4, Either4::*};
+use embassy_futures::select::{select, select3, Either3::*};
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex,
+    mutex::Mutex,
     pubsub::{DynPublisher, PubSubChannel},
     signal::Signal,
 };
@@ -21,6 +22,8 @@ use crate::{
 
 static SEND_NOW_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 static EXTRA_SEND: PubSubChannel<CriticalSectionRawMutex, types::TxFrame, 64, 1, 32> = PubSubChannel::new();
+static PIDS_SEND: Mutex<CriticalSectionRawMutex, heapless::FnvIndexSet<Pid, 64>> =
+    Mutex::new(heapless::FnvIndexSet::new());
 
 #[embassy_executor::task]
 pub async fn run(mut ieee802154: Ieee802154<'static>) {
@@ -40,20 +43,17 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
     });
 
     let mut send_ticker = embassy_time::Ticker::every(embassy_time::Duration::from_secs(15));
-    let mut event_bus_sub = event_bus_sub();
 
-    let mut obd2_pids: heapless::FnvIndexSet<Pid, 64> = heapless::FnvIndexSet::new();
     let mut ieee802154 = AsyncIeee802154::new(ieee802154);
 
     let mut shutdown_signal = get_shutdown_signal();
     let mut extra_send_sub = unwrap!(EXTRA_SEND.subscriber());
 
     loop {
-        match select4(
+        match select3(
             async {
                 select(send_ticker.next(), SEND_NOW_SIGNAL.wait()).await;
             },
-            event_bus_sub.next_message_pure(),
             shutdown_signal.next_message_pure(),
             extra_send_sub.next_message_pure(),
         )
@@ -61,6 +61,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
         {
             First(_) => {
                 let now = embassy_time::Instant::now();
+                let obd2_pids = PIDS_SEND.lock().await.clone();
                 for pid in obd2_pids.iter() {
                     //info!("pid: {:?}", pid);
                     if let Some(encrypted_pid) =
@@ -75,29 +76,18 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                     } else {
                         error!("types::TxFrame::Obd2Pid(pid.clone()).encrypt(&shared_key).ok() failed");
                     }
+                    embassy_time::Timer::after(embassy_time::Duration::from_millis(25)).await;
                 }
                 info!("send_ticker elapsed: {:?}ms", now.elapsed().as_millis());
-                obd2_pids.clear();
+                PIDS_SEND.lock().await.clear();
                 send_ticker.reset();
             }
-            Second(event) => {
-                //info!("event_bus_sub: {:?}", event);
-                match event {
-                    Event::Kia(KiaEvent::Obd2Event(pid)) => {
-                        obd2_pids.remove(&pid);
-                        if obd2_pids.insert(pid).is_err() {
-                            info!("obd2_pids.insert(pid) failed");
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            Third(_) => {
+            Second(_) => {
                 info!("ieee802154 shutdown");
                 types::TxMessage::new(types::TxFrame::Shutdown).encrypt(&shared_key).ok();
                 break;
             }
-            Fourth(extra_txframe) => {
+            Third(extra_txframe) => {
                 if let Some(encrypted_extra) = types::TxMessage::new(extra_txframe).encrypt(&shared_key).ok() {
                     let encrypted_extra_bytes = encrypted_extra.serialize();
                     if let Err(err) =
@@ -252,4 +242,14 @@ pub type TxFramePub = DynPublisher<'static, types::TxFrame>;
 
 pub fn extra_txframes_pub() -> TxFramePub {
     unwrap!(EXTRA_SEND.dyn_publisher())
+}
+
+pub async fn insert_send_pid(pid: &Pid) {
+    let mut pids_send = PIDS_SEND.lock().await;
+    pids_send.remove(pid);
+    pids_send.insert(pid.clone()).ok();
+}
+
+pub async fn clear_pids(pid: &Pid) {
+    PIDS_SEND.lock().await.clear();
 }
