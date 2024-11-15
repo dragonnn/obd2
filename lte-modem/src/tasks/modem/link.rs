@@ -18,8 +18,8 @@ static CONNECTED: AtomicBool = AtomicBool::new(false);
 
 #[embassy_executor::task]
 pub async fn task() {
-    //let hostname = env!("SEND_HOST");
-    //let port = env!("SEND_PORT").parse().unwrap();
+    let ip: core::net::Ipv4Addr = env!("SEND_HOST").parse().unwrap();
+    let port: u16 = env!("SEND_PORT").parse().unwrap();
 
     let mut tx_channel_sub = unwrap!(TX_CHANNEL.dyn_subscriber());
     let mut socket: Option<UdpSocket> = None;
@@ -66,9 +66,9 @@ pub async fn task() {
                         Ok(Ok(s)) => {
                             info!("connected");
                             timeout_ticker = Some(Ticker::every(Duration::from_secs(60)));
-                            s.tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::Connected))).await.ok();
+                            s.tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::Connected)), ip, port).await.ok();
                             let battery = crate::tasks::battery::State::get().await;
-                            s.tx_frame_send(&TxMessage::new(TxFrame::Modem(battery.into()))).await.ok();
+                            s.tx_frame_send(&TxMessage::new(TxFrame::Modem(battery.into())), ip, port).await.ok();
                             Timer::after_millis(100).await;
                             socket = Some(s);
                             starting_port = starting_port.wrapping_add(1);
@@ -86,7 +86,7 @@ pub async fn task() {
                     if !txmessage.frame.is_modem() {
                         timeout_ticker.as_mut().map(|t| t.reset());
                     }
-                    match current_socket.tx_frame_send(&txmessage).await {
+                    match current_socket.tx_frame_send(&txmessage, ip, port).await {
                         Ok(_) => {}
                         Err(e) => {
                             error!("link socket send error {:?}", e);
@@ -99,11 +99,15 @@ pub async fn task() {
                 error!("tx_channel_sub timeout");
                 if let Some(socket) = &mut socket {
                     if let Some(gnss) = crate::tasks::gnss::State::get_current_fix().await {
-                        socket.tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::GnssFix(gnss)))).await.ok();
+                        socket
+                            .tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::GnssFix(gnss))), ip, port)
+                            .await
+                            .ok();
                     }
-                    socket.tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::Disconnected))).await.ok();
+                    socket.tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::Disconnected)), ip, port).await.ok();
                 }
                 if let Some(socket) = socket.take() {
+                    embassy_time::Timer::after(Duration::from_secs(1)).await;
                     match socket.deactivate().await {
                         Ok(_) => {
                             info!("socket closed");
@@ -121,17 +125,21 @@ pub async fn task() {
 }
 
 trait TxMessageSend {
-    async fn tx_frame_send(&self, message: &TxMessage) -> Result<(), NrfError>;
+    async fn tx_frame_send(&self, message: &TxMessage, ip: core::net::Ipv4Addr, port: u16) -> Result<(), NrfError>;
 }
 
 impl TxMessageSend for UdpSocket {
-    async fn tx_frame_send(&self, message: &TxMessage) -> Result<(), nrf_modem::Error> {
+    async fn tx_frame_send(
+        &self,
+        message: &TxMessage,
+        ip: core::net::Ipv4Addr,
+        port: u16,
+    ) -> Result<(), nrf_modem::Error> {
         match with_timeout(
             Duration::from_secs(15),
             self.send_to(
                 &message.to_vec_encrypted().map_err(|_| nrf_modem::Error::Utf8Error)?,
-                nrf_modem::no_std_net::SocketAddrV4::new(nrf_modem::no_std_net::Ipv4Addr::new(185, 127, 22, 95), 49671)
-                    .into(),
+                (ip.octets(), 49671).into(),
             ),
         )
         .await
