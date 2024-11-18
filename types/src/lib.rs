@@ -222,6 +222,7 @@ pub struct TxMessage {
     pub id: u64,
     pub frame: TxFrame,
     pub timestamp: u64,
+    pub ack: bool,
 }
 
 impl TxMessage {
@@ -230,6 +231,7 @@ impl TxMessage {
             id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
             frame,
             timestamp: 0,
+            ack: false,
         }
     }
 
@@ -250,6 +252,21 @@ impl TxMessage {
         let bytes = bytes.to_vec();
         let shared_key = SharedKey::new(SHARED_KEY.clone());
         Self::decrypt_owned(&EncryptedMessage::deserialize(bytes)?, &shared_key)
+    }
+
+    pub fn ack(&mut self) {
+        self.ack = true;
+    }
+
+    pub fn needs_ack(&self) -> bool {
+        self.ack
+            || match self.frame {
+                TxFrame::Shutdown => true,
+                TxFrame::State(_) => true,
+                TxFrame::Modem(Modem::Disconnected) => true,
+                TxFrame::Modem(Modem::Connected) => true,
+                _ => false,
+            }
     }
 }
 

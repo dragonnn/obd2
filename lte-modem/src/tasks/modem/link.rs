@@ -108,7 +108,7 @@ pub async fn task() {
                 }
                 if let Some(socket) = socket.take() {
                     embassy_time::Timer::after(Duration::from_secs(1)).await;
-                    match socket.deactivate().await {
+                    match with_timeout(Duration::from_secs(5), socket.deactivate()).await {
                         Ok(_) => {
                             info!("socket closed");
                         }
@@ -139,7 +139,7 @@ impl TxMessageSend for UdpSocket {
             Duration::from_secs(15),
             self.send_to(
                 &message.to_vec_encrypted().map_err(|_| nrf_modem::Error::Utf8Error)?,
-                (ip.octets(), 49671).into(),
+                (ip.octets(), port).into(),
             ),
         )
         .await
