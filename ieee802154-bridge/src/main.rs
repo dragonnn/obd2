@@ -109,6 +109,8 @@ async fn main(spawner: Spawner) {
     let mut current_chunk_count = 0;
     let mut current_chunk = 0;
 
+    let mut rx_packet_seq = 0;
+
     unwrap!(spawner.spawn(uarte_send_task(send, uarte_send, wdg1)));
     unwrap!(spawner.spawn(uarte_receive_task(receive, uarte_receive)));
 
@@ -213,21 +215,59 @@ async fn main(spawner: Spawner) {
                     error!("Error receiving packet: {:?}", err);
                 }
             },
-            Second(uarte_result) => {}
+            Second(uarte_result) => {
+                if let Err(err) = ieee802154
+                    .try_send_buffer(&uarte_result, &mut rx_packet_seq)
+                    .await
+                {
+                    error!("Error sending packet: {:?}", err);
+                }
+            }
         }
     }
 }
 
 pub trait TryIeee802154Send {
-    async fn try_send(
+    async fn try_send_buffer(
         &mut self,
         packet: &[u8],
         seq_number: &mut u8,
     ) -> Result<(), embassy_nrf::radio::Error>;
+
+    async fn try_send_raw(
+        &mut self,
+        header: &ieee802154::mac::Header,
+        packet: &mut radio::ieee802154::Packet,
+    ) -> Result<(), embassy_nrf::radio::Error>;
 }
 
 impl TryIeee802154Send for embassy_nrf::radio::ieee802154::Radio<'_, peripherals::RADIO> {
-    async fn try_send(
+    async fn try_send_raw(
+        &mut self,
+        header: &ieee802154::mac::Header,
+        tx_packet: &mut radio::ieee802154::Packet,
+    ) -> Result<(), embassy_nrf::radio::Error> {
+        for _ in 0..5 {
+            self.try_send(tx_packet).await?;
+            let mut rx_packet = radio::ieee802154::Packet::new();
+            if let Ok(_) = self.receive(&mut rx_packet).await {
+                match ieee802154::mac::Frame::try_read(&rx_packet, FooterMode::None) {
+                    Ok((frame, _)) => {
+                        if frame.header.frame_type == ieee802154::mac::FrameType::Acknowledgement
+                            && header.destination == frame.header.destination
+                        {
+                            return Ok(());
+                        }
+                    }
+                    Err(err) => {
+                        error!("Error reading frame: {:?}", defmt::Debug2Format(&err));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+    async fn try_send_buffer(
         &mut self,
         packet: &[u8],
         seq_number: &mut u8,
@@ -264,7 +304,7 @@ impl TryIeee802154Send for embassy_nrf::radio::ieee802154::Radio<'_, peripherals
                 &mut tx_packet,
                 &mut FrameSerDesContext::no_security(FooterMode::Explicit),
             ) {
-                Ok(_) => self.try_send(&mut tx_packet).await?,
+                Ok(_) => self.try_send_raw(&frame.header, &mut tx_packet).await?,
                 Err(err) => {
                     error!("Error writing frame: {:?}", defmt::Debug2Format(&err));
                 }
