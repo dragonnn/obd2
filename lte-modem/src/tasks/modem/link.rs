@@ -1,28 +1,35 @@
 use core::sync::atomic::{AtomicBool, Ordering};
 
 use defmt::*;
+use embassy_executor::Spawner;
 use embassy_futures::select::{select, Either::*};
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex,
-    pubsub::{DynPublisher, PubSubChannel},
+    pubsub::{DynPublisher, DynSubscriber, PubSubChannel},
+    signal::Signal,
 };
 use embassy_time::{with_timeout, Duration, Ticker, Timer};
-use nrf_modem::{CancellationToken, DtlsSocket, Error as NrfError, LteLink, PeerVerification, UdpSocket};
+use nrf_modem::{
+    CancellationToken, DtlsSocket, Error as NrfError, LteLink, OwnedUdpReceiveSocket, OwnedUdpSendSocket,
+    PeerVerification, UdpSocket,
+};
 use postcard::{from_bytes, from_bytes_crc32, to_vec, to_vec_crc32};
-use types::{Modem, TxFrame, TxMessage};
+use types::{Modem, RxFrame, TxFrame, TxMessage};
 
 use crate::board::Gnss;
 
 static TX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, TxFrame, 256, 1, 16> = PubSubChannel::new();
-static CONNECTED: AtomicBool = AtomicBool::new(false);
+static RX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, RxFrame, 256, 2, 16> = PubSubChannel::new();
 
+static CONNECTED: AtomicBool = AtomicBool::new(false);
+static DISCONNECT_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 #[embassy_executor::task]
-pub async fn task() {
+pub async fn send_task(spawner: Spawner) {
     let ip: core::net::Ipv4Addr = env!("SEND_HOST").parse().unwrap();
     let port: u16 = env!("SEND_PORT").parse().unwrap();
 
     let mut tx_channel_sub = unwrap!(TX_CHANNEL.dyn_subscriber());
-    let mut socket: Option<UdpSocket> = None;
+    let mut socket: Option<OwnedUdpSendSocket> = None;
     let mut timeout_ticker: Option<Ticker> = None;
     let mut starting_port: u16 = 10000;
     loop {
@@ -64,13 +71,21 @@ pub async fn task() {
                     .await
                     {
                         Ok(Ok(s)) => {
+                            let (socket_rx, socket_tx) = s.split_owned().await.unwrap();
                             info!("connected");
+                            spawner.spawn(recv_task(socket_rx)).ok();
                             timeout_ticker = Some(Ticker::every(Duration::from_secs(60)));
-                            s.tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::Connected)), ip, port).await.ok();
+                            socket_tx
+                                .tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::Connected)), ip, port)
+                                .await
+                                .ok();
                             let battery = crate::tasks::battery::State::get().await;
-                            s.tx_frame_send(&TxMessage::new(TxFrame::Modem(battery.into())), ip, port).await.ok();
+                            socket_tx
+                                .tx_frame_send(&TxMessage::new(TxFrame::Modem(battery.into())), ip, port)
+                                .await
+                                .ok();
                             Timer::after_millis(100).await;
-                            socket = Some(s);
+                            socket = Some(socket_tx);
                             starting_port = starting_port.wrapping_add(1);
                             CONNECTED.store(true, Ordering::Relaxed);
                         }
@@ -117,6 +132,7 @@ pub async fn task() {
                         }
                     }
                     CONNECTED.store(false, Ordering::Relaxed);
+                    DISCONNECT_SIGNAL.signal(());
                     timeout_ticker = None;
                 }
             }
@@ -124,11 +140,39 @@ pub async fn task() {
     }
 }
 
+#[embassy_executor::task]
+pub async fn recv_task(socket_rx: OwnedUdpReceiveSocket) {
+    let mut rx_buf = [0; 512];
+    let mut rx_pub = unwrap!(RX_CHANNEL.dyn_publisher());
+    loop {
+        match select(DISCONNECT_SIGNAL.wait(), socket_rx.receive_from(&mut rx_buf)).await {
+            First(_) => break,
+            Second(Ok((readed, peer))) => {
+                info!("got data: {:?} from peer", readed);
+                match types::RxMessage::from_bytes_encrypted(&readed) {
+                    Ok(rx_message) => {
+                        info!("rx_message: {:?}", rx_message);
+                        rx_pub.publish_immediate(rx_message.frame);
+                    }
+                    Err(err) => {
+                        error!("error decoding rx messsage");
+                    }
+                }
+            }
+            Second(Err(err)) => {
+                error!("got socket_rx error: {:?}", err);
+            }
+        }
+    }
+    with_timeout(Duration::from_secs(5), socket_rx.deactivate()).await.ok();
+    warn!("recv task exit");
+}
+
 trait TxMessageSend {
     async fn tx_frame_send(&self, message: &TxMessage, ip: core::net::Ipv4Addr, port: u16) -> Result<(), NrfError>;
 }
 
-impl TxMessageSend for UdpSocket {
+impl TxMessageSend for OwnedUdpSendSocket {
     async fn tx_frame_send(
         &self,
         message: &TxMessage,
@@ -152,9 +196,14 @@ impl TxMessageSend for UdpSocket {
 }
 
 pub type TxChannelPub = DynPublisher<'static, TxFrame>;
+pub type RxChannelSub = DynSubscriber<'static, RxFrame>;
 
 pub fn tx_channel_pub() -> TxChannelPub {
     unwrap!(TX_CHANNEL.dyn_publisher())
+}
+
+pub fn rx_channel_sub() -> RxChannelSub {
+    unwrap!(RX_CHANNEL.dyn_subscriber())
 }
 
 pub fn connected() -> bool {

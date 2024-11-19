@@ -40,8 +40,7 @@ impl Gnss {
     async fn start(&mut self) -> Result<(), ModemError> {
         if self.duration.as_millis() < 20000 {
             info!("start periodic fix");
-            self.stream =
-                Some(self.handler().await?.start_periodic_fix(self.get_config(), self.duration.as_secs() as u16)?);
+            self.stream = Some(self.handler().await?.start_continuous_fix(self.get_config())?);
             self.tx_channel_pub.try_publish(TxFrame::Modem(Modem::GnssState(GnssState::PeriodicFix))).ok();
         } else {
             self.stream = None;

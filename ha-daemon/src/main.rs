@@ -180,6 +180,7 @@ impl HaState {
                         .let_log()
                         .is_err()
                     {
+                        error!("failed to send sensor update");
                         self.event_sender.send(HaStateEvent::Step).log();
                         self.event_sender.send(event.clone()).log();
                         return Transition(State::load());
@@ -197,6 +198,7 @@ impl HaState {
                         .let_log()
                         .is_err()
                     {
+                        error!("failed to send location update");
                         self.event_sender.send(HaStateEvent::Step).log();
                         self.event_sender.send(event.clone()).log();
                         return Transition(State::load());
@@ -204,7 +206,11 @@ impl HaState {
                 }
                 _ => {}
             }
-            ws.next().await.log();
+            if let Err(err) = ws.next().await {
+                error!("websocket error: {:?}", err);
+                self.event_sender.send(HaStateEvent::Step).log();
+                return Transition(State::load());
+            }
             Handled
         } else {
             Transition(State::load())

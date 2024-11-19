@@ -44,7 +44,7 @@ impl KiaHandler {
         });
     }
 
-    async fn dispatch_txframe(&self, txframe: TxFrame) {
+    async fn dispatch_txframe(&self, txframe: &TxFrame) {
         self.ha_sensors
             .get("last_communication")
             .unwrap()
@@ -135,12 +135,12 @@ impl KiaHandler {
                 self.ha_sensors
                     .get("modem_soc")
                     .unwrap()
-                    .update(soc.into())
+                    .update((*soc).into())
                     .await;
                 self.ha_sensors
                     .get("modem_voltage")
                     .unwrap()
-                    .update(voltage.into())
+                    .update((*voltage).into())
                     .await;
             }
             _ => {}
@@ -156,11 +156,12 @@ impl KiaHandler {
         let socket =
             tokio::net::UdpSocket::bind(SocketAddr::from(([0, 0, 0, 0], self.config.kia.port)))
                 .await?;
+        let mut peer = None;
 
         info!("KiaHandler listening on port: {}", self.config.kia.port);
         let mut buffer = [0u8; 1024];
         loop {
-            let (n, peer) = socket.recv_from(&mut buffer).await?;
+            let (n, new_peer) = socket.recv_from(&mut buffer).await?;
             let data = buffer[..n].to_vec();
             if let Some(duplicated) = &self.config.kia.duplicated {
                 socket.send_to(&data, duplicated).await?;
@@ -170,7 +171,20 @@ impl KiaHandler {
                     match TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
                         Ok(txmessage) => {
                             info!("Received txmessage: {:?} from: {:?}", txmessage, peer);
-                            self.dispatch_txframe(txmessage.frame).await;
+                            peer = Some(new_peer);
+                            self.dispatch_txframe(&txmessage.frame).await;
+                            if txmessage.needs_ack() {
+                                if let Some(peer) = peer {
+                                    let ack = types::RxMessage::new(types::RxFrame::TxFrameAck(
+                                        txmessage.id,
+                                    ))
+                                    .to_vec_encrypted()
+                                    .unwrap();
+                                    if let Err(err) = socket.send_to(ack.as_slice(), peer).await {
+                                        error!("error sending ack frame: {:?} to: {:?}", err, peer);
+                                    }
+                                }
+                            }
                         }
                         Err(err) => {
                             error!("Error decrypting message: {:?}", err);

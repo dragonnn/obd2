@@ -28,7 +28,7 @@ use crate::{
 
 // /#[embassy_executor::task]
 pub async fn task(mut modem: Modem, spawner: &Spawner) {
-    unwrap!(spawner.spawn(link::task()));
+    unwrap!(spawner.spawn(link::send_task(*spawner)));
 
     let mut persistent_manager = PeristentManager::new();
 

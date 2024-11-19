@@ -12,7 +12,10 @@ use serde_encrypt::{
     EncryptedMessage,
 };
 
+#[cfg(feature = "message_id_increment")]
 pub static ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
+#[cfg(feature = "message_id_decrement")]
+pub static ID_COUNTER: AtomicUsize = AtomicUsize::new(usize::MAX);
 
 mod serializer;
 
@@ -227,12 +230,20 @@ pub struct TxMessage {
 
 impl TxMessage {
     pub fn new(frame: TxFrame) -> Self {
-        Self {
+        let mut ret = Self {
+            #[cfg(feature = "message_id_increment")]
             id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
+            #[cfg(feature = "message_id_decrement")]
+            id: ID_COUNTER.fetch_sub(1, Ordering::Relaxed) as u64,
             frame,
             timestamp: 0,
             ack: false,
+        };
+        if ret.id % 10 == 0 {
+            ret.ack = true;
         }
+
+        ret
     }
 
     pub fn to_vec(&self) -> Result<heapless::Vec<u8, 512>, postcard::Error> {
@@ -357,15 +368,26 @@ pub struct RxMessage {
     pub id: u64,
     pub frame: RxFrame,
     pub timestamp: u64,
+    pub ack: bool,
 }
 
 impl RxMessage {
     pub fn new(frame: RxFrame) -> Self {
-        Self {
+        let mut ret = Self {
+            #[cfg(feature = "message_id_increment")]
             id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
+            #[cfg(feature = "message_id_decrement")]
+            id: ID_COUNTER.fetch_sub(1, Ordering::Relaxed) as u64,
             frame,
             timestamp: 0,
+            ack: false,
+        };
+
+        if ret.id % 10 == 0 {
+            ret.ack = true;
         }
+
+        ret
     }
 
     pub fn to_vec(&self) -> Result<heapless::Vec<u8, 512>, postcard::Error> {

@@ -24,7 +24,19 @@ pub fn run(
 }
 
 #[embassy_executor::task]
-async fn send_task(send: BoardUarteTx, mut uarte_send: Output<'static>) {}
+async fn send_task(mut send: BoardUarteTx, mut uarte_send: Output<'static>) {
+    let mut rx_channel_sub = crate::tasks::modem::link::rx_channel_sub();
+    loop {
+        let msg = rx_channel_sub.next_message_pure().await;
+        if let Ok(encrypted_message) = types::RxMessage::new(msg).to_vec_encrypted() {
+            uarte_send.set_high();
+            embassy_time::Timer::after(Duration::from_millis(10)).await;
+            send.write(&encrypted_message).await.unwrap();
+            uarte_send.set_low();
+            embassy_time::Timer::after(Duration::from_millis(10)).await;
+        }
+    }
+}
 
 #[embassy_executor::task]
 async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'static>, mut uarte_reset: Output<'static>) {

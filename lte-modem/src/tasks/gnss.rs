@@ -32,7 +32,7 @@ pub struct State {
 
 impl State {
     pub async fn get_current_fix() -> Option<Fix> {
-        STATE.lock().await.fix
+        with_timeout(Duration::from_secs(10), STATE.lock()).await.ok().map(|l| l.fix).flatten()
     }
 
     pub async fn wait_for_fix(timeout: Duration) -> Option<Fix> {
