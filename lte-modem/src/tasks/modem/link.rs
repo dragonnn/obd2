@@ -221,43 +221,52 @@ impl TxMessageSend for OwnedUdpSendSocket {
         if message.needs_ack() {
             rx.clear();
         }
-        match with_timeout(
-            Duration::from_secs(15),
-            self.send_to(
-                &message.to_vec_encrypted().map_err(|_| nrf_modem::Error::Utf8Error)?,
-                (ip.octets(), port).into(),
-            ),
-        )
-        .await
-        {
-            Ok(Ok(_)) => {
-                if message.needs_ack() {
-                    let ack_wait = Instant::now();
-                    loop {
-                        match with_timeout(Duration::from_secs(15), rx.next_message_pure()).await {
-                            Ok(rx_frame) => {
-                                if let types::RxFrame::TxFrameAck(ack_id) = rx_frame {
-                                    if ack_id == message.id {
-                                        info!("got ack id: {:?}", ack_id);
-                                        return Ok(());
+        let ack_wait = Instant::now();
+        loop {
+            match with_timeout(
+                Duration::from_secs(15),
+                self.send_to(
+                    &message.to_vec_encrypted().map_err(|_| nrf_modem::Error::Utf8Error)?,
+                    (ip.octets(), port).into(),
+                ),
+            )
+            .await
+            {
+                Ok(Ok(_)) => {
+                    if message.needs_ack() {
+                        loop {
+                            match with_timeout(Duration::from_secs(15), rx.next_message_pure()).await {
+                                Ok(rx_frame) => {
+                                    if let types::RxFrame::TxFrameAck(ack_id) = rx_frame {
+                                        if ack_id == message.id {
+                                            info!("got ack id: {:?}", ack_id);
+                                            return Ok(());
+                                        }
                                     }
                                 }
+                                Err(_) => {
+                                    ACK_TIMEOUT.fetch_add(1, Ordering::Relaxed);
+                                    error!("ack timeout");
+                                }
                             }
-                            Err(_) => {
-                                ACK_TIMEOUT.fetch_add(1, Ordering::Relaxed);
+                            if ack_wait.elapsed() > Duration::from_secs(60) {
+                                error!("ack timeout inside loop");
                                 return Err(nrf_modem::Error::Utf8Error);
                             }
                         }
-                        if ack_wait.elapsed() > Duration::from_secs(15) {
-                            return Err(nrf_modem::Error::Utf8Error);
-                        }
+                    } else {
+                        return Ok(());
                     }
-                } else {
-                    Ok(())
+                }
+                Ok(Err(e)) => {
+                    error!("send error {:?}", e);
+                    return Err(nrf_modem::Error::Utf8Error);
+                }
+                Err(_) => {
+                    error!("send timeout");
+                    return Err(nrf_modem::Error::Utf8Error);
                 }
             }
-            Ok(Err(e)) => Err(e),
-            Err(_) => Err(nrf_modem::Error::Utf8Error),
         }
     }
 }
