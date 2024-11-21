@@ -12,6 +12,12 @@ use serde_encrypt::{
     EncryptedMessage,
 };
 
+#[cfg(all(
+    not(feature = "message_id_increment"),
+    not(feature = "message_id_decrement")
+))]
+pub static ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
+
 #[cfg(feature = "message_id_increment")]
 pub static ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
 #[cfg(feature = "message_id_decrement")]
@@ -231,6 +237,11 @@ pub struct TxMessage {
 impl TxMessage {
     pub fn new(frame: TxFrame) -> Self {
         let mut ret = Self {
+            #[cfg(all(
+                not(feature = "message_id_increment"),
+                not(feature = "message_id_decrement")
+            ))]
+            id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
             #[cfg(feature = "message_id_increment")]
             id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
             #[cfg(feature = "message_id_decrement")]
@@ -297,6 +308,7 @@ pub enum Modem {
     Disconnected,
     GnssFix(GnssFix),
     GnssState(GnssState),
+    Reset,
 }
 
 #[derive(Debug, Format, Clone, Deserialize, Serialize)]
@@ -374,6 +386,11 @@ pub struct RxMessage {
 impl RxMessage {
     pub fn new(frame: RxFrame) -> Self {
         let mut ret = Self {
+            #[cfg(all(
+                not(feature = "message_id_increment"),
+                not(feature = "message_id_decrement")
+            ))]
+            id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
             #[cfg(feature = "message_id_increment")]
             id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
             #[cfg(feature = "message_id_decrement")]

@@ -52,6 +52,9 @@ pub async fn send_task(spawner: Spawner) {
         .await
         {
             First(txframe) => {
+                if let types::TxFrame::Modem(Modem::Reset) = txframe {
+                    crate::tasks::reset::request_reset();
+                }
                 if let types::TxFrame::Shutdown = txframe {
                     txframe_shutdown = true;
                 }

@@ -49,6 +49,13 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
     let mut shutdown_signal = get_shutdown_signal();
     let mut extra_send_sub = unwrap!(EXTRA_SEND.subscriber());
 
+    if let Some(encrypted_modem_reset) =
+        types::TxMessage::new(types::TxFrame::Modem(types::Modem::Reset)).encrypt(&shared_key).ok()
+    {
+        let encrypted_modem_reset_bytes = encrypted_modem_reset.serialize();
+        ieee802154.transmit_buffer(&encrypted_modem_reset_bytes, 2, Duration::from_secs(1)).await.ok();
+    }
+
     loop {
         match select3(
             async {
