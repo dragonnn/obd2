@@ -78,7 +78,7 @@ pub async fn run(mut power: Power) {
             Second(power_event) => match power_event {
                 PowerEvent::Shutdown(duration) => {
                     warn!("shutdown event received for {:?}s", duration.as_secs());
-                    unwrap!(SHUTDOWN.publisher()).publish(()).await;
+                    unwrap!(SHUTDOWN.publisher()).publish_immediate(());
                     let delay_duration = if debugger_connected() {
                         warn!("debugger connected, deep sleeping in 5s");
                         Duration::from_secs(5)

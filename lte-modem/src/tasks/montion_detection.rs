@@ -66,7 +66,7 @@ pub async fn task(mut montion_detection: LowPowerAccelerometer) {
                 }
                 last_montion_count += 1;
             } else {
-                montion_detection_pub.publish(()).await;
+                montion_detection_pub.publish_immediate(());
                 STATE.lock().await.0 += 1;
                 last_montion_count = 0;
                 if last_montion_detect.elapsed().as_secs() > 60 {

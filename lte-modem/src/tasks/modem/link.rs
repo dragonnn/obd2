@@ -1,4 +1,4 @@
-use core::sync::atomic::{AtomicBool, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use defmt::*;
 use embassy_executor::Spawner;
@@ -8,7 +8,7 @@ use embassy_sync::{
     pubsub::{DynPublisher, DynSubscriber, PubSubChannel},
     signal::Signal,
 };
-use embassy_time::{with_timeout, Duration, Ticker, Timer};
+use embassy_time::{with_timeout, Duration, Instant, Ticker, Timer};
 use nrf_modem::{
     CancellationToken, DtlsSocket, Error as NrfError, LteLink, OwnedUdpReceiveSocket, OwnedUdpSendSocket,
     PeerVerification, UdpSocket,
@@ -20,6 +20,7 @@ use crate::board::Gnss;
 
 static TX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, TxFrame, 256, 1, 16> = PubSubChannel::new();
 static RX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, RxFrame, 256, 2, 16> = PubSubChannel::new();
+static ACK_TIMEOUT: AtomicUsize = AtomicUsize::new(0);
 
 static CONNECTED: AtomicBool = AtomicBool::new(false);
 static DISCONNECT_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
@@ -32,6 +33,7 @@ pub async fn send_task(spawner: Spawner) {
     let mut socket: Option<OwnedUdpSendSocket> = None;
     let mut timeout_ticker: Option<Ticker> = None;
     let mut starting_port: u16 = 10000;
+    let mut rx_channel_sub = rx_channel_sub();
     loop {
         if starting_port < 10000 {
             starting_port = 10000;
@@ -79,12 +81,22 @@ pub async fn send_task(spawner: Spawner) {
                             spawner.spawn(recv_task(socket_rx)).ok();
                             timeout_ticker = Some(Ticker::every(Duration::from_secs(60)));
                             socket_tx
-                                .tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::Connected)), ip, port)
+                                .tx_frame_send(
+                                    &TxMessage::new(TxFrame::Modem(Modem::Connected)),
+                                    ip,
+                                    port,
+                                    &mut rx_channel_sub,
+                                )
                                 .await
                                 .ok();
                             let battery = crate::tasks::battery::State::get().await;
                             socket_tx
-                                .tx_frame_send(&TxMessage::new(TxFrame::Modem(battery.into())), ip, port)
+                                .tx_frame_send(
+                                    &TxMessage::new(TxFrame::Modem(battery.into())),
+                                    ip,
+                                    port,
+                                    &mut rx_channel_sub,
+                                )
                                 .await
                                 .ok();
                             Timer::after_millis(100).await;
@@ -104,7 +116,7 @@ pub async fn send_task(spawner: Spawner) {
                     if !txmessage.frame.is_modem() {
                         timeout_ticker.as_mut().map(|t| t.reset());
                     }
-                    match current_socket.tx_frame_send(&txmessage, ip, port).await {
+                    match current_socket.tx_frame_send(&txmessage, ip, port, &mut rx_channel_sub).await {
                         Ok(_) => {}
                         Err(e) => {
                             error!("link socket send error {:?}", e);
@@ -118,11 +130,24 @@ pub async fn send_task(spawner: Spawner) {
                 if let Some(socket) = &mut socket {
                     if let Some(gnss) = crate::tasks::gnss::State::get_current_fix().await {
                         socket
-                            .tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::GnssFix(gnss))), ip, port)
+                            .tx_frame_send(
+                                &TxMessage::new(TxFrame::Modem(Modem::GnssFix(gnss))),
+                                ip,
+                                port,
+                                &mut rx_channel_sub,
+                            )
                             .await
                             .ok();
                     }
-                    socket.tx_frame_send(&TxMessage::new(TxFrame::Modem(Modem::Disconnected)), ip, port).await.ok();
+                    socket
+                        .tx_frame_send(
+                            &TxMessage::new(TxFrame::Modem(Modem::Disconnected)),
+                            ip,
+                            port,
+                            &mut rx_channel_sub,
+                        )
+                        .await
+                        .ok();
                 }
                 if let Some(socket) = socket.take() {
                     embassy_time::Timer::after(Duration::from_secs(1)).await;
@@ -146,19 +171,19 @@ pub async fn send_task(spawner: Spawner) {
 #[embassy_executor::task]
 pub async fn recv_task(socket_rx: OwnedUdpReceiveSocket) {
     let mut rx_buf = [0; 512];
-    let mut rx_pub = unwrap!(RX_CHANNEL.dyn_publisher());
+    let rx_pub = unwrap!(RX_CHANNEL.dyn_publisher());
     loop {
         match select(DISCONNECT_SIGNAL.wait(), socket_rx.receive_from(&mut rx_buf)).await {
             First(_) => break,
-            Second(Ok((readed, peer))) => {
+            Second(Ok((readed, _peer))) => {
                 info!("got data: {:?} from peer", readed);
                 match types::RxMessage::from_bytes_encrypted(&readed) {
                     Ok(rx_message) => {
                         info!("rx_message: {:?}", rx_message);
                         rx_pub.publish_immediate(rx_message.frame);
                     }
-                    Err(err) => {
-                        error!("error decoding rx messsage");
+                    Err(_err) => {
+                        error!("error decoding rx message");
                     }
                 }
             }
@@ -172,7 +197,13 @@ pub async fn recv_task(socket_rx: OwnedUdpReceiveSocket) {
 }
 
 trait TxMessageSend {
-    async fn tx_frame_send(&self, message: &TxMessage, ip: core::net::Ipv4Addr, port: u16) -> Result<(), NrfError>;
+    async fn tx_frame_send(
+        &self,
+        message: &TxMessage,
+        ip: core::net::Ipv4Addr,
+        port: u16,
+        rx: &mut RxChannelSub,
+    ) -> Result<(), NrfError>;
 }
 
 impl TxMessageSend for OwnedUdpSendSocket {
@@ -181,7 +212,15 @@ impl TxMessageSend for OwnedUdpSendSocket {
         message: &TxMessage,
         ip: core::net::Ipv4Addr,
         port: u16,
+        rx: &mut RxChannelSub,
     ) -> Result<(), nrf_modem::Error> {
+        if ACK_TIMEOUT.load(Ordering::Relaxed) > 60 {
+            crate::tasks::reset::request_reset();
+        }
+
+        if message.needs_ack() {
+            rx.clear();
+        }
         match with_timeout(
             Duration::from_secs(15),
             self.send_to(
@@ -191,7 +230,32 @@ impl TxMessageSend for OwnedUdpSendSocket {
         )
         .await
         {
-            Ok(Ok(_)) => Ok(()),
+            Ok(Ok(_)) => {
+                if message.needs_ack() {
+                    let ack_wait = Instant::now();
+                    loop {
+                        match with_timeout(Duration::from_secs(15), rx.next_message_pure()).await {
+                            Ok(rx_frame) => {
+                                if let types::RxFrame::TxFrameAck(ack_id) = rx_frame {
+                                    if ack_id == message.id {
+                                        info!("got ack id: {:?}", ack_id);
+                                        return Ok(());
+                                    }
+                                }
+                            }
+                            Err(_) => {
+                                ACK_TIMEOUT.fetch_add(1, Ordering::Relaxed);
+                                return Err(nrf_modem::Error::Utf8Error);
+                            }
+                        }
+                        if ack_wait.elapsed() > Duration::from_secs(15) {
+                            return Err(nrf_modem::Error::Utf8Error);
+                        }
+                    }
+                } else {
+                    Ok(())
+                }
+            }
             Ok(Err(e)) => Err(e),
             Err(_) => Err(nrf_modem::Error::Utf8Error),
         }

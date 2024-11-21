@@ -19,10 +19,10 @@ pub async fn task(mut button: Button) {
         defmt::info!("button press detected");
         if let Some(button_last_press) = button_last_press {
             if button_last_press.elapsed().as_secs() > 15 {
-                button_pub.publish(()).await;
+                button_pub.publish_immediate(());
             }
         } else {
-            button_pub.publish(()).await;
+            button_pub.publish_immediate(());
         }
         button_last_press = Some(Instant::now());
         Timer::after(Duration::from_millis(500)).await;

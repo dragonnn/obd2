@@ -111,7 +111,7 @@ pub async fn task(mut gnss: Gnss) {
                             state.fixes.pop();
                         }
                         state.fixes.push(fix).ok();
-                        fix_pub.publish(fix).await;
+                        fix_pub.publish_immediate(fix);
                     } else {
                         defmt::warn!("found duplicated fix");
                     }
@@ -135,7 +135,7 @@ pub async fn task(mut gnss: Gnss) {
                     let fix = fix.0;
                     let mut state = STATE.lock().await;
                     state.fix = Some(fix);
-                    fix_pub.publish(fix).await;
+                    fix_pub.publish_immediate(fix);
 
                     battery_state = BatteryState::get().await;
                     gnss_set_duration(&battery_state, &mut gnss).await;

@@ -65,7 +65,7 @@ impl KiaState {
         ieee802154::send_now();
         LCD_EVENTS.send(LcdEvent::Main).await;
         set_obd2_sets(Obd2PidSets::IgnitionOn).await;
-        self.tx_frame_pub.publish(types::TxFrame::State(types::State::IgnitionOn)).await;
+        self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::IgnitionOn));
     }
 
     #[state(entry_action = "enter_ignition_on")]
@@ -114,7 +114,7 @@ impl KiaState {
     async fn enter_check_charging(&mut self) {
         ieee802154::send_now();
         set_obd2_sets(Obd2PidSets::Charging).await;
-        self.tx_frame_pub.publish(types::TxFrame::State(types::State::CheckCharging)).await;
+        self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::CheckCharging));
     }
 
     #[state(entry_action = "enter_check_charging")]
@@ -157,7 +157,7 @@ impl KiaState {
     async fn enter_charging(&mut self) {
         ieee802154::send_now();
         set_obd2_sets(Obd2PidSets::Charging).await;
-        self.tx_frame_pub.publish(types::TxFrame::State(types::State::Charging)).await;
+        self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::Charging));
     }
 
     #[state(entry_action = "enter_charging")]
@@ -201,7 +201,7 @@ impl KiaState {
         ieee802154::send_now();
         LCD_EVENTS.send(LcdEvent::PowerOff).await;
         set_obd2_sets(Obd2PidSets::IgnitionOff).await;
-        self.tx_frame_pub.publish(types::TxFrame::State(types::State::IgnitionOff)).await;
+        self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::IgnitionOff));
     }
 
     #[state(entry_action = "enter_ignition_off")]
@@ -235,9 +235,9 @@ impl KiaState {
     #[action]
     async fn enter_shutdown(&mut self, duration: &embassy_time::Duration) {
         ieee802154::send_now();
-        self.tx_frame_pub.publish(types::TxFrame::State(types::State::Shutdown)).await;
+        self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::Shutdown));
         embassy_time::Timer::after_millis(200).await;
-        self.power_events_pub.publish(PowerEvent::Shutdown(*duration)).await;
+        self.power_events_pub.publish_immediate(PowerEvent::Shutdown(*duration));
     }
 
     #[state(entry_action = "enter_shutdown")]
@@ -253,7 +253,7 @@ impl KiaState {
     }
 
     fn on_dispatch(&mut self, state: StateOrSuperstate<Self>, event: &KiaEvent) {
-        self.power_events_pub.try_publish(PowerEvent::RwdtFeed).ok();
+        self.power_events_pub.publish_immediate(PowerEvent::RwdtFeed);
         if let KiaEvent::Obd2Event(_) = event {
             trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
         } else {

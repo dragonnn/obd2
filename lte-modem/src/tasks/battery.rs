@@ -75,7 +75,7 @@ pub async fn task(mut battery: Battery) {
     loop {
         let new_state = State::new(&mut battery, low_voltage).await;
         if new_state.charging != state.charging {
-            charging_pub.publish(new_state.clone()).await;
+            charging_pub.publish_immediate(new_state.clone());
             state = new_state.clone();
             if new_state.charging {
                 timeout = Duration::from_secs(5);
@@ -101,14 +101,12 @@ pub async fn task(mut battery: Battery) {
         defmt::info!("battery voltage: {} soc: {} low_voltage: {}", battery_voltage, battery_soc, low_voltage);
         if last_modem_battery_send.map(|l| l.elapsed().as_secs() > 60).unwrap_or(true) {
             last_modem_battery_send = Some(Instant::now());
-            tx_channel_pub
-                .try_publish(TxFrame::Modem(Modem::Battery {
-                    voltage: battery_voltage as f64 / 1000.0,
-                    low_voltage,
-                    soc: battery_soc,
-                    charging: state.charging,
-                }))
-                .ok();
+            tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::Battery {
+                voltage: battery_voltage as f64 / 1000.0,
+                low_voltage,
+                soc: battery_soc,
+                charging: state.charging,
+            }));
         }
     }
 }

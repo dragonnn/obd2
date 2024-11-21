@@ -66,7 +66,7 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
             match EncryptedMessage::deserialize(vec_buffer) {
                 Ok(encrypted_message) => match types::TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
                     Ok(msg) => {
-                        tx_channel_pub.publish(msg.frame).await;
+                        tx_channel_pub.publish_immediate(msg.frame);
                     }
                     Err(e) => {
                         error!("uarte_receive decrypt error {:?}", defmt::Debug2Format(&e));

@@ -41,12 +41,12 @@ impl Gnss {
         if self.duration.as_millis() < 20000 {
             info!("start periodic fix");
             self.stream = Some(self.handler().await?.start_continuous_fix(self.get_config())?);
-            self.tx_channel_pub.try_publish(TxFrame::Modem(Modem::GnssState(GnssState::PeriodicFix))).ok();
+            self.tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::GnssState(GnssState::PeriodicFix)));
         } else {
             self.stream = None;
-            self.tx_channel_pub
-                .try_publish(TxFrame::Modem(Modem::GnssState(GnssState::TickerFix(self.duration.as_secs() as u32))))
-                .ok();
+            self.tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::GnssState(GnssState::TickerFix(
+                self.duration.as_secs() as u32,
+            ))));
             self.ticker = Ticker::every(self.duration);
         }
         Ok(())
@@ -138,10 +138,10 @@ impl Gnss {
             self.ticker.next().await;
         }
 
-        self.tx_channel_pub.try_publish(TxFrame::Modem(Modem::GnssState(GnssState::WaitingForFix))).ok();
+        self.tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::GnssState(GnssState::WaitingForFix)));
         with_timeout(self.timeout, self.get_fix()).await.map_err(|_| {
             defmt::error!("gnss timeout");
-            self.tx_channel_pub.try_publish(TxFrame::Modem(Modem::GnssState(GnssState::TimeoutFix))).ok();
+            self.tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::GnssState(GnssState::TimeoutFix)));
             ModemError::NrfError(0)
         })?
     }

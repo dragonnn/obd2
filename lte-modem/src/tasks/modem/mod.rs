@@ -122,7 +122,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                 }
                 if let Some(fix) = fix {
                     if link::connected() || current_distance > 0.5 {
-                        tx_channel_pub.publish(types::TxFrame::Modem(types::Modem::GnssFix(fix))).await;
+                        tx_channel_pub.publish_immediate(types::TxFrame::Modem(types::Modem::GnssFix(fix)));
                     }
                 }
                 persistent_manager.update_fix(fix);
