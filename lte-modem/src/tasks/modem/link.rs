@@ -79,7 +79,7 @@ pub async fn send_task(spawner: Spawner) {
                             let (socket_rx, socket_tx) = s.split_owned().await.unwrap();
                             info!("connected");
                             spawner.spawn(recv_task(socket_rx)).ok();
-                            timeout_ticker = Some(Ticker::every(Duration::from_secs(60)));
+                            timeout_ticker = Some(Ticker::every(Duration::from_secs(120)));
                             socket_tx
                                 .tx_frame_send(
                                     &TxMessage::new(TxFrame::Modem(Modem::Connected)),

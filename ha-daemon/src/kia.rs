@@ -170,6 +170,11 @@ impl KiaHandler {
                 Ok(encrypted_message) => {
                     match TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
                         Ok(txmessage) => {
+                            self.ha_sensors
+                                .get("peer")
+                                .unwrap()
+                                .update(new_peer.to_string().into())
+                                .await;
                             info!("Received txmessage: {:?} from: {:?}", txmessage, peer);
                             peer = Some(new_peer);
                             self.dispatch_txframe(&txmessage.frame).await;

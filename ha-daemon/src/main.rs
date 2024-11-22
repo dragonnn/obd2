@@ -150,7 +150,7 @@ impl HaState {
             if self.sensor_register {
                 Transition(State::sensors_register())
             } else {
-                Transition(State::connected())
+                Transition(State::connected(0))
             }
         } else {
             Transition(State::load())
@@ -165,7 +165,7 @@ impl HaState {
     }
 
     #[state(entry_action = "entry_connected")]
-    async fn connected(&mut self, event: &HaStateEvent) -> Response<State> {
+    async fn connected(&mut self, event: &HaStateEvent, ws_errors: &mut i32) -> Response<State> {
         if let Some(ws) = &mut self.ws {
             match event {
                 HaStateEvent::UpdateSensor(update_sensor) => {
@@ -208,8 +208,12 @@ impl HaState {
             }
             if let Err(err) = ws.next().await {
                 error!("websocket error: {:?}", err);
-                self.event_sender.send(HaStateEvent::Step).log();
-                return Transition(State::load());
+                *ws_errors += 1;
+                if *ws_errors > 5 || err.is_ws() {
+                    error!("websocket errors exceeded");
+                    tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+                    return Transition(State::load());
+                }
             }
             Handled
         } else {
@@ -239,7 +243,7 @@ impl HaState {
 
     #[state(entry_action = "entry_sensors_register")]
     async fn sensors_register(&mut self, event: &HaStateEvent) -> Response<State> {
-        Transition(State::connected())
+        Transition(State::connected(0))
     }
 }
 

@@ -54,6 +54,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
     {
         let encrypted_modem_reset_bytes = encrypted_modem_reset.serialize();
         ieee802154.transmit_buffer(&encrypted_modem_reset_bytes, 2, Duration::from_secs(1)).await.ok();
+        embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     }
 
     loop {
