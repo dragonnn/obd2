@@ -98,6 +98,11 @@ pub struct Icu2Pid {
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
+pub struct Icu3Pid {
+    pub on_board_charger_wakeup_output: bool,
+}
+
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct Icu1Smk {
     pub aux_battery_voltage_power_load: f32,
     pub aux_battery_voltage_signal_cpu: f32,
@@ -167,6 +172,7 @@ pub enum Pid {
     HybridDcDcPid(HybridDcDcPid),
     IcuPid(IcuPid),
     Icu2Pid(Icu2Pid),
+    Icu3Pid(Icu3Pid),
     Icu1Smk(Icu1Smk),
     IceEnginePid(IceEnginePid),
     TransaxlePid(TransaxlePid),

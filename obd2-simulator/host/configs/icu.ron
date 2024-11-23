@@ -41,6 +41,47 @@
             )),
         ]
     ),
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                    0x62, 0x00, 0x0b, 0xf0, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0xaa, 0xaa,
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                    0x62, 0x00, 0x0c, 0xe0, 0x00, 0x00,
+                    0x00, 0x64, 0xff, 0x4c, 0xaa, 0xaa, 0xaa,
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                    0x62, 0x00, 0xd, 0x80, 0x00, 0x00,
+                    0x00, 0x00, 0x3, 0xe8, 0xaa, 0xaa, 0xaa,
+                ]
+            )),
+        ]
+    ),
+
+
 
     Request(
         can_id: 0x770,
@@ -80,5 +121,125 @@
                 ]
             )),
         ]
-    )
+    ),
+    /*
+    [2024-11-23T16:48:44Z WARN  host] Unhandled CAN ID: 770 [2, 3e, 0, 0, 0, 0, 0, 0]
+    [2024-11-23T16:48:45Z WARN  host] Unhandled CAN ID: 770 [3, 22, bc, 7, 0, 0, 0, 0]
+    [2024-11-23T16:48:45Z WARN  host] Unhandled CAN ID: 770 [3, 22, bc, 8, 0, 0, 0, 0]
+    [2024-11-23T16:48:46Z WARN  host] Unhandled CAN ID: 770 [3, 22, bc, 8, 0, 0, 0, 0]
+    [2024-11-23T16:48:46Z WARN  host] Unhandled CAN ID: 770 [3, 22, bc, 8, 0, 0, 0, 0]
+    [2024-11-23T16:48:47Z WARN  host] Unhandled CAN ID: 770 [1, 20, 0, 0, 0, 0, 0, 0]
+    */
+
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0xbc, 0x01, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                    0x62, 0xbc, 0x01, 0x5a, 0x00, 0x00,
+                    0x00, 0x00, 0x02, 0x00, 0x02, 0x02, 0x00,
+                    0x02, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0xbc, 0x04, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                    0x62, 0xbc, 0x04, 0xb0, 0x23, 0x70,
+                    0x20, 0x0d, 0x00, 0x00, 0x00, 0xaa, 0xaa
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0xbc, 0x05, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                    0x62, 0xbc, 0x05, 0x2f, 0x13, 0x24,
+                    0x02, 0x00, 0x40, 0x00, 0x00, 0xaa, 0xaa,
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0xbc, 0x06, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                    0x62, 0xbc, 0x06, 0xb4, 0x80, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0xaa, 0xaa,
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0xbc, 0x07, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                    0x62, 0xbc, 0x07, 0x08, 0x40, 0x43,
+                    0xce, 0x00, 0x00, 0x00, 0x40, 0xaa, 0xaa,
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0xbc, 0x08, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                    0x62, 0xbc, 0x08, 0x00, 0xd0, 0x90,
+                    0xb8, 0x00, 0x01, 0x09, 0x1c, 0xaa, 0xaa,
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0xbc, 0x09, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                    0x62, 0xbc, 0x09, 0x32, 0x20, 0x30,
+                    0x3f, 0x00, 0x00, 0x00, 0x00, 0xaa, 0xaa,
+                ]
+            )),
+        ]
+    ),
+    Request(
+        can_id: 0x770,
+        message: [0x03, 0x22, 0xbc, 0x10, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x778,
+                message: [
+                    //0    1     2     3     4     5
+                    0x62, 0xbc, 0x10, 0x0f, 0x08, 0x00,
+                    //6    7
+                    0x00, 0x00, 
+                    //8
+                    0b00010000, // on board charger wakeup output
+                    //9    10    11    12
+                    0x00, 0x00, 0xaa, 0xaa,
+                ]
+            )),
+        ]
+    ),
 ]

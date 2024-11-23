@@ -65,6 +65,7 @@ impl Obd2PidSets {
         ret = ret && obd2.handle_pid::<pid::HybridDcDcPid>().await;
         ret = ret && obd2.handle_pid::<pid::IcuPid>().await;
         ret = ret && obd2.handle_pid::<pid::Icu2Pid>().await;
+        ret = ret && obd2.handle_pid::<pid::Icu3Pid>().await;
         ret = ret && obd2.handle_pid::<pid::IceEnginePid>().await;
         ret = ret && obd2.handle_pid::<pid::OnBoardChargerPid>().await;
         ret = ret && obd2.handle_pid::<pid::Icu1Smk>().await;
@@ -79,6 +80,7 @@ impl Obd2PidSets {
         ret = ret && obd2.handle_pid::<pid::IceTemperaturePid>().await;
         ret = ret && obd2.handle_pid::<pid::IcuPid>().await;
         ret = ret && obd2.handle_pid::<pid::Icu2Pid>().await;
+        ret = ret && obd2.handle_pid::<pid::Icu3Pid>().await;
         ret = ret && obd2.handle_pid::<pid::OnBoardChargerPid>().await;
         ret = ret && obd2.handle_pid::<pid::Icu1Smk>().await;
 
@@ -90,6 +92,7 @@ impl Obd2PidSets {
         obd2.disable_obd2_pid_periods();
         ret = ret && obd2.handle_pid::<pid::IcuPid>().await;
         ret = ret && obd2.handle_pid::<pid::Icu2Pid>().await;
+        ret = ret && obd2.handle_pid::<pid::Icu3Pid>().await;
         ret = ret && obd2.handle_pid::<pid::Icu1Smk>().await;
         ret
     }

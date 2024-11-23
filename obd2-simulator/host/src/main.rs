@@ -63,10 +63,10 @@ async fn main() {
 
                 let can_dlc = buffer[4] as usize;
                 let can_message = &buffer[5..decoded];
-                info!("CAN ID: {:x} {:x?}", can_id, can_message);
+                //info!("CAN ID: {:x} {:x?}", can_id, can_message);
                 let request = config.find_request(can_id, can_message);
                 if let Some(request) = request {
-                    info!("Request: {:?}", request);
+                    info!("Handling: {:x?}", request);
                     for response in &request.response {
                         let mut response_buf = Vec::with_capacity(512);
                         for raw_response in response.into_raw_responses() {
@@ -85,6 +85,8 @@ async fn main() {
                             tokio::time::sleep(Duration::from_millis(1)).await;
                         }
                     }
+                } else {
+                    warn!("Unhandled CAN ID: {:x} {:x?}", can_id, can_message);
                 }
             }
             Err(e) => {

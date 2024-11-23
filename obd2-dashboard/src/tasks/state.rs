@@ -207,6 +207,13 @@ impl KiaState {
     #[state(entry_action = "enter_ignition_off")]
     async fn ignition_off(&mut self, event: &KiaEvent, timeout: &Instant) -> Response<State> {
         match event {
+            KiaEvent::Obd2Event(Obd2Event::Icu3Pid(icu3_pid)) => {
+                if icu3_pid.on_board_charger_wakeup_output {
+                    Transition(State::check_charging(None, Instant::now()))
+                } else {
+                    Handled
+                }
+            }
             KiaEvent::Obd2Event(Obd2Event::OnBoardChargerPid(obc_pid)) => {
                 if obc_pid.ac_input_current > 0.0 {
                     Transition(State::check_charging(None, Instant::now()))
