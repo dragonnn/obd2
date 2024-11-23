@@ -179,6 +179,23 @@ pub enum Pid {
     OnBoardChargerPid(OnBoardChargerPid),
 }
 
+#[derive(Debug, Format, Clone, PartialEq, Deserialize, Serialize)]
+pub enum PidError {
+    BmsPid,
+    IceTemperaturePid,
+    IceFuelRatePid,
+    VehicleSpeedPid,
+    AcPid,
+    HybridDcDcPid,
+    IcuPid,
+    Icu2Pid,
+    Icu3Pid,
+    Icu1Smk,
+    IceEnginePid,
+    TransaxlePid,
+    OnBoardChargerPid,
+}
+
 impl core::hash::Hash for Pid {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         core::mem::discriminant(self).hash(state);
@@ -196,6 +213,7 @@ impl Eq for Pid {}
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub enum TxFrame {
     Obd2Pid(Pid),
+    Obd2PidError(PidError),
     Modem(Modem),
     Shutdown,
     State(State),

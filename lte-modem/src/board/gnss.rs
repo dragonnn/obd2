@@ -18,6 +18,8 @@ pub struct Gnss {
     ticker: Ticker,
     low_accuracy: bool,
     tx_channel_pub: TxChannelPub,
+
+    first_fix: bool,
 }
 
 impl Gnss {
@@ -25,8 +27,19 @@ impl Gnss {
         let duration = Duration::from_secs(20);
         let timeout = Duration::from_secs(5 * 60);
         let tx_channel_pub = tx_channel_pub();
+        unsafe {
+            nrfxlib_sys::nrf_modem_gnss_prio_mode_enable();
+        }
 
-        Self { stream: None, duration, timeout, ticker: Ticker::every(duration), low_accuracy: false, tx_channel_pub }
+        Self {
+            stream: None,
+            duration,
+            timeout,
+            ticker: Ticker::every(duration),
+            low_accuracy: false,
+            tx_channel_pub,
+            first_fix: true,
+        }
     }
 
     async fn handler(&mut self) -> Result<ModemGnss, ModemError> {
@@ -139,11 +152,21 @@ impl Gnss {
         }
 
         self.tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::GnssState(GnssState::WaitingForFix)));
-        with_timeout(self.timeout, self.get_fix()).await.map_err(|_| {
+        let mut _link_lock = None;
+        if self.first_fix {
+            warn!("force link disconnect and lock");
+            _link_lock = crate::tasks::modem::link::force_disconnect_and_lock().await;
+        }
+        let ret = with_timeout(self.timeout, self.get_fix()).await.map_err(|_| {
             defmt::error!("gnss timeout");
             self.tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::GnssState(GnssState::TimeoutFix)));
             ModemError::NrfError(0)
-        })?
+        })?;
+
+        if ret.as_ref().map(|f| f.is_some()).unwrap_or_default() {
+            self.first_fix = false;
+        }
+        ret
     }
 
     pub fn ticker_reset(&mut self) {

@@ -50,6 +50,10 @@ impl Pid for Icu1Smk {
         Ok(ret)
     }
 
+    fn into_error() -> types::PidError {
+        types::PidError::Icu1Smk
+    }
+
     fn into_event(self) -> Obd2Event {
         Obd2Event::Icu1Smk(self)
     }

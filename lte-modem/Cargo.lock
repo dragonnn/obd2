@@ -1970,6 +1970,7 @@ dependencies = [
  "futures-util",
  "heapless 0.8.0",
  "nrf-modem",
+ "nrfxlib-sys",
  "num-traits",
  "panic-persist",
  "persistent-buff",

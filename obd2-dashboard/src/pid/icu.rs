@@ -36,6 +36,10 @@ impl Pid for IcuPid {
         Ok(ret)
     }
 
+    fn into_error() -> types::PidError {
+        types::PidError::IcuPid
+    }
+
     fn into_event(self) -> Obd2Event {
         Obd2Event::IcuPid(self)
     }

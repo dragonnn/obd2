@@ -3,7 +3,7 @@ use embassy_futures::select::select;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex, signal::Signal};
 use embassy_time::{with_timeout, Duration};
 use serde::{Deserialize, Serialize};
-pub use types::Pid as Obd2Event;
+pub use types::{Pid as Obd2Event, PidError as Obd2Error};
 
 static OBD2_SETS: Mutex<CriticalSectionRawMutex, Obd2PidSets> = Mutex::new(Obd2PidSets::None);
 static OBD2_SETS_CHANGED: Signal<CriticalSectionRawMutex, ()> = Signal::new();
@@ -56,19 +56,19 @@ impl Obd2PidSets {
     async fn handle_ignition_on(obd2: &mut Obd2) -> bool {
         let mut ret = true;
         obd2.enable_obd2_pid_periods();
-        ret = ret && obd2.handle_pid::<pid::BmsPid>().await;
-        ret = ret && obd2.handle_pid::<pid::TransaxlePid>().await;
-        ret = ret && obd2.handle_pid::<pid::IceTemperaturePid>().await;
-        ret = ret && obd2.handle_pid::<pid::IceFuelRatePid>().await;
-        ret = ret && obd2.handle_pid::<pid::VehicleSpeedPid>().await;
-        ret = ret && obd2.handle_pid::<pid::AcPid>().await;
-        ret = ret && obd2.handle_pid::<pid::HybridDcDcPid>().await;
-        ret = ret && obd2.handle_pid::<pid::IcuPid>().await;
-        ret = ret && obd2.handle_pid::<pid::Icu2Pid>().await;
-        ret = ret && obd2.handle_pid::<pid::Icu3Pid>().await;
-        ret = ret && obd2.handle_pid::<pid::IceEnginePid>().await;
-        ret = ret && obd2.handle_pid::<pid::OnBoardChargerPid>().await;
-        ret = ret && obd2.handle_pid::<pid::Icu1Smk>().await;
+        ret = obd2.handle_pid::<pid::BmsPid>().await && ret;
+        ret = obd2.handle_pid::<pid::TransaxlePid>().await && ret;
+        ret = obd2.handle_pid::<pid::IceTemperaturePid>().await && ret;
+        ret = obd2.handle_pid::<pid::IceFuelRatePid>().await && ret;
+        ret = obd2.handle_pid::<pid::VehicleSpeedPid>().await && ret;
+        ret = obd2.handle_pid::<pid::AcPid>().await && ret;
+        ret = obd2.handle_pid::<pid::HybridDcDcPid>().await && ret;
+        ret = obd2.handle_pid::<pid::IcuPid>().await && ret;
+        ret = obd2.handle_pid::<pid::Icu2Pid>().await && ret;
+        ret = obd2.handle_pid::<pid::Icu3Pid>().await && ret;
+        ret = obd2.handle_pid::<pid::IceEnginePid>().await && ret;
+        ret = obd2.handle_pid::<pid::OnBoardChargerPid>().await && ret;
+        ret = obd2.handle_pid::<pid::Icu1Smk>().await && ret;
 
         ret
     }
@@ -76,13 +76,13 @@ impl Obd2PidSets {
     async fn handle_charging(obd2: &mut Obd2) -> bool {
         let mut ret = true;
         obd2.disable_obd2_pid_periods();
-        ret = ret && obd2.handle_pid::<pid::BmsPid>().await;
-        ret = ret && obd2.handle_pid::<pid::IceTemperaturePid>().await;
-        ret = ret && obd2.handle_pid::<pid::IcuPid>().await;
-        ret = ret && obd2.handle_pid::<pid::Icu2Pid>().await;
-        ret = ret && obd2.handle_pid::<pid::Icu3Pid>().await;
-        ret = ret && obd2.handle_pid::<pid::OnBoardChargerPid>().await;
-        ret = ret && obd2.handle_pid::<pid::Icu1Smk>().await;
+        ret = obd2.handle_pid::<pid::BmsPid>().await && ret;
+        ret = obd2.handle_pid::<pid::IceTemperaturePid>().await && ret;
+        ret = obd2.handle_pid::<pid::IcuPid>().await && ret;
+        ret = obd2.handle_pid::<pid::Icu2Pid>().await && ret;
+        ret = obd2.handle_pid::<pid::Icu3Pid>().await && ret;
+        ret = obd2.handle_pid::<pid::OnBoardChargerPid>().await && ret;
+        ret = obd2.handle_pid::<pid::Icu1Smk>().await && ret;
 
         ret
     }
@@ -90,10 +90,11 @@ impl Obd2PidSets {
     async fn handle_ignition_off(obd2: &mut Obd2) -> bool {
         let mut ret = true;
         obd2.disable_obd2_pid_periods();
-        ret = ret && obd2.handle_pid::<pid::IcuPid>().await;
-        ret = ret && obd2.handle_pid::<pid::Icu2Pid>().await;
-        ret = ret && obd2.handle_pid::<pid::Icu3Pid>().await;
-        ret = ret && obd2.handle_pid::<pid::Icu1Smk>().await;
+        ret = obd2.handle_pid::<pid::IcuPid>().await && ret;
+        ret = obd2.handle_pid::<pid::Icu2Pid>().await && ret;
+        ret = obd2.handle_pid::<pid::Icu3Pid>().await && ret;
+        ret = obd2.handle_pid::<pid::Icu1Smk>().await && ret;
+        ret = obd2.handle_pid::<pid::OnBoardChargerPid>().await && ret;
         ret
     }
 

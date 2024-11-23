@@ -41,6 +41,10 @@ impl Pid for TransaxlePid {
         Ok(Self { gear })
     }
 
+    fn into_error() -> types::PidError {
+        types::PidError::TransaxlePid
+    }
+
     fn into_event(self) -> Obd2Event {
         Obd2Event::TransaxlePid(self)
     }

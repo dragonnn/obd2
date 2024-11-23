@@ -55,6 +55,10 @@ impl Pid for BmsPid {
         })
     }
 
+    fn into_error() -> types::PidError {
+        types::PidError::BmsPid
+    }
+
     fn into_event(self) -> Obd2Event {
         Obd2Event::BmsPid(self)
     }

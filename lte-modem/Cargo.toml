@@ -50,6 +50,7 @@ embedded-hal-bus = { version = "0.2.0", features = ["async"] }
 embedded-alloc = "0.6.0"
 
 nrf-modem = { path = "./nrf-modem", features = ["nrf9160", "defmt"] }
+nrfxlib-sys = "2.7.1"
 #nrf-modem = { git = "https://github.com/dragonnn/nrf-modem", features = [] }
 #nrf-modem = { version = "0.5.1", features = ["nrf9160", "defmt"] }
 tinyrlibc = { git = "https://github.com/rust-embedded-community/tinyrlibc" }

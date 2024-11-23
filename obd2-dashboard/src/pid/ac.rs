@@ -22,6 +22,10 @@ impl Pid for AcPid {
         Ok(Self { gear: data[2] as i32 })
     }
 
+    fn into_error() -> types::PidError {
+        types::PidError::AcPid
+    }
+
     fn into_event(self) -> Obd2Event {
         Obd2Event::AcPid(self)
     }

@@ -4,7 +4,7 @@ use embedded_can::{Frame as _, StandardId};
 pub use types::OnBoardChargerPid;
 
 use crate::{
-    event::Obd2Event,
+    event::{Obd2Error as PidError, Obd2Event},
     mcp2515::CanFrame,
     obd2::{Obd2Error, Pid},
 };
@@ -61,6 +61,10 @@ impl Pid for OnBoardChargerPid {
 
     fn into_event(self) -> Obd2Event {
         Obd2Event::OnBoardChargerPid(self)
+    }
+
+    fn into_error() -> types::PidError {
+        types::PidError::OnBoardChargerPid
     }
 
     fn period() -> Option<Duration> {

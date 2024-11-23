@@ -274,6 +274,7 @@ pub trait Pid {
     where
         Self: Sized;
     fn into_event(self) -> Obd2Event;
+    fn into_error() -> types::PidError;
     fn period() -> Option<Duration> {
         None
     }

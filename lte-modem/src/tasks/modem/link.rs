@@ -2,9 +2,10 @@ use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_futures::select::{select, Either::*};
+use embassy_futures::select::{select, select3, Either, Either3::*};
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex,
+    mutex::{Mutex, MutexGuard},
     pubsub::{DynPublisher, DynSubscriber, PubSubChannel},
     signal::Signal,
 };
@@ -24,6 +25,9 @@ static ACK_TIMEOUT: AtomicUsize = AtomicUsize::new(0);
 
 static CONNECTED: AtomicBool = AtomicBool::new(false);
 static DISCONNECT_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
+static FORCE_DISCONNECT_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
+static CONNECT_LOCK: Mutex<CriticalSectionRawMutex, ()> = Mutex::new(());
+
 #[embassy_executor::task]
 pub async fn send_task(spawner: Spawner) {
     let ip: core::net::Ipv4Addr = env!("SEND_HOST").parse().unwrap();
@@ -40,17 +44,21 @@ pub async fn send_task(spawner: Spawner) {
         }
         let mut txframe_shutdown = false;
 
-        match select(tx_channel_sub.next_message_pure(), async {
-            if txframe_shutdown {
-                txframe_shutdown = false;
-            } else {
-                if let Some(timeout_ticker) = &mut timeout_ticker {
-                    timeout_ticker.next().await;
+        match select3(
+            tx_channel_sub.next_message_pure(),
+            async {
+                if txframe_shutdown {
+                    txframe_shutdown = false;
                 } else {
-                    futures::pending!()
+                    if let Some(timeout_ticker) = &mut timeout_ticker {
+                        timeout_ticker.next().await;
+                    } else {
+                        futures::pending!()
+                    }
                 }
-            }
-        })
+            },
+            FORCE_DISCONNECT_SIGNAL.wait(),
+        )
         .await
         {
             First(txframe) => {
@@ -64,6 +72,11 @@ pub async fn send_task(spawner: Spawner) {
                 let is_modem_battery = txframe.is_modem_battery();
                 let txmessage = TxMessage::new(txframe);
                 if socket.is_none() && !is_modem_battery {
+                    {
+                        info!("waiting for connect lock");
+                        with_timeout(Duration::from_secs(120), CONNECT_LOCK.lock()).await.ok();
+                        info!("got connect lock");
+                    }
                     match with_timeout(
                         Duration::from_secs(30),
                         UdpSocket::bind(nrf_modem::no_std_net::SocketAddr::V4(
@@ -164,6 +177,22 @@ pub async fn send_task(spawner: Spawner) {
                     timeout_ticker = None;
                 }
             }
+            Third(_) => {
+                error!("force disconnect");
+                if let Some(socket) = socket.take() {
+                    match with_timeout(Duration::from_secs(5), socket.deactivate()).await {
+                        Ok(_) => {
+                            info!("socket closed");
+                        }
+                        Err(e) => {
+                            error!("link socket close error {:?}", e);
+                        }
+                    }
+                    CONNECTED.store(false, Ordering::Relaxed);
+                    DISCONNECT_SIGNAL.signal(());
+                    timeout_ticker = None;
+                }
+            }
         }
     }
 }
@@ -174,8 +203,8 @@ pub async fn recv_task(socket_rx: OwnedUdpReceiveSocket) {
     let rx_pub = unwrap!(RX_CHANNEL.dyn_publisher());
     loop {
         match select(DISCONNECT_SIGNAL.wait(), socket_rx.receive_from(&mut rx_buf)).await {
-            First(_) => break,
-            Second(Ok((readed, _peer))) => {
+            Either::First(_) => break,
+            Either::Second(Ok((readed, _peer))) => {
                 info!("got data: {:?} from peer", readed);
                 match types::RxMessage::from_bytes_encrypted(&readed) {
                     Ok(rx_message) => {
@@ -187,8 +216,9 @@ pub async fn recv_task(socket_rx: OwnedUdpReceiveSocket) {
                     }
                 }
             }
-            Second(Err(err)) => {
+            Either::Second(Err(err)) => {
                 error!("got socket_rx error: {:?}", err);
+                break;
             }
         }
     }
@@ -239,6 +269,7 @@ impl TxMessageSend for OwnedUdpSendSocket {
                                 Ok(rx_frame) => {
                                     if let types::RxFrame::TxFrameAck(ack_id) = rx_frame {
                                         if ack_id == message.id {
+                                            ACK_TIMEOUT.store(0, Ordering::Relaxed);
                                             info!("got ack id: {:?}", ack_id);
                                             return Ok(());
                                         }
@@ -284,4 +315,12 @@ pub fn rx_channel_sub() -> RxChannelSub {
 
 pub fn connected() -> bool {
     CONNECTED.load(Ordering::Relaxed)
+}
+
+pub async fn force_disconnect_and_lock() -> Option<MutexGuard<'static, CriticalSectionRawMutex, ()>> {
+    let lock = with_timeout(Duration::from_secs(120), CONNECT_LOCK.lock()).await.ok();
+    if connected() {
+        FORCE_DISCONNECT_SIGNAL.signal(());
+    }
+    lock
 }

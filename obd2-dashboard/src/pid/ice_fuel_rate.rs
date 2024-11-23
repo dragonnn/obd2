@@ -23,6 +23,10 @@ impl Pid for IceFuelRatePid {
         Ok(Self { fuel_rate: (data[3] as i32 * 256 + data[4] as i32) as f64 / 20.0 })
     }
 
+    fn into_error() -> types::PidError {
+        types::PidError::IceFuelRatePid
+    }
+
     fn into_event(self) -> Obd2Event {
         Obd2Event::IceFuelRatePid(self)
     }

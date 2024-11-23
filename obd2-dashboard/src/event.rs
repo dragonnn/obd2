@@ -6,7 +6,7 @@ use embassy_sync::{
 
 pub use crate::tasks::{
     lcd::{LcdEvent, EVENTS as LCD_EVENTS},
-    obd2::Obd2Event,
+    obd2::{Obd2Error, Obd2Event},
     state::{KiaEvent, EVENTS as KIA_EVENTS},
 };
 

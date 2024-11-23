@@ -22,6 +22,10 @@ impl Pid for VehicleSpeedPid {
         Ok(Self { vehicle_speed: data[3] })
     }
 
+    fn into_error() -> types::PidError {
+        types::PidError::VehicleSpeedPid
+    }
+
     fn into_event(self) -> Obd2Event {
         Obd2Event::VehicleSpeedPid(self)
     }

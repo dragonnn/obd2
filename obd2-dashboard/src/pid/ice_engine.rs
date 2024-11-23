@@ -21,6 +21,10 @@ impl Pid for IceEnginePid {
         Ok(Self { gear: data[2] as i32 })
     }
 
+    fn into_error() -> types::PidError {
+        types::PidError::IceEnginePid
+    }
+
     fn into_event(self) -> Obd2Event {
         Obd2Event::IceEnginePid(self)
     }

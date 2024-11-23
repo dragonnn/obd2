@@ -23,6 +23,10 @@ impl Pid for IceTemperaturePid {
         Ok(Self { temperature: (data[3] as i8 - 40) as f64 })
     }
 
+    fn into_error() -> types::PidError {
+        types::PidError::IceTemperaturePid
+    }
+
     fn into_event(self) -> Obd2Event {
         Obd2Event::IceTemperaturePid(self)
     }
