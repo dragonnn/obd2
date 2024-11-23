@@ -58,8 +58,6 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
         fix = GnssState::get_current_fix().await;
     }
 
-    let mut ticker = Ticker::every(Duration::from_secs(30));
-
     let mut button_sub = button_subscribe().await;
     let tx_channel_pub = tx_channel_pub();
 
@@ -67,8 +65,8 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
     let mut secs = persistent_manager.get_secs();
 
     loop {
-        match select::select4(battery_state_sub.next(), ticker.next(), fix_sub.next(), button_sub.next()).await {
-            select::Either4::First(new_battery_state) => {
+        match select::select3(battery_state_sub.next(), fix_sub.next(), button_sub.next()).await {
+            select::Either3::First(new_battery_state) => {
                 if let Some(new_battery_state) = new_battery_state {
                     if new_battery_state.charging != battery_state.charging {
                         send_charging_state(
@@ -97,14 +95,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                     battery_state = new_battery_state;
                 }
             }
-            select::Either4::Second(_) => {
-                defmt::info!("ticker running");
-                #[cfg(feature = "modem-send")]
-                if with_timeout(Duration::from_secs(120), send::send_signle(&modem)).await.is_err() {
-                    defmt::error!("send single err");
-                }
-            }
-            select::Either4::Third(new_fix) => {
+            select::Either3::Second(new_fix) => {
                 fix =
                     process_new_fix(&battery_state, &fix, new_fix, &mut modem, persistent_manager.get_restarts()).await;
                 let mut current_distance = 0.0;
@@ -127,7 +118,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                 }
                 persistent_manager.update_fix(fix);
             }
-            select::Either4::Fourth(_) => {
+            select::Either3::Third(_) => {
                 defmt::info!("sending button press");
                 send_state(&modem, "button pressed...", false, false, persistent_manager.get_restarts()).await.ok();
             }

@@ -1,5 +1,5 @@
 use defmt::{error, info, unwrap, Format};
-use embassy_futures::select::{select, select3, Either3::*};
+use embassy_futures::select::{select, select4, Either4::*};
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex,
     mutex::Mutex,
@@ -58,12 +58,13 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
     }
 
     loop {
-        match select3(
+        match select4(
             async {
                 select(send_ticker.next(), SEND_NOW_SIGNAL.wait()).await;
             },
             shutdown_signal.next_message_pure(),
             extra_send_sub.next_message_pure(),
+            ieee802154.receive_raw(),
         )
         .await
         {
@@ -112,6 +113,28 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                     error!("types::TxFrame::Extra(extra_txframe).encrypt(&shared_key).ok() failed");
                 }
             }
+            Fourth(received_frame) => match received_frame {
+                Ok(received_frame) => {
+                    if let Ok(decrypted_frame) = types::RxMessage::from_bytes_encrypted(&received_frame.frame.payload) {
+                        if let types::RxFrame::Modem(modem) = decrypted_frame.frame {
+                            match modem {
+                                types::Modem::Reset => info!("modem reset"),
+                                types::Modem::GnssState(gnss_state) => info!("gnss_state: {:?}", gnss_state),
+                                types::Modem::GnssFix(gnss_fix) => info!("gnss_fix: {:?}", gnss_fix),
+                                types::Modem::Connected => info!("modem connected"),
+                                types::Modem::Disconnected => info!("modem disconnected"),
+                                types::Modem::Battery { voltage, low_voltage, soc, charging } => info!(
+                                    "battery: voltage: {:?} low_voltage: {:?} soc: {:?} charging: {:?}",
+                                    voltage, low_voltage, soc, charging
+                                ),
+                            }
+                        }
+                    }
+                }
+                Err(err) => {
+                    error!("ieee802154.receive_raw() failed");
+                }
+            },
         }
     }
 }

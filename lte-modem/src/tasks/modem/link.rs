@@ -74,7 +74,7 @@ pub async fn send_task(spawner: Spawner) {
                 if socket.is_none() && !is_modem_battery {
                     {
                         info!("waiting for connect lock");
-                        with_timeout(Duration::from_secs(120), CONNECT_LOCK.lock()).await.ok();
+                        with_timeout(Duration::from_secs(5 * 60), CONNECT_LOCK.lock()).await.ok();
                         info!("got connect lock");
                     }
                     match with_timeout(
@@ -318,7 +318,7 @@ pub fn connected() -> bool {
 }
 
 pub async fn force_disconnect_and_lock() -> Option<MutexGuard<'static, CriticalSectionRawMutex, ()>> {
-    let lock = with_timeout(Duration::from_secs(120), CONNECT_LOCK.lock()).await.ok();
+    let lock = with_timeout(Duration::from_secs(5 * 60), CONNECT_LOCK.lock()).await.ok();
     if connected() {
         FORCE_DISCONNECT_SIGNAL.signal(());
     }

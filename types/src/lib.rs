@@ -397,6 +397,7 @@ impl PartialEq for Modem {
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub enum RxFrame {
     TxFrameAck(u64),
+    Modem(Modem),
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
