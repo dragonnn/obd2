@@ -333,6 +333,9 @@ pub enum Modem {
     GnssFix(GnssFix),
     GnssState(GnssState),
     Reset,
+    Boot,
+    Ping,
+    Pong,
 }
 
 #[derive(Debug, Format, Clone, Deserialize, Serialize)]

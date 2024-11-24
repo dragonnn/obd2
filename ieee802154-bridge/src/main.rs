@@ -145,6 +145,8 @@ async fn main(spawner: Spawner) {
                                     ack_packet.copy_from_slice(&ack_packet_bytes[0..ack_size]);
                                     if ieee802154.try_send(&mut ack_packet).await.is_err() {
                                         error!("Send failed");
+                                    } else {
+                                        info!("Ack sent");
                                     }
                                 }
                                 Err(err) => {
@@ -216,6 +218,7 @@ async fn main(spawner: Spawner) {
                 }
             },
             Second(uarte_result) => {
+                info!("Received data from uarte: {=[u8]:a}", uarte_result);
                 if let Err(err) = ieee802154
                     .try_send_buffer(&uarte_result, &mut rx_packet_seq)
                     .await
@@ -274,6 +277,7 @@ impl TryIeee802154Send for embassy_nrf::radio::ieee802154::Radio<'_, peripherals
     ) -> Result<(), embassy_nrf::radio::Error> {
         let chunks = packet.chunks(100);
         let chunks_count = chunks.len();
+        info!("Chunks count: {}", chunks_count);
         for (c, chunk) in chunks.enumerate() {
             let frame = ieee802154::mac::Frame {
                 header: ieee802154::mac::Header {
@@ -299,12 +303,20 @@ impl TryIeee802154Send for embassy_nrf::radio::ieee802154::Radio<'_, peripherals
                 footer: [0, 0],
                 content: ieee802154::mac::FrameContent::Data,
             };
-            let mut tx_packet = radio::ieee802154::Packet::new();
+            let mut radio_tx_packet = radio::ieee802154::Packet::new();
+            let mut tx_packet = [0; 256];
             match frame.try_write(
                 &mut tx_packet,
                 &mut FrameSerDesContext::no_security(FooterMode::Explicit),
             ) {
-                Ok(_) => self.try_send_raw(&frame.header, &mut tx_packet).await?,
+                Ok(res) => {
+                    info!("result: {}", res);
+
+                    radio_tx_packet.copy_from_slice(&tx_packet[0..res]);
+                    info!("radio_tx_packet.len(): {}", radio_tx_packet.len());
+                    self.try_send_raw(&frame.header, &mut radio_tx_packet)
+                        .await?;
+                }
                 Err(err) => {
                     error!("Error writing frame: {:?}", defmt::Debug2Format(&err));
                 }
@@ -357,7 +369,7 @@ pub async fn uarte_receive_task(
         match uarte_receive.read_until_idle(&mut buffer).await {
             Ok(size) => {
                 let data = &buffer[..size];
-                info!("Received data: {=[u8]:a} with len: {}", data, size);
+                warn!("Received data: {=[u8]:a} with len: {}", data, size);
                 UARTE_RECEIVE_CHANNEL
                     .send(unwrap!(heapless::Vec::from_slice(data)))
                     .await;

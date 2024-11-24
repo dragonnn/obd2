@@ -9,6 +9,7 @@ use embassy_nrf::{
 };
 use embassy_time::{with_timeout, Duration};
 use serde_encrypt::{shared_key::SharedKey, traits::SerdeEncryptSharedKey as _, EncryptedMessage};
+use types::Modem;
 
 use crate::board::{BoardUarteRx, BoardUarteTx};
 
@@ -31,6 +32,7 @@ async fn send_task(mut send: BoardUarteTx, mut uarte_send: Output<'static>) {
         if let Ok(encrypted_message) = types::RxMessage::new(msg).to_vec_encrypted() {
             uarte_send.set_high();
             embassy_time::Timer::after(Duration::from_millis(10)).await;
+            warn!("uarte_send high");
             send.write(&encrypted_message).await.unwrap();
             uarte_send.set_low();
             embassy_time::Timer::after(Duration::from_millis(10)).await;
@@ -41,6 +43,7 @@ async fn send_task(mut send: BoardUarteTx, mut uarte_send: Output<'static>) {
 #[embassy_executor::task]
 async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'static>, mut uarte_reset: Output<'static>) {
     let tx_channel_pub = crate::tasks::modem::link::tx_channel_pub();
+    let rx_channel_pub = crate::tasks::modem::link::rx_channel_pub();
 
     let shared_key: SharedKey = SharedKey::new(crate::SHARED_KEY.clone());
 
@@ -66,7 +69,11 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
             match EncryptedMessage::deserialize(vec_buffer) {
                 Ok(encrypted_message) => match types::TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
                     Ok(msg) => {
-                        tx_channel_pub.publish_immediate(msg.frame);
+                        if let types::TxFrame::Modem(Modem::Ping) = msg.frame {
+                            rx_channel_pub.publish_immediate(types::RxFrame::Modem(Modem::Pong));
+                        } else {
+                            tx_channel_pub.publish_immediate(msg.frame);
+                        }
                     }
                     Err(e) => {
                         error!("uarte_receive decrypt error {:?}", defmt::Debug2Format(&e));

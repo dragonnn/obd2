@@ -38,6 +38,9 @@ pub async fn send_task(spawner: Spawner) {
     let mut timeout_ticker: Option<Ticker> = None;
     let mut starting_port: u16 = 10000;
     let mut rx_channel_sub = rx_channel_sub();
+    let mut rx_channel_pub = rx_channel_pub();
+    rx_channel_pub.publish_immediate(RxFrame::Modem(Modem::Boot));
+
     loop {
         if starting_port < 10000 {
             starting_port = 10000;
@@ -311,6 +314,10 @@ pub fn tx_channel_pub() -> TxChannelPub {
 
 pub fn rx_channel_sub() -> RxChannelSub {
     unwrap!(RX_CHANNEL.dyn_subscriber())
+}
+
+pub fn rx_channel_pub() -> DynPublisher<'static, RxFrame> {
+    unwrap!(RX_CHANNEL.dyn_publisher())
 }
 
 pub fn connected() -> bool {
