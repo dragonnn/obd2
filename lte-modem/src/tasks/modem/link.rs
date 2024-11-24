@@ -207,18 +207,15 @@ pub async fn recv_task(socket_rx: OwnedUdpReceiveSocket) {
     loop {
         match select(DISCONNECT_SIGNAL.wait(), socket_rx.receive_from(&mut rx_buf)).await {
             Either::First(_) => break,
-            Either::Second(Ok((readed, _peer))) => {
-                info!("got data: {:?} from peer", readed);
-                match types::RxMessage::from_bytes_encrypted(&readed) {
-                    Ok(rx_message) => {
-                        info!("rx_message: {:?}", rx_message);
-                        rx_pub.publish_immediate(rx_message.frame);
-                    }
-                    Err(_err) => {
-                        error!("error decoding rx message");
-                    }
+            Either::Second(Ok((readed, _peer))) => match types::RxMessage::from_bytes_encrypted(&readed) {
+                Ok(rx_message) => {
+                    info!("rx_message: {:?}", rx_message);
+                    rx_pub.publish_immediate(rx_message.frame);
                 }
-            }
+                Err(_err) => {
+                    error!("error decoding rx message");
+                }
+            },
             Either::Second(Err(err)) => {
                 error!("got socket_rx error: {:?}", err);
                 break;

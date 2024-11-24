@@ -1,4 +1,4 @@
-use defmt::{error, info, unwrap, Format};
+use defmt::{error, info, unwrap, warn, Format};
 use embassy_futures::select::{select, select4, Either4::*};
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex,
@@ -27,18 +27,16 @@ static PIDS_SEND: Mutex<CriticalSectionRawMutex, heapless::FnvIndexSet<Pid, 64>>
 
 #[embassy_executor::task]
 pub async fn run(mut ieee802154: Ieee802154<'static>) {
-    let shared_key_bytes = include_bytes!("../../../shared_key.bin");
-    info!("shared_key_bytes: {:?}", shared_key_bytes);
-    let shared_key: SharedKey = SharedKey::new(shared_key_bytes.clone());
-
     ieee802154.set_config(Config {
         channel: 15,
         promiscuous: true,
         pan_id: Some(0x4242),
         short_addr: Some(0x2222),
-        cca_mode: esp_ieee802154::CcaMode::CarrierOrEd,
+        cca_mode: esp_ieee802154::CcaMode::Carrier,
         txpower: 20,
         rx_when_idle: true,
+        auto_ack_tx: false,
+        auto_ack_rx: false,
         ..Default::default()
     });
 
@@ -53,14 +51,20 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
         //let reset_message =
         //    types::TxMessage::new(types::TxFrame::Modem(types::Modem::Reset)).to_vec_encrypted().unwrap();
         let ping_message = types::TxMessage::new(types::TxFrame::Modem(types::Modem::Ping)).to_vec_encrypted().unwrap();
+        let pong_message = types::TxMessage::new(types::TxFrame::Modem(types::Modem::Pong)).to_vec_encrypted().unwrap();
         //ieee802154.transmit_buffer(&reset_message, 2, Duration::from_secs(10), true).await.ok();
         let bootup_start = Instant::now();
         loop {
+            loop {
+                if ieee802154.transmit_buffer(&pong_message, 2, Duration::from_secs(2), true).await.is_err() {
+                    error!("pong send failed");
+                }
+            }
             if ieee802154.transmit_buffer(&ping_message, 2, Duration::from_secs(2), true).await.is_err() {
                 error!("ping send failed");
             }
             info!("ping sent");
-            match with_timeout(Duration::from_secs(2), ieee802154.receive()).await {
+            match with_timeout(Duration::from_secs(5), ieee802154.receive()).await {
                 Ok(Ok(types::RxFrame::Modem(types::Modem::Boot))) => {
                     info!("modem boot received");
                     break;
@@ -86,6 +90,8 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
         }
     }
 
+    let mut state: Option<types::State> = None;
+
     loop {
         match select4(
             async {
@@ -108,12 +114,11 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
 
                 for pid in obd2_pids.iter() {
                     //info!("pid: {:?}", pid);
-                    if let Some(encrypted_pid) =
-                        types::TxMessage::new(types::TxFrame::Obd2Pid(pid.clone())).encrypt(&shared_key).ok()
+                    if let Ok(encrypted_pid) =
+                        types::TxMessage::new(types::TxFrame::Obd2Pid(pid.clone())).to_vec_encrypted()
                     {
-                        let encrypted_pid_bytes = encrypted_pid.serialize();
                         if let Err(err) =
-                            ieee802154.transmit_buffer(&encrypted_pid_bytes, 2, Duration::from_secs(1), true).await
+                            ieee802154.transmit_buffer(&encrypted_pid, 2, Duration::from_secs(2), true).await
                         {
                             error!("ieee802154.transmit_buffer(&encrypted_pid_bytes, 2, Duration::from_secs(5)) failed: {:?} {:?}", err, pid);
                         }
@@ -122,19 +127,41 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                     }
                     embassy_time::Timer::after(embassy_time::Duration::from_millis(25)).await;
                 }
+                if let Some(state) = &state {
+                    if let Ok(encrypted_state) =
+                        types::TxMessage::new(types::TxFrame::State(state.clone())).to_vec_encrypted()
+                    {
+                        if let Err(err) =
+                            ieee802154.transmit_buffer(&encrypted_state, 2, Duration::from_secs(2), true).await
+                        {
+                            error!(
+                                "ieee802154.transmit_buffer(&encrypted_state, 2, Duration::from_secs(5)) failed: {:?}",
+                                err
+                            );
+                        }
+                    }
+                }
                 info!("send_ticker elapsed: {:?}ms", now.elapsed().as_millis());
                 send_ticker.reset();
             }
             Second(_) => {
                 info!("ieee802154 shutdown");
-                types::TxMessage::new(types::TxFrame::Shutdown).encrypt(&shared_key).ok();
+                if let Ok(shutdown) = types::TxMessage::new(types::TxFrame::Shutdown).to_vec_encrypted() {
+                    ieee802154.transmit_buffer(&shutdown, 2, Duration::from_secs(2), true).await.ok();
+                }
                 break;
             }
             Third(extra_txframe) => {
-                if let Some(encrypted_extra) = types::TxMessage::new(extra_txframe).encrypt(&shared_key).ok() {
-                    let encrypted_extra_bytes = encrypted_extra.serialize();
+                match &extra_txframe {
+                    types::TxFrame::State(new_state) => {
+                        state = Some(new_state.clone());
+                    }
+                    _ => {}
+                }
+
+                if let Ok(encrypted_extra) = types::TxMessage::new(extra_txframe).to_vec_encrypted() {
                     if let Err(err) =
-                        ieee802154.transmit_buffer(&encrypted_extra_bytes, 2, Duration::from_secs(1), true).await
+                        ieee802154.transmit_buffer(&encrypted_extra, 2, Duration::from_secs(1), true).await
                     {
                         error!("ieee802154.transmit_buffer(&encrypted_extra_bytes, 2, Duration::from_secs(5)) failed: {:?}", err);
                     }
@@ -209,10 +236,10 @@ impl AsyncIeee802154 {
         static RX_AVAILABLE_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 
         ieee802154.set_rx_available_callback_fn(|| {
+            info!("TX_DONE_SIGNAL.signal()");
             TX_DONE_SIGNAL.signal(());
         });
         ieee802154.set_tx_done_callback_fn(|| {
-            info!("rx done");
             RX_AVAILABLE_SIGNAL.signal(());
         });
         ieee802154.start_receive();
@@ -233,6 +260,8 @@ impl AsyncIeee802154 {
         timeout: Duration,
         ack: bool,
     ) -> Result<(), AsyncIeee802154Error> {
+        warn!("transmit_buffer buffer.len(): {}", buffer.len());
+        let elepsed = Instant::now();
         let chunks = buffer.chunks(100);
         let chunks_count = chunks.len();
         for (c, chunk) in chunks.enumerate() {
@@ -254,9 +283,12 @@ impl AsyncIeee802154 {
                 payload: unwrap!(heapless::Vec::from_slice(chunk)),
                 footer: [0, 0],
             };
+            let elepsed_chunk = Instant::now();
             self.transmit_raw(&frame, retry, timeout, ack).await?;
+            info!("transmit_raw chunk {} elapsed: {}ms", c, elepsed_chunk.elapsed().as_millis());
             self.seq_number = self.seq_number.wrapping_add(1);
         }
+        info!("transmit_buffer elapsed: {}ms", elepsed.elapsed().as_millis());
         Ok(())
     }
 
@@ -267,17 +299,29 @@ impl AsyncIeee802154 {
         timeout: Duration,
         ack: bool,
     ) -> Result<(), AsyncIeee802154Error> {
-        for _ in 0..retry {
+        warn!("start transmit_raw");
+        for retry in 0..retry {
             self.tx_done_signal.reset();
             self.rx_available_signal.reset();
+            info!("transmitting frame: {:?}", defmt::Debug2Format(&frame));
             self.ieee802154.transmit(frame)?;
+            info!("tx_done_signal.wait() on retry: {}", retry);
+            if with_timeout(timeout * 10, self.tx_done_signal.wait()).await.is_err() {
+                error!("timeout waiting for tx_done_signal on retry: {}", retry);
+                continue;
+            } else {
+                info!("tx_done_signal received on retry: {}", retry);
+            }
             if !ack {
                 return Ok(());
             }
 
-            match with_timeout(timeout, async {
-                self.tx_done_signal.wait().await;
-                self.receive_raw(false).await
+            //for _ in 0..retry {
+            match with_timeout(timeout / retry as u32, async {
+                let recive_elapsed = Instant::now();
+                let ret_recive = self.receive_raw(false).await;
+                info!("receive_raw elapsed: {}ms", recive_elapsed.elapsed().as_millis());
+                ret_recive
             })
             .await
             {
@@ -285,23 +329,22 @@ impl AsyncIeee802154 {
                     if response.frame.header.frame_type == FrameType::Acknowledgement
                         && response.frame.header.destination == frame.header.destination
                     {
-                        info!("ack received");
+                        info!("acknowledgement received");
                         return Ok(());
                     } else {
-                        error!(
-                            "unexpected response: {:?} expected: {:?}",
-                            defmt::Debug2Format(&response),
-                            frame.footer
-                        );
+                        warn!("unexpected response expected, storing into buffer {:?}", defmt::Debug2Format(&response));
                         self.received_frame_buffer.push(response).ok();
                     }
                 }
-                Err(_) => {}
+                Err(_err) => {
+                    error!("timeout reciving ack frame");
+                }
                 Ok(Err(err)) => {
-                    error!("error transmitting frame: {:?}", defmt::Debug2Format(&err));
-                    break;
+                    error!("error receiving frame: {:?}", defmt::Debug2Format(&err));
                 }
             }
+            //info!("retrying recive");
+            //}
         }
         Err(AsyncIeee802154Error::Timeout)
     }
@@ -314,25 +357,23 @@ impl AsyncIeee802154 {
             }
         }
 
-        let msg = self.ieee802154.get_received();
-        if let Some(frame) = msg {
-            let frame = frame?;
-            return Ok(frame);
-        }
+        //let msg = self.ieee802154.get_received();
+        //if let Some(Ok(frame)) = msg {
+        //    info!("frame from get_received early on: {:?}", defmt::Debug2Format(&frame));
+        //    return Ok(frame);
+        //}
         loop {
             self.rx_available_signal.wait().await;
             if let Some(frame) = self.ieee802154.get_received() {
                 let frame = frame?;
                 return Ok(frame);
             } else {
-                error!("eereeee frame not found?");
-                //Err(esp_ieee802154::Error::Incomplete)
+                error!("get_received failed");
             }
         }
     }
 
     pub async fn receive(&mut self) -> Result<types::RxFrame, esp_ieee802154::Error> {
-        info!("receive");
         let received_frame = self.receive_raw(true).await?;
         info!(
             "received_frame: {:?} received_frame.frame.payload.len(): {}",

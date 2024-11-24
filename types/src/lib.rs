@@ -403,6 +403,12 @@ pub enum RxFrame {
     Modem(Modem),
 }
 
+impl RxFrame {
+    pub fn is_ack(&self) -> bool {
+        matches!(self, RxFrame::TxFrameAck(_))
+    }
+}
+
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub struct RxMessage {
     pub id: u64,

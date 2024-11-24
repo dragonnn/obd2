@@ -346,7 +346,7 @@ pub async fn uarte_send_task(
     loop {
         let data = uarte_send_channel_sub.receive().await;
         wdg1.pet().await;
-        info!("Sending data: {=[u8]:a} with len: {}", data, data.len());
+        //info!("Sending data: {=[u8]:a} with len: {}", data, data.len());
         uarte_send_gpio.set_high();
         embassy_time::Timer::after(embassy_time::Duration::from_millis(2)).await;
         if let Err(err) = uarte_send.write(&data).await {

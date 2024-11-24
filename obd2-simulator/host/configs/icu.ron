@@ -235,7 +235,7 @@
                     //6    7
                     0x00, 0x00, 
                     //8
-                    0b00010000, // on board charger wakeup output
+                    0b00000000, // on board charger wakeup output 0b00010000 = ONF
                     //9    10    11    12
                     0x00, 0x00, 0xaa, 0xaa,
                 ]
