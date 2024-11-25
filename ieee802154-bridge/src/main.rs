@@ -112,6 +112,7 @@ async fn main(spawner: Spawner) {
 
     unwrap!(spawner.spawn(uarte_send_task(send, uarte_send, wdg1)));
     unwrap!(spawner.spawn(uarte_receive_task(receive, uarte_receive)));
+    let mut last_message_time = embassy_time::Instant::now();
 
     loop {
         let mut rx_packet = radio::ieee802154::Packet::new();
@@ -142,6 +143,9 @@ async fn main(spawner: Spawner) {
                             ack_packet.copy_from_slice(&ack_packet_bytes[0..ack_size]);
                             if ieee802154.try_send(&mut ack_packet).await.is_err() {
                                 error!("Send failed");
+                            } else {
+                                info!("Sent ack");
+                                last_message_time = embassy_time::Instant::now();
                             }
 
                             match frame.header.destination {
@@ -203,11 +207,16 @@ async fn main(spawner: Spawner) {
             }
             Second(uarte_result) => {
                 info!("Received data from uarte: {=[u8]:a}", uarte_result);
+                if last_message_time.elapsed().as_millis() < 50 {
+                    embassy_time::Timer::after_millis(50).await;
+                }
                 if let Err(err) = ieee802154
                     .try_send_buffer(&uarte_result, &mut rx_packet_seq)
                     .await
                 {
                     error!("Error sending packet: {:?}", err);
+                } else {
+                    last_message_time = embassy_time::Instant::now();
                 }
             }
         }
