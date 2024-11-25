@@ -29,9 +29,9 @@ async fn send_task(mut send: BoardUarteTx, mut uarte_send: Output<'static>) {
     let mut rx_channel_sub = crate::tasks::modem::link::rx_channel_sub();
     loop {
         let msg = rx_channel_sub.next_message_pure().await;
-        if !msg.is_ack() {
+        if !msg.frame.is_ack() {
             warn!("sending {:?}", msg);
-            if let Ok(encrypted_message) = types::RxMessage::new(msg).to_vec_encrypted() {
+            if let Ok(encrypted_message) = msg.to_vec_encrypted() {
                 uarte_send.set_high();
                 embassy_time::Timer::after(Duration::from_millis(10)).await;
                 warn!("uarte_send high");
@@ -75,9 +75,9 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
                         if let types::TxFrame::Modem(Modem::Ping) = msg.frame {
                             embassy_time::Timer::after(Duration::from_millis(100)).await;
                             warn!("sending modem pong");
-                            rx_channel_pub.publish_immediate(types::RxFrame::Modem(Modem::Pong));
+                            rx_channel_pub.publish_immediate(types::RxMessage::new(types::RxFrame::Modem(Modem::Pong)));
                         } else {
-                            tx_channel_pub.publish_immediate(msg.frame);
+                            tx_channel_pub.publish_immediate(msg);
                         }
                     }
                     Err(e) => {

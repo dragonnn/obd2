@@ -16,6 +16,7 @@ mod sms;
 
 use persistent::PeristentManager;
 use sms::send_state;
+use types::{TxFrame, TxMessage};
 
 use crate::{
     board::Modem,
@@ -113,7 +114,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                 }
                 if let Some(fix) = fix {
                     if link::connected() || current_distance > 0.5 {
-                        tx_channel_pub.publish_immediate(types::TxFrame::Modem(types::Modem::GnssFix(fix)));
+                        tx_channel_pub.publish_immediate(TxMessage::new(TxFrame::Modem(types::Modem::GnssFix(fix))));
                     }
                 }
                 persistent_manager.update_fix(fix);

@@ -5,7 +5,7 @@ use nrf_modem::{
     nrfxlib_sys, Error as ModemError, Gnss as ModemGnss, GnssConfig as ModemGnssConfig, GnssData as ModemGnssData,
     GnssPowerSaveMode as ModemGnssPowerSaveMode, GnssStream as ModemGnssStream, GnssUsecase as ModemGnssUsecase,
 };
-use types::{GnssState, Modem, TxFrame};
+use types::{GnssState, Modem, TxFrame, TxMessage};
 
 use crate::tasks::modem::link::{tx_channel_pub, TxChannelPub};
 
@@ -54,11 +54,12 @@ impl Gnss {
         if self.duration.as_millis() < 20000 {
             info!("start periodic fix");
             self.stream = Some(self.handler().await?.start_continuous_fix(self.get_config())?);
-            self.tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::GnssState(GnssState::PeriodicFix)));
+            self.tx_channel_pub
+                .publish_immediate(TxMessage::new(TxFrame::Modem(Modem::GnssState(GnssState::PeriodicFix))));
         } else {
             self.stream = None;
-            self.tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::GnssState(GnssState::TickerFix(
-                self.duration.as_secs() as u32,
+            self.tx_channel_pub.publish_immediate(TxMessage::new(TxFrame::Modem(Modem::GnssState(
+                GnssState::TickerFix(self.duration.as_secs() as u32),
             ))));
             self.ticker = Ticker::every(self.duration);
         }
@@ -151,7 +152,8 @@ impl Gnss {
             self.ticker.next().await;
         }
 
-        self.tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::GnssState(GnssState::WaitingForFix)));
+        self.tx_channel_pub
+            .publish_immediate(TxMessage::new(TxFrame::Modem(Modem::GnssState(GnssState::WaitingForFix))));
         let mut _link_lock = None;
         if self.first_fix {
             warn!("force link disconnect and lock");
@@ -159,7 +161,8 @@ impl Gnss {
         }
         let ret = with_timeout(self.timeout, self.get_fix()).await.map_err(|_| {
             defmt::error!("gnss timeout");
-            self.tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::GnssState(GnssState::TimeoutFix)));
+            self.tx_channel_pub
+                .publish_immediate(TxMessage::new(TxFrame::Modem(Modem::GnssState(GnssState::TimeoutFix))));
             ModemError::NrfError(0)
         })?;
 

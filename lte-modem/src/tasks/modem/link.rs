@@ -15,12 +15,12 @@ use nrf_modem::{
     PeerVerification, UdpSocket,
 };
 use postcard::{from_bytes, from_bytes_crc32, to_vec, to_vec_crc32};
-use types::{Modem, RxFrame, TxFrame, TxMessage};
+use types::{Modem, RxFrame, RxMessage, TxFrame, TxMessage};
 
 use crate::board::Gnss;
 
-static TX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, TxFrame, 256, 1, 16> = PubSubChannel::new();
-static RX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, RxFrame, 256, 2, 16> = PubSubChannel::new();
+static TX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, TxMessage, 256, 1, 16> = PubSubChannel::new();
+static RX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, RxMessage, 256, 2, 16> = PubSubChannel::new();
 static ACK_TIMEOUT: AtomicUsize = AtomicUsize::new(0);
 
 static CONNECTED: AtomicBool = AtomicBool::new(false);
@@ -41,7 +41,7 @@ pub async fn send_task(spawner: Spawner) {
     let mut rx_channel_pub = rx_channel_pub();
     let mut txframe_shutdown = false;
 
-    rx_channel_pub.publish_immediate(RxFrame::Modem(Modem::Boot));
+    rx_channel_pub.publish_immediate(RxMessage::new(RxFrame::Modem(Modem::Boot)));
 
     loop {
         if starting_port < 10000 {
@@ -66,15 +66,15 @@ pub async fn send_task(spawner: Spawner) {
         .await
         {
             First(txframe) => {
-                if let types::TxFrame::Modem(Modem::Reset) = txframe {
+                if let types::TxFrame::Modem(Modem::Reset) = txframe.frame {
                     crate::tasks::reset::request_reset();
                 }
-                if let types::TxFrame::Shutdown = txframe {
+                if let types::TxFrame::Shutdown = txframe.frame {
                     txframe_shutdown = true;
                 }
                 info!("tx_channel_sub recv {:?}", txframe);
-                let is_modem_battery = txframe.is_modem_battery();
-                let txmessage = TxMessage::new(txframe);
+                let is_modem_battery = txframe.frame.is_modem_battery();
+                let txmessage = txframe;
                 if socket.is_none() && !is_modem_battery {
                     {
                         info!("waiting for connect lock");
@@ -211,7 +211,7 @@ pub async fn recv_task(socket_rx: OwnedUdpReceiveSocket) {
             Either::Second(Ok((readed, _peer))) => match types::RxMessage::from_bytes_encrypted(&readed) {
                 Ok(rx_message) => {
                     info!("rx_message: {:?}", rx_message);
-                    rx_pub.publish_immediate(rx_message.frame);
+                    rx_pub.publish_immediate(rx_message);
                 }
                 Err(_err) => {
                     error!("error decoding rx message");
@@ -268,7 +268,7 @@ impl TxMessageSend for OwnedUdpSendSocket {
                         loop {
                             match with_timeout(Duration::from_secs(15), rx.next_message_pure()).await {
                                 Ok(rx_frame) => {
-                                    if let types::RxFrame::TxFrameAck(ack_id) = rx_frame {
+                                    if let types::RxFrame::TxFrameAck(ack_id) = rx_frame.frame {
                                         if ack_id == message.id {
                                             ACK_TIMEOUT.store(0, Ordering::Relaxed);
                                             info!("got ack id: {:?}", ack_id);
@@ -303,8 +303,8 @@ impl TxMessageSend for OwnedUdpSendSocket {
     }
 }
 
-pub type TxChannelPub = DynPublisher<'static, TxFrame>;
-pub type RxChannelSub = DynSubscriber<'static, RxFrame>;
+pub type TxChannelPub = DynPublisher<'static, TxMessage>;
+pub type RxChannelSub = DynSubscriber<'static, RxMessage>;
 
 pub fn tx_channel_pub() -> TxChannelPub {
     unwrap!(TX_CHANNEL.dyn_publisher())
@@ -314,7 +314,7 @@ pub fn rx_channel_sub() -> RxChannelSub {
     unwrap!(RX_CHANNEL.dyn_subscriber())
 }
 
-pub fn rx_channel_pub() -> DynPublisher<'static, RxFrame> {
+pub fn rx_channel_pub() -> DynPublisher<'static, RxMessage> {
     unwrap!(RX_CHANNEL.dyn_publisher())
 }
 

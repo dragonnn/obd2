@@ -6,7 +6,7 @@ use embassy_sync::{
     pubsub::{PubSubChannel, Subscriber},
 };
 use embassy_time::{Duration, Instant, Timer};
-use types::{Modem, TxFrame};
+use types::{Modem, TxFrame, TxMessage};
 
 use super::{modem::link::tx_channel_pub, TASKS_SUBSCRIBERS};
 use crate::board::{Battery, ChargerStatus, InterputEvent};
@@ -101,12 +101,12 @@ pub async fn task(mut battery: Battery) {
         defmt::info!("battery voltage: {} soc: {} low_voltage: {}", battery_voltage, battery_soc, low_voltage);
         if last_modem_battery_send.map(|l| l.elapsed().as_secs() > 60).unwrap_or(true) {
             last_modem_battery_send = Some(Instant::now());
-            tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::Battery {
+            tx_channel_pub.publish_immediate(TxMessage::new(TxFrame::Modem(Modem::Battery {
                 voltage: battery_voltage as f64 / 1000.0,
                 low_voltage,
                 soc: battery_soc,
                 charging: state.charging,
-            }));
+            })));
         }
     }
 }

@@ -2,7 +2,7 @@
 
 extern crate alloc;
 
-use core::sync::atomic::{AtomicUsize, Ordering};
+use core::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 use crc::{Crc, CRC_32_ISCSI};
 use defmt::Format;
 use postcard::to_vec_crc32;
@@ -12,16 +12,7 @@ use serde_encrypt::{
     EncryptedMessage,
 };
 
-#[cfg(all(
-    not(feature = "message_id_increment"),
-    not(feature = "message_id_decrement")
-))]
-pub static ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
-
-#[cfg(feature = "message_id_increment")]
-pub static ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
-#[cfg(feature = "message_id_decrement")]
-pub static ID_COUNTER: AtomicUsize = AtomicUsize::new(usize::MAX);
+pub static ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 mod serializer;
 
@@ -252,29 +243,59 @@ impl TxFrame {
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub struct TxMessage {
-    pub id: u64,
+    pub id: MessageId,
     pub frame: TxFrame,
     pub timestamp: u64,
     pub ack: bool,
 }
 
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+pub enum MessageId {
+    Modem(u32),
+    Obd2Dashboard(u32),
+    HaDaemon(u32),
+}
+
+impl Default for MessageId {
+    fn default() -> Self {
+        #[cfg(feature = "id_modem")]
+        let ret = MessageId::Modem(ID_COUNTER.fetch_add(1, Ordering::Relaxed));
+        #[cfg(feature = "id_obd2dashboard")]
+        let ret = MessageId::Obd2Dashboard(ID_COUNTER.fetch_add(1, Ordering::Relaxed));
+        #[cfg(feature = "id_ha_daemon")]
+        let ret = MessageId::Obd2Dashboard(ID_COUNTER.fetch_add(1, Ordering::Relaxed));
+
+        #[cfg(all(
+            not(feature = "id_modem"),
+            not(feature = "id_obd2dashboard"),
+            not(feature = "id_ha_daemon"),
+        ))]
+        let ret = MessageId::Modem(0);
+        ret
+    }
+}
+
+impl core::ops::Deref for MessageId {
+    type Target = u32;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            MessageId::Modem(id) => id,
+            MessageId::Obd2Dashboard(id) => id,
+            MessageId::HaDaemon(id) => id,
+        }
+    }
+}
+
 impl TxMessage {
     pub fn new(frame: TxFrame) -> Self {
         let mut ret = Self {
-            #[cfg(all(
-                not(feature = "message_id_increment"),
-                not(feature = "message_id_decrement")
-            ))]
-            id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
-            #[cfg(feature = "message_id_increment")]
-            id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
-            #[cfg(feature = "message_id_decrement")]
-            id: ID_COUNTER.fetch_sub(1, Ordering::Relaxed) as u64,
+            id: MessageId::default(),
             frame,
             timestamp: 0,
             ack: false,
         };
-        if ret.id % 10 == 0 {
+        if *ret.id % 10 == 0 {
             ret.ack = true;
         }
 
@@ -399,7 +420,7 @@ impl PartialEq for Modem {
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub enum RxFrame {
-    TxFrameAck(u64),
+    TxFrameAck(MessageId),
     Modem(Modem),
 }
 
@@ -411,7 +432,7 @@ impl RxFrame {
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub struct RxMessage {
-    pub id: u64,
+    pub id: MessageId,
     pub frame: RxFrame,
     pub timestamp: u64,
     pub ack: bool,
@@ -420,21 +441,13 @@ pub struct RxMessage {
 impl RxMessage {
     pub fn new(frame: RxFrame) -> Self {
         let mut ret = Self {
-            #[cfg(all(
-                not(feature = "message_id_increment"),
-                not(feature = "message_id_decrement")
-            ))]
-            id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
-            #[cfg(feature = "message_id_increment")]
-            id: ID_COUNTER.fetch_add(1, Ordering::Relaxed) as u64,
-            #[cfg(feature = "message_id_decrement")]
-            id: ID_COUNTER.fetch_sub(1, Ordering::Relaxed) as u64,
+            id: MessageId::default(),
             frame,
             timestamp: 0,
             ack: false,
         };
 
-        if ret.id % 10 == 0 {
+        if *ret.id % 10 == 0 {
             ret.ack = true;
         }
 
