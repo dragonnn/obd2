@@ -15,6 +15,7 @@ use serde_encrypt::{serialize::impls::PostcardSerializer, shared_key::SharedKey,
 use static_cell::StaticCell;
 use types::Pid;
 
+use super::power::ShutdownGuard;
 use crate::{
     event::{event_bus_sub, Event, KiaEvent},
     tasks::power::get_shutdown_signal,
@@ -44,6 +45,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
 
     let mut ieee802154 = AsyncIeee802154::new(ieee802154);
 
+    let _shutdown_guard = ShutdownGuard::new();
     let mut shutdown_signal = get_shutdown_signal();
     let mut extra_send_sub = unwrap!(EXTRA_SEND.subscriber());
 
@@ -55,11 +57,11 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
         //ieee802154.transmit_buffer(&reset_message, 2, Duration::from_secs(10), true).await.ok();
         let bootup_start = Instant::now();
         loop {
-            loop {
+            /*loop {
                 if ieee802154.transmit_buffer(&pong_message, 2, Duration::from_secs(2), true).await.is_err() {
                     error!("pong send failed");
                 }
-            }
+            }*/
             if ieee802154.transmit_buffer(&ping_message, 2, Duration::from_secs(2), true).await.is_err() {
                 error!("ping send failed");
             }
@@ -128,6 +130,7 @@ pub async fn run(mut ieee802154: Ieee802154<'static>) {
                     embassy_time::Timer::after(embassy_time::Duration::from_millis(25)).await;
                 }
                 if let Some(state) = &state {
+                    warn!("sending extra state: {:?}", state);
                     if let Ok(encrypted_state) =
                         types::TxMessage::new(types::TxFrame::State(state.clone())).to_vec_encrypted()
                     {
@@ -295,42 +298,38 @@ impl AsyncIeee802154 {
     pub async fn transmit_raw(
         &mut self,
         frame: &Frame,
-        retry: u8,
+        total_retry: u8,
         timeout: Duration,
         ack: bool,
     ) -> Result<(), AsyncIeee802154Error> {
-        warn!("start transmit_raw");
-        for retry in 0..retry {
+        for retry in 0..total_retry {
             self.tx_done_signal.reset();
             self.rx_available_signal.reset();
-            info!("transmitting frame: {:?}", defmt::Debug2Format(&frame));
             self.ieee802154.transmit(frame)?;
-            info!("tx_done_signal.wait() on retry: {}", retry);
-            if with_timeout(timeout * 10, self.tx_done_signal.wait()).await.is_err() {
+            if with_timeout(timeout, self.tx_done_signal.wait()).await.is_err() {
                 error!("timeout waiting for tx_done_signal on retry: {}", retry);
                 continue;
-            } else {
-                info!("tx_done_signal received on retry: {}", retry);
+            } else if retry > 0 {
+                error!("tx_done_signal received on retry: {}", retry);
             }
             if !ack {
                 return Ok(());
             }
 
             //for _ in 0..retry {
-            match with_timeout(timeout / retry as u32, async {
-                let recive_elapsed = Instant::now();
-                let ret_recive = self.receive_raw(false).await;
-                info!("receive_raw elapsed: {}ms", recive_elapsed.elapsed().as_millis());
-                ret_recive
-            })
-            .await
-            {
+            match with_timeout(timeout / total_retry as u32, self.receive_raw(false)).await {
                 Ok(Ok(response)) => {
-                    if response.frame.header.frame_type == FrameType::Acknowledgement
-                        && response.frame.header.destination == frame.header.destination
-                    {
-                        info!("acknowledgement received");
-                        return Ok(());
+                    if response.frame.header.frame_type == FrameType::Acknowledgement {
+                        if response.frame.header.destination == frame.header.destination {
+                            info!("acknowledgement received");
+                            return Ok(());
+                        } else {
+                            warn!(
+                                "unexpected ack frame {:?} expected: {:?}",
+                                defmt::Debug2Format(&response.frame.header.destination),
+                                defmt::Debug2Format(&frame.header.destination)
+                            );
+                        }
                     } else {
                         warn!("unexpected response expected, storing into buffer {:?}", defmt::Debug2Format(&response));
                         self.received_frame_buffer.push(response).ok();
@@ -374,20 +373,26 @@ impl AsyncIeee802154 {
     }
 
     pub async fn receive(&mut self) -> Result<types::RxFrame, esp_ieee802154::Error> {
-        let received_frame = self.receive_raw(true).await?;
-        info!(
-            "received_frame: {:?} received_frame.frame.payload.len(): {}",
-            defmt::Debug2Format(&received_frame),
-            received_frame.frame.payload.len()
-        );
-        let decrypted_frame = types::RxMessage::from_bytes_encrypted(
-            &received_frame.frame.payload[0..received_frame.frame.payload.len() - 2],
-        )
-        .map_err(|e| {
-            error!("types::RxMessage::from_bytes_encrypted failed: {:?}", defmt::Debug2Format(&e));
-            esp_ieee802154::Error::BadInput
-        })?;
-        Ok(decrypted_frame.frame)
+        loop {
+            let received_frame = self.receive_raw(true).await?;
+            info!(
+                "received_frame: {:?} received_frame.frame.payload.len(): {}",
+                defmt::Debug2Format(&received_frame),
+                received_frame.frame.payload.len()
+            );
+            if received_frame.frame.payload.len() < 2 {
+                error!("received_frame.frame.payload.len() < 2");
+            } else {
+                let decrypted_frame = types::RxMessage::from_bytes_encrypted(
+                    &received_frame.frame.payload[0..received_frame.frame.payload.len() - 2],
+                )
+                .map_err(|e| {
+                    error!("types::RxMessage::from_bytes_encrypted failed: {:?}", defmt::Debug2Format(&e));
+                    esp_ieee802154::Error::BadInput
+                })?;
+                return Ok(decrypted_frame.frame);
+            }
+        }
     }
 }
 

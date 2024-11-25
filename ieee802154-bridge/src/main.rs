@@ -8,7 +8,6 @@ use defmt::*;
 use embassy_executor::Spawner;
 use embassy_futures::select::{select, Either::*};
 use embassy_nrf::peripherals::TIMER0;
-use embassy_nrf::uarte::UarteRx;
 use embassy_nrf::uarte::UarteRxWithIdle;
 use embassy_nrf::uarte::UarteTx;
 use embassy_nrf::{
@@ -103,7 +102,7 @@ async fn main(spawner: Spawner) {
     let mut uarte_receive = Input::new(p.P0_25, Pull::Down);
     let mut ctx = ieee802154::mac::frame::FrameSerDesContext::no_security(FooterMode::None);
 
-    let mut uarte_rx_packet: heapless::Vec<u8, 1024> = heapless::Vec::new();
+    let mut uarte_rx_packet: heapless::Vec<u8, 512> = heapless::Vec::new();
     let mut uarte_send_channel_pub = UARTE_SEND_CHANNEL.sender();
 
     let mut current_chunk_count = 0;
@@ -116,16 +115,14 @@ async fn main(spawner: Spawner) {
 
     loop {
         let mut rx_packet = radio::ieee802154::Packet::new();
-        let packet = ieee802154.receive(&mut rx_packet).await;
-        wdg0.pet().await;
         match select(
             ieee802154.receive(&mut rx_packet),
             UARTE_RECEIVE_CHANNEL.receive(),
         )
         .await
         {
-            First(ieee802154_result) => match ieee802154_result {
-                Ok(_) => {
+            First(ieee802154_result) => {
+                if ieee802154_result.is_ok() {
                     info!("Received packet: {:?}", rx_packet.lqi(),);
                     match ieee802154::mac::Frame::try_read(&rx_packet, FooterMode::None) {
                         Ok((mut frame, size)) => {
@@ -137,24 +134,14 @@ async fn main(spawner: Spawner) {
                                 footer: frame.footer,
                                 content: ieee802154::mac::FrameContent::Acknowledgement,
                             };
-                            let mut ack_packet_bytes = [0; 256];
-                            match ack_frame.try_write(&mut ack_packet_bytes, &mut ctx) {
-                                Ok(ack_size) => {
-                                    let mut ack_packet =
-                                        embassy_nrf::radio::ieee802154::Packet::new();
-                                    ack_packet.copy_from_slice(&ack_packet_bytes[0..ack_size]);
-                                    if ieee802154.try_send(&mut ack_packet).await.is_err() {
-                                        error!("Send failed");
-                                    } else {
-                                        info!("Ack sent");
-                                    }
-                                }
-                                Err(err) => {
-                                    error!(
-                                        "Error writing ack frame: {:?}",
-                                        defmt::Debug2Format(&err)
-                                    );
-                                }
+                            let mut ack_packet_bytes = [0; 127];
+                            let ack_size = ack_frame
+                                .try_write(&mut ack_packet_bytes, &mut ctx)
+                                .unwrap();
+                            let mut ack_packet = embassy_nrf::radio::ieee802154::Packet::new();
+                            ack_packet.copy_from_slice(&ack_packet_bytes[0..ack_size]);
+                            if ieee802154.try_send(&mut ack_packet).await.is_err() {
+                                error!("Send failed");
                             }
 
                             match frame.header.destination {
@@ -184,9 +171,7 @@ async fn main(spawner: Spawner) {
                                         } else {
                                             current_chunk = chunk;
                                             if current_chunk_count == chunk + 1 {
-                                                info!(
-                                                        "Got all chunks, sending to uarte_send_channel_pub"
-                                                    );
+                                                info!("Got all chunks, sending to uarte_send_channel_pub");
                                                 uarte_send_channel_pub
                                                     .send(uarte_rx_packet.clone())
                                                     .await;
@@ -196,9 +181,9 @@ async fn main(spawner: Spawner) {
                                         }
                                     } else {
                                         error!(
-                                                "Invalid chunk count or chunk, current: {} {} got: {} {}",
-                                                current_chunk_count, current_chunk, chunk_count, chunk
-                                            );
+                                            "Invalid chunk count or chunk, current: {} {} got: {} {}",
+                                            current_chunk_count, current_chunk, chunk_count, chunk
+                                        );
                                         uarte_rx_packet.clear();
                                         current_chunk_count = 0;
                                     }
@@ -212,11 +197,10 @@ async fn main(spawner: Spawner) {
                             error!("Error reading frame: {:?}", defmt::Debug2Format(&err));
                         }
                     }
+                } else {
+                    error!("Receive failed");
                 }
-                Err(err) => {
-                    error!("Error receiving packet: {:?}", err);
-                }
-            },
+            }
             Second(uarte_result) => {
                 info!("Received data from uarte: {=[u8]:a}", uarte_result);
                 if let Err(err) = ieee802154
@@ -227,6 +211,8 @@ async fn main(spawner: Spawner) {
                 }
             }
         }
+
+        wdg0.pet().await;
     }
 }
 
@@ -327,14 +313,8 @@ impl TryIeee802154Send for embassy_nrf::radio::ieee802154::Radio<'_, peripherals
     }
 }
 
-static UARTE_SEND_CHANNEL: channel::Channel<CriticalSectionRawMutex, heapless::Vec<u8, 1024>, 16> =
+static UARTE_SEND_CHANNEL: channel::Channel<CriticalSectionRawMutex, heapless::Vec<u8, 512>, 128> =
     channel::Channel::new();
-
-static UARTE_RECEIVE_CHANNEL: channel::Channel<
-    CriticalSectionRawMutex,
-    heapless::Vec<u8, 1024>,
-    16,
-> = channel::Channel::new();
 
 #[embassy_executor::task]
 pub async fn uarte_send_task(
@@ -346,7 +326,7 @@ pub async fn uarte_send_task(
     loop {
         let data = uarte_send_channel_sub.receive().await;
         wdg1.pet().await;
-        //info!("Sending data: {=[u8]:a} with len: {}", data, data.len());
+        info!("Sending data: {=[u8]:a} with len: {}", data, data.len());
         uarte_send_gpio.set_high();
         embassy_time::Timer::after(embassy_time::Duration::from_millis(2)).await;
         if let Err(err) = uarte_send.write(&data).await {
@@ -356,6 +336,12 @@ pub async fn uarte_send_task(
         embassy_time::Timer::after(embassy_time::Duration::from_millis(2)).await;
     }
 }
+
+static UARTE_RECEIVE_CHANNEL: channel::Channel<
+    CriticalSectionRawMutex,
+    heapless::Vec<u8, 1024>,
+    16,
+> = channel::Channel::new();
 
 #[embassy_executor::task]
 pub async fn uarte_receive_task(

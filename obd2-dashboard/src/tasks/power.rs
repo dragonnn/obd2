@@ -1,6 +1,8 @@
+use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
 use defmt::*;
 use embassy_futures::select::{select, Either::*};
-use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, pubsub::PubSubChannel};
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, pubsub::PubSubChannel, signal::Signal};
 use embassy_time::{Duration, Timer};
 use esp_hal::{
     debugger::debugger_connected,
@@ -17,6 +19,9 @@ pub enum PowerEvent {
 }
 
 static SHUTDOWN: PubSubChannel<CriticalSectionRawMutex, (), 1, 16, 1> = PubSubChannel::new();
+static SHUTDOWN_GUARD_DROP_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
+static SHUTDOWN_GUARDS: AtomicUsize = AtomicUsize::new(0);
+static SHUTDOWN_REQUESTED: AtomicBool = AtomicBool::new(false);
 static POWER_EVENTS: PubSubChannel<CriticalSectionRawMutex, PowerEvent, 1, 1, 16> = PubSubChannel::new();
 
 use crate::{
@@ -86,6 +91,16 @@ pub async fn run(mut power: Power) {
                         warn!("debugger not connected, deep sleeping in 200ms");
                         Duration::from_millis(200)
                     };
+
+                    embassy_time::with_timeout(Duration::from_secs(120), async {
+                        SHUTDOWN_REQUESTED.store(true, Ordering::Relaxed);
+                        while SHUTDOWN_GUARDS.load(Ordering::Relaxed) != 0 {
+                            SHUTDOWN_GUARD_DROP_SIGNAL.wait().await;
+                        }
+                    })
+                    .await
+                    .ok();
+
                     Timer::after(delay_duration).await;
                     if power.is_ignition_on() {
                         warn!("ignition is on, not deep sleeping");
@@ -111,4 +126,23 @@ pub type PowerEventPublisher = embassy_sync::pubsub::DynPublisher<'static, Power
 
 pub fn get_power_events_pub() -> PowerEventPublisher {
     unwrap!(POWER_EVENTS.dyn_publisher())
+}
+
+pub struct ShutdownGuard;
+
+impl ShutdownGuard {
+    pub fn new() -> Self {
+        SHUTDOWN_GUARDS.fetch_add(1, Ordering::Relaxed);
+        Self
+    }
+}
+
+impl Drop for ShutdownGuard {
+    fn drop(&mut self) {
+        SHUTDOWN_GUARDS.fetch_sub(1, Ordering::Relaxed);
+        let requested = SHUTDOWN_REQUESTED.load(Ordering::Relaxed);
+        if requested {
+            SHUTDOWN_GUARD_DROP_SIGNAL.signal(());
+        }
+    }
 }

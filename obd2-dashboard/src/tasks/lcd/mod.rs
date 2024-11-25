@@ -89,6 +89,7 @@ impl LcdState {
         self.display2.flush().await.ok();
         unwrap!(self.display1.sleep(false).await);
         unwrap!(self.display2.sleep(false).await);
+        crate::tasks::buttons::init();
         self.display_on = true;
         Timer::after(Duration::from_millis(100)).await;
     }

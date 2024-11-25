@@ -1,5 +1,6 @@
 use defmt::{error, info, unwrap, warn, Format};
 use embassy_futures::select::select;
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use embassy_time::Timer;
 
 use crate::{
@@ -26,8 +27,11 @@ pub enum Action {
     Released(Button),
 }
 
+static INIT_BUTTONS: Signal<CriticalSectionRawMutex, ()> = Signal::new();
+
 #[embassy_executor::task]
 pub async fn run(mut cap1188: Cap1188) {
+    INIT_BUTTONS.wait().await;
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     cap1188.reset().await.ok();
     loop {
@@ -174,4 +178,8 @@ pub async fn run(mut cap1188: Cap1188) {
     )
     .await;
     cap1188.shutdown().await;
+}
+
+pub fn init() {
+    INIT_BUTTONS.signal(());
 }

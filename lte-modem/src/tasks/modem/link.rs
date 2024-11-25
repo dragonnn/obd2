@@ -39,13 +39,14 @@ pub async fn send_task(spawner: Spawner) {
     let mut starting_port: u16 = 10000;
     let mut rx_channel_sub = rx_channel_sub();
     let mut rx_channel_pub = rx_channel_pub();
+    let mut txframe_shutdown = false;
+
     rx_channel_pub.publish_immediate(RxFrame::Modem(Modem::Boot));
 
     loop {
         if starting_port < 10000 {
             starting_port = 10000;
         }
-        let mut txframe_shutdown = false;
 
         match select3(
             tx_channel_sub.next_message_pure(),
