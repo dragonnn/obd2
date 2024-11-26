@@ -211,6 +211,12 @@ pub enum TxFrame {
     Error(Error),
 }
 
+impl Into<TxMessage> for TxFrame {
+    fn into(self) -> TxMessage {
+        TxMessage::new(self)
+    }
+}
+
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub enum Error {}
 
@@ -249,7 +255,7 @@ pub struct TxMessage {
     pub ack: bool,
 }
 
-#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Debug, Format, PartialEq, Clone, Copy, Deserialize, Serialize)]
 pub enum MessageId {
     Modem(u32),
     Obd2Dashboard(u32),
@@ -422,6 +428,12 @@ impl PartialEq for Modem {
 pub enum RxFrame {
     TxFrameAck(MessageId),
     Modem(Modem),
+}
+
+impl Into<RxMessage> for RxFrame {
+    fn into(self) -> RxMessage {
+        RxMessage::new(self)
+    }
 }
 
 impl RxFrame {

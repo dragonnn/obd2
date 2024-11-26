@@ -49,6 +49,11 @@ num-integer = { version = "0.1.45", default-features = false }
 ieee802154 = { version = "0.6.1", features = ["defmt"] }
 byte = "0.2.7"
 heapless = { version = "0.8.0", features = ["defmt-03"] }
+statig = { path = "../obd2-dashboard/crates/statig/statig/", features = [
+    "async",
+    "alloc",
+] }
+embedded-alloc = "0.6.0"
 
 [profile.release]
 debug = 2

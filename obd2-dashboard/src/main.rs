@@ -60,7 +60,7 @@ async fn main(spawner: Spawner) {
     spawner.spawn(tasks::power::run(hal.power)).ok();
     #[cfg(feature = "usb_serial")]
     spawner.spawn(tasks::usb::run(hal.usb_serial)).ok();
-    spawner.spawn(tasks::ieee802154::run(hal.ieee802154)).ok();
+    spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner)).ok();
 
     tasks::state::run().await;
 }

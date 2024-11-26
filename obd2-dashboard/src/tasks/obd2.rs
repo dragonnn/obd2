@@ -76,6 +76,7 @@ impl Obd2PidSets {
     async fn handle_charging(obd2: &mut Obd2) -> bool {
         let mut ret = true;
         obd2.disable_obd2_pid_periods();
+
         ret = obd2.handle_pid::<pid::BmsPid>().await && ret;
         ret = obd2.handle_pid::<pid::IceTemperaturePid>().await && ret;
         ret = obd2.handle_pid::<pid::IcuPid>().await && ret;
@@ -101,7 +102,7 @@ impl Obd2PidSets {
     pub async fn loop_delay(&self) {
         let delay = match self {
             Self::Charging => embassy_time::Duration::from_secs(1),
-            Self::IgnitionOff => embassy_time::Duration::from_secs(5),
+            Self::IgnitionOff => embassy_time::Duration::from_secs(1),
             Self::IgnitionOn | Self::None => embassy_time::Duration::from_millis(100),
         };
         embassy_time::Timer::after(delay).await;

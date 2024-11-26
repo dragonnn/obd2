@@ -2,6 +2,8 @@
 #![no_main]
 #![feature(impl_trait_in_assoc_type)]
 
+extern crate alloc;
+
 use byte::TryRead;
 use byte::TryWrite;
 use defmt::*;
@@ -22,9 +24,13 @@ use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel;
 use embassy_time::Duration;
 use embassy_time::Timer;
+use embedded_alloc::LlffHeap as Heap;
 use ieee802154::mac::FooterMode;
 use ieee802154::mac::FrameSerDesContext;
 use {defmt_rtt as _, panic_probe as _};
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
 
 bind_interrupts!(struct Ieee802154Irqs {
     RADIO => radio::InterruptHandler<peripherals::RADIO>;
@@ -108,7 +114,7 @@ async fn main(spawner: Spawner) {
     let mut current_chunk_count = 0;
     let mut current_chunk = 0;
 
-    let mut rx_packet_seq = 0;
+    let mut rx_packet_seq = 0x0F;
 
     unwrap!(spawner.spawn(uarte_send_task(send, uarte_send, wdg1)));
     unwrap!(spawner.spawn(uarte_receive_task(receive, uarte_receive)));
@@ -127,7 +133,15 @@ async fn main(spawner: Spawner) {
                     info!("Received packet: {:?}", rx_packet.lqi(),);
                     match ieee802154::mac::Frame::try_read(&rx_packet, FooterMode::None) {
                         Ok((mut frame, size)) => {
-                            info!("Frame: {:?} Payload: {:x}", frame, frame.payload);
+                            if frame.header.frame_pending {
+                                warn!("found first frame!");
+                                current_chunk_count = 0;
+                                current_chunk = 0;
+                            }
+                            info!(
+                                "Frame: {:?} with seq_number: {}",
+                                frame.header, frame.header.seq
+                            );
                             frame.header.frame_type = ieee802154::mac::FrameType::Acknowledgement;
                             let ack_frame = ieee802154::mac::Frame {
                                 header: frame.header,
@@ -141,6 +155,7 @@ async fn main(spawner: Spawner) {
                                 .unwrap();
                             let mut ack_packet = embassy_nrf::radio::ieee802154::Packet::new();
                             ack_packet.copy_from_slice(&ack_packet_bytes[0..ack_size]);
+                            info!("Sending ack for ack_Frame: {:?}", ack_frame);
                             if ieee802154.try_send(&mut ack_packet).await.is_err() {
                                 error!("Send failed");
                             } else {
@@ -206,10 +221,11 @@ async fn main(spawner: Spawner) {
                 }
             }
             Second(uarte_result) => {
-                info!("Received data from uarte: {=[u8]:a}", uarte_result);
+                warn!("Received data from uarte: {=[u8]:a}", uarte_result);
                 if last_message_time.elapsed().as_millis() < 50 {
                     embassy_time::Timer::after_millis(50).await;
                 }
+                embassy_time::Timer::after_millis(400).await;
                 if let Err(err) = ieee802154
                     .try_send_buffer(&uarte_result, &mut rx_packet_seq)
                     .await
@@ -218,6 +234,7 @@ async fn main(spawner: Spawner) {
                 } else {
                     last_message_time = embassy_time::Instant::now();
                 }
+                info!("Sent packet");
             }
         }
 
@@ -247,8 +264,9 @@ impl TryIeee802154Send for embassy_nrf::radio::ieee802154::Radio<'_, peripherals
     ) -> Result<(), embassy_nrf::radio::Error> {
         for _ in 0..5 {
             self.try_send(tx_packet).await?;
+            return Ok(());
             let mut rx_packet = radio::ieee802154::Packet::new();
-            if let Ok(_) = self.receive(&mut rx_packet).await {
+            /*if let Ok(_) = self.receive(&mut rx_packet).await {
                 match ieee802154::mac::Frame::try_read(&rx_packet, FooterMode::None) {
                     Ok((frame, _)) => {
                         if frame.header.frame_type == ieee802154::mac::FrameType::Acknowledgement
@@ -261,7 +279,7 @@ impl TryIeee802154Send for embassy_nrf::radio::ieee802154::Radio<'_, peripherals
                         error!("Error reading frame: {:?}", defmt::Debug2Format(&err));
                     }
                 }
-            }
+            }*/
         }
         Ok(())
     }
@@ -278,7 +296,7 @@ impl TryIeee802154Send for embassy_nrf::radio::ieee802154::Radio<'_, peripherals
                 header: ieee802154::mac::Header {
                     frame_type: ieee802154::mac::FrameType::Data,
                     frame_pending: false,
-                    ack_request: true,
+                    ack_request: false,
                     pan_id_compress: false,
                     seq_no_suppress: false,
                     ie_present: false,
@@ -335,7 +353,6 @@ pub async fn uarte_send_task(
     loop {
         let data = uarte_send_channel_sub.receive().await;
         wdg1.pet().await;
-        info!("Sending data: {=[u8]:a} with len: {}", data, data.len());
         uarte_send_gpio.set_high();
         embassy_time::Timer::after(embassy_time::Duration::from_millis(2)).await;
         if let Err(err) = uarte_send.write(&data).await {

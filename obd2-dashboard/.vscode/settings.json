@@ -21,9 +21,11 @@
         "repr",
         "rtcio",
         "Rwdt",
+        "rxmessage",
         "statig",
         "timg",
         "txframes",
+        "txmessage",
         "unlisten"
     ]
 }

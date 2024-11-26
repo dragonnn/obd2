@@ -34,7 +34,7 @@
                     //    where FF is 2.5, 7F  where FF is 2.5, 7F is 1.3                                                           0x01 = -99C (0x00 = -100C)
                     //    is 1.3                                                                                                    0x20 = -68C
                     //13   14   15              16    17                                         18                                  19
-                    0x00, 0x00, 0x00,          0x00, 0xFF,                                      0x50,                               0x7F,
+                    0x00, 0x0F, 0x00,          0x00, 0xFF,                                      0x50,                               0x7F,
                     ///   CP VOLTAGE           CP duty                                          CP freqency
                     ///   0xFF = 652.8         0xFF = 6528                                      0xFF = 65280
                     ///   but plus next byte   but plus next byte                               but plus next byte with
