@@ -13,10 +13,10 @@ use esp_hal::{
     gpio::{Input, Io, Output, Pull},
     peripherals::Peripherals,
     prelude::*,
-    rtc_cntl::{Rtc, Rwdt},
+    rtc_cntl::{Rtc, Rwdt, RwdtStage},
     spi::{
         master::{Spi, SpiDmaBus},
-        FullDuplexMode, SpiMode,
+        AnySpi, SpiMode,
     },
     timer::{timg::TimerGroup, OneShotTimer},
     usb_serial_jtag::UsbSerialJtag,
@@ -53,11 +53,11 @@ macro_rules! mk_static {
 }
 
 pub struct SpiBus {
-    spi: SpiDmaBus<'static, esp_hal::peripherals::SPI2, FullDuplexMode, Async>,
+    spi: SpiDmaBus<'static, Async, AnySpi>,
 }
 
 impl SpiBus {
-    pub fn new(spi: SpiDmaBus<'static, esp_hal::peripherals::SPI2, FullDuplexMode, Async>) -> Self {
+    pub fn new(spi: SpiDmaBus<'static, Async, AnySpi>) -> Self {
         Self { spi }
     }
 }
@@ -95,7 +95,13 @@ impl embassy_embedded_hal::SetConfig for SpiBus {
     type ConfigError = ();
 
     fn set_config(&mut self, config: &Self::Config) -> Result<(), Self::ConfigError> {
-        self.spi.change_bus_frequency(config.MHz());
+        //self.spi.change_bus_frequency(config.MHz());
+        self.spi.apply_config(&esp_hal::spi::master::Config {
+            mode: SpiMode::Mode0,
+            read_bit_order: esp_hal::spi::SpiBitOrder::MSBFirst,
+            write_bit_order: esp_hal::spi::SpiBitOrder::MSBFirst,
+            frequency: config.MHz(),
+        });
         Ok(())
     }
 }
@@ -112,39 +118,40 @@ pub fn init() -> Hal {
     let timg0 = TimerGroup::new(peripherals.TIMG0);
 
     esp_hal_embassy::init(timg0.timer0);
-    let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
+    let io = Io::new(peripherals.IO_MUX);
     let mut rtc = Rtc::new(peripherals.LPWR);
 
     let dma = Dma::new(peripherals.DMA);
     let dma_channel = dma.channel0;
 
-    let sclk = io.pins.gpio6;
-    let mosi = io.pins.gpio7;
-    let miso = io.pins.gpio2;
+    let sclk = peripherals.GPIO6;
+    let mosi = peripherals.GPIO7;
+    let miso = peripherals.GPIO2;
 
     let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(32000);
     let dma_rx_buf = unwrap!(DmaRxBuf::new(rx_descriptors, rx_buffer).ok());
     let dma_tx_buf = unwrap!(DmaTxBuf::new(tx_descriptors, tx_buffer).ok());
 
-    let spi = Spi::new(peripherals.SPI2, 6.MHz(), SpiMode::Mode0)
+    let spi = Spi::new(peripherals.SPI2)
         .with_sck(sclk)
         .with_mosi(mosi)
         .with_miso(miso)
-        .with_dma(dma_channel.configure_for_async(false, DmaPriority::Priority0))
-        .with_buffers(dma_rx_buf, dma_tx_buf);
+        .with_dma(dma_channel.configure(true, DmaPriority::Priority0))
+        .with_buffers(dma_rx_buf, dma_tx_buf)
+        .into_async();
 
-    let mut dc = Output::new(io.pins.gpio23, false.into());
-    let mut cs_display1 = Output::new(io.pins.gpio18, false.into());
-    let mut cs_display2 = Output::new(io.pins.gpio19, false.into());
-    let mut cs_cap1188 = Output::new(io.pins.gpio20, false.into());
-    let mut cs_mcp2515 = Output::new(io.pins.gpio17, false.into());
-    let mut cs_mcp2515_2 = Output::new(io.pins.gpio16, false.into());
-    let int_mcp2515 = Input::new(io.pins.gpio4, Pull::Up);
-    let int_mcp2515_2 = Input::new(io.pins.gpio13, Pull::Up);
-    let mut rs = Output::new(io.pins.gpio22, true.into());
-    let ing = Input::new(io.pins.gpio5, Pull::Up);
-    let int_cap1188 = Input::new(io.pins.gpio3, Pull::Up);
-    let led = Output::new(io.pins.gpio0, false.into());
+    let mut dc = Output::new(peripherals.GPIO23, false.into());
+    let mut cs_display1 = Output::new(peripherals.GPIO18, false.into());
+    let mut cs_display2 = Output::new(peripherals.GPIO19, false.into());
+    let mut cs_cap1188 = Output::new(peripherals.GPIO20, false.into());
+    let mut cs_mcp2515 = Output::new(peripherals.GPIO17, false.into());
+    let mut cs_mcp2515_2 = Output::new(peripherals.GPIO16, false.into());
+    let int_mcp2515 = Input::new(peripherals.GPIO4, Pull::Up);
+    let int_mcp2515_2 = Input::new(peripherals.GPIO13, Pull::Up);
+    let mut rs = Output::new(peripherals.GPIO22, true.into());
+    let ing = Input::new(peripherals.GPIO5, Pull::Up);
+    let int_cap1188 = Input::new(peripherals.GPIO3, Pull::Up);
+    let led = Output::new(peripherals.GPIO0, false.into());
 
     dc.set_high();
     rs.set_low();
@@ -197,7 +204,7 @@ pub fn init() -> Hal {
     //rtc.set_interrupt_handler(interrupt_handler);
 
     rtc.rwdt.enable();
-    rtc.rwdt.set_timeout(5 * 60.secs());
+    rtc.rwdt.set_timeout(RwdtStage::Stage0, 5 * 60.secs());
     rtc.rwdt.listen();
 
     Hal {

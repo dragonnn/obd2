@@ -29,16 +29,14 @@ async fn send_task(mut send: BoardUarteTx, mut uarte_send: Output<'static>) {
     let mut rx_channel_sub = crate::tasks::modem::link::rx_channel_sub();
     loop {
         let msg = rx_channel_sub.next_message_pure().await;
-        if !msg.frame.is_ack() {
-            warn!("sending {:?}", msg);
-            if let Ok(encrypted_message) = msg.to_vec_encrypted() {
-                uarte_send.set_high();
-                embassy_time::Timer::after(Duration::from_millis(10)).await;
-                warn!("uarte_send high");
-                send.write(&encrypted_message).await.unwrap();
-                uarte_send.set_low();
-                embassy_time::Timer::after(Duration::from_millis(10)).await;
-            }
+        warn!("sending {:?}", msg);
+        if let Ok(encrypted_message) = msg.to_vec_encrypted() {
+            uarte_send.set_high();
+            embassy_time::Timer::after(Duration::from_millis(10)).await;
+            warn!("uarte_send high");
+            send.write(&encrypted_message).await.unwrap();
+            uarte_send.set_low();
+            embassy_time::Timer::after(Duration::from_millis(10)).await;
         }
     }
 }
@@ -72,9 +70,14 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
             match EncryptedMessage::deserialize(vec_buffer) {
                 Ok(encrypted_message) => match types::TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
                     Ok(msg) => {
+                        if !msg.ack {
+                            warn!("not remote ack, sending ack from modem");
+                            rx_channel_pub.publish_immediate(types::RxFrame::TxFrameAck(msg.id).into());
+                        }
+
                         if let types::TxFrame::Modem(Modem::Ping) = msg.frame {
-                            embassy_time::Timer::after(Duration::from_millis(100)).await;
                             warn!("sending modem pong");
+                            embassy_time::Timer::after(Duration::from_millis(300)).await;
                             rx_channel_pub.publish_immediate(types::RxMessage::new(types::RxFrame::Modem(Modem::Pong)));
                         } else {
                             tx_channel_pub.publish_immediate(msg);

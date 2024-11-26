@@ -72,7 +72,6 @@ pub async fn send_task(spawner: Spawner) {
                 if let types::TxFrame::Shutdown = txframe.frame {
                     txframe_shutdown = true;
                 }
-                info!("tx_channel_sub recv {:?}", txframe);
                 let is_modem_battery = txframe.frame.is_modem_battery();
                 let txmessage = txframe;
                 if socket.is_none() && !is_modem_battery {

@@ -104,21 +104,21 @@ async fn main(spawner: Spawner) {
 
     //receive  - p0.25 -> MCU_IF5
     //send - p1.00 -> MCU_IF4
-    let mut uarte_send = Output::new(p.P1_00, Level::Low, OutputDrive::Standard);
-    let mut uarte_receive = Input::new(p.P0_25, Pull::Down);
-    let mut ctx = ieee802154::mac::frame::FrameSerDesContext::no_security(FooterMode::None);
+    let uarte_send = Output::new(p.P1_00, Level::Low, OutputDrive::Standard);
+    let uarte_receive = Input::new(p.P0_25, Pull::Down);
+    let ctx = ieee802154::mac::frame::FrameSerDesContext::no_security(FooterMode::None);
 
     let mut uarte_rx_packet: heapless::Vec<u8, 512> = heapless::Vec::new();
-    let mut uarte_send_channel_pub = UARTE_SEND_CHANNEL.sender();
+    let uarte_send_channel_pub = UARTE_SEND_CHANNEL.sender();
 
     let mut current_chunk_count = 0;
     let mut current_chunk = 0;
 
-    let mut rx_packet_seq = 0x0F;
+    let mut rx_packet_seq = 0x00u8;
+    let mut tx_packet_seq = 0x00u8;
 
     unwrap!(spawner.spawn(uarte_send_task(send, uarte_send, wdg1)));
     unwrap!(spawner.spawn(uarte_receive_task(receive, uarte_receive)));
-    let mut last_message_time = embassy_time::Instant::now();
 
     loop {
         let mut rx_packet = radio::ieee802154::Packet::new();
@@ -130,52 +130,25 @@ async fn main(spawner: Spawner) {
         {
             First(ieee802154_result) => {
                 if ieee802154_result.is_ok() {
-                    info!("Received packet: {:?}", rx_packet.lqi(),);
                     match ieee802154::mac::Frame::try_read(&rx_packet, FooterMode::None) {
-                        Ok((mut frame, size)) => {
-                            if frame.header.frame_pending {
-                                warn!("found first frame!");
-                                current_chunk_count = 0;
-                                current_chunk = 0;
+                        Ok((frame, _size)) => {
+                            if !frame_seq_number_check(frame.header.seq, &mut tx_packet_seq) {
+                                warn!("frame with same seq number received");
+                                continue;
                             }
-                            info!(
-                                "Frame: {:?} with seq_number: {}",
-                                frame.header, frame.header.seq
-                            );
-                            frame.header.frame_type = ieee802154::mac::FrameType::Acknowledgement;
-                            let ack_frame = ieee802154::mac::Frame {
-                                header: frame.header,
-                                payload: &[],
-                                footer: frame.footer,
-                                content: ieee802154::mac::FrameContent::Acknowledgement,
-                            };
-                            let mut ack_packet_bytes = [0; 127];
-                            let ack_size = ack_frame
-                                .try_write(&mut ack_packet_bytes, &mut ctx)
-                                .unwrap();
-                            let mut ack_packet = embassy_nrf::radio::ieee802154::Packet::new();
-                            ack_packet.copy_from_slice(&ack_packet_bytes[0..ack_size]);
-                            info!("Sending ack for ack_Frame: {:?}", ack_frame);
-                            if ieee802154.try_send(&mut ack_packet).await.is_err() {
-                                error!("Send failed");
-                            } else {
-                                info!("Sent ack");
-                                last_message_time = embassy_time::Instant::now();
-                            }
-
                             match frame.header.destination {
                                 Some(ieee802154::mac::Address::Short(chunk_count, chunk)) => {
                                     let chunk_count = chunk_count.0 as u8;
                                     let chunk = chunk.0 as u8;
-                                    info!(
-                                        "New Chunk count: {} Chunk: {} with payload: {}",
-                                        chunk_count,
-                                        chunk,
-                                        frame.payload.len()
-                                    );
-                                    if current_chunk_count == 0 {
+                                    if frame.header.frame_pending {
+                                        warn!("found first frame!");
                                         current_chunk_count = chunk_count;
                                         current_chunk = chunk;
+                                    } else {
+                                        info!(
+                                            "frame: {:?} with seq_number: {}",
+                                            frame.header, frame.header.seq
+                                        );
                                     }
 
                                     if current_chunk_count == chunk_count
@@ -221,20 +194,13 @@ async fn main(spawner: Spawner) {
                 }
             }
             Second(uarte_result) => {
-                warn!("Received data from uarte: {=[u8]:a}", uarte_result);
-                if last_message_time.elapsed().as_millis() < 50 {
-                    embassy_time::Timer::after_millis(50).await;
-                }
-                embassy_time::Timer::after_millis(400).await;
                 if let Err(err) = ieee802154
                     .try_send_buffer(&uarte_result, &mut rx_packet_seq)
                     .await
                 {
                     error!("Error sending packet: {:?}", err);
-                } else {
-                    last_message_time = embassy_time::Instant::now();
                 }
-                info!("Sent packet");
+                info!("uarte packet sent");
             }
         }
 
@@ -251,7 +217,6 @@ pub trait TryIeee802154Send {
 
     async fn try_send_raw(
         &mut self,
-        header: &ieee802154::mac::Header,
         packet: &mut radio::ieee802154::Packet,
     ) -> Result<(), embassy_nrf::radio::Error>;
 }
@@ -259,28 +224,9 @@ pub trait TryIeee802154Send {
 impl TryIeee802154Send for embassy_nrf::radio::ieee802154::Radio<'_, peripherals::RADIO> {
     async fn try_send_raw(
         &mut self,
-        header: &ieee802154::mac::Header,
         tx_packet: &mut radio::ieee802154::Packet,
     ) -> Result<(), embassy_nrf::radio::Error> {
-        for _ in 0..5 {
-            self.try_send(tx_packet).await?;
-            return Ok(());
-            let mut rx_packet = radio::ieee802154::Packet::new();
-            /*if let Ok(_) = self.receive(&mut rx_packet).await {
-                match ieee802154::mac::Frame::try_read(&rx_packet, FooterMode::None) {
-                    Ok((frame, _)) => {
-                        if frame.header.frame_type == ieee802154::mac::FrameType::Acknowledgement
-                            && header.destination == frame.header.destination
-                        {
-                            return Ok(());
-                        }
-                    }
-                    Err(err) => {
-                        error!("Error reading frame: {:?}", defmt::Debug2Format(&err));
-                    }
-                }
-            }*/
-        }
+        self.try_send(tx_packet).await?;
         Ok(())
     }
     async fn try_send_buffer(
@@ -290,7 +236,7 @@ impl TryIeee802154Send for embassy_nrf::radio::ieee802154::Radio<'_, peripherals
     ) -> Result<(), embassy_nrf::radio::Error> {
         let chunks = packet.chunks(100);
         let chunks_count = chunks.len();
-        info!("Chunks count: {}", chunks_count);
+        warn!("Chunks count: {}", chunks_count);
         for (c, chunk) in chunks.enumerate() {
             let frame = ieee802154::mac::Frame {
                 header: ieee802154::mac::Header {
@@ -323,15 +269,12 @@ impl TryIeee802154Send for embassy_nrf::radio::ieee802154::Radio<'_, peripherals
                 &mut FrameSerDesContext::no_security(FooterMode::Explicit),
             ) {
                 Ok(res) => {
-                    info!("result: {}", res);
-
                     radio_tx_packet.copy_from_slice(&tx_packet[0..res]);
                     info!("radio_tx_packet.len(): {}", radio_tx_packet.len());
-                    self.try_send_raw(&frame.header, &mut radio_tx_packet)
-                        .await?;
+                    self.try_send_raw(&mut radio_tx_packet).await?;
                 }
                 Err(err) => {
-                    error!("Error writing frame: {:?}", defmt::Debug2Format(&err));
+                    error!("error writing frame: {:?}", defmt::Debug2Format(&err));
                 }
             }
             *seq_number = seq_number.wrapping_add(1);
@@ -356,7 +299,7 @@ pub async fn uarte_send_task(
         uarte_send_gpio.set_high();
         embassy_time::Timer::after(embassy_time::Duration::from_millis(2)).await;
         if let Err(err) = uarte_send.write(&data).await {
-            error!("Error sending data: {:?}", err);
+            error!("error sending data: {:?}", err);
         }
         uarte_send_gpio.set_low();
         embassy_time::Timer::after(embassy_time::Duration::from_millis(2)).await;
@@ -381,14 +324,34 @@ pub async fn uarte_receive_task(
         match uarte_receive.read_until_idle(&mut buffer).await {
             Ok(size) => {
                 let data = &buffer[..size];
-                warn!("Received data: {=[u8]:a} with len: {}", data, size);
+                warn!("received data: {=[u8]:a} with len: {}", data, size);
                 UARTE_RECEIVE_CHANNEL
                     .send(unwrap!(heapless::Vec::from_slice(data)))
                     .await;
             }
             Err(err) => {
-                error!("Error reading data: {:?}", err);
+                error!("error reading data: {:?}", err);
             }
         }
+    }
+}
+
+fn frame_seq_number_check(new_rx_seq_number: u8, current_rx_seq_number: &mut u8) -> bool {
+    if new_rx_seq_number == *current_rx_seq_number {
+        warn!("frame with same seq number received");
+        false
+    } else if new_rx_seq_number == current_rx_seq_number.wrapping_add(1) {
+        *current_rx_seq_number = new_rx_seq_number;
+        true
+    } else if new_rx_seq_number == 0 && *current_rx_seq_number == 0 {
+        warn!("frame seq number both 0");
+        true
+    } else {
+        warn!(
+            "frame seq number out of order, expected: {}, got: {}",
+            current_rx_seq_number, new_rx_seq_number
+        );
+        *current_rx_seq_number = new_rx_seq_number;
+        true
     }
 }

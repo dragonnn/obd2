@@ -6,12 +6,12 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-esp-hal = { version = "0.21.1", features = [
+esp-hal = { version = "0.22.0", features = [
     "esp32c6",
     "defmt",
 ] } # Base ESP deps
-esp-hal-embassy = { version = "0.4.0", features = ["esp32c6"] }
-esp-hal-procmacros = { version = "0.14.0", features = ["embassy"] }
+esp-hal-embassy = { version = "0.5.0", features = ["esp32c6"] }
+esp-hal-procmacros = { version = "0.15.0", features = ["embassy"] }
 esp-backtrace = { version = "0.14.2", features = [
     "esp32c6",
     "panic-handler",
@@ -36,7 +36,7 @@ panic-persist = "0.3.0"
 
 esp-println = { version = "0.12.0", features = ["esp32c6"] }
 esp-alloc = { version = "0.5.0" }
-esp-ieee802154 = { version = "0.3.1", features = ["esp32c6", "defmt"] }
+esp-ieee802154 = { version = "0.4.0", features = ["esp32c6", "defmt"] }
 ieee802154 = "0.6.1"
 serde-encrypt = { version = "0.7.0", default-features = false }
 serde = { version = "1.0", default-features = false, features = [

@@ -8,7 +8,7 @@ use esp_hal::{
     debugger::debugger_connected,
     macros::ram,
     reset::SleepSource,
-    rtc_cntl::{get_reset_reason, get_wakeup_cause, SocResetReason},
+    //rtc_cntl::{get_reset_reason, get_wakeup_cause, SocResetReason},
     Cpu,
 };
 

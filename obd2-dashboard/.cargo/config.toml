@@ -6,8 +6,8 @@ runner = "probe-rs run --chip esp32c6"
 rustflags = [
     "-C",
     "link-arg=-Tlinkall.x",
-    "-C",
-    "link-arg=-Trom_functions.x",
+    #"-C",
+    #"link-arg=-Trom_functions.x",
     "-C",
     "force-frame-pointers",
     "-C",

@@ -1,11 +1,8 @@
 use embassy_embedded_hal::shared_bus::asynch::spi::SpiDeviceWithConfig;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
-use esp_hal::{gpio::*, spi::FullDuplexMode, Async};
+use esp_hal::{gpio::*, spi::AnySpi, Async};
 
-pub type Spi = Mutex<
-    CriticalSectionRawMutex,
-    esp_hal::spi::master::SpiDma<'static, esp_hal::peripherals::SPI2, FullDuplexMode, Async>,
->;
+pub type Spi = Mutex<CriticalSectionRawMutex, esp_hal::spi::master::SpiDma<'static, Async, AnySpi>>;
 
 pub use crate::hal::SpiBus;
 

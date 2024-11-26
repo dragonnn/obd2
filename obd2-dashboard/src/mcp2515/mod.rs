@@ -5,11 +5,7 @@ use embassy_time::{Delay, Duration, Timer};
 use embedded_can::{Frame as _, StandardId};
 use embedded_hal_async::spi::{Operation, SpiDevice};
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
-use esp_hal::{
-    gpio::InputPin,
-    peripherals::SPI2,
-    spi::{master::SpiDma, FullDuplexMode},
-};
+use esp_hal::{gpio::InputPin, peripherals::SPI2, spi::master::SpiDma};
 
 mod bitrates;
 mod config;

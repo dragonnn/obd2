@@ -154,8 +154,8 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
         cca_mode: esp_ieee802154::CcaMode::Carrier,
         txpower: 20,
         rx_when_idle: true,
-        auto_ack_tx: true,
-        auto_ack_rx: true,
+        auto_ack_tx: false,
+        auto_ack_rx: false,
         ..Default::default()
     });
 
@@ -166,23 +166,24 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
     let ieee802154_send_sub = IEEE802154_SEND.receiver();
     let ieee802154_receive_pub = IEEE802154_RECEIVE.sender();
     loop {
-        match select3(ieee802154_send_sub.receive(), ieee802154.receive(), shutdown_signal.next_message_pure()).await {
-            First(txmessage) => {
-                if let Err(err) = ieee802154.transmit_txmessage(txmessage, 2, Duration::from_secs(5)).await {
-                    error!("ieee802154.transmit_txmessage failed: {:?}", err);
-                }
-            }
-            Second(rxmessage) => {
+        match select3(ieee802154.receive(), ieee802154_send_sub.receive(), shutdown_signal.next_message_pure()).await {
+            First(rxmessage) => {
+                info!("got rx message: {:?}", rxmessage);
                 if ieee802154_receive_pub.is_full() {
                     warn!("ieee802154_receive_pub is full");
                     ieee802154_receive_pub.clear();
                 }
                 ieee802154_receive_pub.send(rxmessage).await;
             }
+            Second(txmessage) => {
+                if let Err(err) = ieee802154.transmit_txmessage(txmessage, 2, Duration::from_secs(10)).await {
+                    error!("ieee802154.transmit_txmessage failed: {:?}", err);
+                }
+            }
             Third(_) => {
                 info!("ieee802154 shutdown");
                 while let Ok(txmessage) = ieee802154_send_sub.try_receive() {
-                    if let Err(err) = ieee802154.transmit_txmessage(txmessage, 2, Duration::from_secs(5)).await {
+                    if let Err(err) = ieee802154.transmit_txmessage(txmessage, 2, Duration::from_secs(10)).await {
                         error!("ieee802154.transmit_txmessage failed: {:?}", err);
                     }
                 }
@@ -258,12 +259,6 @@ impl AsyncIeee802154 {
         }
     }
 
-    pub fn flush(&mut self) {
-        while self.ieee802154.get_received().is_some() {
-            warn!("flushing received frames");
-        }
-    }
-
     pub async fn transmit_txmessage(
         &mut self,
         txmessage: TxMessage,
@@ -273,7 +268,7 @@ impl AsyncIeee802154 {
         let elapsed = Instant::now();
         let txmessage_id = txmessage.id;
         let buffer = txmessage.to_vec_encrypted()?;
-        for _ in 0..retry {
+        for current_retry in 0..retry {
             let chunks = buffer.chunks(100);
             let chunks_count = chunks.len();
             for (c, chunk) in chunks.enumerate() {
@@ -295,18 +290,26 @@ impl AsyncIeee802154 {
                     payload: unwrap!(heapless::Vec::from_slice(chunk)),
                     footer: [0, 0],
                 };
-                self.transmit_raw(&frame, timeout).await?;
+                self.transmit_raw(&frame, timeout / retry as u32).await?;
 
                 self.tx_seq_number = self.tx_seq_number.wrapping_add(1);
             }
-            match with_timeout(timeout, self.receive_ack()).await {
-                Ok(ack) => {
-                    info!("ack received");
+
+            match with_timeout(timeout, async {
+                loop {
+                    let ack = self.receive_ack().await;
                     if ack == txmessage_id {
-                        return Ok(());
+                        info!("ack received after retry: {}", current_retry);
+                        break;
                     } else {
                         error!("ack != txmessage_id");
                     }
+                }
+            })
+            .await
+            {
+                Ok(ack) => {
+                    return Ok(());
                 }
                 Err(_) => {
                     error!("receive_ack timeout");
@@ -319,11 +322,10 @@ impl AsyncIeee802154 {
 
     async fn transmit_raw(&mut self, frame: &Frame, timeout: Duration) -> Result<(), AsyncIeee802154Error> {
         self.tx_done_signal.reset();
-        self.rx_available_signal.reset();
+        //self.rx_available_signal.reset();
         self.ieee802154.transmit(frame)?;
-        info!("sending frame with seq: {}", frame.header.seq);
         if with_timeout(timeout, self.tx_done_signal.wait()).await.is_err() {
-            error!("timeout waiting for tx_done_signal");
+            error!("timeout waiting for tx_done_signal, timeout was: {}ms", timeout.as_millis());
         }
 
         Ok(())
@@ -337,6 +339,9 @@ impl AsyncIeee802154 {
         } else if new_rx_seq_number == self.rx_seq_number.wrapping_add(1) {
             self.rx_seq_number = new_rx_seq_number;
             true
+        } else if new_rx_seq_number == 0 && self.rx_seq_number == 0 {
+            warn!("frame seq number both 0");
+            true
         } else {
             warn!("frame seq number out of order, expected: {}, got: {}", self.rx_seq_number, new_rx_seq_number);
             self.rx_seq_number = new_rx_seq_number;
@@ -345,21 +350,31 @@ impl AsyncIeee802154 {
     }
 
     pub async fn receive_raw(&mut self) -> ReceivedFrame {
-        let msg = self.ieee802154.get_received();
+        /*let msg = self.ieee802154.get_received();
         if let Some(Ok(frame)) = msg {
             if self.frame_seq_number_check(&frame) {
-                warn!("early frame received");
                 return frame;
             }
-        }
+        }*/
         loop {
             self.rx_available_signal.wait().await;
-            if let Some(Ok(frame)) = self.ieee802154.get_received() {
+            /*let mut previous_frame = None;
+            while let Some(Ok(frame)) = self.ieee802154.get_received() {
+                previous_frame = Some(frame);
+            }
+
+            if let Some(frame) = previous_frame {
+                if self.frame_seq_number_check(&frame) {
+                    return frame;
+                }
+            }*/
+
+            if let Some(Ok(frame)) = self.ieee802154.received() {
                 if self.frame_seq_number_check(&frame) {
                     return frame;
                 }
             } else {
-                error!("get_received failed");
+                //error!("get_received failed");
             }
         }
     }
@@ -379,11 +394,6 @@ impl AsyncIeee802154 {
     async fn internal_receive(&mut self) -> RxMessage {
         loop {
             let received_frame = self.receive_raw().await;
-            info!(
-                "received_frame: {:?} received_frame.frame.payload.len(): {}",
-                defmt::Debug2Format(&received_frame),
-                received_frame.frame.payload.len()
-            );
             if received_frame.frame.payload.len() < 2 {
                 error!("received_frame.frame.payload.len() < 2");
             } else {
@@ -400,6 +410,7 @@ impl AsyncIeee802154 {
     pub async fn receive(&mut self) -> RxMessage {
         loop {
             if let Some(rxmessage) = self.rxmessage_buffer.pop() {
+                warn!("message from buffer: {:?}", rxmessage);
                 return rxmessage;
             }
             return self.internal_receive().await;
