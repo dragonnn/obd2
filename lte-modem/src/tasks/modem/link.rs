@@ -128,6 +128,7 @@ pub async fn send_task(spawner: Spawner) {
                         }
                     }
                 }
+                let mut drop_socket = false;
                 if let Some(current_socket) = &mut socket {
                     if !txmessage.frame.is_modem() {
                         timeout_ticker.as_mut().map(|t| t.reset());
@@ -136,8 +137,23 @@ pub async fn send_task(spawner: Spawner) {
                         Ok(_) => {}
                         Err(e) => {
                             error!("link socket send error {:?}", e);
-                            socket = None;
+                            drop_socket = true;
                         }
+                    }
+                }
+                if drop_socket {
+                    if let Some(socket) = socket.take() {
+                        match with_timeout(Duration::from_secs(5), socket.deactivate()).await {
+                            Ok(_) => {
+                                info!("socket closed");
+                            }
+                            Err(e) => {
+                                error!("link socket close error {:?}", e);
+                            }
+                        }
+                        CONNECTED.store(false, Ordering::Relaxed);
+                        DISCONNECT_SIGNAL.signal(());
+                        timeout_ticker = None;
                     }
                 }
             }
@@ -244,7 +260,7 @@ impl TxMessageSend for OwnedUdpSendSocket {
         port: u16,
         rx: &mut RxChannelSub,
     ) -> Result<(), nrf_modem::Error> {
-        if ACK_TIMEOUT.load(Ordering::Relaxed) > 60 {
+        if ACK_TIMEOUT.load(Ordering::Relaxed) > 10 {
             crate::tasks::reset::request_reset();
         }
 

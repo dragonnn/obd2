@@ -301,7 +301,7 @@ impl TxMessage {
             timestamp: 0,
             ack: false,
         };
-        if *ret.id % 10 == 0 {
+        if *ret.id % 10 == 0 && *ret.id != 0 {
             ret.ack = true;
         }
 
@@ -338,6 +338,8 @@ impl TxMessage {
                 TxFrame::State(_) => true,
                 TxFrame::Modem(Modem::Disconnected) => true,
                 TxFrame::Modem(Modem::Connected) => true,
+                TxFrame::Modem(Modem::Ping) => false,
+                TxFrame::Modem(Modem::Pong) => false,
                 _ => false,
             }
     }
@@ -459,7 +461,7 @@ impl RxMessage {
             ack: false,
         };
 
-        if *ret.id % 10 == 0 {
+        if *ret.id % 10 == 0 && *ret.id != 0 {
             ret.ack = true;
         }
 

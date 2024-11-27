@@ -96,12 +96,14 @@ impl embassy_embedded_hal::SetConfig for SpiBus {
 
     fn set_config(&mut self, config: &Self::Config) -> Result<(), Self::ConfigError> {
         //self.spi.change_bus_frequency(config.MHz());
-        self.spi.apply_config(&esp_hal::spi::master::Config {
-            mode: SpiMode::Mode0,
-            read_bit_order: esp_hal::spi::SpiBitOrder::MSBFirst,
-            write_bit_order: esp_hal::spi::SpiBitOrder::MSBFirst,
-            frequency: config.MHz(),
-        });
+        self.spi
+            .apply_config(&esp_hal::spi::master::Config {
+                mode: SpiMode::Mode0,
+                read_bit_order: esp_hal::spi::SpiBitOrder::MSBFirst,
+                write_bit_order: esp_hal::spi::SpiBitOrder::MSBFirst,
+                frequency: config.MHz(),
+            })
+            .ok();
         Ok(())
     }
 }
@@ -114,8 +116,9 @@ pub fn init() -> Hal {
     //let system = SystemControl::new(peripherals.SYSTEM);
     //let clocks = ClockControl::max(system.clock_control).freeze();
     let delay = Delay::new();
-
+    info!("delay init");
     delay.delay_millis(10u32);
+    info!("delay done");
 
     let timg0 = TimerGroup::new(peripherals.TIMG0);
 

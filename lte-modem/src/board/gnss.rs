@@ -110,7 +110,10 @@ impl Gnss {
                 let gnss_frame = stream.next().await.map_or(Ok(None), |v| v.map(Some))?;
                 match gnss_frame {
                     Some(ModemGnssData::PositionVelocityTime(postion_gnss_frame)) => {
-                        info!("got fix with accuracy: {}", postion_gnss_frame.accuracy);
+                        info!(
+                            "got fix with accuracy: {} on {}:{}",
+                            postion_gnss_frame.accuracy, postion_gnss_frame.latitude, postion_gnss_frame.longitude
+                        );
                         if postion_gnss_frame.accuracy != 0.0
                             && postion_gnss_frame.accuracy < 250.0
                             && postion_gnss_frame.altitude > -50.0

@@ -15,7 +15,7 @@ use ieee802154::mac::{Address, FrameContent, FrameType, FrameVersion, Header, Pa
 use serde::{Deserialize, Serialize};
 use serde_encrypt::{serialize::impls::PostcardSerializer, shared_key::SharedKey, traits::SerdeEncryptSharedKey};
 use static_cell::StaticCell;
-use types::{Pid, RxFrame, RxMessage, TxFrame, TxMessage};
+use types::{MessageId, Pid, RxFrame, RxMessage, TxFrame, TxMessage};
 
 use super::power::ShutdownGuard;
 use crate::{
@@ -165,6 +165,8 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
 
     let ieee802154_send_sub = IEEE802154_SEND.receiver();
     let ieee802154_receive_pub = IEEE802154_RECEIVE.sender();
+    let local_timeout = Duration::from_secs(1);
+    let remote_timeout = Duration::from_secs(10);
     loop {
         match select3(ieee802154.receive(), ieee802154_send_sub.receive(), shutdown_signal.next_message_pure()).await {
             First(rxmessage) => {
@@ -176,14 +178,22 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
                 ieee802154_receive_pub.send(rxmessage).await;
             }
             Second(txmessage) => {
-                if let Err(err) = ieee802154.transmit_txmessage(txmessage, 2, Duration::from_secs(10)).await {
+                let needs_ack = txmessage.needs_ack();
+                if let Err(err) = ieee802154
+                    .transmit_txmessage(txmessage, 5, if needs_ack { remote_timeout } else { local_timeout })
+                    .await
+                {
                     error!("ieee802154.transmit_txmessage failed: {:?}", err);
                 }
             }
             Third(_) => {
                 info!("ieee802154 shutdown");
                 while let Ok(txmessage) = ieee802154_send_sub.try_receive() {
-                    if let Err(err) = ieee802154.transmit_txmessage(txmessage, 2, Duration::from_secs(10)).await {
+                    let needs_ack = txmessage.needs_ack();
+                    if let Err(err) = ieee802154
+                        .transmit_txmessage(txmessage, 5, if needs_ack { remote_timeout } else { local_timeout })
+                        .await
+                    {
                         error!("ieee802154.transmit_txmessage failed: {:?}", err);
                     }
                 }
@@ -242,10 +252,10 @@ impl AsyncIeee802154 {
         static RX_AVAILABLE_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 
         ieee802154.set_rx_available_callback_fn(|| {
-            TX_DONE_SIGNAL.signal(());
+            RX_AVAILABLE_SIGNAL.signal(());
         });
         ieee802154.set_tx_done_callback_fn(|| {
-            RX_AVAILABLE_SIGNAL.signal(());
+            TX_DONE_SIGNAL.signal(());
         });
         ieee802154.start_receive();
 
@@ -290,16 +300,20 @@ impl AsyncIeee802154 {
                     payload: unwrap!(heapless::Vec::from_slice(chunk)),
                     footer: [0, 0],
                 };
-                self.transmit_raw(&frame, timeout / retry as u32).await?;
+                if self.transmit_raw(&frame, Duration::from_millis(100)).await.is_err() {
+                    error!("transmit_raw failed");
+                }
 
                 self.tx_seq_number = self.tx_seq_number.wrapping_add(1);
             }
 
             match with_timeout(timeout, async {
                 loop {
-                    let ack = self.receive_ack().await;
+                    let ack = self.receive_ack(txmessage_id).await;
                     if ack == txmessage_id {
-                        info!("ack received after retry: {}", current_retry);
+                        if current_retry > 0 {
+                            warn!("ack received after retry: {}", current_retry);
+                        }
                         break;
                     } else {
                         error!("ack != txmessage_id");
@@ -309,14 +323,15 @@ impl AsyncIeee802154 {
             .await
             {
                 Ok(ack) => {
+                    info!("transmit_tx message ok, elapsed: {}ms", elapsed.elapsed().as_millis());
                     return Ok(());
                 }
                 Err(_) => {
-                    error!("receive_ack timeout");
+                    error!("receive_ack timeout for txmessage: {:?}", txmessage);
                 }
             }
         }
-        info!("transmit_buffer elapsed: {}ms", elapsed.elapsed().as_millis());
+        error!("transmit_buffer elapsed: {}ms", elapsed.elapsed().as_millis());
         Err(AsyncIeee802154Error::Timeout)
     }
 
@@ -325,7 +340,7 @@ impl AsyncIeee802154 {
         //self.rx_available_signal.reset();
         self.ieee802154.transmit(frame)?;
         if with_timeout(timeout, self.tx_done_signal.wait()).await.is_err() {
-            error!("timeout waiting for tx_done_signal, timeout was: {}ms", timeout.as_millis());
+            warn!("timeout waiting for tx_done_signal, timeout was: {}ms", timeout.as_millis());
         }
 
         Ok(())
@@ -350,12 +365,13 @@ impl AsyncIeee802154 {
     }
 
     pub async fn receive_raw(&mut self) -> ReceivedFrame {
-        /*let msg = self.ieee802154.get_received();
+        let msg = self.ieee802154.received();
         if let Some(Ok(frame)) = msg {
             if self.frame_seq_number_check(&frame) {
+                warn!("early frame return");
                 return frame;
             }
-        }*/
+        }
         loop {
             self.rx_available_signal.wait().await;
             /*let mut previous_frame = None;
@@ -379,11 +395,16 @@ impl AsyncIeee802154 {
         }
     }
 
-    pub async fn receive_ack(&mut self) -> types::MessageId {
+    pub async fn receive_ack(&mut self, txmessage_id: MessageId) -> types::MessageId {
         loop {
             let rxmessage = self.internal_receive().await;
             if let types::RxFrame::TxFrameAck(ack) = rxmessage.frame {
-                return ack;
+                if ack == txmessage_id {
+                    return ack;
+                } else {
+                    warn!("ack != txmessage_id");
+                    self.rxmessage_buffer.push(rxmessage).ok();
+                }
             } else {
                 warn!("no ack received_frame: {:?}", rxmessage);
                 self.rxmessage_buffer.push(rxmessage).ok();

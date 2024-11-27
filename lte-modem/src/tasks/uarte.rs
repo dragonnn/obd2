@@ -33,7 +33,6 @@ async fn send_task(mut send: BoardUarteTx, mut uarte_send: Output<'static>) {
         if let Ok(encrypted_message) = msg.to_vec_encrypted() {
             uarte_send.set_high();
             embassy_time::Timer::after(Duration::from_millis(10)).await;
-            warn!("uarte_send high");
             send.write(&encrypted_message).await.unwrap();
             uarte_send.set_low();
             embassy_time::Timer::after(Duration::from_millis(10)).await;
@@ -70,16 +69,15 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
             match EncryptedMessage::deserialize(vec_buffer) {
                 Ok(encrypted_message) => match types::TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
                     Ok(msg) => {
-                        if !msg.ack {
-                            warn!("not remote ack, sending ack from modem");
-                            rx_channel_pub.publish_immediate(types::RxFrame::TxFrameAck(msg.id).into());
-                        }
-
                         if let types::TxFrame::Modem(Modem::Ping) = msg.frame {
                             warn!("sending modem pong");
-                            embassy_time::Timer::after(Duration::from_millis(300)).await;
+                            rx_channel_pub.publish_immediate(types::RxFrame::TxFrameAck(msg.id).into());
                             rx_channel_pub.publish_immediate(types::RxMessage::new(types::RxFrame::Modem(Modem::Pong)));
                         } else {
+                            if !msg.needs_ack() {
+                                warn!("not remote ack, sending ack from modem");
+                                rx_channel_pub.publish_immediate(types::RxFrame::TxFrameAck(msg.id).into());
+                            }
                             tx_channel_pub.publish_immediate(msg);
                         }
                     }
