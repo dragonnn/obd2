@@ -110,15 +110,18 @@ pub fn init() -> Hal {
     let mut config = esp_hal::Config::default();
     config.cpu_clock = CpuClock::max();
     let peripherals = esp_hal::init(config);
+
     //let system = SystemControl::new(peripherals.SYSTEM);
     //let clocks = ClockControl::max(system.clock_control).freeze();
     let delay = Delay::new();
-    delay.delay_micros(100u32);
+
+    delay.delay_millis(10u32);
 
     let timg0 = TimerGroup::new(peripherals.TIMG0);
 
     esp_hal_embassy::init(timg0.timer0);
-    let io = Io::new(peripherals.IO_MUX);
+
+    //let io = Io::new(peripherals.IO_MUX);
     let mut rtc = Rtc::new(peripherals.LPWR);
 
     let dma = Dma::new(peripherals.DMA);
@@ -147,7 +150,7 @@ pub fn init() -> Hal {
     let mut cs_mcp2515 = Output::new(peripherals.GPIO17, false.into());
     let mut cs_mcp2515_2 = Output::new(peripherals.GPIO16, false.into());
     let int_mcp2515 = Input::new(peripherals.GPIO4, Pull::Up);
-    let int_mcp2515_2 = Input::new(peripherals.GPIO13, Pull::Up);
+    let int_mcp2515_2 = Input::new(peripherals.GPIO1, Pull::Up);
     let mut rs = Output::new(peripherals.GPIO22, true.into());
     let ing = Input::new(peripherals.GPIO5, Pull::Up);
     let int_cap1188 = Input::new(peripherals.GPIO3, Pull::Up);
