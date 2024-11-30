@@ -83,6 +83,7 @@ pub struct Board {
     pub uarte_send: Option<Output<'static>>,
     pub uarte_receive: Option<Input<'static>>,
     pub uarte_reset: Option<Output<'static>>,
+    pub charging_control: Option<Output<'static>>,
 }
 
 impl Board {
@@ -165,6 +166,8 @@ impl Board {
 
         lightwell.r(0);
 
+        let charging_control = Output::new(p.P0_13, Level::Low, OutputDrive::Standard);
+
         Self {
             modem,
             buzzer,
@@ -180,6 +183,7 @@ impl Board {
             uarte_send: Some(uarte_send),
             uarte_receive: Some(uarte_receive),
             uarte_reset: Some(uarte_reset),
+            charging_control: Some(charging_control),
         }
     }
 }

@@ -1,8 +1,11 @@
+use crc::{Crc, CRC_32_ISCSI};
 use defmt::Format;
 use persistent_buff::PersistentBuff;
 use serde::{Deserialize, Serialize};
 
 use crate::tasks::{gnss::Fix, reset::ResetGuard};
+
+static CRC: Crc<u32> = Crc::<u32>::new(&CRC_32_ISCSI);
 
 #[derive(Format, Default, Deserialize, Serialize)]
 pub struct PeristentState {
@@ -11,6 +14,7 @@ pub struct PeristentState {
     booted: bool,
     restarts: u32,
     fix: Option<Fix>,
+    state: Option<types::State>,
 }
 
 pub struct PeristentManager {
@@ -20,18 +24,10 @@ pub struct PeristentManager {
 
 impl PeristentManager {
     pub fn new() -> Self {
-        let persistent_buff = PersistentBuff::take_managed().unwrap().take_validate(|b| {
-            let state = PeristentState { booted: false, ..Default::default() };
-            embedded_msgpack::encode::serde::to_array(&state, b).unwrap();
-        });
+        let persistent_buff = PersistentBuff::take_managed().unwrap().take_validate(|_buff| {});
 
         let persistent_state: PeristentState =
-            embedded_msgpack::decode::from_slice(persistent_buff).unwrap_or_else(|e| {
-                defmt::error!("error decoding peristante_state: {}", defmt::Debug2Format(&e));
-                let state = PeristentState { booted: false, ..Default::default() };
-                embedded_msgpack::encode::serde::to_array(&state, persistent_buff).unwrap();
-                state
-            });
+            postcard::from_bytes_crc32(&persistent_buff, CRC.digest()).unwrap_or_default();
 
         Self { persistent_buff, persistent_state }
     }
@@ -61,6 +57,11 @@ impl PeristentManager {
         self.serialize();
     }
 
+    pub fn update_state(&mut self, state: Option<types::State>) {
+        self.persistent_state.state = state;
+        self.serialize();
+    }
+
     pub fn get_booted(&self) -> bool {
         self.persistent_state.booted
     }
@@ -81,8 +82,15 @@ impl PeristentManager {
         self.persistent_state.fix
     }
 
+    pub fn get_state(&self) -> Option<types::State> {
+        self.persistent_state.state.clone()
+    }
+
     fn serialize(&mut self) {
         let _guard = ResetGuard::new();
-        embedded_msgpack::encode::serde::to_array(&self.persistent_state, self.persistent_buff).unwrap();
+        match postcard::to_slice_crc32(&self.persistent_state, &mut self.persistent_buff, CRC.digest()) {
+            Ok(_) => {}
+            Err(e) => defmt::error!("Failed to serialize persistent state: {:?}", e),
+        }
     }
 }

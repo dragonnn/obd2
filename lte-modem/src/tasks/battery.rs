@@ -1,5 +1,6 @@
-use defmt::Format;
-use embassy_futures::select;
+use defmt::{info, warn, Format};
+use embassy_futures::select::{select3, Either3::*};
+use embassy_nrf::gpio::Output;
 use embassy_sync::{
     blocking_mutex::raw::ThreadModeRawMutex,
     mutex::Mutex,
@@ -8,7 +9,7 @@ use embassy_sync::{
 use embassy_time::{Duration, Instant, Timer};
 use types::{Modem, TxFrame, TxMessage};
 
-use super::{modem::link::tx_channel_pub, TASKS_SUBSCRIBERS};
+use super::{modem::link::tx_channel_pub, uarte::state_channel_sub, TASKS_SUBSCRIBERS};
 use crate::board::{Battery, ChargerStatus, InterputEvent};
 
 #[derive(Format, Clone, Default)]
@@ -25,6 +26,7 @@ pub type StateSubscriper = Subscriber<'static, ThreadModeRawMutex, State, TASKS_
 impl State {
     pub async fn new(battery: &mut Battery, low_voltage: bool) -> Self {
         let charger_state = battery.charger_status().await.unwrap();
+        info!("charger state: {:?}", charger_state);
         let charging = charger_state.is_charging();
         let capacity = battery.battery_soc().await;
         let voltage = battery.voltage().await;
@@ -63,7 +65,23 @@ static CHANNEL: PubSubChannel<ThreadModeRawMutex, State, TASKS_SUBSCRIBERS, TASK
     PubSubChannel::new();
 
 #[embassy_executor::task]
-pub async fn task(mut battery: Battery) {
+pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
+    let mut current_charging = false;
+    let mut charging_control = |charing: bool| {
+        current_charging = charing;
+        if charing {
+            charging_control.set_low();
+            warn!("enable charging");
+        } else {
+            charging_control.set_high();
+            warn!("disable charging");
+        }
+    };
+    charging_control(false);
+    let mut state_channel_sub = state_channel_sub();
+    let mut current_state = None;
+
+    embassy_time::Timer::after(Duration::from_secs(1)).await;
     let mut timeout = Duration::from_secs(60);
     let mut low_voltage = false;
     let mut state = State::new(&mut battery, low_voltage).await;
@@ -83,18 +101,38 @@ pub async fn task(mut battery: Battery) {
                 timeout = Duration::from_secs(60);
             }
         }
+
+        if new_state.capacity < 15 {
+            warn!("low battery capacity, charging");
+            charging_control(true);
+        } else if new_state.capacity > 85
+            && (current_state != Some(types::State::IgnitionOn) && current_state != Some(types::State::Charging))
+        {
+            charging_control(false);
+        }
+
         *STATE.lock().await = new_state;
 
-        let result = select::select(battery.irq(), Timer::after(timeout)).await;
-        match result {
-            select::Either::First(event) => {
+        match select3(battery.irq(), Timer::after(timeout), state_channel_sub.next_message_pure()).await {
+            First(event) => {
                 defmt::info!("battery event: {:?}", event);
                 if let Ok(InterputEvent::LowVoltage) = event {
                     defmt::error!("battery low voltage");
                     low_voltage = true;
                 }
             }
-            select::Either::Second(_) => {}
+            Second(_) => {}
+            Third(new_state) => {
+                info!("new state: {:?}", new_state);
+                if let types::State::Charging = new_state {
+                    charging_control(true);
+                } else if let types::State::IgnitionOn = new_state {
+                    charging_control(true);
+                } else {
+                    charging_control(false);
+                }
+                current_state = Some(new_state);
+            }
         }
         let battery_voltage = battery.voltage().await;
         let battery_soc = battery.battery_soc().await;

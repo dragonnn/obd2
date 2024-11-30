@@ -2,7 +2,7 @@ use core::{fmt::Write, write};
 
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_futures::select;
+use embassy_futures::select::{select4, Either4};
 use embassy_time::{Duration, Instant, Ticker};
 use futures::StreamExt;
 use heapless::String;
@@ -24,6 +24,7 @@ use crate::{
         battery::State as BatteryState,
         button::subscribe as button_subscribe,
         gnss::{Fix, State as GnssState},
+        uarte::{state_channel_pub, state_channel_sub},
     },
 };
 
@@ -43,6 +44,8 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
 
     let mut battery_state_sub = BatteryState::subscribe().await;
     let mut battery_state = BatteryState::get().await;
+    let mut state_channel_sub = state_channel_sub();
+    let state_channel_pub = state_channel_pub();
 
     if !persistent_manager.get_booted() {
         if let Err(err) = send_state(&modem, "booting..", false, true, persistent_manager.get_restarts()).await {
@@ -51,6 +54,10 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
         persistent_manager.update_booted(true);
     } else {
         persistent_manager.add_restarts();
+    }
+
+    if let Some(state) = persistent_manager.get_state() {
+        state_channel_pub.publish_immediate(state);
     }
 
     let mut fix_sub = GnssState::subscribe().await;
@@ -66,10 +73,17 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
     let mut secs = persistent_manager.get_secs();
 
     loop {
-        match select::select3(battery_state_sub.next(), fix_sub.next(), button_sub.next()).await {
-            select::Either3::First(new_battery_state) => {
+        match select4(
+            battery_state_sub.next(),
+            fix_sub.next(),
+            button_sub.next(),
+            state_channel_sub.next_message_pure(),
+        )
+        .await
+        {
+            Either4::First(new_battery_state) => {
                 if let Some(new_battery_state) = new_battery_state {
-                    if new_battery_state.charging != battery_state.charging {
+                    /*if new_battery_state.charging != battery_state.charging {
                         send_charging_state(
                             &new_battery_state,
                             &mut modem,
@@ -92,11 +106,11 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                             persistent_manager.get_restarts(),
                         )
                         .await;
-                    }
+                    }*/
                     battery_state = new_battery_state;
                 }
             }
-            select::Either3::Second(new_fix) => {
+            Either4::Second(new_fix) => {
                 fix =
                     process_new_fix(&battery_state, &fix, new_fix, &mut modem, persistent_manager.get_restarts()).await;
                 let mut current_distance = 0.0;
@@ -119,35 +133,59 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                 }
                 persistent_manager.update_fix(fix);
             }
-            select::Either3::Third(_) => {
+            Either4::Third(_) => {
                 defmt::info!("sending button press");
                 send_state(&modem, "button pressed...", false, false, persistent_manager.get_restarts()).await.ok();
+            }
+            Either4::Fourth(state) => {
+                if persistent_manager.get_state() != Some(state.clone()) {
+                    persistent_manager.update_state(Some(state.clone()));
+                    if state == types::State::IgnitionOn || state == types::State::CheckCharging {
+                        embassy_time::Timer::after(Duration::from_secs(5)).await;
+                        warn!("sending obd2 state");
+                        send_obd2_state(
+                            &battery_state,
+                            &mut modem,
+                            distance,
+                            distance / (secs / 3600.0),
+                            persistent_manager.get_restarts(),
+                            &state,
+                        )
+                        .await
+                        .ok();
+                    }
+                }
             }
         }
     }
 }
 
-async fn send_charging_state(
+async fn send_obd2_state(
     battery_state: &BatteryState,
     modem: &mut Modem,
     distance: f64,
     speed: f64,
     restarts: u32,
-) {
-    let mut discharging_event: String<32> = String::new();
-    write!(&mut discharging_event, "discharging.. {:.2}km {:.1}km/h...", distance, speed).ok();
+    state: &types::State,
+) -> Result<(), ()> {
+    let mut parked_event: String<32> = String::new();
+    write!(&mut parked_event, "parked.. {:.2}km {:.1}km/h...", distance, speed).ok();
 
-    if battery_state.charging {
-        if send_state(modem, "charging..", true, false, restarts).await.is_err() {
-            defmt::error!("error sending sms");
+    match state {
+        types::State::CheckCharging => {
+            if send_state(modem, &parked_event, true, false, restarts).await.is_err() {
+                defmt::error!("error sending sms");
+            }
         }
-    } else if battery_state.low_voltage {
-        if send_state(modem, "low voltage..", true, false, restarts).await.is_err() {
-            defmt::error!("error sending sms");
+        types::State::IgnitionOn => {
+            if send_state(modem, "driving..", true, false, restarts).await.is_err() {
+                defmt::error!("error sending sms");
+            }
         }
-    } else if send_state(modem, &discharging_event, true, false, restarts).await.is_err() {
-        defmt::error!("error sending sms");
+        _ => {}
     }
+
+    Ok(())
 }
 
 async fn process_new_fix(

@@ -75,6 +75,7 @@ async fn main(spawner: Spawner) {
     let uarte_send = unwrap!(board.uarte_send.take());
     let uarte_receive = unwrap!(board.uarte_receive.take());
     let uarte_reset = unwrap!(board.uarte_reset.take());
+    let charging_control = unwrap!(board.charging_control.take());
 
     if let Some(panic) = panic_message {
         if !panic.contains("twi reset") {
@@ -83,7 +84,7 @@ async fn main(spawner: Spawner) {
     }
 
     defmt::info!("starting tasks");
-    unwrap!(spawner.spawn(tasks::battery::task(battery)));
+    unwrap!(spawner.spawn(tasks::battery::task(battery, charging_control)));
     Timer::after(Duration::from_millis(100)).await;
     unwrap!(spawner.spawn(tasks::gnss::task(gnss)));
     unwrap!(spawner.spawn(tasks::state::task(sense, lightwell, wdg, light_sensor)));

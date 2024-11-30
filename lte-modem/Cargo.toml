@@ -74,8 +74,9 @@ arbitrary-int = "1.2.7"
 
 serde = { version = "1.0.147", default-features = false, features = ["derive"] }
 serde-encrypt = { version = "0.7.0", default-features = false }
-postcard = { version = "1.0.10", features = ["use-defmt"] }
-embedded-msgpack = "0.3.1"
+postcard = { version = "1.0.10", features = ["use-defmt", "use-crc"] }
+crc = "3.2.1"
+#embedded-msgpack = "0.3.1"
 bitfield-struct = "0.9.0"
 
 array-macro = "2.1.5"

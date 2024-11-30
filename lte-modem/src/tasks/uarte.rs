@@ -7,9 +7,15 @@ use embassy_nrf::{
     peripherals::SERIAL1,
     uarte::{Uarte, UarteRx, UarteTx},
 };
+use embassy_sync::{
+    blocking_mutex::raw::CriticalSectionRawMutex,
+    pubsub::{DynPublisher, DynSubscriber, PubSubChannel},
+};
 use embassy_time::{with_timeout, Duration};
 use serde_encrypt::{shared_key::SharedKey, traits::SerdeEncryptSharedKey as _, EncryptedMessage};
 use types::Modem;
+
+static STATE_CHANNEL: PubSubChannel<CriticalSectionRawMutex, types::State, 16, 8, 2> = PubSubChannel::new();
 
 use crate::board::{BoardUarteRx, BoardUarteTx};
 
@@ -44,6 +50,7 @@ async fn send_task(mut send: BoardUarteTx, mut uarte_send: Output<'static>) {
 async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'static>, mut uarte_reset: Output<'static>) {
     let tx_channel_pub = crate::tasks::modem::link::tx_channel_pub();
     let rx_channel_pub = crate::tasks::modem::link::rx_channel_pub();
+    let state_channel_pub = unwrap!(STATE_CHANNEL.publisher());
 
     let shared_key: SharedKey = SharedKey::new(crate::SHARED_KEY.clone());
 
@@ -69,7 +76,11 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
             match EncryptedMessage::deserialize(vec_buffer) {
                 Ok(encrypted_message) => match types::TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
                     Ok(msg) => {
-                        if let types::TxFrame::Modem(Modem::Ping) = msg.frame {
+                        if let types::TxFrame::State(state) = &msg.frame {
+                            state_channel_pub.publish_immediate(state.clone());
+                        }
+
+                        if let types::TxFrame::Modem(Modem::Ping) = &msg.frame {
                             warn!("sending modem pong");
                             rx_channel_pub.publish_immediate(types::RxFrame::TxFrameAck(msg.id).into());
                             rx_channel_pub.publish_immediate(types::RxMessage::new(types::RxFrame::Modem(Modem::Pong)));
@@ -95,4 +106,12 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
         //info!("uarte_receive low");
         uarte_receive.wait_for_low().await;
     }
+}
+
+pub fn state_channel_sub() -> DynSubscriber<'static, types::State> {
+    unwrap!(STATE_CHANNEL.dyn_subscriber())
+}
+
+pub fn state_channel_pub() -> DynPublisher<'static, types::State> {
+    unwrap!(STATE_CHANNEL.dyn_publisher())
 }

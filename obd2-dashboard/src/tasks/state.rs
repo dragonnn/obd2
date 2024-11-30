@@ -218,11 +218,17 @@ impl KiaState {
     async fn ignition_off(&mut self, event: &KiaEvent, timeout: &Instant) -> Response<State> {
         let now = self.rtc.lock().await.current_time().and_utc().timestamp();
         let last_ignition_on = unsafe { LAST_IGNITION_ON };
-        let shutdown_duration = if last_ignition_on != 0 && now - last_ignition_on < 60 * 60 {
+        let shutdown_duration = if last_ignition_on != 0 && now - last_ignition_on > 60 * 60 {
             Duration::from_secs(60 * 60)
         } else {
             Duration::from_secs(15 * 60)
         };
+        warn!(
+            "shutdown duration: {}min: last_ignition_on:{}sec now: {}sec",
+            shutdown_duration.as_secs() / 60,
+            last_ignition_on,
+            now
+        );
 
         match event {
             KiaEvent::Obd2Event(Obd2Event::Icu3Pid(icu3_pid)) => {

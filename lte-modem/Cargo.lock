@@ -20,7 +20,7 @@ dependencies = [
  "cfg-if",
  "once_cell",
  "version_check",
- "zerocopy 0.7.35",
+ "zerocopy",
 ]
 
 [[package]]
@@ -804,20 +804,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "embedded-msgpack"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "940b95a2be9c025785d7c6262ac0d0ed38848eeaea126f1ee4d69ba6eaae1da9"
-dependencies = [
- "byteorder",
- "num-traits",
- "paste",
- "serde",
- "serde_bytes",
- "zerocopy 0.5.2",
-]
-
-[[package]]
 name = "embedded-nal"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1522,7 +1508,7 @@ version = "0.2.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77957b295656769bb8ad2b6a6b09d897d94f05c41b069aede1fcdaa675eaea04"
 dependencies = [
- "zerocopy 0.7.35",
+ "zerocopy",
 ]
 
 [[package]]
@@ -1777,15 +1763,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_bytes"
-version = "0.11.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "387cc504cb06bb40a96c8e04e951fe01854cf6bc921053c954e4a606d9675c6a"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "serde_cbor"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1948,6 +1925,7 @@ dependencies = [
  "bitfield-struct",
  "cortex-m",
  "cortex-m-rt",
+ "crc",
  "defmt",
  "defmt-rtt",
  "dotenv-build",
@@ -1965,7 +1943,6 @@ dependencies = [
  "embedded-hal-bus",
  "embedded-io 0.6.1",
  "embedded-io-async",
- "embedded-msgpack",
  "embedded-storage",
  "futures",
  "futures-util",
@@ -2242,33 +2219,12 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d497797928c195a67ad29428cc6db3bb3b38fa2d520be13637bde0ceb91c696"
-dependencies = [
- "byteorder",
- "zerocopy-derive 0.3.2",
-]
-
-[[package]]
-name = "zerocopy"
 version = "0.7.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b9b4fd18abc82b8136838da5d50bae7bdea537c574d8dc1a34ed098d6c166f0"
 dependencies = [
  "byteorder",
- "zerocopy-derive 0.7.35",
-]
-
-[[package]]
-name = "zerocopy-derive"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6505e6815af7de1746a08f69c69606bb45695a17149517680f3b2149713b19a3"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
+ "zerocopy-derive",
 ]
 
 [[package]]
