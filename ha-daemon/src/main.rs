@@ -132,6 +132,12 @@ impl HaState {
 
     #[action]
     async fn entry_connect(&mut self) {
+        if let Some(ws) = self.ws.take() {
+            warn!("closing websocket");
+            drop(ws);
+            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+        }
+
         if let Ok(ws) = HaWs::new(&self.config).await.let_log() {
             self.ws = Some(ws);
         }

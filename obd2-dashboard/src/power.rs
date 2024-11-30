@@ -4,22 +4,19 @@ use embedded_hal::delay::DelayNs;
 use esp_hal::{
     delay::Delay,
     gpio::{self, InputPin, Pin, RtcPin, RtcPinWithResistors},
-    rtc_cntl::{
-        sleep::{Ext1WakeupSource, TimerWakeupSource, WakeupLevel},
-        Rtc,
-    },
+    rtc_cntl::sleep::{Ext1WakeupSource, TimerWakeupSource, WakeupLevel},
 };
 
 use crate::{
     debug::internal_debug,
-    types::{IngGpio, Rs},
+    types::{IngGpio, Rs, Rtc},
 };
 
 pub struct Power {
     ing_gpio: IngGpio,
     rs_gpio: Rs,
     delay: Delay,
-    rtc: Rtc<'static>,
+    rtc: Rtc,
 }
 
 pub enum Ignition {
@@ -28,7 +25,7 @@ pub enum Ignition {
 }
 
 impl Power {
-    pub fn new(ing_gpio: IngGpio, delay: Delay, rtc: Rtc<'static>, rs_gpio: Rs) -> Self {
+    pub fn new(ing_gpio: IngGpio, delay: Delay, rtc: Rtc, rs_gpio: Rs) -> Self {
         Self { ing_gpio, delay, rtc, rs_gpio }
     }
 
@@ -42,7 +39,8 @@ impl Power {
 
         let rtcio = Ext1WakeupSource::new(wakeup_pins);
         self.rs_gpio.set_low();
-        self.rtc.sleep_deep(&[&timer, &rtcio]);
+        let mut rtc = unwrap!(self.rtc.try_lock());
+        rtc.sleep_deep(&[&timer, &rtcio]);
     }
 
     pub fn is_ignition_on(&self) -> bool {
@@ -73,6 +71,10 @@ impl Power {
     }
 
     pub fn rwdt_feed(&mut self) {
-        self.rtc.rwdt.feed();
+        if let Ok(mut rtc) = self.rtc.try_lock() {
+            rtc.rwdt.feed();
+        } else {
+            warn!("failed to feed rwdt");
+        }
     }
 }

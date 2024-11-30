@@ -55,7 +55,14 @@ impl KiaHandler {
                 let state = match state {
                     types::State::IgnitionOff => "IgnitionOff",
                     types::State::IgnitionOn => "IgnitionOn",
-                    types::State::Shutdown => "Shutdown",
+                    types::State::Shutdown(duration) => {
+                        self.ha_sensors
+                            .get("shutdown_duration")
+                            .unwrap()
+                            .update((duration.as_secs() / 60).into())
+                            .await;
+                        "Shutdown"
+                    }
                     types::State::Charging => "Charging",
                     types::State::CheckCharging => "CheckCharging",
                 }

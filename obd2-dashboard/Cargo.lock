@@ -1213,6 +1213,7 @@ name = "kia_obd2_esp32c3_v2"
 version = "0.1.0"
 dependencies = [
  "bitvec",
+ "chrono",
  "critical-section",
  "dbc-codegen",
  "defmt",

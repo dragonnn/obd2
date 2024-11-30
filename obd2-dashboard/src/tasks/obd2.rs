@@ -95,7 +95,8 @@ impl Obd2PidSets {
         ret = obd2.handle_pid::<pid::Icu2Pid>().await && ret;
         ret = obd2.handle_pid::<pid::Icu3Pid>().await && ret;
         ret = obd2.handle_pid::<pid::Icu1Smk>().await && ret;
-        ret = obd2.handle_pid::<pid::OnBoardChargerPid>().await && ret;
+        //ignore obc charger error in ignition off
+        obd2.handle_pid::<pid::OnBoardChargerPid>().await;
         ret
     }
 

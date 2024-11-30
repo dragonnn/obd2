@@ -224,7 +224,7 @@ pub enum Error {}
 pub enum State {
     IgnitionOff,
     IgnitionOn,
-    Shutdown,
+    Shutdown(core::time::Duration),
     Charging,
     CheckCharging,
 }

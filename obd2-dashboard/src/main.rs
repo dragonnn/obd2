@@ -62,7 +62,7 @@ async fn main(spawner: Spawner) {
     spawner.spawn(tasks::usb::run(hal.usb_serial)).ok();
     spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner)).ok();
 
-    tasks::state::run().await;
+    tasks::state::run(hal.rtc).await;
 }
 
 #[no_mangle]

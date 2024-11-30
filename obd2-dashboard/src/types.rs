@@ -33,3 +33,4 @@ pub type Display1 = Sh1122;
 
 pub type Led = Output<'static, AnyPin>;
 pub type Rs = Output<'static, AnyPin>;
+pub type Rtc = &'static Mutex<CriticalSectionRawMutex, esp_hal::rtc_cntl::Rtc<'static>>;

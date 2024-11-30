@@ -41,6 +41,7 @@ pub struct Hal {
     pub power: power::Power,
     pub led: types::Led,
     pub ieee802154: Ieee802154<'static>,
+    pub rtc: types::Rtc,
 }
 
 macro_rules! mk_static {
@@ -124,7 +125,6 @@ pub fn init() -> Hal {
 
     esp_hal_embassy::init(timg0.timer0);
 
-    //let io = Io::new(peripherals.IO_MUX);
     let mut rtc = Rtc::new(peripherals.LPWR);
 
     let dma = Dma::new(peripherals.DMA);
@@ -212,6 +212,8 @@ pub fn init() -> Hal {
     rtc.rwdt.enable();
     rtc.rwdt.set_timeout(RwdtStage::Stage0, 5 * 60.secs());
     rtc.rwdt.listen();
+    static RTC: StaticCell<Mutex<CriticalSectionRawMutex, Rtc<'static>>> = StaticCell::new();
+    let rtc = RTC.init(Mutex::new(rtc));
 
     Hal {
         display1,
@@ -224,5 +226,6 @@ pub fn init() -> Hal {
         power: power::Power::new(ing, delay, rtc, rs),
         led,
         ieee802154,
+        rtc,
     }
 }

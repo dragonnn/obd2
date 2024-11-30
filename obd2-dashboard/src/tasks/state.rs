@@ -2,6 +2,7 @@ use defmt::*;
 use embassy_futures::select::{select, Either::*};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 use embassy_time::{with_timeout, Duration, Instant};
+use esp_hal_procmacros::ram;
 use statig::prelude::*;
 use types::OnBoardChargerPid;
 
@@ -31,10 +32,14 @@ pub enum KiaEvent {
     Ticker,
 }
 
+#[ram(rtc_fast, persistent)]
+static mut LAST_IGNITION_ON: i64 = 0;
+
 #[derive()]
 pub struct KiaState {
     pub power_events_pub: PowerEventPublisher,
     pub tx_frame_pub: TxFramePub,
+    pub rtc: crate::types::Rtc,
 }
 
 #[state_machine(
@@ -62,6 +67,11 @@ impl KiaState {
 
     #[action]
     async fn enter_ignition_on(&mut self) {
+        unsafe {
+            LAST_IGNITION_ON = self.rtc.lock().await.current_time().and_utc().timestamp();
+            info!("last ignition on: {}", LAST_IGNITION_ON);
+        }
+
         ieee802154::send_now();
         LCD_EVENTS.send(LcdEvent::Main).await;
         set_obd2_sets(Obd2PidSets::IgnitionOn).await;
@@ -206,6 +216,14 @@ impl KiaState {
 
     #[state(entry_action = "enter_ignition_off")]
     async fn ignition_off(&mut self, event: &KiaEvent, timeout: &Instant) -> Response<State> {
+        let now = self.rtc.lock().await.current_time().and_utc().timestamp();
+        let last_ignition_on = unsafe { LAST_IGNITION_ON };
+        let shutdown_duration = if last_ignition_on != 0 && now - last_ignition_on < 60 * 60 {
+            Duration::from_secs(60 * 60)
+        } else {
+            Duration::from_secs(15 * 60)
+        };
+
         match event {
             KiaEvent::Obd2Event(Obd2Event::Icu3Pid(icu3_pid)) => {
                 if icu3_pid.on_board_charger_wakeup_output {
@@ -223,17 +241,15 @@ impl KiaState {
             }
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             KiaEvent::Obd2LoopEnd(all) => {
-                if timeout.elapsed().as_secs() > 2 * 60
-                /*|| *all*/
-                {
-                    Transition(State::shutdown(embassy_time::Duration::from_secs(15 * 60)))
+                if timeout.elapsed().as_secs() > 2 * 60 || *all {
+                    Transition(State::shutdown(shutdown_duration))
                 } else {
                     Handled
                 }
             }
             _ => {
                 if timeout.elapsed().as_secs() > 5 * 60 {
-                    Transition(State::shutdown(embassy_time::Duration::from_secs(15 * 60)))
+                    Transition(State::shutdown(shutdown_duration))
                 } else {
                     Handled
                 }
@@ -244,13 +260,14 @@ impl KiaState {
     #[action]
     async fn enter_shutdown(&mut self, duration: &embassy_time::Duration) {
         ieee802154::send_now();
-        self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::Shutdown));
+        self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::Shutdown((*duration).into())));
         embassy_time::Timer::after_millis(200).await;
         self.power_events_pub.publish_immediate(PowerEvent::Shutdown(*duration));
+        ieee802154::send_now();
     }
 
     #[state(entry_action = "enter_shutdown")]
-    async fn shutdown(&mut self, duration: &embassy_time::Duration) -> Response<State> {
+    async fn shutdown(&mut self, duration: &Duration) -> Response<State> {
         Handled
     }
 }
@@ -278,8 +295,8 @@ impl KiaState {
     }
 }
 
-pub async fn run() {
-    let mut state = KiaState { power_events_pub: get_power_events_pub(), tx_frame_pub: extra_txframes_pub() }
+pub async fn run(rtc: crate::types::Rtc) {
+    let mut state = KiaState { power_events_pub: get_power_events_pub(), tx_frame_pub: extra_txframes_pub(), rtc }
         .uninitialized_state_machine()
         .init()
         .await;
