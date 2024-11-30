@@ -1,5 +1,6 @@
 use core::{fmt::Write, sync::atomic::Ordering, write};
 
+use defmt::warn;
 use embassy_time::Duration;
 use heapless::String;
 
@@ -54,7 +55,19 @@ pub async fn send_state(
         writeln!(&mut sms, "fix: none").map_err(|_| nrf_modem::Error::OutOfMemory)?;
     }
     defmt::info!("starting sms send");
-    let link = modem.link(Duration::from_secs(120)).await?;
+    let mut link = Err(nrf_modem::Error::NrfError(0));
+    for _ in 0..5 {
+        link = modem.link(Duration::from_secs(120)).await;
+        if link.is_ok() {
+            break;
+        }
+        if link.is_err() {
+            warn!("link error");
+            embassy_time::Timer::after(Duration::from_secs(10)).await;
+        }
+    }
+    let link = link?;
+
     if let Some(dbm) = modem.dbm().await.unwrap() {
         writeln!(&mut sms, "dbm: {}", dbm).map_err(|_| nrf_modem::Error::OutOfMemory)?;
     } else {
