@@ -1,4 +1,4 @@
-use defmt::Format;
+use defmt::{unwrap, warn, Format};
 use embassy_futures::select;
 use embassy_sync::{
     blocking_mutex::raw::ThreadModeRawMutex,
@@ -15,7 +15,8 @@ use serde::{Deserialize, Serialize};
 use types::{Modem, TxFrame};
 
 use super::{
-    modem::{link, link::tx_channel_pub},
+    modem::link::{self, tx_channel_pub},
+    uarte::state_channel_sub,
     TASKS_SUBSCRIBERS,
 };
 use crate::{board::Gnss, tasks::battery::State as BatteryState};
@@ -87,17 +88,70 @@ static REQUEST: Signal<ThreadModeRawMutex, ()> = Signal::new();
 
 #[embassy_executor::task]
 pub async fn task(mut gnss: Gnss) {
+    let mut state_channel_sub = state_channel_sub();
+    let mut current_state = None;
     let mut battery_state_sub = BatteryState::subscribe().await;
     let mut battery_state = BatteryState::get().await;
 
-    gnss_set_duration(&battery_state, &mut gnss).await;
-
     let fix_pub = CHANNEL.publisher().unwrap();
+    let mut last_fix: Option<embassy_time::Instant> = None;
+    let mut gnss_half_duration_delay: Option<embassy_time::Timer> = None;
     //let mut last_modem_fix_send: Option<Instant> = None;
 
     loop {
-        gnss_set_duration(&battery_state, &mut gnss).await;
-        let result = select::select3(gnss.next(), battery_state_sub.next(), REQUEST.wait()).await;
+        let result = select::select3(
+            async {
+                match current_state {
+                    None
+                    | Some(types::State::Charging)
+                    | Some(types::State::IgnitionOff)
+                    | Some(types::State::CheckCharging) => {
+                        if let Some(last_fix) = last_fix {
+                            if last_fix.elapsed().as_secs() > 60 * 60 * 4 {
+                                warn!("no fix for 4 hours, reseting GNSS");
+                                gnss.next().await
+                            } else {
+                                futures::future::pending().await
+                            }
+                        } else {
+                            last_fix = Some(embassy_time::Instant::now());
+                            futures::future::pending().await
+                        }
+                    }
+                    Some(types::State::Shutdown(duration)) => {
+                        if gnss_half_duration_delay.is_none() {
+                            let duration: embassy_time::Duration = unwrap!(duration.try_into());
+                            gnss_half_duration_delay = Some(embassy_time::Timer::after(duration / 2));
+                        }
+
+                        let mut clear_gnss_half_duration_delay = false;
+                        if let Some(gnss_half_duration_delay) = &mut gnss_half_duration_delay {
+                            gnss_half_duration_delay.await;
+                            clear_gnss_half_duration_delay = true;
+                        }
+
+                        if clear_gnss_half_duration_delay {
+                            gnss_half_duration_delay = None;
+                        }
+                        warn!("getting fix in shutdown state");
+                        if let Some(last_fix) = &last_fix {
+                            if last_fix.elapsed().as_secs() < 60 * 15 {
+                                warn!("last fix was less than 15 minutes ago, waiting");
+                                embassy_time::Timer::after(Duration::from_secs(60 * 15) - last_fix.elapsed()).await;
+                            }
+                        }
+                        gnss.next().await
+                    }
+                    Some(types::State::IgnitionOn) => {
+                        warn!("getting fix in ignition on state");
+                        gnss.next().await
+                    }
+                }
+            },
+            state_channel_sub.next_message_pure(),
+            REQUEST.wait(),
+        )
+        .await;
         match result {
             select::Either3::First(new_gnss_frame) => {
                 if let Ok(Some(new_gnss_frame)) = new_gnss_frame {
@@ -117,20 +171,16 @@ pub async fn task(mut gnss: Gnss) {
                     }
                 }
             }
-            select::Either3::Second(new_battery_state) => {
-                defmt::info!("got new battery state: {:?}", new_battery_state);
-                if let Some(new_battery_state) = new_battery_state {
-                    if new_battery_state.charging != battery_state.charging {
-                        battery_state = new_battery_state;
-                        gnss_set_duration(&battery_state, &mut gnss).await;
-                    }
+            select::Either3::Second(new_state) => {
+                if current_state != Some(new_state.clone()) {
+                    gnss_set_duration(&battery_state, &mut gnss, &new_state).await;
                 }
+                current_state = Some(new_state.clone());
             }
             select::Either3::Third(_) => {
-                defmt::info!("got request for new fix");
-                gnss.ticker_reset();
-                gnss.conf(Duration::from_secs(1), false).await;
+                warn!("got request for new fix");
                 if let Ok(Some(new_gnss_frame)) = gnss.next().await {
+                    last_fix = Some(embassy_time::Instant::now());
                     let fix: FromFix = new_gnss_frame.into();
                     let fix = fix.0;
                     let mut state = STATE.lock().await;
@@ -138,23 +188,24 @@ pub async fn task(mut gnss: Gnss) {
                     fix_pub.publish_immediate(fix);
 
                     battery_state = BatteryState::get().await;
-                    gnss_set_duration(&battery_state, &mut gnss).await;
+                    if let Some(state) = &current_state {
+                        gnss_set_duration(&battery_state, &mut gnss, state).await
+                    }
                 }
             }
         }
     }
 }
 
-async fn gnss_set_duration(battery_state: &BatteryState, gnss: &mut Gnss) {
-    if battery_state.charging {
-        gnss.conf(Duration::from_secs(1), false).await;
-        defmt::debug!("gnss in charging state");
-    } else {
-        defmt::debug!("gnss in batter state");
-        if battery_state.capacity < 50 {
-            gnss.conf(Duration::from_secs(60 * 60), true).await;
-        } else {
-            gnss.conf(Duration::from_secs(15 * 60), true).await;
-        }
+async fn gnss_set_duration(battery_state: &BatteryState, gnss: &mut Gnss, state: &types::State) {
+    let long_duration = Duration::from_secs(60 * 60);
+    let short_duration = Duration::from_secs(1);
+
+    match state {
+        types::State::Charging
+        | types::State::CheckCharging
+        | types::State::IgnitionOff
+        | types::State::Shutdown(_) => gnss.conf(long_duration, true).await,
+        types::State::IgnitionOn => gnss.conf(short_duration, false).await,
     }
 }

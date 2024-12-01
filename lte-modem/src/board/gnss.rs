@@ -15,7 +15,6 @@ pub struct Gnss {
 
     duration: Duration,
     timeout: Duration,
-    ticker: Ticker,
     low_accuracy: bool,
     tx_channel_pub: TxChannelPub,
 
@@ -31,15 +30,7 @@ impl Gnss {
             nrfxlib_sys::nrf_modem_gnss_prio_mode_enable();
         }
 
-        Self {
-            stream: None,
-            duration,
-            timeout,
-            ticker: Ticker::every(duration),
-            low_accuracy: false,
-            tx_channel_pub,
-            first_fix: true,
-        }
+        Self { stream: None, duration, timeout, low_accuracy: false, tx_channel_pub, first_fix: true }
     }
 
     async fn handler(&mut self) -> Result<ModemGnss, ModemError> {
@@ -51,7 +42,7 @@ impl Gnss {
     }
 
     async fn start(&mut self) -> Result<(), ModemError> {
-        if self.duration.as_millis() < 20000 {
+        if self.duration.as_secs() < 20 {
             info!("start periodic fix");
             self.stream = Some(self.handler().await?.start_continuous_fix(self.get_config())?);
             self.tx_channel_pub
@@ -61,7 +52,6 @@ impl Gnss {
             self.tx_channel_pub.publish_immediate(TxMessage::new(TxFrame::Modem(Modem::GnssState(
                 GnssState::TickerFix(self.duration.as_secs() as u32),
             ))));
-            self.ticker = Ticker::every(self.duration);
         }
         Ok(())
     }
@@ -151,17 +141,13 @@ impl Gnss {
     }
 
     pub async fn next(&mut self) -> Result<Option<nrfxlib_sys::nrf_modem_gnss_pvt_data_frame>, ModemError> {
-        if self.stream.is_none() {
-            self.ticker.next().await;
-        }
-
         self.tx_channel_pub
             .publish_immediate(TxMessage::new(TxFrame::Modem(Modem::GnssState(GnssState::WaitingForFix))));
-        let mut _link_lock = None;
+        /*let mut _link_lock = None;
         if self.first_fix {
             warn!("force link disconnect and lock");
             _link_lock = crate::tasks::modem::link::force_disconnect_and_lock().await;
-        }
+        }*/
         let ret = with_timeout(self.timeout, self.get_fix()).await.map_err(|_| {
             defmt::error!("gnss timeout");
             self.tx_channel_pub
@@ -173,9 +159,5 @@ impl Gnss {
             self.first_fix = false;
         }
         ret
-    }
-
-    pub fn ticker_reset(&mut self) {
-        self.ticker.reset();
     }
 }
