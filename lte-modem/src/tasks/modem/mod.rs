@@ -48,7 +48,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
     let state_channel_pub = state_channel_pub();
 
     if !persistent_manager.get_booted() {
-        if let Err(err) = send_state(&modem, "booting..", false, true, persistent_manager.get_restarts()).await {
+        if let Err(err) = send_state(&modem, "booting..", false, true, persistent_manager.get_restarts(), false).await {
             defmt::error!("error sending sms: {:?}", defmt::Debug2Format(&err));
         }
         persistent_manager.update_booted(true);
@@ -135,7 +135,9 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
             }
             Either4::Third(_) => {
                 defmt::info!("sending button press");
-                send_state(&modem, "button pressed...", false, false, persistent_manager.get_restarts()).await.ok();
+                send_state(&modem, "button pressed...", false, false, persistent_manager.get_restarts(), false)
+                    .await
+                    .ok();
             }
             Either4::Fourth(state) => {
                 if persistent_manager.get_state() != Some(state.clone()) {
@@ -173,12 +175,12 @@ async fn send_obd2_state(
 
     match state {
         types::State::CheckCharging => {
-            if send_state(modem, &parked_event, true, false, restarts).await.is_err() {
+            if send_state(modem, &parked_event, true, false, restarts, true).await.is_err() {
                 defmt::error!("error sending sms");
             }
         }
         types::State::IgnitionOn => {
-            if send_state(modem, "driving..", true, false, restarts).await.is_err() {
+            if send_state(modem, "driving..", true, false, restarts, true).await.is_err() {
                 defmt::error!("error sending sms");
             }
         }
@@ -205,7 +207,7 @@ async fn process_new_fix(
                         if fix_distance > 300.0 {
                             let mut fix_distance_event: String<32> = String::new();
                             write!(&mut fix_distance_event, "movement on battery {:.2}m...", fix_distance).ok();
-                            send_state(modem, &fix_distance_event, false, false, restarts).await.ok();
+                            send_state(modem, &fix_distance_event, false, false, restarts, true).await.ok();
                         }
                         return Some(accurate_fix);
                     } else {
@@ -215,10 +217,10 @@ async fn process_new_fix(
             }
         }
         (Some(_fix), None) => {
-            send_state(modem, "lost fix...", false, false, restarts).await.ok();
+            send_state(modem, "lost fix...", false, false, restarts, true).await.ok();
         }
         (None, Some(_new_fix)) => {
-            send_state(modem, "found fix...", false, false, restarts).await.ok();
+            send_state(modem, "found fix...", false, false, restarts, true).await.ok();
         }
         (None, None) => {}
     }

@@ -12,6 +12,7 @@ pub async fn send_state(
     force_new_fix: bool,
     new_fix_if_missing: bool,
     restarts: u32,
+    all_numbers: bool,
 ) -> Result<(), nrf_modem::Error> {
     defmt::trace!("sending sms");
     let battery = tasks::battery::State::get().await;
@@ -76,7 +77,11 @@ pub async fn send_state(
 
     //write!(&mut sms, "twi2_resets: {}", crate::board::TWI2_RESETS.load(Ordering::SeqCst))
     //    .map_err(|_| nrf_modem::Error::OutOfMemory)?;
-    modem.send_sms(crate::config::SMS_NUMBERS, &sms).await?;
+    if all_numbers {
+        modem.send_sms(crate::config::SMS_NUMBERS, &sms).await?;
+    } else {
+        modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &sms).await?;
+    }
     defmt::info!("sms send ok");
     link.deactivate().await?;
     Ok(())

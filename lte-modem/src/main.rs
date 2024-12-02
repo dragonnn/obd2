@@ -39,6 +39,16 @@ static SHARED_KEY: &[u8; 32] = include_bytes!("../../shared_key.bin");
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
 
+#[derive(Debug, Format)]
+pub enum ResetReason {
+    Dog,
+    Off,
+    Dif,
+    Sreq,
+    LockUp,
+    CtrlAp,
+}
+
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
     {
@@ -48,6 +58,29 @@ async fn main(spawner: Spawner) {
         unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
     }
 
+    let mut reset_reasons: heapless::Vec<ResetReason, 6> = heapless::Vec::new();
+    unsafe {
+        let pac = nrf9160_pac::Peripherals::steal();
+        let reset_reason = pac.POWER_NS.resetreas.read();
+        if reset_reason.dog().bit_is_set() {
+            reset_reasons.push(ResetReason::Dog).ok();
+        }
+        if reset_reason.off().bit_is_set() {
+            reset_reasons.push(ResetReason::Off).ok();
+        }
+        if reset_reason.dif().bit_is_set() {
+            reset_reasons.push(ResetReason::Dif).ok();
+        }
+        if reset_reason.sreq().bit_is_set() {
+            reset_reasons.push(ResetReason::Sreq).ok();
+        }
+        if reset_reason.lockup().bit_is_set() {
+            reset_reasons.push(ResetReason::LockUp).ok();
+        }
+        if reset_reason.ctrlap().bit_is_set() {
+            reset_reasons.push(ResetReason::CtrlAp).ok();
+        }
+    }
     let panic_message = get_panic_message_utf8();
     if let Some(panic) = panic_message {
         defmt::error!("{}", panic);
@@ -79,9 +112,18 @@ async fn main(spawner: Spawner) {
     let charging_control = unwrap!(board.charging_control.take());
 
     if let Some(panic) = panic_message {
-        if !panic.contains("twi reset") {
-            board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, panic).await.ok();
-        }
+        //if !panic.contains("twi reset") {
+        board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, panic).await.ok();
+        //}
+    } else {
+        use core::fmt::Write;
+        info!("reset reasons: {:?}", reset_reasons);
+        let mut reset_reasons_str = heapless::String::<256>::new();
+        core::write!(reset_reasons_str, "{:?}", reset_reasons).ok();
+        info!("{}", reset_reasons_str);
+        reset_reasons_str.pop();
+        let reset_reasons_str = reset_reasons_str.trim_start_matches("[");
+        board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &reset_reasons_str).await.ok();
     }
 
     defmt::info!("starting tasks");
