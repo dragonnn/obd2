@@ -67,7 +67,10 @@ pub async fn send_task(spawner: Spawner) {
         {
             First(txframe) => {
                 if let types::TxFrame::Modem(Modem::Reset) = txframe.frame {
-                    crate::tasks::reset::request_reset();
+                    use core::fmt::Write;
+                    let mut reason = heapless::String::new();
+                    core::write!(reason, "got modem reset txframe").ok();
+                    crate::tasks::reset::request_reset(reason);
                 }
                 if let types::TxFrame::Shutdown = txframe.frame {
                     txframe_shutdown = true;
@@ -260,8 +263,11 @@ impl TxMessageSend for OwnedUdpSendSocket {
         port: u16,
         rx: &mut RxChannelSub,
     ) -> Result<(), nrf_modem::Error> {
-        if ACK_TIMEOUT.load(Ordering::Relaxed) > 10 {
-            crate::tasks::reset::request_reset();
+        if ACK_TIMEOUT.load(Ordering::Relaxed) > 20 {
+            use core::fmt::Write;
+            let mut reason = heapless::String::new();
+            core::write!(reason, "link ack over 20").ok();
+            crate::tasks::reset::request_reset(reason);
         }
 
         if message.needs_ack() {

@@ -8,7 +8,7 @@ use embassy_sync::{
     pubsub::{DynPublisher, PubSubChannel},
     signal::Signal,
 };
-use embassy_time::{with_timeout, Duration, Instant};
+use embassy_time::{with_timeout, Duration, Instant, Ticker};
 use esp_hal::aes::{dma::AesDma, Aes, Mode};
 use esp_ieee802154::{Config, Frame, Ieee802154, ReceivedFrame};
 use ieee802154::mac::{Address, FrameContent, FrameType, FrameVersion, Header, PanId, ShortAddress};
@@ -32,7 +32,9 @@ static PIDS_SEND: Mutex<CriticalSectionRawMutex, heapless::FnvIndexSet<Pid, 64>>
 pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
     spawner.must_spawn(ieee802154_run(ieee802154));
 
-    let mut send_ticker = embassy_time::Ticker::every(embassy_time::Duration::from_secs(15));
+    let mut last_modem_fix = Instant::now();
+    let mut send_ticker_duration = Duration::from_secs(15);
+    let mut send_ticker = Ticker::every(send_ticker_duration);
 
     let _shutdown_guard = ShutdownGuard::new();
     let mut shutdown_signal = get_shutdown_signal();
@@ -77,6 +79,18 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
         match select4(
             async {
                 select(send_ticker.next(), SEND_NOW_SIGNAL.wait()).await;
+                let mut last_modem_fix_secs = last_modem_fix.elapsed().as_secs();
+                if last_modem_fix_secs > 60 {
+                    if last_modem_fix_secs > 5 * 60 {
+                        last_modem_fix_secs = 5 * 60;
+                    }
+                    let new_send_ticker_duration = Duration::from_secs(last_modem_fix_secs % 60 * 60);
+                    if new_send_ticker_duration != send_ticker_duration {
+                        info!("new_send_ticker_duration: {:?}", new_send_ticker_duration);
+                        send_ticker_duration = new_send_ticker_duration;
+                        send_ticker = Ticker::every(send_ticker_duration);
+                    }
+                }
             },
             shutdown_signal.next_message_pure(),
             extra_send_sub.next_message_pure(),
@@ -123,7 +137,16 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
                     match modem {
                         types::Modem::Reset => info!("modem reset"),
                         types::Modem::GnssState(gnss_state) => info!("gnss_state: {:?}", gnss_state),
-                        types::Modem::GnssFix(gnss_fix) => info!("gnss_fix: {:?}", gnss_fix),
+                        types::Modem::GnssFix(gnss_fix) => {
+                            warn!("gnss_fix: {:?}", gnss_fix);
+                            last_modem_fix = Instant::now();
+                            let new_send_ticker_duration = Duration::from_secs(15);
+                            if new_send_ticker_duration != send_ticker_duration {
+                                info!("new_send_ticker_duration: {:?}", new_send_ticker_duration);
+                                send_ticker_duration = new_send_ticker_duration;
+                                send_ticker = Ticker::every(send_ticker_duration);
+                            }
+                        }
                         types::Modem::Connected => info!("modem connected"),
                         types::Modem::Disconnected => info!("modem disconnected"),
                         types::Modem::Battery { voltage, low_voltage, soc, charging } => info!(
