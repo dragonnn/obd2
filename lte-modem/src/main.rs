@@ -5,6 +5,7 @@
 #![feature(array_chunks)]
 #![feature(stdarch_arm_hints)]
 #![feature(stdarch_arm_neon_intrinsics)]
+#![feature(async_closure)]
 #![allow(clippy::uninlined_format_args)]
 #![feature(impl_trait_in_assoc_type)]
 extern crate alloc;

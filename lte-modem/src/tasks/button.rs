@@ -1,5 +1,5 @@
 use embassy_sync::{
-    blocking_mutex::raw::ThreadModeRawMutex,
+    blocking_mutex::raw::CriticalSectionRawMutex,
     pubsub::{PubSubChannel, Subscriber},
 };
 use embassy_time::{Duration, Instant, Timer};
@@ -7,7 +7,7 @@ use embassy_time::{Duration, Instant, Timer};
 use super::TASKS_SUBSCRIBERS;
 use crate::board::Button;
 
-static CHANNEL: PubSubChannel<ThreadModeRawMutex, (), TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, 1> = PubSubChannel::new();
+static CHANNEL: PubSubChannel<CriticalSectionRawMutex, (), TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, 1> = PubSubChannel::new();
 
 #[embassy_executor::task]
 pub async fn task(mut button: Button) {
@@ -29,6 +29,6 @@ pub async fn task(mut button: Button) {
     }
 }
 
-pub async fn subscribe() -> Subscriber<'static, ThreadModeRawMutex, (), TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, 1> {
+pub async fn subscribe() -> Subscriber<'static, CriticalSectionRawMutex, (), TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, 1> {
     CHANNEL.subscriber().unwrap()
 }

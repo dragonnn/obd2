@@ -4,6 +4,7 @@ mod adxl372;
 mod bh1749nuc;
 mod button;
 mod buzzer;
+mod destruct_twim;
 mod gnss;
 mod modem;
 mod rgb;
@@ -26,7 +27,7 @@ use embassy_nrf::{
     twim::{self, Twim},
     uarte::{self, Uarte, UarteRxWithIdle, UarteTx},
 };
-use embassy_sync::{blocking_mutex::raw::ThreadModeRawMutex, mutex::Mutex};
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer};
 pub use gnss::Gnss;
 pub use modem::Modem;
@@ -34,25 +35,28 @@ pub use rgb::Rgb;
 use static_cell::StaticCell;
 pub use wdg::Wdg;
 
-static TWIM2: StaticCell<Mutex<ThreadModeRawMutex, Twim<SERIAL2>>> = StaticCell::new();
-static SPIM3: StaticCell<Mutex<ThreadModeRawMutex, Spim<SERIAL3>>> = StaticCell::new();
+static TWIM2: StaticCell<Mutex<CriticalSectionRawMutex, destruct_twim::DestructTwim>> = StaticCell::new();
+static SPIM3: StaticCell<Mutex<CriticalSectionRawMutex, Spim<SERIAL3>>> = StaticCell::new();
 
+//pub type I2cBus = destruct_twim::DestructTwim;
+pub type I2cBus = embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice<
+    'static,
+    CriticalSectionRawMutex,
+    destruct_twim::DestructTwim,
+>;
 pub type Buzzer = buzzer::Buzzer<'static, PWM0>;
 pub type Lightwell = Rgb<'static, PWM1>;
 pub type Sense = Rgb<'static, PWM2>;
-pub type Battery = Adp5360<
-    embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice<'static, ThreadModeRawMutex, Twim<'static, SERIAL2>>,
->;
+pub type Battery = Adp5360<I2cBus>;
 pub type LowPowerAccelerometer =
-    Adxl362<SpiDevice<'static, ThreadModeRawMutex, Spim<'static, SERIAL3>, Output<'static>>>;
-pub type HiGAccelerometer = Adxl372<SpiDevice<'static, ThreadModeRawMutex, Spim<'static, SERIAL3>, Output<'static>>>;
-pub type LightSensor = Bh1749nuc<
-    embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice<'static, ThreadModeRawMutex, Twim<'static, SERIAL2>>,
->;
+    Adxl362<SpiDevice<'static, CriticalSectionRawMutex, Spim<'static, SERIAL3>, Output<'static>>>;
+pub type HiGAccelerometer =
+    Adxl372<SpiDevice<'static, CriticalSectionRawMutex, Spim<'static, SERIAL3>, Output<'static>>>;
+pub type LightSensor = Bh1749nuc<I2cBus>;
 
-bind_interrupts!(struct TwiIrqs {
+/*bind_interrupts!(struct TwiIrqs {
     UARTE2_SPIM2_SPIS2_TWIM2_TWIS2 => twim::InterruptHandler<SERIAL2>;
-});
+});*/
 
 bind_interrupts!(struct SpiIrqs {
     UARTE3_SPIM3_SPIS3_TWIM3_TWIS3 => spim::InterruptHandler<SERIAL3>;
@@ -108,17 +112,18 @@ impl Board {
         embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
         defmt::info!("battery initializing");
 
-        twi2_reset().await;
         Timer::after(Duration::from_millis(200)).await;
 
-        let mut twi2_config = twim::Config::default();
-        twi2_config.scl_high_drive = true;
-        twi2_config.sda_high_drive = true;
-        twi2_config.scl_pullup = true;
-        twi2_config.sda_pullup = true;
-        let twi2 = Twim::new(p.SERIAL2, TwiIrqs, p.P0_11, p.P0_12, twi2_config);
+        let mut twi2 = destruct_twim::DestructTwim::new().await;
+        twi2.reset().await;
 
-        let twim2 = TWIM2.init(Mutex::<ThreadModeRawMutex, _>::new(twi2));
+        /*let twi2 = Twim::new(p.SERIAL2, TwiIrqs, p.P0_11, p.P0_12, twi2_config);
+        unsafe {
+            let pac = nrf9160_pac::Peripherals::steal();
+            pac.TWIM2_NS.frequency.write(|w| w.frequency().bits(2673868));
+        }*/
+
+        let twim2 = TWIM2.init(Mutex::<CriticalSectionRawMutex, _>::new(twi2));
 
         let twim2_dev1 = I2cDevice::new(twim2);
 
@@ -133,7 +138,7 @@ impl Board {
         spim3_config.mode = spim::MODE_0;
 
         let spim3 = spim::Spim::new(p.SERIAL3, SpiIrqs, p.P0_03, p.P0_05, p.P0_04, spim3_config);
-        let spim3 = SPIM3.init(Mutex::<ThreadModeRawMutex, _>::new(spim3));
+        let spim3 = SPIM3.init(Mutex::<CriticalSectionRawMutex, _>::new(spim3));
 
         let spim3_dev1_cs = Output::new(p.P0_08, Level::High, OutputDrive::Standard);
         let spim3_dev1 = SpiDevice::new(spim3, spim3_dev1_cs);
@@ -185,30 +190,5 @@ impl Board {
             uarte_reset: Some(uarte_reset),
             charging_control: Some(charging_control),
         }
-    }
-}
-
-use core::sync::atomic::{AtomicUsize, Ordering};
-
-use crate::tasks::reset::request_reset;
-pub static TWI2_ERROS: AtomicUsize = AtomicUsize::new(0);
-
-pub async fn twi2_reset() {
-    error!("twi2_reset");
-    let current_errors = TWI2_ERROS.fetch_add(1, Ordering::Relaxed);
-    unsafe {
-        let mut twim2_scl = Output::new(embassy_nrf::peripherals::P0_12::steal(), Level::High, OutputDrive::Standard);
-        let mut twim2_sda = Output::new(embassy_nrf::peripherals::P0_11::steal(), Level::High, OutputDrive::Standard);
-        for _ in 0..10 {
-            twim2_scl.set_low();
-            Timer::after(Duration::from_micros(5)).await;
-            twim2_scl.set_high();
-            Timer::after(Duration::from_micros(5)).await;
-        }
-        embassy_nrf::gpio::Input::new(embassy_nrf::peripherals::P0_12::steal(), embassy_nrf::gpio::Pull::Up);
-        embassy_nrf::gpio::Input::new(embassy_nrf::peripherals::P0_11::steal(), embassy_nrf::gpio::Pull::Up);
-    }
-    if current_errors > 10 {
-        request_reset();
     }
 }

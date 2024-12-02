@@ -1,6 +1,6 @@
 use defmt::Format;
 use embassy_sync::{
-    blocking_mutex::raw::ThreadModeRawMutex,
+    blocking_mutex::raw::CriticalSectionRawMutex,
     mutex::Mutex,
     pubsub::{PubSubChannel, Subscriber},
 };
@@ -9,10 +9,10 @@ use embassy_time::Instant;
 use super::TASKS_SUBSCRIBERS;
 use crate::board::LowPowerAccelerometer;
 
-static CHANNEL: PubSubChannel<ThreadModeRawMutex, (), TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, 1> = PubSubChannel::new();
+static CHANNEL: PubSubChannel<CriticalSectionRawMutex, (), TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, 1> = PubSubChannel::new();
 
 pub type MontionDetectionSubscriper =
-    Subscriber<'static, ThreadModeRawMutex, (), TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, 1>;
+    Subscriber<'static, CriticalSectionRawMutex, (), TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, 1>;
 
 const THRESHOLD_ACT: (u16, u16) = (110, 250);
 const THRESHOLD_INACT: (u16, u16) = (95, 100);
@@ -34,7 +34,7 @@ impl State {
     }
 }
 
-static STATE: Mutex<ThreadModeRawMutex, State> = Mutex::new(State(0));
+static STATE: Mutex<CriticalSectionRawMutex, State> = Mutex::new(State(0));
 
 #[embassy_executor::task]
 pub async fn task(mut montion_detection: LowPowerAccelerometer) {

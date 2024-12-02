@@ -4,7 +4,7 @@ use embassy_nrf::gpio::{AnyPin, Input, Level, Output, OutputDrive, Pull};
 use embassy_time::{with_timeout, Duration};
 use embedded_hal_async::i2c::I2c;
 
-use super::twi2_reset;
+use super::destruct_twim::I2cBusReset;
 
 const I2C_ADDRESS: u8 = 0x46;
 const I2C_TIMEOUT: Duration = Duration::from_millis(100);
@@ -68,7 +68,7 @@ pub struct Adp5360<I2C> {
 
 impl<I2C> Adp5360<I2C>
 where
-    I2C: I2c,
+    I2C: I2c + I2cBusReset,
 {
     pub async fn new(i2c: I2C, irq: AnyPin) -> Self {
         let irq = Input::new(irq, Pull::Up);
@@ -87,7 +87,7 @@ where
     }
 
     async fn reset(&mut self) {
-        twi2_reset().await
+        self.i2c.reset().await;
     }
 
     async fn set_u8_bit(&mut self, reg: u8, bit: u8, value: bool) {
@@ -150,6 +150,7 @@ where
 
     pub async fn irq(&mut self) -> Result<InterputEvent, u8> {
         self.irq.wait_for_any_edge().await;
+        embassy_time::Timer::after(Duration::from_secs(1)).await;
         let mut interput_reason = [0u8; 2];
         self.get_u8_values(REG_INTERRUPT_FLAG1, &mut interput_reason).await.ok();
 

@@ -3,7 +3,7 @@ use embassy_nrf::gpio::{AnyPin, Input, Pull};
 use embassy_time::{with_timeout, Duration, Timer};
 use embedded_hal_async::i2c::I2c;
 
-use crate::board::twi2_reset;
+use super::destruct_twim::I2cBusReset;
 
 const I2C_ADDRESS: u8 = 0x38;
 const I2C_TIMEOUT: Duration = Duration::from_millis(100);
@@ -83,7 +83,7 @@ pub struct Bh1749nuc<I2C> {
 
 impl<I2C> Bh1749nuc<I2C>
 where
-    I2C: I2c,
+    I2C: I2c + I2cBusReset,
 {
     pub async fn new(i2c: I2C, irq: AnyPin) -> Self {
         defmt::info!("init");
@@ -133,12 +133,12 @@ where
             Ok(Ok(_)) => Ok(buf[0]),
             Ok(Err(err)) => {
                 defmt::error!("i2c error: {:?}", defmt::Debug2Format(&err));
-                twi2_reset().await;
+                self.i2c.reset().await;
                 Err(())
             }
             Err(_) => {
                 defmt::error!("i2c timeout");
-                twi2_reset().await;
+                self.i2c.reset().await;
                 Err(())
             }
         }
@@ -149,11 +149,11 @@ where
             Ok(Ok(_)) => {}
             Ok(Err(err)) => {
                 defmt::error!("i2c error: {:?}", defmt::Debug2Format(&err));
-                twi2_reset().await;
+                self.i2c.reset().await;
             }
             Err(_) => {
                 defmt::error!("i2c timeout");
-                twi2_reset().await;
+                self.i2c.reset().await;
             }
         }
     }

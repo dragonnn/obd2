@@ -2,7 +2,7 @@ use defmt::{info, warn, Format};
 use embassy_futures::select::{select3, Either3::*};
 use embassy_nrf::gpio::Output;
 use embassy_sync::{
-    blocking_mutex::raw::ThreadModeRawMutex,
+    blocking_mutex::raw::CriticalSectionRawMutex,
     mutex::Mutex,
     pubsub::{PubSubChannel, Subscriber},
 };
@@ -21,7 +21,7 @@ pub struct State {
     pub voltage: u16,
 }
 
-pub type StateSubscriper = Subscriber<'static, ThreadModeRawMutex, State, TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, 1>;
+pub type StateSubscriper = Subscriber<'static, CriticalSectionRawMutex, State, TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, 1>;
 
 impl State {
     pub async fn new(battery: &mut Battery, low_voltage: bool) -> Self {
@@ -53,7 +53,7 @@ impl Into<types::Modem> for State {
     }
 }
 
-static STATE: Mutex<ThreadModeRawMutex, State> = Mutex::new(State {
+static STATE: Mutex<CriticalSectionRawMutex, State> = Mutex::new(State {
     charging: false,
     charger_state: ChargerStatus::Off,
     low_voltage: false,
@@ -61,23 +61,27 @@ static STATE: Mutex<ThreadModeRawMutex, State> = Mutex::new(State {
     voltage: 0,
 });
 
-static CHANNEL: PubSubChannel<ThreadModeRawMutex, State, TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, 1> =
+static CHANNEL: PubSubChannel<CriticalSectionRawMutex, State, TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, 1> =
     PubSubChannel::new();
 
 #[embassy_executor::task]
 pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
     let mut current_charging = false;
-    let mut charging_control = |charing: bool| {
-        current_charging = charing;
+    let mut charging_control = async |charing: bool| {
         if charing {
             charging_control.set_low();
+            if !current_charging {
+                embassy_time::Timer::after(Duration::from_secs(5)).await;
+            }
             warn!("enable charging");
         } else {
             charging_control.set_high();
             warn!("disable charging");
         }
+        current_charging = charing;
     };
-    charging_control(false);
+    embassy_time::Timer::after(Duration::from_secs(1)).await;
+    charging_control(false).await;
     let mut state_channel_sub = state_channel_sub();
     let mut current_state = None;
 
@@ -104,11 +108,11 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
 
         if new_state.capacity < 15 {
             warn!("low battery capacity, charging");
-            charging_control(true);
+            charging_control(true).await;
         } else if new_state.capacity > 85
             && (current_state != Some(types::State::IgnitionOn) && current_state != Some(types::State::Charging))
         {
-            charging_control(false);
+            charging_control(false).await;
         }
 
         *STATE.lock().await = new_state;
@@ -125,11 +129,11 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
             Third(new_state) => {
                 info!("new state: {:?}", new_state);
                 if let types::State::Charging = new_state {
-                    charging_control(true);
+                    charging_control(true).await;
                 } else if let types::State::IgnitionOn = new_state {
-                    charging_control(true);
+                    charging_control(true).await;
                 } else {
-                    charging_control(false);
+                    charging_control(false).await;
                 }
                 current_state = Some(new_state);
             }

@@ -1,7 +1,7 @@
 use defmt::{unwrap, warn, Format};
 use embassy_futures::select;
 use embassy_sync::{
-    blocking_mutex::raw::ThreadModeRawMutex,
+    blocking_mutex::raw::CriticalSectionRawMutex,
     mutex::Mutex,
     pubsub::{PubSubChannel, Subscriber},
     signal::Signal,
@@ -54,7 +54,7 @@ impl State {
 }
 
 pub type FixSubscriper =
-    Subscriber<'static, ThreadModeRawMutex, Fix, TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, FIXES_BUFFER_SIZE>;
+    Subscriber<'static, CriticalSectionRawMutex, Fix, TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, FIXES_BUFFER_SIZE>;
 
 pub struct FromFix(Fix);
 
@@ -79,12 +79,12 @@ impl From<nrf_modem_gnss_pvt_data_frame> for FromFix {
     }
 }
 
-static STATE: Mutex<ThreadModeRawMutex, State> = Mutex::new(State { fix: None, fixes: Vec::new() });
+static STATE: Mutex<CriticalSectionRawMutex, State> = Mutex::new(State { fix: None, fixes: Vec::new() });
 
-static CHANNEL: PubSubChannel<ThreadModeRawMutex, Fix, TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, FIXES_BUFFER_SIZE> =
+static CHANNEL: PubSubChannel<CriticalSectionRawMutex, Fix, TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, FIXES_BUFFER_SIZE> =
     PubSubChannel::new();
 
-static REQUEST: Signal<ThreadModeRawMutex, ()> = Signal::new();
+static REQUEST: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 
 #[embassy_executor::task]
 pub async fn task(mut gnss: Gnss) {
