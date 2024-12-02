@@ -7,11 +7,13 @@ use embassy_nrf::{
     twim::{self, Twim},
 };
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
-use embassy_time::{Duration, Instant, Timer};
+use embassy_time::{with_timeout, Duration, Instant, Timer};
 use embedded_hal::i2c::{Operation, SevenBitAddress};
 use static_cell::StaticCell;
 
 use crate::tasks::reset::request_reset;
+
+const I2C_TIMEOUT: Duration = Duration::from_millis(80);
 
 bind_interrupts!(struct TwiIrqs {
     UARTE2_SPIM2_SPIS2_TWIM2_TWIS2 => twim::InterruptHandler<SERIAL2>;
@@ -24,7 +26,7 @@ pub type I2cBus = Twim<'static, SERIAL2>;
 
 pub struct DestructTwim {
     i2c_bus: Option<I2cBus>,
-    errors: u8,
+    errors: heapless::FnvIndexMap<u8, u8, 64>,
     lifetime: Instant,
 }
 
@@ -33,7 +35,7 @@ impl DestructTwim {
         unsafe {
             let twi2 = Self::get_bus();
 
-            Self { i2c_bus: Some(twi2), errors: 0, lifetime: Instant::now() }
+            Self { i2c_bus: Some(twi2), errors: heapless::FnvIndexMap::new(), lifetime: Instant::now() }
         }
     }
 
@@ -54,26 +56,35 @@ impl DestructTwim {
         twi2
     }
 
-    pub async fn reset(&mut self) {
+    pub async fn reset(&mut self, address: u8) {
         self.i2c_bus = None;
+        Timer::after(Duration::from_millis(5)).await;
 
-        error!("twi2_reset");
-        self.errors += 1;
+        error!("twi2_reset on address: {}", address);
+        let mut errors = self.errors.get_mut(&address);
+        if let Some(errors) = errors.as_mut() {
+            **errors += 1
+        } else {
+            self.errors.insert(address, 1).ok();
+            errors = self.errors.get_mut(&address);
+        }
         unsafe {
-            let mut twim2_scl = Output::new(Scl::steal(), Level::High, OutputDrive::Standard);
-            let mut twim2_sda = Output::new(Sda::steal(), Level::High, OutputDrive::Standard);
-            for _ in 0..12 {
-                twim2_scl.set_low();
-                Timer::after(Duration::from_micros(100)).await;
-                twim2_scl.set_high();
-                Timer::after(Duration::from_micros(100)).await;
+            {
+                let mut twim2_scl = Output::new(Scl::steal(), Level::High, OutputDrive::Standard);
+                let mut twim2_sda = Output::new(Sda::steal(), Level::High, OutputDrive::Standard);
+                for _ in 0..20 {
+                    twim2_scl.set_low();
+                    Timer::after(Duration::from_micros(100)).await;
+                    twim2_scl.set_high();
+                    Timer::after(Duration::from_micros(100)).await;
+                }
+                Input::new(Scl::steal(), Pull::Up);
+                Input::new(Sda::steal(), Pull::Up);
+                Timer::after(Duration::from_millis(5)).await;
             }
-            Input::new(Scl::steal(), Pull::Up);
-            Input::new(Sda::steal(), Pull::Up);
-            Timer::after(Duration::from_millis(5)).await;
             self.i2c_bus = Some(Self::get_bus());
         }
-        if self.errors > 50 && self.lifetime.elapsed().as_secs() > 5 * 60 {
+        if errors.map(|e| *e).unwrap_or_default() > 50 && self.lifetime.elapsed().as_secs() > 5 * 60 {
             request_reset();
         }
     }
@@ -90,11 +101,23 @@ impl embedded_hal_async::i2c::I2c for DestructTwim {
         operations: &mut [Operation<'_>],
     ) -> Result<(), Self::Error> {
         if let Some(i2c_bus) = &mut self.i2c_bus {
-            let ret = i2c_bus.transaction(address, operations).await;
-            if ret.is_err() {
-                self.reset().await;
+            match with_timeout(I2C_TIMEOUT, i2c_bus.transaction(address, operations)).await {
+                Err(_) => {
+                    error!("i2c timeout");
+                    self.reset(address).await;
+                    Err(twim::Error::Timeout)
+                }
+
+                Ok(Err(err)) => {
+                    error!("i2c error: {:?}", err);
+                    self.reset(address).await;
+                    Err(err)
+                }
+                Ok(Ok(_)) => {
+                    self.errors.get_mut(&address).map(|e| *e = 0);
+                    Ok(())
+                }
             }
-            ret
         } else {
             Err(twim::Error::Receive)
         }
@@ -102,11 +125,23 @@ impl embedded_hal_async::i2c::I2c for DestructTwim {
 
     async fn read(&mut self, address: u8, read: &mut [u8]) -> Result<(), Self::Error> {
         if let Some(i2c_bus) = &mut self.i2c_bus {
-            let ret = i2c_bus.read(address, read).await;
-            if ret.is_err() {
-                self.reset().await;
+            match with_timeout(I2C_TIMEOUT, i2c_bus.read(address, read)).await {
+                Err(_) => {
+                    error!("i2c timeout");
+                    self.reset(address).await;
+                    Err(twim::Error::Timeout)
+                }
+
+                Ok(Err(err)) => {
+                    error!("i2c error: {:?}", err);
+                    self.reset(address).await;
+                    Err(err)
+                }
+                Ok(Ok(_)) => {
+                    self.errors.get_mut(&address).map(|e| *e = 0);
+                    Ok(())
+                }
             }
-            ret
         } else {
             Err(twim::Error::Receive)
         }
@@ -114,22 +149,46 @@ impl embedded_hal_async::i2c::I2c for DestructTwim {
 
     async fn write(&mut self, address: u8, write: &[u8]) -> Result<(), Self::Error> {
         if let Some(i2c_bus) = &mut self.i2c_bus {
-            let ret = i2c_bus.write(address, write).await;
-            if ret.is_err() {
-                self.reset().await;
+            match with_timeout(I2C_TIMEOUT, i2c_bus.write(address, write)).await {
+                Err(_) => {
+                    error!("i2c timeout");
+                    self.reset(address).await;
+                    Err(twim::Error::Timeout)
+                }
+
+                Ok(Err(err)) => {
+                    error!("i2c error: {:?}", err);
+                    self.reset(address).await;
+                    Err(err)
+                }
+                Ok(Ok(_)) => {
+                    self.errors.get_mut(&address).map(|e| *e = 0);
+                    Ok(())
+                }
             }
-            ret
         } else {
             Err(twim::Error::Receive)
         }
     }
     async fn write_read(&mut self, address: u8, write: &[u8], read: &mut [u8]) -> Result<(), Self::Error> {
         if let Some(i2c_bus) = &mut self.i2c_bus {
-            let ret = i2c_bus.write_read(address, write, read).await;
-            if ret.is_err() {
-                self.reset().await;
+            match with_timeout(I2C_TIMEOUT, i2c_bus.write_read(address, write, read)).await {
+                Err(_) => {
+                    error!("i2c timeout");
+                    self.reset(address).await;
+                    Err(twim::Error::Timeout)
+                }
+
+                Ok(Err(err)) => {
+                    error!("i2c error: {:?}", err);
+                    self.reset(address).await;
+                    Err(err)
+                }
+                Ok(Ok(_)) => {
+                    self.errors.get_mut(&address).map(|e| *e = 0);
+                    Ok(())
+                }
             }
-            ret
         } else {
             Err(twim::Error::Receive)
         }
