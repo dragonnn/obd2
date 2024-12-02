@@ -85,7 +85,10 @@ impl DestructTwim {
             self.i2c_bus = Some(Self::get_bus());
         }
         if errors.map(|e| *e).unwrap_or_default() > 50 && self.lifetime.elapsed().as_secs() > 5 * 60 {
-            request_reset();
+            use core::fmt::Write;
+            let mut reason = heapless::String::new();
+            core::write!(reason, "twi2_reset on address: {}", address).ok();
+            request_reset(reason);
         }
     }
 }

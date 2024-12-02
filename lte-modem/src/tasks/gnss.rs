@@ -92,6 +92,7 @@ pub async fn task(mut gnss: Gnss) {
     let mut current_state = None;
     let mut battery_state_sub = BatteryState::subscribe().await;
     let mut battery_state = BatteryState::get().await;
+    let rx_channel_pub = crate::tasks::modem::link::rx_channel_pub();
 
     let fix_pub = CHANNEL.publisher().unwrap();
     let mut last_fix: Option<embassy_time::Instant> = None;
@@ -186,6 +187,7 @@ pub async fn task(mut gnss: Gnss) {
                     let mut state = STATE.lock().await;
                     state.fix = Some(fix);
                     fix_pub.publish_immediate(fix);
+                    rx_channel_pub.publish_immediate(types::RxFrame::Modem(Modem::GnssFix(fix)).into());
 
                     battery_state = BatteryState::get().await;
                     if let Some(state) = &current_state {
