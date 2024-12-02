@@ -115,7 +115,7 @@ impl Board {
         Timer::after(Duration::from_millis(200)).await;
 
         let mut twi2 = destruct_twim::DestructTwim::new().await;
-        twi2.reset().await;
+        twi2.reset(0xFF).await;
 
         /*let twi2 = Twim::new(p.SERIAL2, TwiIrqs, p.P0_11, p.P0_12, twi2_config);
         unsafe {
