@@ -115,6 +115,7 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
             && (current_state != Some(types::State::IgnitionOn) && current_state != Some(types::State::Charging))
         {
             charging_control(false).await;
+            low_capacity_forced_charging = false;
         }
 
         *STATE.lock().await = new_state;
