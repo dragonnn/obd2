@@ -125,6 +125,7 @@ impl KiaState {
         ieee802154::send_now();
         set_obd2_sets(Obd2PidSets::Charging).await;
         self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::CheckCharging));
+        embassy_time::Timer::after_secs(1).await;
     }
 
     #[state(entry_action = "enter_check_charging")]

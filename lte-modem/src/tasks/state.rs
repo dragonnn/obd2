@@ -1,4 +1,4 @@
-use defmt::Format;
+use defmt::{info, Format};
 use embassy_futures::select;
 use embassy_time::{Duration, Instant, Timer};
 use futures::StreamExt;
@@ -24,19 +24,22 @@ pub async fn task(mut sense: Sense, mut lightwell: Lightwell, mut wdg: Wdg, mut 
 
     loop {
         wdg.pet().await;
-        match select::select3(
+        match select::select4(
             state_loop(&mut state, &mut sense, &mut lightwell, &mut wdg, &mut light_sensor),
             battery_state_sub.next(),
             montion_detection_sub.next(),
+            Timer::after_secs(30),
         )
         .await
         {
-            select::Either3::Second(new_battery_state) => {
+            select::Either4::Second(new_battery_state) => {
+                info!("Battery state changed: {:?}", new_battery_state);
                 if let Some(new_battery_state) = new_battery_state {
                     state.battery = new_battery_state
                 }
             }
-            select::Either3::Third(_) => {
+            select::Either4::Third(_) => {
+                info!("Montion detected");
                 state.montion_detect = true;
             }
             _ => {}
@@ -86,10 +89,11 @@ async fn state_loop(
                 lightwell_step_max = 12.0;
                 lightwell_step_min = 0.0;
                 lightwell_step_size = 0.24;
+                Timer::after_millis(200).await;
             } else {
                 lightwell_step_max = 100.0;
                 lightwell_step_min = 5.0;
-                lightwell_step_size = 1.0;
+                lightwell_step_size = 1.0 * 4.0;
             }
 
             if lightwell_direction {
@@ -104,8 +108,7 @@ async fn state_loop(
                     w = light_sensor.w().await;
                 }
             }
-
-            Timer::after(Duration::from_millis(25)).await;
+            Timer::after(Duration::from_millis(100)).await;
         } else if state.montion_detect {
             if w > 15 {
                 lightwell.b(255);

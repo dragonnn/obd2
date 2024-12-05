@@ -16,7 +16,7 @@ use types::{Modem, TxFrame};
 
 use super::{
     modem::link::{self, tx_channel_pub},
-    uarte::state_channel_sub,
+    uarte::{current_state, state_channel_sub},
     TASKS_SUBSCRIBERS,
 };
 use crate::{board::Gnss, tasks::battery::State as BatteryState};
@@ -88,8 +88,9 @@ static REQUEST: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 
 #[embassy_executor::task]
 pub async fn task(mut gnss: Gnss) {
+    embassy_time::Timer::after(Duration::from_secs(10)).await;
     let mut state_channel_sub = state_channel_sub();
-    let mut current_state = None;
+    let mut current_state = Some(current_state().await);
     let mut battery_state_sub = BatteryState::subscribe().await;
     let mut battery_state = BatteryState::get().await;
     let rx_channel_pub = crate::tasks::modem::link::rx_channel_pub();
@@ -98,6 +99,9 @@ pub async fn task(mut gnss: Gnss) {
     let mut last_fix: Option<embassy_time::Instant> = None;
     let mut gnss_half_duration_delay: Option<embassy_time::Timer> = None;
     //let mut last_modem_fix_send: Option<Instant> = None;
+    if let Some(current_state) = current_state.as_ref() {
+        gnss_set_duration(&battery_state, &mut gnss, current_state).await;
+    }
 
     loop {
         let result = select::select3(

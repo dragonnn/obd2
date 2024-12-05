@@ -171,7 +171,7 @@ impl Board {
 
         lightwell.r(0);
 
-        let charging_control = Output::new(p.P0_13, Level::Low, OutputDrive::Standard);
+        let charging_control = Output::new(p.P0_13, Level::High, OutputDrive::Standard);
 
         Self {
             modem,

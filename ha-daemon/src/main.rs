@@ -4,6 +4,7 @@ extern crate log;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use build_time::build_time_local;
 use futures_util::{future, pin_mut, SinkExt as _, StreamExt};
 use ha::device::{UpdateLocation, UpdateSensor};
 use ha::ws::HaWs;
@@ -269,6 +270,11 @@ async fn main() {
     std::env::set_var("RUST_LOG_STYLE", "always");
 
     env_logger::init();
+
+    info!(
+        "starting up: {}",
+        build_time_local!("%Y-%m-%dT%H:%M:%S%.f%:z")
+    );
 
     let config = Arc::new(config::Config::load());
     let db = db::DbHandle::new().await;

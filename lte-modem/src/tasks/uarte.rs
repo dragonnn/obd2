@@ -9,6 +9,7 @@ use embassy_nrf::{
 };
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex,
+    mutex::Mutex,
     pubsub::{DynPublisher, DynSubscriber, PubSubChannel},
 };
 use embassy_time::{with_timeout, Duration};
@@ -16,6 +17,8 @@ use serde_encrypt::{shared_key::SharedKey, traits::SerdeEncryptSharedKey as _, E
 use types::Modem;
 
 static STATE_CHANNEL: PubSubChannel<CriticalSectionRawMutex, types::State, 16, 8, 2> = PubSubChannel::new();
+static CURRENT_STATE: Mutex<CriticalSectionRawMutex, types::State> =
+    Mutex::new(types::State::Shutdown(core::time::Duration::from_secs(15 * 60)));
 
 use crate::board::{BoardUarteRx, BoardUarteTx};
 
@@ -78,6 +81,9 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
                     Ok(msg) => {
                         if let types::TxFrame::State(state) = &msg.frame {
                             state_channel_pub.publish_immediate(state.clone());
+                            {
+                                *CURRENT_STATE.lock().await = state.clone();
+                            }
                         }
 
                         if let types::TxFrame::Modem(Modem::Ping) = &msg.frame {
@@ -114,4 +120,12 @@ pub fn state_channel_sub() -> DynSubscriber<'static, types::State> {
 
 pub fn state_channel_pub() -> DynPublisher<'static, types::State> {
     unwrap!(STATE_CHANNEL.dyn_publisher())
+}
+
+pub async fn current_state() -> types::State {
+    CURRENT_STATE.lock().await.clone()
+}
+
+pub async fn set_current_state(state: types::State) {
+    *CURRENT_STATE.lock().await = state;
 }

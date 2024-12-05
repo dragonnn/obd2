@@ -185,8 +185,8 @@ impl KiaHandler {
                             info!("Received txmessage: {:?} from: {:?}", txmessage, peer);
                             peer = Some(new_peer);
                             self.dispatch_txframe(&txmessage.frame).await;
-                            if txmessage.needs_ack() {
-                                if let Some(peer) = peer {
+                            if txmessage.needs_ack() || txmessage.ack {
+                                if let Some(peer) = &peer {
                                     let ack = types::RxMessage::new(types::RxFrame::TxFrameAck(
                                         txmessage.id,
                                     ))
@@ -194,8 +194,14 @@ impl KiaHandler {
                                     .unwrap();
                                     if let Err(err) = socket.send_to(ack.as_slice(), peer).await {
                                         error!("error sending ack frame: {:?} to: {:?}", err, peer);
+                                    } else {
+                                        info!("Sent ack frame to: {:?}", peer);
                                     }
+                                } else {
+                                    error!("No peer to send ack frame to");
                                 }
+                            } else {
+                                info!("No ack needed for txmessage: {:?}", txmessage);
                             }
                         }
                         Err(err) => {

@@ -1,3 +1,4 @@
+use defmt::warn;
 use embassy_nrf::{
     peripherals,
     wdt::{Config, Watchdog, WatchdogHandle},
@@ -5,21 +6,14 @@ use embassy_nrf::{
 use embassy_time::{Duration, Timer};
 
 pub struct Wdg(WatchdogHandle);
+//pub struct Wdg;
 
 impl Wdg {
     pub async fn new(wdt: peripherals::WDT) -> Self {
         let mut config = Config::default();
 
-        #[cfg(not(debug_assertions))]
-        {
-            config.timeout_ticks = 32768 * 120;
-            config.run_during_debug_halt = false;
-        }
-
-        #[cfg(debug_assertions)]
-        {
-            config.timeout_ticks = 32768 * 120;
-        }
+        config.timeout_ticks = 32768 * 120;
+        config.run_during_debug_halt = false;
 
         let (_wdt, [handle]) = match Watchdog::try_new(wdt, config) {
             Ok(x) => x,
@@ -31,10 +25,14 @@ impl Wdg {
             }
         };
 
-        Self(handle)
+        let mut ret = Self(handle);
+        //let mut ret = Self;
+        ret.pet().await;
+        ret
     }
 
     pub async fn pet(&mut self) {
+        //warn!("wdg pet");
         self.0.pet();
     }
 }

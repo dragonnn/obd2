@@ -1,5 +1,5 @@
 use bitbybit::bitenum;
-use defmt::Format;
+use defmt::{info, Format};
 use embassy_nrf::gpio::{AnyPin, Input, Level, Output, OutputDrive, Pull};
 use embassy_time::{with_timeout, Duration};
 use embedded_hal_async::i2c::I2c;
@@ -150,6 +150,7 @@ where
 
     pub async fn irq(&mut self) -> Result<InterputEvent, u8> {
         self.irq.wait_for_any_edge().await;
+        info!("battery irq");
         embassy_time::Timer::after(Duration::from_secs(1)).await;
         let mut interput_reason = [0u8; 2];
         self.get_u8_values(REG_INTERRUPT_FLAG1, &mut interput_reason).await.ok();

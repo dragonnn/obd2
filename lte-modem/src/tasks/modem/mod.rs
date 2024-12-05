@@ -24,7 +24,7 @@ use crate::{
         battery::State as BatteryState,
         button::subscribe as button_subscribe,
         gnss::{Fix, State as GnssState},
-        uarte::{state_channel_pub, state_channel_sub},
+        uarte::{set_current_state, state_channel_pub, state_channel_sub},
     },
 };
 
@@ -57,7 +57,8 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
     }
 
     if let Some(state) = persistent_manager.get_state() {
-        state_channel_pub.publish_immediate(state);
+        state_channel_pub.publish_immediate(state.clone());
+        set_current_state(state).await;
     }
 
     let mut fix_sub = GnssState::subscribe().await;

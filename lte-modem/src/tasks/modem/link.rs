@@ -17,7 +17,7 @@ use nrf_modem::{
 use postcard::{from_bytes, from_bytes_crc32, to_vec, to_vec_crc32};
 use types::{Modem, RxFrame, RxMessage, TxFrame, TxMessage};
 
-use crate::board::Gnss;
+use crate::{board::Gnss, tasks::uarte::current_state};
 
 static TX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, TxMessage, 256, 1, 16> = PubSubChannel::new();
 static RX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, RxMessage, 256, 2, 16> = PubSubChannel::new();
@@ -146,6 +146,8 @@ pub async fn send_task(spawner: Spawner) {
                 }
                 if drop_socket {
                     if let Some(socket) = socket.take() {
+                        let state = current_state().await;
+                        socket.tx_frame_send(&TxFrame::State(state).into(), ip, port, &mut rx_channel_sub).await.ok();
                         match with_timeout(Duration::from_secs(5), socket.deactivate()).await {
                             Ok(_) => {
                                 info!("socket closed");
@@ -163,6 +165,8 @@ pub async fn send_task(spawner: Spawner) {
             Second(_) => {
                 error!("tx_channel_sub timeout");
                 if let Some(socket) = &mut socket {
+                    let state = current_state().await;
+                    socket.tx_frame_send(&TxFrame::State(state).into(), ip, port, &mut rx_channel_sub).await.ok();
                     if let Some(gnss) = crate::tasks::gnss::State::get_current_fix().await {
                         socket
                             .tx_frame_send(
@@ -202,6 +206,8 @@ pub async fn send_task(spawner: Spawner) {
             Third(_) => {
                 error!("force disconnect");
                 if let Some(socket) = socket.take() {
+                    let state = current_state().await;
+                    socket.tx_frame_send(&TxFrame::State(state).into(), ip, port, &mut rx_channel_sub).await.ok();
                     match with_timeout(Duration::from_secs(5), socket.deactivate()).await {
                         Ok(_) => {
                             info!("socket closed");

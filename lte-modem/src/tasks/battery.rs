@@ -93,6 +93,7 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
 
     let mut last_modem_battery_send: Option<Instant> = None;
     let charging_pub = CHANNEL.publisher().unwrap();
+    let mut low_capacity_forced_charging = false;
 
     loop {
         let new_state = State::new(&mut battery, low_voltage).await;
@@ -109,6 +110,7 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
         if new_state.capacity < 15 {
             warn!("low battery capacity, charging");
             charging_control(true).await;
+            low_capacity_forced_charging = true;
         } else if new_state.capacity > 85
             && (current_state != Some(types::State::IgnitionOn) && current_state != Some(types::State::Charging))
         {
@@ -133,7 +135,9 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
                 } else if let types::State::IgnitionOn = new_state {
                     charging_control(true).await;
                 } else {
-                    charging_control(false).await;
+                    if !low_capacity_forced_charging {
+                        charging_control(false).await;
+                    }
                 }
                 current_state = Some(new_state);
             }

@@ -7,6 +7,7 @@
 #![feature(stdarch_arm_neon_intrinsics)]
 #![feature(async_closure)]
 #![allow(clippy::uninlined_format_args)]
+#![warn(clippy::large_futures)]
 #![feature(impl_trait_in_assoc_type)]
 extern crate alloc;
 extern crate tinyrlibc;
@@ -84,8 +85,8 @@ async fn main(spawner: Spawner) {
     let panic_message = get_panic_message_utf8();
     if let Some(panic) = panic_message {
         defmt::error!("{}", panic);
+        Timer::after(Duration::from_millis(500)).await;
     }
-    Timer::after(Duration::from_millis(500)).await;
     defmt::info!("starting");
 
     let mut board = board::Board::new().await;
@@ -116,14 +117,16 @@ async fn main(spawner: Spawner) {
         board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, panic).await.ok();
         //}
     } else {
-        use core::fmt::Write;
-        info!("reset reasons: {:?}", reset_reasons);
-        let mut reset_reasons_str = heapless::String::<256>::new();
-        core::write!(reset_reasons_str, "{:?}", reset_reasons).ok();
-        info!("{}", reset_reasons_str);
-        reset_reasons_str.pop();
-        let reset_reasons_str = reset_reasons_str.trim_start_matches("[");
-        board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &reset_reasons_str).await.ok();
+        if reset_reasons.len() > 0 {
+            use core::fmt::Write;
+            info!("reset reasons: {:?}", reset_reasons);
+            let mut reset_reasons_str = heapless::String::<256>::new();
+            core::write!(reset_reasons_str, "{:?}", reset_reasons).ok();
+            info!("{}", reset_reasons_str);
+            reset_reasons_str.pop();
+            let reset_reasons_str = reset_reasons_str.trim_start_matches("[");
+            board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &reset_reasons_str).await.ok();
+        }
     }
 
     defmt::info!("starting tasks");
