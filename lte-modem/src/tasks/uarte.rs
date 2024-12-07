@@ -2,6 +2,7 @@ use alloc::vec::Vec;
 
 use defmt::*;
 use embassy_executor::Spawner;
+use embassy_futures::select::{select3, Either3::*};
 use embassy_nrf::{
     gpio::{Input, Output},
     peripherals::SERIAL1,
@@ -11,14 +12,16 @@ use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex,
     mutex::Mutex,
     pubsub::{DynPublisher, DynSubscriber, PubSubChannel},
+    signal::Signal,
 };
-use embassy_time::{with_timeout, Duration};
+use embassy_time::{with_timeout, Duration, Instant};
 use serde_encrypt::{shared_key::SharedKey, traits::SerdeEncryptSharedKey as _, EncryptedMessage};
 use types::Modem;
 
 static STATE_CHANNEL: PubSubChannel<CriticalSectionRawMutex, types::State, 16, 8, 2> = PubSubChannel::new();
 static CURRENT_STATE: Mutex<CriticalSectionRawMutex, types::State> =
     Mutex::new(types::State::Shutdown(core::time::Duration::from_secs(15 * 60)));
+static UARTE_RESET: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 
 use crate::board::{BoardUarteRx, BoardUarteTx};
 
@@ -56,61 +59,73 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
     let state_channel_pub = unwrap!(STATE_CHANNEL.publisher());
 
     let shared_key: SharedKey = SharedKey::new(crate::SHARED_KEY.clone());
+    let mut last_communication = Instant::now();
 
     let mut buffer = [0u8; 1024];
     loop {
         let mut vec_buffer = Vec::with_capacity(1024);
-        match with_timeout(Duration::from_secs(60), uarte_receive.wait_for_high()).await {
-            Ok(_) => {}
-            Err(_) => {
+        let mut do_uarte_reset = false;
+        match select3(uarte_receive.wait_for_high(), embassy_time::Timer::after_secs(60), UARTE_RESET.wait()).await {
+            First(_) => {}
+            Second(_) => {
                 let battery_state = crate::tasks::battery::State::get().await;
                 if battery_state.charging {
-                    error!("uarte_receive wait_for_high timeout");
-                    uarte_reset.set_low();
-                    embassy_time::Timer::after(Duration::from_millis(10)).await;
-                    uarte_reset.set_high();
+                    do_uarte_reset = true;
+                } else if last_communication.elapsed().as_secs() > 15 * 60 {
+                    do_uarte_reset = true;
                 }
             }
+            Third(_) => do_uarte_reset = true,
         }
-        let result = receive.read_until_idle(&mut buffer).await;
-        if let Ok(result) = result {
-            vec_buffer.extend_from_slice(&buffer[..result]);
 
-            match EncryptedMessage::deserialize(vec_buffer) {
-                Ok(encrypted_message) => match types::TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
-                    Ok(msg) => {
-                        if let types::TxFrame::State(state) = &msg.frame {
-                            state_channel_pub.publish_immediate(state.clone());
-                            {
-                                *CURRENT_STATE.lock().await = state.clone();
-                            }
-                        }
-
-                        if let types::TxFrame::Modem(Modem::Ping) = &msg.frame {
-                            warn!("sending modem pong");
-                            rx_channel_pub.publish_immediate(types::RxFrame::TxFrameAck(msg.id).into());
-                            rx_channel_pub.publish_immediate(types::RxMessage::new(types::RxFrame::Modem(Modem::Pong)));
-                        } else {
-                            if !msg.needs_ack() {
-                                warn!("not remote ack, sending ack from modem");
-                                rx_channel_pub.publish_immediate(types::RxFrame::TxFrameAck(msg.id).into());
-                            }
-                            tx_channel_pub.publish_immediate(msg);
-                        }
-                    }
-                    Err(e) => {
-                        error!("uarte_receive decrypt error {:?}", defmt::Debug2Format(&e));
-                    }
-                },
-                Err(e) => {
-                    error!("uarte_receive deserialize error {:?}", defmt::Debug2Format(&e));
-                }
-            }
+        if do_uarte_reset {
+            error!("uarte_receive wait_for_high reset");
+            uarte_reset.set_low();
+            embassy_time::Timer::after(Duration::from_millis(10)).await;
+            uarte_reset.set_high();
         } else {
-            error!("uarte_receive read_until_idle error {:?}", result);
+            let result = receive.read_until_idle(&mut buffer).await;
+            if let Ok(result) = result {
+                vec_buffer.extend_from_slice(&buffer[..result]);
+
+                match EncryptedMessage::deserialize(vec_buffer) {
+                    Ok(encrypted_message) => match types::TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
+                        Ok(msg) => {
+                            last_communication = Instant::now();
+                            if let types::TxFrame::State(state) = &msg.frame {
+                                state_channel_pub.publish_immediate(state.clone());
+                                {
+                                    *CURRENT_STATE.lock().await = state.clone();
+                                }
+                            }
+
+                            if let types::TxFrame::Modem(Modem::Ping) = &msg.frame {
+                                warn!("sending modem pong");
+                                rx_channel_pub.publish_immediate(types::RxFrame::TxFrameAck(msg.id).into());
+                                rx_channel_pub
+                                    .publish_immediate(types::RxMessage::new(types::RxFrame::Modem(Modem::Pong)));
+                            } else {
+                                if !msg.needs_ack() {
+                                    warn!("not remote ack, sending ack from modem");
+                                    rx_channel_pub.publish_immediate(types::RxFrame::TxFrameAck(msg.id).into());
+                                }
+                                tx_channel_pub.publish_immediate(msg);
+                            }
+                        }
+                        Err(e) => {
+                            error!("uarte_receive decrypt error {:?}", defmt::Debug2Format(&e));
+                        }
+                    },
+                    Err(e) => {
+                        error!("uarte_receive deserialize error {:?}", defmt::Debug2Format(&e));
+                    }
+                }
+            } else {
+                error!("uarte_receive read_until_idle error {:?}", result);
+            }
+            //info!("uarte_receive low");
+            uarte_receive.wait_for_low().await;
         }
-        //info!("uarte_receive low");
-        uarte_receive.wait_for_low().await;
     }
 }
 
@@ -128,4 +143,8 @@ pub async fn current_state() -> types::State {
 
 pub async fn set_current_state(state: types::State) {
     *CURRENT_STATE.lock().await = state;
+}
+
+pub fn reset() {
+    UARTE_RESET.signal(());
 }

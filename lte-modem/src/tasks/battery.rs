@@ -113,6 +113,7 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
             low_capacity_forced_charging = true;
         } else if new_state.capacity > 85
             && (current_state != Some(types::State::IgnitionOn) && current_state != Some(types::State::Charging))
+            && low_capacity_forced_charging
         {
             charging_control(false).await;
             low_capacity_forced_charging = false;

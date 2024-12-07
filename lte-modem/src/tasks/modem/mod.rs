@@ -72,6 +72,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
 
     let mut distance = persistent_manager.get_distance();
     let mut secs = persistent_manager.get_secs();
+    let mut last_button_press = Instant::now();
 
     loop {
         match select4(
@@ -136,9 +137,14 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
             }
             Either4::Third(_) => {
                 defmt::info!("sending button press");
-                send_state(&modem, "button pressed...", false, false, persistent_manager.get_restarts(), false)
-                    .await
-                    .ok();
+                if last_button_press.elapsed().as_secs() > 5 {
+                    send_state(&modem, "button pressed...", false, false, persistent_manager.get_restarts(), false)
+                        .await
+                        .ok();
+                } else {
+                    warn!("button press ignored");
+                }
+                last_button_press = Instant::now();
             }
             Either4::Fourth(state) => {
                 if persistent_manager.get_state() != Some(state.clone()) {

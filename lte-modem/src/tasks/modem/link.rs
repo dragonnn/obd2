@@ -159,6 +159,7 @@ pub async fn send_task(spawner: Spawner) {
                         CONNECTED.store(false, Ordering::Relaxed);
                         DISCONNECT_SIGNAL.signal(());
                         timeout_ticker = None;
+                        crate::tasks::uarte::reset();
                     }
                 }
             }
@@ -187,6 +188,7 @@ pub async fn send_task(spawner: Spawner) {
                         )
                         .await
                         .ok();
+                    crate::tasks::uarte::reset();
                 }
                 if let Some(socket) = socket.take() {
                     embassy_time::Timer::after(Duration::from_secs(1)).await;
@@ -201,6 +203,7 @@ pub async fn send_task(spawner: Spawner) {
                     CONNECTED.store(false, Ordering::Relaxed);
                     DISCONNECT_SIGNAL.signal(());
                     timeout_ticker = None;
+                    crate::tasks::uarte::reset();
                 }
             }
             Third(_) => {
@@ -219,6 +222,7 @@ pub async fn send_task(spawner: Spawner) {
                     CONNECTED.store(false, Ordering::Relaxed);
                     DISCONNECT_SIGNAL.signal(());
                     timeout_ticker = None;
+                    crate::tasks::uarte::reset();
                 }
             }
         }
