@@ -1,5 +1,5 @@
 use crc::{Crc, CRC_32_ISCSI};
-use defmt::Format;
+use defmt::*;
 use persistent_buff::PersistentBuff;
 use serde::{Deserialize, Serialize};
 
@@ -25,9 +25,28 @@ pub struct PeristentManager {
 impl PeristentManager {
     pub fn new() -> Self {
         let persistent_buff = PersistentBuff::take_managed().unwrap().take_validate(|_buff| {});
+        let persistent_buff_len = persistent_buff.len();
+        let used_persistent_buff = persistent_buff[0];
+        let (first_persistent_buff, second_persistent_buf) =
+            &mut persistent_buff[2..persistent_buff_len].split_at_mut((persistent_buff_len - 2) / 2);
 
-        let persistent_state: PeristentState =
-            postcard::from_bytes_crc32(&persistent_buff, CRC.digest()).unwrap_or_default();
+        let persistent_state: PeristentState = postcard::from_bytes_crc32(
+            if used_persistent_buff == 0 { first_persistent_buff } else { second_persistent_buf },
+            CRC.digest(),
+        )
+        .unwrap_or_else(|e| {
+            postcard::from_bytes_crc32(
+                if used_persistent_buff == 0 { second_persistent_buf } else { first_persistent_buff },
+                CRC.digest(),
+            )
+            .unwrap_or_else(|e| {
+                defmt::error!("Failed to deserialize persistent state: {:?}", e);
+                Default::default()
+            })
+        });
+
+        info!("Used persistent buff: {}", used_persistent_buff);
+        info!("Persistent state: {:?}", persistent_state);
 
         Self { persistent_buff, persistent_state }
     }
@@ -88,8 +107,17 @@ impl PeristentManager {
 
     fn serialize(&mut self) {
         let _guard = ResetGuard::new();
-        match postcard::to_slice_crc32(&self.persistent_state, &mut self.persistent_buff, CRC.digest()) {
-            Ok(_) => {}
+        let persistent_buff_len = self.persistent_buff.len();
+        let used_persistent_buff = self.persistent_buff[0];
+        let (first_persistent_buff, second_persistent_buf) =
+            &mut self.persistent_buff[2..persistent_buff_len].split_at_mut((persistent_buff_len - 2) / 2);
+
+        let write_perisent_buff = if used_persistent_buff == 0 { second_persistent_buf } else { first_persistent_buff };
+
+        match postcard::to_slice_crc32(&self.persistent_state, write_perisent_buff, CRC.digest()) {
+            Ok(_) => {
+                self.persistent_buff[0] = if used_persistent_buff == 0 { 1 } else { 0 };
+            }
             Err(e) => defmt::error!("Failed to serialize persistent state: {:?}", e),
         }
     }

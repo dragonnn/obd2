@@ -111,9 +111,9 @@ where
         let dev_mst = new.read_one(REG_DEVID_MST).await;
         let partid = new.read_one(REG_PARTID).await;
 
-        assert_eq!(dev_ad, VALUE_DEVID_AD);
-        assert_eq!(dev_mst, VALUE_DEVID_MST);
-        assert_eq!(partid, VALUE_PARTID);
+        //assert_eq!(dev_ad, VALUE_DEVID_AD);
+        //assert_eq!(dev_mst, VALUE_DEVID_MST);
+        //assert_eq!(partid, VALUE_PARTID);
         new
     }
 

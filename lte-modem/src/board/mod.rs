@@ -22,7 +22,7 @@ use embassy_nrf::{
     bind_interrupts,
     gpio::{Input, Level, Output, OutputDrive, Pin, Pull},
     pac::UARTE0,
-    peripherals::{P0_07, P0_08, PWM0, PWM1, PWM2, SERIAL1, SERIAL2, SERIAL3, TIMER0},
+    peripherals::{P0_07, P0_08, PWM0, PWM1, PWM2, SERIAL0, SERIAL1, SERIAL2, SERIAL3, TIMER0, TIMER1},
     spim::{self, Spim},
     twim::{self, Twim},
     uarte::{self, Uarte, UarteRxWithIdle, UarteTx},
@@ -64,10 +64,14 @@ bind_interrupts!(struct SpiIrqs {
 
 bind_interrupts!(struct UartIrqs {
     UARTE1_SPIM1_SPIS1_TWIM1_TWIS1 => uarte::InterruptHandler<SERIAL1>;
+    UARTE0_SPIM0_SPIS0_TWIM0_TWIS0 => uarte::InterruptHandler<SERIAL0>;
 });
 
 pub type BoardUarteTx = UarteTx<'static, SERIAL1>;
 pub type BoardUarteRx = UarteRxWithIdle<'static, SERIAL1, TIMER0>;
+pub type BoardDebugUarteTx = UarteTx<'static, SERIAL0>;
+pub type BoardGnssUarteRx = UarteRxWithIdle<'static, SERIAL0, TIMER1>;
+pub type BoardGnssUarteTx = UarteTx<'static, SERIAL0>;
 
 pub struct Board {
     pub buzzer: Buzzer,
@@ -88,6 +92,9 @@ pub struct Board {
     pub uarte_receive: Option<Input<'static>>,
     pub uarte_reset: Option<Output<'static>>,
     pub charging_control: Option<Output<'static>>,
+    pub uarte_tx_gnss: Option<(BoardGnssUarteTx, BoardGnssUarteRx)>,
+    pub gnss_pss: Option<Input<'static>>,
+    pub gnss_force_on: Option<Output<'static>>,
 }
 
 impl Board {
@@ -160,7 +167,7 @@ impl Board {
             UartIrqs,
             p.P0_24, //rxd
             p.P0_25, //txd
-            uart_config,
+            uart_config.clone(),
         )
         .split_with_idle(p.TIMER0, p.PPI_CH0, p.PPI_CH1);
         //send - p0.23 -> MCU_IF5
@@ -169,9 +176,17 @@ impl Board {
         let uarte_receive = Input::new(p.P0_22, Pull::Down);
         let uarte_reset = Output::new(p.P0_10, Level::High, OutputDrive::Standard);
 
+        uart_config.baudrate = uarte::Baudrate::BAUD9600;
+        uart_config.parity = uarte::Parity::EXCLUDED;
+
+        let uarte_tx_gnss = Uarte::new(p.SERIAL0, UartIrqs, p.P0_13, p.P0_16, uart_config)
+            .split_with_idle(p.TIMER1, p.PPI_CH2, p.PPI_CH3);
+
         lightwell.r(0);
 
-        let charging_control = Output::new(p.P0_13, Level::High, OutputDrive::Standard);
+        let charging_control = Output::new(p.P0_14, Level::Low, OutputDrive::Standard);
+        let gnss_pss = Input::new(p.P0_21, Pull::Down);
+        let gnss_force_on = Output::new(p.P0_15, Level::High, OutputDrive::Standard);
 
         Self {
             modem,
@@ -189,6 +204,9 @@ impl Board {
             uarte_receive: Some(uarte_receive),
             uarte_reset: Some(uarte_reset),
             charging_control: Some(charging_control),
+            uarte_tx_gnss: Some(uarte_tx_gnss),
+            gnss_pss: Some(gnss_pss),
+            gnss_force_on: Some(gnss_force_on),
         }
     }
 }

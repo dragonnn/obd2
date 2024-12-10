@@ -98,7 +98,7 @@ pub async fn send_task(spawner: Spawner) {
                             let (socket_rx, socket_tx) = s.split_owned().await.unwrap();
                             info!("connected");
                             spawner.spawn(recv_task(socket_rx)).ok();
-                            timeout_ticker = Some(Ticker::every(Duration::from_secs(120)));
+                            timeout_ticker = Some(Ticker::every(Duration::from_secs(2 * 60)));
                             socket_tx
                                 .tx_frame_send(
                                     &TxMessage::new(TxFrame::Modem(Modem::Connected)),
@@ -336,6 +336,7 @@ impl TxMessageSend for OwnedUdpSendSocket {
 
 pub type TxChannelPub = DynPublisher<'static, TxMessage>;
 pub type RxChannelSub = DynSubscriber<'static, RxMessage>;
+pub type RxChannelPub = DynPublisher<'static, RxMessage>;
 
 pub fn tx_channel_pub() -> TxChannelPub {
     unwrap!(TX_CHANNEL.dyn_publisher())
@@ -345,7 +346,7 @@ pub fn rx_channel_sub() -> RxChannelSub {
     unwrap!(RX_CHANNEL.dyn_subscriber())
 }
 
-pub fn rx_channel_pub() -> DynPublisher<'static, RxMessage> {
+pub fn rx_channel_pub() -> RxChannelPub {
     unwrap!(RX_CHANNEL.dyn_publisher())
 }
 

@@ -50,6 +50,13 @@ impl KiaHandler {
             .unwrap()
             .update(chrono::Local::now().format("%+").to_string().into())
             .await;
+        if let TxFrame::Obd2Pid(_) = txframe {
+            self.ha_sensors
+                .get("obd2_last_communication")
+                .unwrap()
+                .update(chrono::Local::now().format("%+").to_string().into())
+                .await;
+        }
         match txframe {
             TxFrame::State(state) => {
                 let state = match state {

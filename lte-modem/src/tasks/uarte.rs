@@ -58,8 +58,8 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
     let rx_channel_pub = crate::tasks::modem::link::rx_channel_pub();
     let state_channel_pub = unwrap!(STATE_CHANNEL.publisher());
 
-    let shared_key: SharedKey = SharedKey::new(crate::SHARED_KEY.clone());
     let mut last_communication = Instant::now();
+    let mut last_reset = Instant::now();
 
     let mut buffer = [0u8; 1024];
     loop {
@@ -78,18 +78,19 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
             Third(_) => do_uarte_reset = true,
         }
 
-        if do_uarte_reset {
+        if do_uarte_reset && last_reset.elapsed().as_secs() > 60 {
             error!("uarte_receive wait_for_high reset");
             uarte_reset.set_low();
             embassy_time::Timer::after(Duration::from_millis(10)).await;
             uarte_reset.set_high();
+            last_reset = Instant::now();
         } else {
             let result = receive.read_until_idle(&mut buffer).await;
             if let Ok(result) = result {
-                vec_buffer.extend_from_slice(&buffer[..result]);
+                if result > 0 {
+                    vec_buffer.extend_from_slice(&buffer[..result]);
 
-                match EncryptedMessage::deserialize(vec_buffer) {
-                    Ok(encrypted_message) => match types::TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
+                    match types::TxMessage::from_bytes_encrypted(&vec_buffer) {
                         Ok(msg) => {
                             last_communication = Instant::now();
                             if let types::TxFrame::State(state) = &msg.frame {
@@ -115,10 +116,9 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
                         Err(e) => {
                             error!("uarte_receive decrypt error {:?}", defmt::Debug2Format(&e));
                         }
-                    },
-                    Err(e) => {
-                        error!("uarte_receive deserialize error {:?}", defmt::Debug2Format(&e));
                     }
+                } else {
+                    warn!("uarte_receive read_until_idle empty");
                 }
             } else {
                 error!("uarte_receive read_until_idle error {:?}", result);

@@ -43,11 +43,12 @@ impl Gnss {
 
     async fn start(&mut self) -> Result<(), ModemError> {
         if self.duration.as_secs() < 20 {
-            info!("start periodic fix");
+            error!("start periodic fix");
             self.stream = Some(self.handler().await?.start_continuous_fix(self.get_config())?);
             self.tx_channel_pub
                 .publish_immediate(TxMessage::new(TxFrame::Modem(Modem::GnssState(GnssState::PeriodicFix))));
         } else {
+            error!("start one shot fix");
             self.stream = None;
             self.tx_channel_pub.publish_immediate(TxMessage::new(TxFrame::Modem(Modem::GnssState(
                 GnssState::TickerFix(self.duration.as_secs() as u32),
@@ -74,6 +75,11 @@ impl Gnss {
             self.low_accuracy = low_accuracy;
             self.stream = None;
             self.start().await.ok();
+            if self.low_accuracy {
+                self.timeout = Duration::from_secs(60);
+            } else {
+                self.timeout = Duration::from_secs(5 * 60);
+            }
         }
     }
 

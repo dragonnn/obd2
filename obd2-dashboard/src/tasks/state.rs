@@ -225,10 +225,11 @@ impl KiaState {
             Duration::from_secs(15 * 60)
         };
         warn!(
-            "shutdown duration: {}min: last_ignition_on:{}sec now: {}sec",
+            "shutdown duration: {}min: last_ignition_on:{}sec now: {}sec on event: {:?}",
             shutdown_duration.as_secs() / 60,
             last_ignition_on,
-            now
+            now,
+            event
         );
 
         match event {

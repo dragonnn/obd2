@@ -1,4 +1,4 @@
-use defmt::{unwrap, warn, Format};
+use defmt::*;
 use embassy_futures::select;
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex,
@@ -27,7 +27,7 @@ pub use types::GnssFix as Fix;
 
 #[derive(Format, Clone)]
 pub struct State {
-    fix: Option<Fix>,
+    pub fix: Option<Fix>,
     fixes: Vec<Fix, FIXES_BUFFER_SIZE>,
 }
 
@@ -56,7 +56,7 @@ impl State {
 pub type FixSubscriper =
     Subscriber<'static, CriticalSectionRawMutex, Fix, TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, FIXES_BUFFER_SIZE>;
 
-pub struct FromFix(Fix);
+pub struct FromFix(pub Fix);
 
 impl From<nrf_modem_gnss_pvt_data_frame> for FromFix {
     fn from(value: nrf_modem_gnss_pvt_data_frame) -> Self {
@@ -79,12 +79,38 @@ impl From<nrf_modem_gnss_pvt_data_frame> for FromFix {
     }
 }
 
-static STATE: Mutex<CriticalSectionRawMutex, State> = Mutex::new(State { fix: None, fixes: Vec::new() });
+impl From<&nmea0183::RMC> for FromFix {
+    fn from(value: &nmea0183::RMC) -> Self {
+        FromFix(Fix {
+            latitude: value.latitude.as_f64(),
+            longitude: value.longitude.as_f64(),
+            altitude: 0.0,
+            accuracy: 10.0,
 
-static CHANNEL: PubSubChannel<CriticalSectionRawMutex, Fix, TASKS_SUBSCRIBERS, TASKS_SUBSCRIBERS, FIXES_BUFFER_SIZE> =
-    PubSubChannel::new();
+            year: value.datetime.date.year,
+            month: value.datetime.date.month,
+            day: value.datetime.date.month,
 
-static REQUEST: Signal<CriticalSectionRawMutex, ()> = Signal::new();
+            hour: value.datetime.time.hours,
+            minute: value.datetime.time.minutes,
+            seconds: value.datetime.time.seconds as u8,
+            ms: 0,
+            elapsed: Instant::now().as_ticks(),
+        })
+    }
+}
+
+pub static STATE: Mutex<CriticalSectionRawMutex, State> = Mutex::new(State { fix: None, fixes: Vec::new() });
+
+pub static CHANNEL: PubSubChannel<
+    CriticalSectionRawMutex,
+    Fix,
+    TASKS_SUBSCRIBERS,
+    TASKS_SUBSCRIBERS,
+    FIXES_BUFFER_SIZE,
+> = PubSubChannel::new();
+
+pub static REQUEST: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 
 #[embassy_executor::task]
 pub async fn task(mut gnss: Gnss) {
@@ -211,7 +237,13 @@ async fn gnss_set_duration(battery_state: &BatteryState, gnss: &mut Gnss, state:
         types::State::Charging
         | types::State::CheckCharging
         | types::State::IgnitionOff
-        | types::State::Shutdown(_) => gnss.conf(long_duration, true).await,
-        types::State::IgnitionOn => gnss.conf(short_duration, false).await,
+        | types::State::Shutdown(_) => {
+            error!("setting long duration");
+            gnss.conf(long_duration, true).await;
+        }
+        types::State::IgnitionOn => {
+            error!("setting short duration");
+            gnss.conf(short_duration, false).await;
+        }
     }
 }

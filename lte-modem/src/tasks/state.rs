@@ -80,7 +80,6 @@ async fn state_loop(
     let mut w = light_sensor.w().await;
 
     loop {
-        warn!("State loop inner");
         wdg.pet().await;
         if last_battery_state_time.elapsed().as_secs() > 60 {
             state.battery = BatteryState::get().await;
@@ -89,7 +88,6 @@ async fn state_loop(
                 w = light_sensor.w().await;
             }
         }
-        warn!("Sate loop inner 2 with w: {}", w);
         let g = (((state.battery.capacity as f32 / 100.0) / 1.0) * 255.0) as u8;
         let r = ((((100 - state.battery.capacity) as f32 / 100.0) / 1.0) * 255.0) as u8;
         if state.battery.charging {

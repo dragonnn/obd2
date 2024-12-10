@@ -56,7 +56,8 @@ nrfxlib-sys = "2.7.1"
 tinyrlibc = { git = "https://github.com/rust-embedded-community/tinyrlibc" }
 
 defmt = "0.3"
-defmt-rtt = "0.4"
+#defmt-rtt = "0.4"
+defmt-brtt = { version = "0.1.1", features = ["rtt", "bbq", "async-await"] }
 
 static_cell = "2.1"
 cortex-m = { version = "0.7.6", features = ["critical-section-single-core"] }
@@ -91,6 +92,11 @@ panic-persist = { version = "0.3.0", features = ["utf8"] }
 persistent-buff = "0.2.6"
 
 types = { path = "../types", features = ["id_modem"] }
+statig = { path = "../obd2-dashboard/crates/statig/statig", features = [
+    "async",
+    "alloc",
+] }
+nmea0183 = "0.5.0"
 
 [build-dependencies]
 dotenv-build = "0.1"

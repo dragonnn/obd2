@@ -8,7 +8,7 @@ use embassy_sync::{
     pubsub::{DynPublisher, PubSubChannel},
     signal::Signal,
 };
-use embassy_time::{with_timeout, Duration, Instant, Ticker};
+use embassy_time::{with_timeout, Duration, Instant, Ticker, Timer};
 use esp_hal::aes::{dma::AesDma, Aes, Mode};
 use esp_ieee802154::{Config, Frame, Ieee802154, ReceivedFrame};
 use ieee802154::mac::{Address, FrameContent, FrameType, FrameVersion, Header, PanId, ShortAddress};
@@ -74,23 +74,31 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
     }
 
     let mut state: Option<types::State> = None;
+    let mut last_send = Instant::now();
 
     loop {
         match select4(
             async {
-                select(send_ticker.next(), SEND_NOW_SIGNAL.wait()).await;
+                match select(send_ticker.next(), SEND_NOW_SIGNAL.wait()).await {
+                    embassy_futures::select::Either::First(_) => warn!("send ticker"),
+                    embassy_futures::select::Either::Second(_) => warn!("send now"),
+                }
                 let mut last_modem_fix_secs = last_modem_fix.elapsed().as_secs();
                 if last_modem_fix_secs > 60 {
                     if last_modem_fix_secs > 5 * 60 {
                         last_modem_fix_secs = 5 * 60;
                     }
                     let new_send_ticker_duration = Duration::from_secs(last_modem_fix_secs % 60 * 60);
-                    if new_send_ticker_duration != send_ticker_duration {
+                    if new_send_ticker_duration != send_ticker_duration && new_send_ticker_duration.as_secs() > 15 {
                         info!("new_send_ticker_duration: {:?}", new_send_ticker_duration);
                         send_ticker_duration = new_send_ticker_duration;
                         send_ticker = Ticker::every(send_ticker_duration);
                     }
                 }
+                if last_send.elapsed().as_secs() < 15 {
+                    Timer::after_secs(1).await;
+                }
+                last_send = Instant::now();
             },
             shutdown_signal.next_message_pure(),
             extra_send_sub.next_message_pure(),
@@ -106,14 +114,17 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
                     obd2_pids = obd2_pids_lock.clone();
                     obd2_pids_lock.clear();
                 }
-
+                let mut pids_send = false;
                 for pid in obd2_pids.iter() {
                     txmessage_pub.send(TxFrame::Obd2Pid(pid.clone()).into()).await;
                     embassy_time::Timer::after(embassy_time::Duration::from_millis(25)).await;
+                    pids_send = true;
                 }
                 if let Some(state) = &state {
                     warn!("sending extra state: {:?}", state);
-                    txmessage_pub.send(TxFrame::State(state.clone()).into()).await;
+                    if pids_send {
+                        txmessage_pub.send(TxFrame::State(state.clone()).into()).await;
+                    }
                 }
                 info!("send_ticker elapsed: {:?}ms", now.elapsed().as_millis());
                 send_ticker.reset();

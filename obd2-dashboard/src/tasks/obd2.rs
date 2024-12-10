@@ -7,8 +7,7 @@ use embassy_time::{with_timeout, Duration};
 use serde::{Deserialize, Serialize};
 pub use types::{Pid as Obd2Event, PidError as Obd2Error};
 
-static OBD2_SETS: Mutex<CriticalSectionRawMutex, Obd2PidSets> = Mutex::new(Obd2PidSets::None);
-static OBD2_SETS_CHANGED: Signal<CriticalSectionRawMutex, ()> = Signal::new();
+static OBD2_SETS_CHANGED: Signal<CriticalSectionRawMutex, Obd2PidSets> = Signal::new();
 
 use crate::{
     debug::internal_debug,
@@ -117,21 +116,21 @@ pub async fn run(mut obd2: Obd2) {
     info!("obd2 task started");
     obd2.init().await;
     info!("obd2 init done");
-    OBD2_SETS_CHANGED.wait().await;
+    let mut current_sets = OBD2_SETS_CHANGED.wait().await;
     select(
         async {
-            let mut old_sets = *OBD2_SETS.lock().await;
             loop {
-                let sets = *OBD2_SETS.lock().await;
-
-                if old_sets != sets {
-                    old_sets = sets;
-                    obd2.clear_pids_cache();
+                if let Some(new_sets) = OBD2_SETS_CHANGED.try_take() {
+                    error!("obd2 sets changed: {:?}", new_sets);
+                    if current_sets != new_sets {
+                        current_sets = new_sets;
+                        obd2.clear_pids_cache();
+                    }
                 }
-                let all = sets.handle(&mut obd2).await;
+                let all = current_sets.handle(&mut obd2).await;
 
                 KIA_EVENTS.send(KiaEvent::Obd2LoopEnd(all)).await;
-                sets.loop_delay().await;
+                current_sets.loop_delay().await;
             }
         },
         get_shutdown_signal().next_message(),
@@ -141,6 +140,6 @@ pub async fn run(mut obd2: Obd2) {
 }
 
 pub async fn set_obd2_sets(sets: Obd2PidSets) {
-    *OBD2_SETS.lock().await = sets;
-    OBD2_SETS_CHANGED.signal(());
+    error!("obd2 sets changed: {:?}", sets);
+    OBD2_SETS_CHANGED.signal(sets);
 }

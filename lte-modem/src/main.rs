@@ -21,7 +21,8 @@ fn panic() -> ! {
     cortex_m::peripheral::SCB::sys_reset();
 }*/
 use defmt::*;
-use defmt_rtt as _;
+//use defmt_rtt as _;
+use defmt_brtt as _;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use embedded_alloc::LlffHeap as Heap;
@@ -34,8 +35,6 @@ mod board;
 mod config;
 mod led;
 mod tasks;
-
-static SHARED_KEY: &[u8; 32] = include_bytes!("../../shared_key.bin");
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -52,9 +51,10 @@ pub enum ResetReason {
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
+    let logger = unwrap!(defmt_brtt::init());
     {
         use core::mem::MaybeUninit;
-        const HEAP_SIZE: usize = 8 * 1024;
+        const HEAP_SIZE: usize = 16 * 1024;
         static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
         unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
     }
@@ -111,6 +111,12 @@ async fn main(spawner: Spawner) {
     let uarte_receive = unwrap!(board.uarte_receive.take());
     let uarte_reset = unwrap!(board.uarte_reset.take());
     let charging_control = unwrap!(board.charging_control.take());
+    //let uarte_tx_debug = unwrap!(board.uarte_tx_debug.take());
+    let uarte_gnss = unwrap!(board.uarte_tx_gnss.take());
+    let gnss_pss = unwrap!(board.gnss_pss.take());
+    let gnss_force_on = unwrap!(board.gnss_force_on.take());
+
+    //unwrap!(spawner.spawn(tasks::logger::task(logger, uarte_tx_debug, panic_message)));
 
     if let Some(panic) = panic_message {
         //if !panic.contains("twi reset") {
@@ -132,7 +138,8 @@ async fn main(spawner: Spawner) {
     defmt::info!("starting tasks");
     unwrap!(spawner.spawn(tasks::battery::task(battery, charging_control)));
     Timer::after(Duration::from_millis(100)).await;
-    unwrap!(spawner.spawn(tasks::gnss::task(gnss)));
+    //unwrap!(spawner.spawn(tasks::gnss::task(gnss)));
+    unwrap!(spawner.spawn(tasks::external_gnss::task(uarte_gnss, gnss_pss, gnss_force_on)));
     unwrap!(spawner.spawn(tasks::state::task(sense, lightwell, wdg, light_sensor)));
     unwrap!(spawner.spawn(tasks::montion_detection::task(low_power_accelerometer)));
     unwrap!(spawner.spawn(tasks::button::task(button)));

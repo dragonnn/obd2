@@ -48,6 +48,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
     let state_channel_pub = state_channel_pub();
 
     if !persistent_manager.get_booted() {
+        embassy_time::Timer::after(Duration::from_secs(5)).await;
         if let Err(err) = send_state(&modem, "booting..", false, true, persistent_manager.get_restarts(), false).await {
             defmt::error!("error sending sms: {:?}", defmt::Debug2Format(&err));
         }
@@ -113,6 +114,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                 }
             }
             Either4::Second(new_fix) => {
+                error!("procesing new fix");
                 fix =
                     process_new_fix(&battery_state, &fix, new_fix, &mut modem, persistent_manager.get_restarts()).await;
                 let mut current_distance = 0.0;
