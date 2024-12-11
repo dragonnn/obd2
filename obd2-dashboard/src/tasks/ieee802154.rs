@@ -32,8 +32,7 @@ static PIDS_SEND: Mutex<CriticalSectionRawMutex, heapless::FnvIndexSet<Pid, 64>>
 pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
     spawner.must_spawn(ieee802154_run(ieee802154));
 
-    let mut last_modem_fix = Instant::now();
-    let mut send_ticker_duration = Duration::from_secs(15);
+    let send_ticker_duration = Duration::from_secs(15);
     let mut send_ticker = Ticker::every(send_ticker_duration);
 
     let _shutdown_guard = ShutdownGuard::new();
@@ -82,18 +81,6 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
                 match select(send_ticker.next(), SEND_NOW_SIGNAL.wait()).await {
                     embassy_futures::select::Either::First(_) => warn!("send ticker"),
                     embassy_futures::select::Either::Second(_) => warn!("send now"),
-                }
-                let mut last_modem_fix_secs = last_modem_fix.elapsed().as_secs();
-                if last_modem_fix_secs > 60 {
-                    if last_modem_fix_secs > 5 * 60 {
-                        last_modem_fix_secs = 5 * 60;
-                    }
-                    let new_send_ticker_duration = Duration::from_secs(last_modem_fix_secs % 60 * 60);
-                    if new_send_ticker_duration != send_ticker_duration && new_send_ticker_duration.as_secs() > 15 {
-                        info!("new_send_ticker_duration: {:?}", new_send_ticker_duration);
-                        send_ticker_duration = new_send_ticker_duration;
-                        send_ticker = Ticker::every(send_ticker_duration);
-                    }
                 }
                 if last_send.elapsed().as_secs() < 15 {
                     Timer::after_secs(1).await;
@@ -150,13 +137,6 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
                         types::Modem::GnssState(gnss_state) => info!("gnss_state: {:?}", gnss_state),
                         types::Modem::GnssFix(gnss_fix) => {
                             warn!("gnss_fix: {:?}", gnss_fix);
-                            last_modem_fix = Instant::now();
-                            let new_send_ticker_duration = Duration::from_secs(15);
-                            if new_send_ticker_duration != send_ticker_duration {
-                                info!("new_send_ticker_duration: {:?}", new_send_ticker_duration);
-                                send_ticker_duration = new_send_ticker_duration;
-                                send_ticker = Ticker::every(send_ticker_duration);
-                            }
                         }
                         types::Modem::Connected => info!("modem connected"),
                         types::Modem::Disconnected => info!("modem disconnected"),
