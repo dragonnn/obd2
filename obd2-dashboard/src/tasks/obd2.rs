@@ -50,7 +50,7 @@ impl Obd2PidSets {
             Self::IgnitionOff => Self::handle_ignition_off(obd2).await,
             Self::Charging => Self::handle_charging(obd2).await,
 
-            Self::None => true,
+            Self::None => false,
         }
     }
 
