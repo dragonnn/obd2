@@ -39,7 +39,7 @@ pub async fn task(
         if !(*gnss_state_machine.state() == State::backup()) {
             match select(
                 state_channel_sub.next_message_pure(),
-                gnss_state_context.uarte_rx.read_until_idle(&mut buffer),
+                with_timeout(Duration::from_secs(30), gnss_state_context.uarte_rx.read_until_idle(&mut buffer)),
             )
             .await
             {
@@ -52,7 +52,7 @@ pub async fn task(
 
                     current_state = Some(state);
                 }
-                Either::Second(rx_result) => {
+                Either::Second(Ok(rx_result)) => {
                     if let Ok(readed) = rx_result {
                         let buffer = &buffer[..readed];
                         let mut parser = Parser::new();
@@ -67,6 +67,10 @@ pub async fn task(
                             }
                         }
                     }
+                }
+                Either::Second(Err(_)) => {
+                    error!("gnss read timeout");
+                    gnss_state_machine.handle_with_context(&GnssStateEvent::Step, &mut gnss_state_context).await;
                 }
             }
         } else {
@@ -157,7 +161,7 @@ impl GnssState {
 
     #[action]
     async fn disable_backup(&mut self) {
-        warn!("gnss enter stream fixes");
+        warn!("gnss disable backup");
         self.gnss_force_on.set_low();
         for _i in 0..5 {
             self.uarte_tx.write(SET_BAUDRATE).await.ok();
