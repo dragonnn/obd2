@@ -115,8 +115,15 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
             }
             Either4::Second(new_fix) => {
                 error!("procesing new fix");
-                fix =
-                    process_new_fix(&battery_state, &fix, new_fix, &mut modem, persistent_manager.get_restarts()).await;
+                fix = process_new_fix(
+                    &battery_state,
+                    &fix,
+                    new_fix,
+                    &mut modem,
+                    persistent_manager.get_restarts(),
+                    &persistent_manager.get_state(),
+                )
+                .await;
                 let mut current_distance = 0.0;
                 if let (Some(old_fix), Some(new_fix)) = (fix, new_fix) {
                     current_distance = (old_fix - new_fix) / 1000.0;
@@ -205,10 +212,11 @@ async fn process_new_fix(
     new_fix: Option<Fix>,
     modem: &mut Modem,
     restarts: u32,
+    state: &Option<types::State>,
 ) -> Option<Fix> {
     match (old_fix, new_fix) {
         (Some(old_fix), Some(new_fix)) => {
-            if !battery_state.charging {
+            if state != &Some(types::State::IgnitionOn) {
                 let mut fix_distance = *old_fix - new_fix;
                 if fix_distance > 300.0 {
                     if let Some(accurate_fix) = GnssState::wait_for_fix(Duration::from_secs(120)).await {
