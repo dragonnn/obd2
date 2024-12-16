@@ -13,7 +13,11 @@ use crate::{
     mcp2515::{
         clock_16mhz, clock_8mhz, CanFrame, OperationMode, RxBuffer, TxBuffer, CANINTE, CLKPRE, RXB0CTRL, RXB1CTRL, RXM,
     },
-    tasks::{ieee802154::insert_send_pid, lcd::obd2_debug_pids_enabled, obd2::Obd2Debug},
+    tasks::{
+        ieee802154::{insert_send_pid, insert_send_pid_error},
+        lcd::obd2_debug_pids_enabled,
+        obd2::Obd2Debug,
+    },
     types::Mcp2515,
 };
 
@@ -228,6 +232,7 @@ impl Obd2 {
                     ret = true;
                 }
                 Ok(Err(_e)) => {
+                    insert_send_pid_error(&PID::into_error()).await;
                     error!("error requesting pid");
                     internal_debug!("error requesting pid");
                     if obd2_debug_pids_enabled {
@@ -236,6 +241,7 @@ impl Obd2 {
                     errors += 1;
                 }
                 Err(_) => {
+                    insert_send_pid_error(&PID::into_error()).await;
                     //error!("timeout requesting pid: {}", core::any::type_name::<PID>());
                     internal_debug!("timeout requesting pid");
                     if obd2_debug_pids_enabled {

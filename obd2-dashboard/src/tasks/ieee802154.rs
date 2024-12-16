@@ -27,6 +27,8 @@ static SEND_NOW_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 static EXTRA_SEND: PubSubChannel<CriticalSectionRawMutex, types::TxFrame, 64, 1, 32> = PubSubChannel::new();
 static PIDS_SEND: Mutex<CriticalSectionRawMutex, heapless::FnvIndexSet<Pid, 64>> =
     Mutex::new(heapless::FnvIndexSet::new());
+static PID_ERRORS_SEND: Mutex<CriticalSectionRawMutex, heapless::FnvIndexSet<types::PidError, 64>> =
+    Mutex::new(heapless::FnvIndexSet::new());
 
 #[embassy_executor::task]
 pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
@@ -107,6 +109,12 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
                     embassy_time::Timer::after(embassy_time::Duration::from_millis(25)).await;
                     pids_send = true;
                 }
+                let mut pid_errors_send = PID_ERRORS_SEND.lock().await;
+                for pid_error in pid_errors_send.iter() {
+                    txmessage_pub.send(TxFrame::Obd2PidError(pid_error.clone()).into()).await;
+                    embassy_time::Timer::after(embassy_time::Duration::from_millis(25)).await;
+                }
+                pid_errors_send.clear();
                 if let Some(state) = &state {
                     warn!("sending extra state: {:?}", state);
                     if pids_send {
@@ -467,6 +475,12 @@ pub async fn insert_send_pid(pid: &Pid) {
     let mut pids_send = PIDS_SEND.lock().await;
     pids_send.remove(pid);
     pids_send.insert(pid.clone()).ok();
+}
+
+pub async fn insert_send_pid_error(pid_error: &types::PidError) {
+    let mut pid_errors_send = PID_ERRORS_SEND.lock().await;
+    pid_errors_send.remove(pid_error);
+    pid_errors_send.insert(pid_error.clone()).ok();
 }
 
 pub async fn clear_pids(pid: &Pid) {

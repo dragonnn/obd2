@@ -114,7 +114,9 @@ impl Obd2PidSets {
 #[embassy_executor::task]
 pub async fn run(mut obd2: Obd2) {
     info!("obd2 task started");
+    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     obd2.init().await;
+    embassy_time::Timer::after(Duration::from_millis(100)).await;
     info!("obd2 init done");
     let mut current_sets = OBD2_SETS_CHANGED.wait().await;
     select(
@@ -129,7 +131,7 @@ pub async fn run(mut obd2: Obd2) {
                 }
                 let all = current_sets.handle(&mut obd2).await;
 
-                KIA_EVENTS.send(KiaEvent::Obd2LoopEnd(all)).await;
+                KIA_EVENTS.send(KiaEvent::Obd2LoopEnd(current_sets, all)).await;
                 current_sets.loop_delay().await;
             }
         },

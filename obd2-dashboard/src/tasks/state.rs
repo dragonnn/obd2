@@ -28,7 +28,7 @@ pub enum KiaEvent {
     Button(crate::tasks::buttons::Action),
     Obd2Event(Obd2Event),
     Obd2Debug(Obd2Debug),
-    Obd2LoopEnd(bool),
+    Obd2LoopEnd(Obd2PidSets, bool),
     Ticker,
 }
 
@@ -93,7 +93,7 @@ impl KiaState {
                 LCD_EVENTS.send(LcdEvent::Obd2Debug(obd2_debug.clone())).await;
                 Handled
             }
-            KiaEvent::Obd2LoopEnd(_all) => {
+            KiaEvent::Obd2LoopEnd(set, _all) => {
                 LCD_EVENTS.send(LcdEvent::Render).await;
                 Handled
             }
@@ -141,7 +141,7 @@ impl KiaState {
                 *obc_pid = Some(new_obc_pid.clone());
                 Handled
             }
-            KiaEvent::Obd2LoopEnd(_all) => {
+            KiaEvent::Obd2LoopEnd(set, _all) => {
                 if let Some(obc_pid) = obc_pid {
                     if obc_pid.ac_input_current > 0.0 {
                         Transition(State::charging(None, 0))
@@ -190,7 +190,7 @@ impl KiaState {
                 ret
             }
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
-            KiaEvent::Obd2LoopEnd(_all) => {
+            KiaEvent::Obd2LoopEnd(set, _all) => {
                 if obc_pid.is_none() {
                     if *obc_pid_wait > 50 {
                         Transition(State::check_charging(None, Instant::now()))
@@ -211,6 +211,7 @@ impl KiaState {
     async fn enter_ignition_off(&mut self) {
         ieee802154::send_now();
         LCD_EVENTS.send(LcdEvent::PowerOff).await;
+        set_obd2_sets(Obd2PidSets::IgnitionOff).await;
         set_obd2_sets(Obd2PidSets::IgnitionOff).await;
         self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::IgnitionOff));
     }
@@ -248,15 +249,24 @@ impl KiaState {
                 }
             }
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
-            KiaEvent::Obd2LoopEnd(all) => {
-                if timeout.elapsed().as_secs() > 2 * 60 || (*all && timeout.elapsed().as_secs() > 10) {
-                    Transition(State::shutdown(shutdown_duration))
+            KiaEvent::Obd2LoopEnd(set, all) => {
+                if set != &Obd2PidSets::IgnitionOff {
+                    set_obd2_sets(Obd2PidSets::IgnitionOff).await;
+                    if timeout.elapsed().as_secs() > 10 * 60 {
+                        Transition(State::shutdown(shutdown_duration))
+                    } else {
+                        Handled
+                    }
                 } else {
-                    Handled
+                    if timeout.elapsed().as_secs() > 10 * 60 || (*all && timeout.elapsed().as_secs() > 60) {
+                        Transition(State::shutdown(shutdown_duration))
+                    } else {
+                        Handled
+                    }
                 }
             }
             _ => {
-                if timeout.elapsed().as_secs() > 5 * 60 {
+                if timeout.elapsed().as_secs() > 20 * 60 {
                     Transition(State::shutdown(shutdown_duration))
                 } else {
                     Handled
@@ -292,7 +302,7 @@ impl KiaState {
             trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
         } else {
             match event {
-                KiaEvent::Obd2Debug(_) | KiaEvent::Obd2LoopEnd(_) => {
+                KiaEvent::Obd2Debug(_) | KiaEvent::Obd2LoopEnd(_, _) => {
                     trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
                 }
                 _ => {

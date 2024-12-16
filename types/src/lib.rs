@@ -170,7 +170,7 @@ pub enum Pid {
     OnBoardChargerPid(OnBoardChargerPid),
 }
 
-#[derive(Debug, Format, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Format, Clone, PartialEq, Deserialize, Serialize, Hash, Eq)]
 pub enum PidError {
     BmsPid,
     IceTemperaturePid,
