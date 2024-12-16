@@ -118,6 +118,11 @@ impl KiaHandler {
                     .await;
             }
             TxFrame::Modem(types::Modem::GnssFix(fix)) => {
+                self.ha_sensors
+                    .get("location_last_communication")
+                    .unwrap()
+                    .update(chrono::Local::now().format("%+").to_string().into())
+                    .await;
                 self.event_sender
                     .send(HaStateEvent::UpdateLocation(UpdateLocation {
                         gps: (fix.latitude, fix.longitude),
