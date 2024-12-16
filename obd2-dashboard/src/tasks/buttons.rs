@@ -32,9 +32,9 @@ static INIT_BUTTONS: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 #[embassy_executor::task]
 pub async fn run(mut cap1188: Cap1188) {
     let mut shutdown_on_init = false;
-    if let Either::Second(_) = select(INIT_BUTTONS.wait(), get_shutdown_signal().next_message()).await {
+    /*if let Either::Second(_) = select(INIT_BUTTONS.wait(), get_shutdown_signal().next_message()).await {
         shutdown_on_init = true;
-    }
+    }*/
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     cap1188.reset().await.ok();
     loop {
