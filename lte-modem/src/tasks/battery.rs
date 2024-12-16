@@ -111,7 +111,7 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
         }
 
         if new_state.capacity < 15 {
-            warn!("low battery capacity, charging");
+            warn!("low battery capacity: {}, charging", new_state.capacity);
             charging_control(true).await;
             low_capacity_forced_charging = true;
         } else if new_state.capacity > 85
