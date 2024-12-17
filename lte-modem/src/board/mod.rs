@@ -184,7 +184,7 @@ impl Board {
 
         lightwell.r(0);
 
-        let charging_control = Output::new(p.P0_14, Level::Low, OutputDrive::Standard);
+        let charging_control = Output::new(p.P0_14, Level::High, OutputDrive::Standard);
         let gnss_pss = Input::new(p.P0_21, Pull::Down);
         let gnss_force_on = Output::new(p.P0_15, Level::High, OutputDrive::Standard);
 

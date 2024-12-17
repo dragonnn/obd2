@@ -66,25 +66,30 @@ static CHANNEL: PubSubChannel<CriticalSectionRawMutex, State, TASKS_SUBSCRIBERS,
 
 #[embassy_executor::task]
 pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
-    embassy_time::Timer::after(Duration::from_secs(60)).await;
-
     let mut current_charging = true;
-    let mut charging_control = async |charing: bool| {
+    let mut charging_control = async |charing: bool, battery: &mut Battery| {
         //charing = true;
-        if charing {
-            charging_control.set_low();
-            if !current_charging {
-                embassy_time::Timer::after(Duration::from_secs(5)).await;
-            }
+        if charing && !current_charging {
             warn!("enable charging");
-        } else {
+            Timer::after_secs(1).await;
             charging_control.set_high();
+            Timer::after_secs(5).await;
+            battery.enable_charging().await;
+            Timer::after_secs(5).await;
+        } else if !charing && current_charging {
             warn!("disable charging");
+            Timer::after_secs(1).await;
+            battery.disable_charging().await;
+            Timer::after_secs(5).await;
+            charging_control.set_low();
+            Timer::after_secs(5).await;
         }
         current_charging = charing;
     };
-    embassy_time::Timer::after(Duration::from_secs(1)).await;
-    charging_control(false).await;
+
+    charging_control(false, &mut battery).await;
+    embassy_time::Timer::after(Duration::from_secs(10)).await;
+
     let mut state_channel_sub = state_channel_sub();
     let mut current_state = None;
 
@@ -112,13 +117,13 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
 
         if new_state.capacity < 15 {
             warn!("low battery capacity: {}, charging", new_state.capacity);
-            charging_control(true).await;
+            charging_control(true, &mut battery).await;
             low_capacity_forced_charging = true;
         } else if new_state.capacity > 85
             && (current_state != Some(types::State::IgnitionOn) && current_state != Some(types::State::Charging))
             && low_capacity_forced_charging
         {
-            charging_control(false).await;
+            charging_control(false, &mut battery).await;
             low_capacity_forced_charging = false;
         }
 
@@ -136,14 +141,14 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
             Third(new_state) => {
                 info!("new state: {:?}", new_state);
                 if let types::State::Charging = new_state {
-                    charging_control(true).await;
+                    charging_control(true, &mut battery).await;
                     low_capacity_forced_charging = false;
                 } else if let types::State::IgnitionOn = new_state {
-                    charging_control(true).await;
+                    charging_control(true, &mut battery).await;
                     low_capacity_forced_charging = false;
                 } else {
                     if !low_capacity_forced_charging {
-                        charging_control(false).await;
+                        charging_control(false, &mut battery).await;
                     }
                 }
                 current_state = Some(new_state);

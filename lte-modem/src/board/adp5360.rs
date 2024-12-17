@@ -1,8 +1,9 @@
 use bitbybit::bitenum;
-use defmt::{info, Format};
+use defmt::*;
 use embassy_nrf::gpio::{AnyPin, Input, Level, Output, OutputDrive, Pull};
 use embassy_time::{with_timeout, Duration};
 use embedded_hal_async::i2c::I2c;
+use modular_bitfield::prelude::*;
 
 use super::destruct_twim::I2cBusReset;
 
@@ -18,12 +19,28 @@ const REG_INTERRUPT_ENABLE2: u8 = 0x33;
 const REG_INTERRUPT_FLAG1: u8 = 0x34;
 const REG_INTERRUPT_FLAG2: u8 = 0x35;
 const REG_VBAT_READ: u8 = 0x25;
+const REG_CHARGER_FUNCTION_SETTING: u8 = 0x07;
 
 const FUEL_GAUGE_MODE_ENABLE_BIT: u8 = 0;
 const FUEL_GAUGE_MODE_SLEEP_MODE_BIT: u8 = 1;
 
 const INTERRUPT_ENABLE1_CHARGER_MODE: u8 = 1;
 const INTERRUPT_ENABLE1_LOW_VOLTAGE: u8 = 7;
+
+#[bitfield]
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Default)]
+pub struct ChargerFunctionSettings {
+    pub enable_charging: bool,
+    pub enable_adaptive_current: bool,
+    pub enable_end_of_charge: bool,
+    pub enable_ldo: bool,
+    pub off_isolation_fet: bool,
+    #[skip]
+    __: B1,
+    pub cool_mode_current: bool,
+    pub enable_jeita: bool,
+}
 
 #[derive(Format)]
 #[bitenum(u8, exhaustive: false)]
@@ -185,6 +202,24 @@ where
                 Ok(self.last_charger_status)
             }
             Err(_) => Ok(self.last_charger_status),
+        }
+    }
+
+    async fn charger_settings(&mut self) -> Result<ChargerFunctionSettings, ()> {
+        self.get_u8_value(REG_CHARGER_FUNCTION_SETTING).await.map(|value| ChargerFunctionSettings::from_bytes([value]))
+    }
+
+    pub async fn disable_charging(&mut self) {
+        if let Ok(mut settings) = self.charger_settings().await {
+            settings.set_enable_charging(false);
+            self.set_u8_value(REG_CHARGER_FUNCTION_SETTING, settings.into_bytes()[0]).await;
+        }
+    }
+
+    pub async fn enable_charging(&mut self) {
+        if let Ok(mut settings) = self.charger_settings().await {
+            settings.set_enable_charging(true);
+            self.set_u8_value(REG_CHARGER_FUNCTION_SETTING, settings.into_bytes()[0]).await;
         }
     }
 }

@@ -63,7 +63,7 @@ pub async fn task(
                                         .handle_with_context(&GnssStateEvent::Nmea(nmea), &mut gnss_state_context)
                                         .await;
                                 }
-                                Err(err) => error!("nmea parse error: {}", err),
+                                Err(err) => error!("nmea parse error: {} on: {=[u8]:a}", err, buffer),
                             }
                         }
                     }
