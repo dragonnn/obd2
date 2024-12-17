@@ -143,6 +143,9 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
                 if let types::State::Charging = new_state {
                     charging_control(true, &mut battery).await;
                     low_capacity_forced_charging = false;
+                } else if let types::State::CheckCharging = new_state {
+                    charging_control(true, &mut battery).await;
+                    low_capacity_forced_charging = false;
                 } else if let types::State::IgnitionOn = new_state {
                     charging_control(true, &mut battery).await;
                     low_capacity_forced_charging = false;
