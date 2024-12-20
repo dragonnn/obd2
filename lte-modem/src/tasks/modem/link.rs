@@ -238,7 +238,6 @@ pub async fn recv_task(socket_rx: OwnedUdpReceiveSocket) {
             Either::First(_) => break,
             Either::Second(Ok((readed, _peer))) => match types::RxMessage::from_bytes_encrypted(&readed) {
                 Ok(rx_message) => {
-                    info!("rx_message: {:?}", rx_message);
                     rx_pub.publish_immediate(rx_message);
                 }
                 Err(_err) => {
@@ -273,6 +272,7 @@ impl TxMessageSend for OwnedUdpSendSocket {
         port: u16,
         rx: &mut RxChannelSub,
     ) -> Result<(), nrf_modem::Error> {
+        info!("sending message {:?}", message);
         if ACK_TIMEOUT.load(Ordering::Relaxed) > 20 {
             use core::fmt::Write;
             let mut reason = heapless::String::new();
@@ -302,7 +302,6 @@ impl TxMessageSend for OwnedUdpSendSocket {
                                     if let types::RxFrame::TxFrameAck(ack_id) = rx_frame.frame {
                                         if ack_id == message.id {
                                             ACK_TIMEOUT.store(0, Ordering::Relaxed);
-                                            info!("got ack id: {:?}", ack_id);
                                             return Ok(());
                                         }
                                     }

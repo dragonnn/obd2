@@ -156,6 +156,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                 last_button_press = Instant::now();
             }
             Either4::Fourth(state) => {
+                let old_state = persistent_manager.get_state();
                 if persistent_manager.get_state() != Some(state.clone()) {
                     persistent_manager.update_state(Some(state.clone()));
                     if state == types::State::IgnitionOn || state == types::State::CheckCharging {
@@ -168,6 +169,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                             distance / (secs / 3600.0),
                             persistent_manager.get_restarts(),
                             &state,
+                            &old_state,
                         )
                         .await
                         .ok();
@@ -185,17 +187,18 @@ async fn send_obd2_state(
     speed: f64,
     restarts: u32,
     state: &types::State,
+    old_state: &Option<types::State>,
 ) -> Result<(), ()> {
     let mut parked_event: String<32> = String::new();
     write!(&mut parked_event, "parked.. {:.2}km {:.1}km/h...", distance, speed).ok();
 
-    match state {
-        types::State::CheckCharging => {
+    match (state, old_state) {
+        (types::State::CheckCharging, Some(types::State::IgnitionOn)) => {
             if send_state(modem, &parked_event, true, false, restarts, true).await.is_err() {
                 defmt::error!("error sending sms");
             }
         }
-        types::State::IgnitionOn => {
+        (types::State::IgnitionOn, _old_state) => {
             if send_state(modem, "driving..", true, false, restarts, true).await.is_err() {
                 defmt::error!("error sending sms");
             }

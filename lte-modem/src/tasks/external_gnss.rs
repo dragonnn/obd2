@@ -5,9 +5,12 @@ use embassy_sync::pubsub::DynPublisher;
 use embassy_time::{with_timeout, Duration, Instant, Timer};
 use nmea0183::{ParseResult, Parser};
 use statig::prelude::*;
-use types::GnssFix;
+use types::{GnssFix, Modem, TxFrame};
 
-use super::{modem::link::RxChannelPub, uarte::state_channel_sub};
+use super::{
+    modem::link::{RxChannelPub, TxChannelPub},
+    uarte::state_channel_sub,
+};
 use crate::board::{BoardGnssUarteRx, BoardGnssUarteTx};
 
 const SET_BAUDRATE: &[u8] = b"$PMTK251,9600*17\r\n";
@@ -23,12 +26,13 @@ pub async fn task(
 ) {
     let fix_pub = unwrap!(crate::tasks::gnss::CHANNEL.dyn_publisher());
     let rx_channel_pub = crate::tasks::modem::link::rx_channel_pub();
+    let tx_channel_pub = crate::tasks::modem::link::tx_channel_pub();
 
     let (uarte_tx, uarte_rx) = uarte_gnss;
     let mut state_channel_sub = state_channel_sub();
     let mut gnss_state_context = GnssContext { uarte_rx };
     let mut gnss_state_machine =
-        GnssState { uarte_tx, gnss_force_on, gnss_pss, fix_pub, rx_channel_pub }.state_machine();
+        GnssState { uarte_tx, gnss_force_on, gnss_pss, fix_pub, rx_channel_pub, tx_channel_pub }.state_machine();
 
     gnss_state_machine.init_with_context(&mut gnss_state_context).await;
 
@@ -122,6 +126,7 @@ pub struct GnssState {
 
     fix_pub: DynPublisher<'static, GnssFix>,
     rx_channel_pub: RxChannelPub,
+    tx_channel_pub: TxChannelPub,
 }
 
 #[state_machine(
@@ -143,6 +148,7 @@ impl GnssState {
         self.gnss_force_on.set_high();
         self.uarte_tx.write(SET_BACKUP_MODE).await.ok();
         Timer::after_millis(100).await;
+        self.tx_channel_pub.publish_immediate(TxFrame::Modem(Modem::GnssState(types::GnssState::BackupMode)).into());
     }
 
     #[state(entry_action = "enable_backup")]
@@ -160,14 +166,37 @@ impl GnssState {
     }
 
     #[action]
-    async fn disable_backup(&mut self) {
+    async fn disable_backup(&mut self, context: &mut GnssContext) {
         warn!("gnss disable backup");
-        self.gnss_force_on.set_low();
-        for _i in 0..5 {
-            self.uarte_tx.write(SET_BAUDRATE).await.ok();
-            self.uarte_tx.write(SET_POS_FIX_400MS).await.ok();
-            self.uarte_tx.write(SET_NMEA_OUTPUT).await.ok();
+        for _i in 0..20 {
+            self.gnss_force_on.set_low();
+            Timer::after_millis(100).await;
+            for cmd in [SET_BAUDRATE, SET_POS_FIX_400MS, SET_NMEA_OUTPUT].iter() {
+                self.uarte_tx.write(*cmd).await.ok();
+                Timer::after_millis(100).await;
+            }
+            let mut buffer = [0; 128];
+            match with_timeout(Duration::from_secs(15), context.uarte_rx.read_until_idle(&mut buffer)).await {
+                Ok(Ok(readed)) => {
+                    let buffer = &buffer[..readed];
+                    info!("gnss: {=[u8]:a}", buffer);
+                    if buffer.len() > 0 {
+                        return;
+                    }
+                }
+                Ok(Err(_)) => {
+                    error!("gnss disable backup read error");
+                }
+                Err(_) => {
+                    error!("gnss disable backup timeout");
+                    self.gnss_force_on.set_high();
+                    Timer::after_millis(100).await;
+                }
+            }
         }
+        self.tx_channel_pub
+            .publish_immediate(TxFrame::Modem(Modem::GnssState(types::GnssState::ErrorDisablingBackup)).into());
+        error!("gnss disable backup failed");
     }
 
     #[state(entry_action = "disable_backup")]
@@ -180,7 +209,7 @@ impl GnssState {
         info!("steam fixes mode: {:?}", event);
         if timeout.elapsed().as_secs() > 20 {
             warn!("no nmea message in 20s, trying to renable");
-            self.disable_backup().await;
+            self.disable_backup(context).await;
             Timer::after_millis(100).await;
         }
         match event {
@@ -237,6 +266,17 @@ impl GnssState {
 impl GnssState {
     fn on_transition(&mut self, source: &State, target: &State) {
         trace!("transitioned from `{:?}` to `{:?}`", source, target);
+        match target {
+            State::Backup {} => self
+                .tx_channel_pub
+                .publish_immediate(TxFrame::Modem(Modem::GnssState(types::GnssState::BackupMode)).into()),
+            State::SingleFix { timeout: _ } => self
+                .tx_channel_pub
+                .publish_immediate(TxFrame::Modem(Modem::GnssState(types::GnssState::SingleFix)).into()),
+            State::ContinuousFix { timeout: _ } => self
+                .tx_channel_pub
+                .publish_immediate(TxFrame::Modem(Modem::GnssState(types::GnssState::ContinuousFix)).into()),
+        }
     }
 
     fn on_dispatch(&mut self, state: StateOrSuperstate<GnssState>, event: &GnssStateEvent) {

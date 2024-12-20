@@ -133,10 +133,11 @@ impl KiaHandler {
             }
             TxFrame::Modem(types::Modem::GnssState(state)) => {
                 let state = match state {
-                    types::GnssState::PeriodicFix => "PeriodicFix".to_string(),
-                    types::GnssState::TickerFix(_period) => "TickerFix".to_string(),
-                    types::GnssState::TimeoutFix => "TimeoutFix".to_string(),
-                    types::GnssState::WaitingForFix => "WaitingForFix".to_string(),
+                    types::GnssState::ContinuousFix => "ContinuousFix".to_string(),
+                    types::GnssState::BackupMode => "BackupMode".to_string(),
+                    types::GnssState::DisablingBackup => "DisablingBackup".to_string(),
+                    types::GnssState::SingleFix => "SingleFix".to_string(),
+                    types::GnssState::ErrorDisablingBackup => "ErrorDisablingBackup".to_string(),
                 };
                 info!("GnssState: {}", state);
                 self.ha_sensors

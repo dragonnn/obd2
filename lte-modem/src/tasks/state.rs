@@ -97,7 +97,7 @@ async fn state_loop(
             lightwell.g(stepped_g as u8);
             lightwell.r(stepped_r as u8);
 
-            if w < 15 {
+            if false {
                 lightwell_step_max = 12.0;
                 lightwell_step_min = 0.0;
                 lightwell_step_size = 0.24;

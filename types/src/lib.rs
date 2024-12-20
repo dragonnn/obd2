@@ -369,10 +369,11 @@ pub enum Modem {
 
 #[derive(Debug, Format, Clone, Deserialize, Serialize)]
 pub enum GnssState {
-    PeriodicFix,
-    TickerFix(u32),
-    WaitingForFix,
-    TimeoutFix,
+    BackupMode,
+    DisablingBackup,
+    SingleFix,
+    ContinuousFix,
+    ErrorDisablingBackup,
 }
 
 #[derive(Debug, PartialEq, Format, Clone, Copy, Deserialize, Serialize)]

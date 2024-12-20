@@ -129,7 +129,7 @@ pub async fn task(mut gnss: Gnss) {
         gnss_set_duration(&battery_state, &mut gnss, current_state).await;
     }
 
-    loop {
+    /*loop {
         let result = select::select3(
             async {
                 match current_state {
@@ -226,7 +226,7 @@ pub async fn task(mut gnss: Gnss) {
                 }
             }
         }
-    }
+    }*/
 }
 
 async fn gnss_set_duration(battery_state: &BatteryState, gnss: &mut Gnss, state: &types::State) {

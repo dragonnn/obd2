@@ -42,7 +42,7 @@ impl Gnss {
     }
 
     async fn start(&mut self) -> Result<(), ModemError> {
-        if self.duration.as_secs() < 20 {
+        /*if self.duration.as_secs() < 20 {
             error!("start periodic fix");
             self.stream = Some(self.handler().await?.start_continuous_fix(self.get_config())?);
             self.tx_channel_pub
@@ -54,6 +54,7 @@ impl Gnss {
                 GnssState::TickerFix(self.duration.as_secs() as u32),
             ))));
         }
+        */
         Ok(())
     }
 
@@ -144,26 +145,5 @@ impl Gnss {
                 }
             }
         }
-    }
-
-    pub async fn next(&mut self) -> Result<Option<nrfxlib_sys::nrf_modem_gnss_pvt_data_frame>, ModemError> {
-        self.tx_channel_pub
-            .publish_immediate(TxMessage::new(TxFrame::Modem(Modem::GnssState(GnssState::WaitingForFix))));
-        /*let mut _link_lock = None;
-        if self.first_fix {
-            warn!("force link disconnect and lock");
-            _link_lock = crate::tasks::modem::link::force_disconnect_and_lock().await;
-        }*/
-        let ret = with_timeout(self.timeout, self.get_fix()).await.map_err(|_| {
-            defmt::error!("gnss timeout");
-            self.tx_channel_pub
-                .publish_immediate(TxMessage::new(TxFrame::Modem(Modem::GnssState(GnssState::TimeoutFix))));
-            ModemError::NrfError(0)
-        })?;
-
-        if ret.as_ref().map(|f| f.is_some()).unwrap_or_default() {
-            self.first_fix = false;
-        }
-        ret
     }
 }
