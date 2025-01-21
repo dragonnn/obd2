@@ -13,35 +13,28 @@ embedded-hal-async = "1.0.0"
 #embassy = { git = "https://github.com/embassy-rs/embassy.git", features = ["nightly", "defmt"] }
 #embassy = { git = "https://github.com/embassy-rs/embassy.git", rev = "4dc8007", features = ["nightly", "defmt"] }
 # not need at deps update?
-embassy-embedded-hal = { version = "0.2.0" }
+embassy-embedded-hal = { version = "0.3.0" }
 embassy-futures = { version = "0.1.1" }
-embassy-sync = { version = "0.6.0", features = ["defmt"] }
-embassy-executor = { version = "0.6.0", features = [
+embassy-sync = { version = "0.6.2", features = ["defmt"] }
+embassy-executor = { version = "0.7.0", features = [
     "arch-cortex-m",
     "executor-thread",
     "executor-interrupt",
     "defmt",
-    "integrated-timers",
     "nightly",
 ] }
-embassy-time = { version = "0.3.2", features = [
+embassy-time = { version = "0.4.0", features = [
     "defmt",
     "defmt-timestamp-uptime",
 ] }
-embassy-nrf = { version = "0.2.0", features = [
+embassy-nrf = { version = "0.3.1", features = [
     "defmt",
     "nrf9160-ns",
     "time-driver-rtc1",
     "gpiote",
     "unstable-pac",
 ] }
-embassy-net = { version = "0.4.0", features = [
-    "defmt",
-    "tcp",
-    "dhcpv4",
-    "medium-ethernet",
-], optional = true }
-embassy-usb = { version = "0.3.0", features = ["defmt"], optional = true }
+embassy-usb = { version = "0.4.0", features = ["defmt"], optional = true }
 embedded-io = { version = "0.6.1", features = ["defmt-03"] }
 embedded-io-async = { version = "0.6.1", optional = true, features = [
     "defmt-03",
@@ -70,15 +63,15 @@ futures-util = { version = "0.3.31", default-features = false }
 rand = { version = "0.8.4", default-features = false }
 embedded-storage = "0.3.1"
 
-bitbybit = "1.3.2"
+bitbybit = "1.3.3"
 arbitrary-int = "1.2.7"
 
-serde = { version = "1.0.147", default-features = false, features = ["derive"] }
+serde = { version = "1.0.217", default-features = false, features = ["derive"] }
 serde-encrypt = { version = "0.7.0", default-features = false }
 postcard = { version = "1.0.10", features = ["use-defmt", "use-crc"] }
 crc = "3.2.1"
 #embedded-msgpack = "0.3.1"
-bitfield-struct = "0.9.0"
+bitfield-struct = "0.10.0"
 modular-bitfield = "0.11.2"
 
 array-macro = "2.1.5"
@@ -112,3 +105,10 @@ opt-level = 's'
 opt-level = 's'
 lto = 'fat'
 debug = 2
+
+#[patch.crates-io]
+#embassy-nrf = { git = "https://github.com/dragonnn/embassy/", branch = "nrf91_twim_errors" }
+#embassy-time = { git = "https://github.com/dragonnn/embassy/", branch = "nrf91_twim_errors" }
+#embassy-embedded-hal = { git = "https://github.com/dragonnn/embassy/", branch = "nrf91_twim_errors" }
+#embassy-executor = { git = "https://github.com/dragonnn/embassy/", branch = "nrf91_twim_errors" }
+#embassy-sync = { git = "https://github.com/dragonnn/embassy/", branch = "nrf91_twim_errors" }

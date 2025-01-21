@@ -13,6 +13,7 @@ use crate::{
     types::{Display1, Display2, Sh1122},
 };
 
+mod boot;
 mod debug;
 mod main;
 mod menu;

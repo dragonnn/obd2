@@ -59,12 +59,12 @@ pub type LightSensor = Bh1749nuc<I2cBus>;
 });*/
 
 bind_interrupts!(struct SpiIrqs {
-    UARTE3_SPIM3_SPIS3_TWIM3_TWIS3 => spim::InterruptHandler<SERIAL3>;
+    SERIAL3 => spim::InterruptHandler<SERIAL3>;
 });
 
 bind_interrupts!(struct UartIrqs {
-    UARTE1_SPIM1_SPIS1_TWIM1_TWIS1 => uarte::InterruptHandler<SERIAL1>;
-    UARTE0_SPIM0_SPIS0_TWIM0_TWIS0 => uarte::InterruptHandler<SERIAL0>;
+    SERIAL1 => uarte::InterruptHandler<SERIAL1>;
+    SERIAL0 => uarte::InterruptHandler<SERIAL0>;
 });
 
 pub type BoardUarteTx = UarteTx<'static, SERIAL1>;

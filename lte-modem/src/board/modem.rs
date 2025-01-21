@@ -56,8 +56,8 @@ impl Modem {
     }
 
     pub async fn gnss(&self) -> Result<Gnss, nrf_modem::Error> {
-        let response = nrf_modem::send_at::<64>("AT%XCOEX0").await.unwrap();
-        assert_eq!(response.as_str(), "OK\r\n");
+        //let response = nrf_modem::send_at::<64>("AT%XCOEX0").await.unwrap();
+        //assert_eq!(response.as_str(), "OK\r\n");
 
         Ok(Gnss::new())
     }

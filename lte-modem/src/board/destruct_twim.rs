@@ -16,7 +16,7 @@ use crate::tasks::reset::request_reset;
 const I2C_TIMEOUT: Duration = Duration::from_millis(80);
 
 bind_interrupts!(struct TwiIrqs {
-    UARTE2_SPIM2_SPIS2_TWIM2_TWIS2 => twim::InterruptHandler<SERIAL2>;
+    SERIAL2 => twim::InterruptHandler<SERIAL2>;
 });
 
 pub type Sda = embassy_nrf::peripherals::P0_11;
@@ -57,6 +57,13 @@ impl DestructTwim {
         twi2
     }
 
+    pub fn clear_errors() {
+        unsafe {
+            let pac = nrf9160_pac::Peripherals::steal();
+            pac.TWIM2_NS.errorsrc.write(|e| e.anack().bit(true).dnack().bit(true).overrun().bit(true));
+        }
+    }
+
     pub async fn reset(&mut self, address: u8) {
         self.i2c_bus = None;
         Timer::after(Duration::from_millis(5)).await;
@@ -84,6 +91,7 @@ impl DestructTwim {
                 Timer::after(Duration::from_millis(5)).await;
             }
             self.i2c_bus = Some(Self::get_bus());
+            //Self::clear_errors();
         }
         if errors.map(|e| *e).unwrap_or_default() > 50 && self.lifetime.elapsed().as_secs() > 5 * 60 {
             use core::fmt::Write;

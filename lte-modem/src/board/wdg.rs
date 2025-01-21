@@ -13,7 +13,7 @@ impl Wdg {
         let mut config = Config::default();
 
         config.timeout_ticks = 32768 * 120;
-        config.run_during_debug_halt = false;
+        //config.run_during_debug_halt = false;
 
         let (_wdt, [handle]) = match Watchdog::try_new(wdt, config) {
             Ok(x) => x,

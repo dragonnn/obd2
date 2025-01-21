@@ -6,23 +6,24 @@ use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 use esp_backtrace as _;
 use esp_hal::{
     aes::dma::AesDma,
-    clock::Clocks,
+    clock::{Clocks, CpuClock},
     delay::Delay,
-    dma::{Dma, DmaChannel0, DmaPriority, DmaRxBuf, DmaTxBuf},
+    dma::{DmaChannel0, DmaPriority, DmaRxBuf, DmaTxBuf},
     dma_buffers, dma_descriptors,
     gpio::{Input, Io, Output, Pull},
     peripherals::Peripherals,
-    prelude::*,
     rtc_cntl::{Rtc, Rwdt, RwdtStage},
     spi::{
         master::{Spi, SpiDmaBus},
-        AnySpi, SpiMode,
+        Mode as SpiMode,
     },
+    time::RateExtU32,
     timer::{timg::TimerGroup, OneShotTimer},
     usb_serial_jtag::UsbSerialJtag,
     Async,
 };
 use esp_ieee802154::{Config, Frame, Ieee802154};
+use fugit::ExtU32;
 use sh1122::{display::DisplayRotation, AsyncDisplay, PixelCoord};
 use static_cell::StaticCell;
 
@@ -54,11 +55,11 @@ macro_rules! mk_static {
 }
 
 pub struct SpiBus {
-    spi: SpiDmaBus<'static, Async, AnySpi>,
+    spi: SpiDmaBus<'static, Async>,
 }
 
 impl SpiBus {
-    pub fn new(spi: SpiDmaBus<'static, Async, AnySpi>) -> Self {
+    pub fn new(spi: SpiDmaBus<'static, Async>) -> Self {
         Self { spi }
     }
 }
@@ -97,14 +98,8 @@ impl embassy_embedded_hal::SetConfig for SpiBus {
 
     fn set_config(&mut self, config: &Self::Config) -> Result<(), Self::ConfigError> {
         //self.spi.change_bus_frequency(config.MHz());
-        self.spi
-            .apply_config(&esp_hal::spi::master::Config {
-                mode: SpiMode::Mode0,
-                read_bit_order: esp_hal::spi::SpiBitOrder::MSBFirst,
-                write_bit_order: esp_hal::spi::SpiBitOrder::MSBFirst,
-                frequency: config.MHz(),
-            })
-            .ok();
+        let mut config = esp_hal::spi::master::Config::default().with_frequency(config.MHz()).with_mode(SpiMode::_0);
+        self.spi.apply_config(&config).ok();
         Ok(())
     }
 }
@@ -127,9 +122,6 @@ pub fn init() -> Hal {
 
     let mut rtc = Rtc::new(peripherals.LPWR);
 
-    let dma = Dma::new(peripherals.DMA);
-    let dma_channel = dma.channel0;
-
     let sclk = peripherals.GPIO6;
     let mosi = peripherals.GPIO7;
     let miso = peripherals.GPIO2;
@@ -138,11 +130,13 @@ pub fn init() -> Hal {
     let dma_rx_buf = unwrap!(DmaRxBuf::new(rx_descriptors, rx_buffer).ok());
     let dma_tx_buf = unwrap!(DmaTxBuf::new(tx_descriptors, tx_buffer).ok());
 
-    let spi = Spi::new(peripherals.SPI2)
+    let dma_channel = peripherals.DMA_CH0;
+    let spi = Spi::new(peripherals.SPI2, esp_hal::spi::master::Config::default().with_frequency(1.MHz()))
+        .unwrap()
         .with_sck(sclk)
         .with_mosi(mosi)
         .with_miso(miso)
-        .with_dma(dma_channel.configure(true, DmaPriority::Priority0))
+        .with_dma(dma_channel)
         .with_buffers(dma_rx_buf, dma_tx_buf)
         .into_async();
 
@@ -210,7 +204,7 @@ pub fn init() -> Hal {
     //rtc.set_interrupt_handler(interrupt_handler);
 
     rtc.rwdt.enable();
-    rtc.rwdt.set_timeout(RwdtStage::Stage0, 5 * 60.secs());
+    rtc.rwdt.set_timeout(RwdtStage::Stage0, (5 * 60u32).secs().into());
     rtc.rwdt.listen();
     static RTC: StaticCell<Mutex<CriticalSectionRawMutex, Rtc<'static>>> = StaticCell::new();
     let rtc = RTC.init(Mutex::new(rtc));

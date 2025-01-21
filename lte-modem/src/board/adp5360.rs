@@ -1,7 +1,7 @@
 use bitbybit::bitenum;
 use defmt::*;
 use embassy_nrf::gpio::{AnyPin, Input, Level, Output, OutputDrive, Pull};
-use embassy_time::{with_timeout, Duration};
+use embassy_time::{with_timeout, Duration, Instant};
 use embedded_hal_async::i2c::I2c;
 use modular_bitfield::prelude::*;
 
@@ -80,6 +80,7 @@ pub struct Adp5360<I2C> {
 
     last_voltage: u16,
     last_soc: u8,
+    last_soc_update: Instant,
     last_charger_status: ChargerStatus,
 }
 
@@ -90,7 +91,14 @@ where
     pub async fn new(i2c: I2C, irq: AnyPin) -> Self {
         let irq = Input::new(irq, Pull::Up);
         defmt::info!("adp5360 reset done");
-        let mut adp5360 = Self { i2c, irq, last_voltage: 0, last_soc: 0, last_charger_status: ChargerStatus::Off };
+        let mut adp5360 = Self {
+            i2c,
+            irq,
+            last_voltage: 0,
+            last_soc: 0,
+            last_soc_update: Instant::now(),
+            last_charger_status: ChargerStatus::Off,
+        };
         adp5360.set_u8_value(REG_BAT_CAP, 0xFF).await;
         adp5360.set_u8_bit(REG_FUEL_GAUGE_MODE, FUEL_GAUGE_MODE_ENABLE_BIT, true).await;
         adp5360.set_u8_bit(REG_FUEL_GAUGE_MODE, FUEL_GAUGE_MODE_SLEEP_MODE_BIT, true).await;
@@ -189,9 +197,15 @@ where
         match self.get_u8_value(REG_BAT_SOC).await {
             Ok(value) => {
                 self.last_soc = value;
+                self.last_soc_update = Instant::now();
                 value
             }
-            Err(_) => self.last_soc,
+            Err(_) => {
+                if self.last_soc_update.elapsed().as_secs() > 5 * 60 {
+                    core::panic!("Battery SOC read timeout");
+                }
+                self.last_soc
+            }
         }
     }
 

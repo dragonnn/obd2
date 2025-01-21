@@ -11,8 +11,7 @@ use core::mem::MaybeUninit;
 use defmt::info;
 use defmt_rtt as _;
 use embassy_executor::Spawner;
-use esp_hal::entry;
-use esp_hal_procmacros::main;
+use esp_hal_embassy::main;
 
 mod cap1188;
 //mod defmt_serial;
