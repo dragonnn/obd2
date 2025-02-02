@@ -41,6 +41,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
     defmt::info!("dbm: {}", dbm);
     let hw = modem.hw().await.unwrap();
     defmt::info!("hw: {}", hw);
+    let fw = modem.fw().await.unwrap();
 
     let mut battery_state_sub = BatteryState::subscribe().await;
     let mut battery_state = BatteryState::get().await;

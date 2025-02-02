@@ -287,7 +287,7 @@ impl Battery {
                 text_position.x += 2;
                 text_position.y += org_size.height as i32 / 2 / 2 + 2;
                 text.clear();
-                write!(text, "{:.1}/{:.1}°C", self.min_temp, self.max_temp).ok();
+                write!(text, "{:.0}/{:.0}°C", self.min_temp, self.max_temp).ok();
 
                 Text::with_text_style(text.as_str(), text_position, character_style, text_style).draw(target)?;
             }

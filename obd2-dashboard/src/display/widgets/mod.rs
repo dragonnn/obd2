@@ -1,6 +1,7 @@
 mod arrow;
 mod battery;
 mod battery_12v;
+mod connection;
 mod debug;
 mod fuel;
 mod gearbox_gear;
@@ -17,6 +18,7 @@ mod value;
 pub use arrow::{Arrow, ArrowDirection};
 pub use battery::{Battery, BatteryOrientation};
 pub use battery_12v::Battery12V;
+pub use connection::Connection;
 pub use debug::DebugScroll;
 pub use fuel::Fuel;
 pub use gearbox_gear::GearboxGear;

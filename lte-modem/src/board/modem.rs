@@ -124,4 +124,13 @@ impl Modem {
             Err(nrf_modem::Error::NrfError(0))
         }
     }
+
+    pub async fn fw(&self) -> Result<String<32>, nrf_modem::Error> {
+        let version = nrf_modem::send_at::<64>("AT+CGMR").await.unwrap();
+        if version.ends_with("OK\r\n") && version.len() >= 17 {
+            Ok(unwrap!(String::try_from(&version[12..17])))
+        } else {
+            Err(nrf_modem::Error::NrfError(0))
+        }
+    }
 }

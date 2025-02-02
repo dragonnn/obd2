@@ -34,7 +34,9 @@ use super::{
 pub static EVENTS: Channel<CriticalSectionRawMutex, LcdEvent, 128> = Channel::new();
 pub use obd2_pids::obd2_debug_pids_enabled;
 
-pub struct LcdContext {}
+pub struct LcdContext {
+    panic: Option<&'static str>,
+}
 
 #[derive(Format, PartialEq, Clone)]
 pub enum LcdEvent {
@@ -301,7 +303,7 @@ impl LcdState {
 }
 
 #[embassy_executor::task]
-pub async fn run(mut display1: Display1, mut display2: Display2) {
+pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&'static str>) {
     info!("lcd init start");
     unwrap!(display1.init(None).await);
     unwrap!(display2.init(None).await);
@@ -315,7 +317,7 @@ pub async fn run(mut display1: Display1, mut display2: Display2) {
     display1.flush().await.ok();
     display2.flush().await.ok();
     info!("lcd init end");
-    let mut context = LcdContext {};
+    let mut context = LcdContext { panic };
     let mut state =
         LcdState::new(display1, display2).uninitialized_state_machine().init_with_context(&mut context).await;
     info!("lcd state machine initialized");

@@ -30,6 +30,9 @@ static PIDS_SEND: Mutex<CriticalSectionRawMutex, heapless::FnvIndexSet<Pid, 64>>
 static PID_ERRORS_SEND: Mutex<CriticalSectionRawMutex, heapless::FnvIndexSet<types::PidError, 64>> =
     Mutex::new(heapless::FnvIndexSet::new());
 
+static LAST_SEND: Mutex<CriticalSectionRawMutex, Instant> = Mutex::new(Instant::from_ticks(0));
+static LAST_RECEIVE: Mutex<CriticalSectionRawMutex, Instant> = Mutex::new(Instant::from_ticks(0));
+
 #[embassy_executor::task]
 pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
     spawner.must_spawn(ieee802154_run(ieee802154));
@@ -192,6 +195,7 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
     loop {
         match select3(ieee802154.receive(), ieee802154_send_sub.receive(), shutdown_signal.next_message_pure()).await {
             First(rxmessage) => {
+                *LAST_RECEIVE.lock().await = Instant::now();
                 info!("got rx message: {:?}", rxmessage);
                 if ieee802154_receive_pub.is_full() {
                     warn!("ieee802154_receive_pub is full");
@@ -358,6 +362,7 @@ impl AsyncIeee802154 {
     }
 
     async fn transmit_raw(&mut self, frame: &Frame, timeout: Duration) -> Result<(), AsyncIeee802154Error> {
+        *LAST_SEND.lock().await = Instant::now();
         self.tx_done_signal.reset();
         //self.rx_available_signal.reset();
         self.ieee802154.transmit(frame)?;
@@ -485,4 +490,12 @@ pub async fn insert_send_pid_error(pid_error: &types::PidError) {
 
 pub async fn clear_pids(pid: &Pid) {
     PIDS_SEND.lock().await.clear();
+}
+
+pub fn last_send() -> Option<Instant> {
+    LAST_SEND.try_lock().ok().map(|lock| *lock)
+}
+
+pub fn last_recieve() -> Option<Instant> {
+    LAST_RECEIVE.try_lock().ok().map(|lock| *lock)
 }

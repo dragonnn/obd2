@@ -36,7 +36,7 @@ pub async fn task(mut sense: Sense, mut lightwell: Lightwell, mut wdg: Wdg, mut 
                     select::Either::Second(_) => false,
                 }
             },
-            Timer::after_secs(30),
+            Timer::after_secs(20),
         )
         .await
         {
@@ -54,7 +54,9 @@ pub async fn task(mut sense: Sense, mut lightwell: Lightwell, mut wdg: Wdg, mut 
                     state.button_detect = true;
                 }
             }
-            _ => {}
+            _ => {
+                wdg.pet().await;
+            }
         }
     }
 }

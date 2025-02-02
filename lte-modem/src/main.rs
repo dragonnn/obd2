@@ -36,6 +36,10 @@ mod config;
 mod led;
 mod tasks;
 
+//#[link_section = ".spm"]
+//#[used]
+//static SPM: [u8; 24052] = *include_bytes!("../zephyr.bin");
+
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
 
@@ -52,6 +56,7 @@ pub enum ResetReason {
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
     let logger = unwrap!(defmt_brtt::init());
+    defmt::info!("init");
     {
         use core::mem::MaybeUninit;
         const HEAP_SIZE: usize = 16 * 1024;
@@ -154,3 +159,16 @@ async fn main(spawner: Spawner) {
 //#[link_section = ".spm"]
 //#[used]
 //static SPM: [u8; 24052] = *include_bytes!("zephyr.bin");
+use cortex_m_rt::ExceptionFrame;
+#[cortex_m_rt::exception]
+unsafe fn HardFault(e: &ExceptionFrame) -> ! {
+    defmt::error!("HardFault: {}", defmt::Debug2Format(e));
+    let now = embassy_time::Instant::now();
+
+    loop {
+        cortex_m::asm::bkpt();
+        if now.elapsed() > Duration::from_secs(10) {
+            cortex_m::peripheral::SCB::sys_reset();
+        }
+    }
+}
