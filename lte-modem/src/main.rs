@@ -51,6 +51,7 @@ pub enum ResetReason {
     Sreq,
     LockUp,
     CtrlAp,
+    ResetPin,
 }
 
 #[embassy_executor::main]
@@ -68,6 +69,9 @@ async fn main(spawner: Spawner) {
     unsafe {
         let pac = nrf9160_pac::Peripherals::steal();
         let reset_reason = pac.POWER_NS.resetreas.read();
+        if reset_reason.resetpin().bit_is_set() {
+            reset_reasons.push(ResetReason::ResetPin).ok();
+        }
         if reset_reason.dog().bit_is_set() {
             reset_reasons.push(ResetReason::Dog).ok();
         }
@@ -156,13 +160,15 @@ async fn main(spawner: Spawner) {
     tasks::modem::task(board.modem, &spawner).await;
 }
 
-//#[link_section = ".spm"]
-//#[used]
-//static SPM: [u8; 24052] = *include_bytes!("zephyr.bin");
+#[link_section = ".spm"]
+#[used]
+static SPM: [u8; 24052] = *include_bytes!("zephyr.bin");
 use cortex_m_rt::ExceptionFrame;
 #[cortex_m_rt::exception]
 unsafe fn HardFault(e: &ExceptionFrame) -> ! {
-    defmt::error!("HardFault: {}", defmt::Debug2Format(e));
+    cortex_m::peripheral::SCB::sys_reset();
+
+    /*defmt::error!("HardFault: {}", defmt::Debug2Format(e));
     let now = embassy_time::Instant::now();
 
     loop {
@@ -170,5 +176,5 @@ unsafe fn HardFault(e: &ExceptionFrame) -> ! {
         if now.elapsed() > Duration::from_secs(10) {
             cortex_m::peripheral::SCB::sys_reset();
         }
-    }
+    }*/
 }

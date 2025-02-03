@@ -39,7 +39,7 @@ embedded-io = { version = "0.6.1", features = ["defmt-03"] }
 embedded-io-async = { version = "0.6.1", optional = true, features = [
     "defmt-03",
 ] }
-embedded-hal-bus = { version = "0.2.0", features = ["async"] }
+embedded-hal-bus = { version = "0.3.0", features = ["async"] }
 embedded-alloc = "0.6.0"
 nrf9160-pac = { version = "0.12.2" }
 nrf-modem = { path = "./nrf-modem", features = ["nrf9160", "defmt"] }

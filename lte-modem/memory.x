@@ -1,7 +1,8 @@
 MEMORY
 {
   /* NOTE 1 K = 1 KiBi = 1024 bytes */
-  FLASH : ORIGIN = 0x00040000, LENGTH = 764K
+  SPM : ORIGIN = 0x00000000, LENGTH = 320K
+  FLASH : ORIGIN = 0x00050000, LENGTH = 700K
   CONFIG : ORIGIN = ORIGIN(FLASH) + LENGTH(FLASH), LENGTH = 4K /* 4K is the flash page size */
   RAM : ORIGIN = 0x20020000, LENGTH = 128K - 1K - 1K
   PANDUMP: ORIGIN = ORIGIN(RAM) + LENGTH(RAM), LENGTH = 1K
@@ -28,13 +29,14 @@ _config = ORIGIN(CONFIG);
    sources added the attribute `#[link_section = ".ram2bss"]` to the data
    you want to place there. */
 /* Note that the section will not be zero-initialized by the runtime! */
-/* SECTIONS {
-     .ram2bss (NOLOAD) : ALIGN(4) {
-       *(.ram2bss);
-       . = ALIGN(4);
-     } > RAM2
-   } INSERT AFTER .bss;
-*/
+SECTIONS
+{
+  /* Define an spm region where the compiler can put the spm for us */
+  .spm :
+  {
+    KEEP(*(.spm .spm.*));
+  } > SPM
+}
 
 _panic_dump_start = ORIGIN(PANDUMP);
 _panic_dump_end   = ORIGIN(PANDUMP) + LENGTH(PANDUMP);

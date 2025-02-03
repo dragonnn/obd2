@@ -1,7 +1,7 @@
 use defmt::warn;
 use embassy_nrf::{
     peripherals,
-    wdt::{Config, Watchdog, WatchdogHandle},
+    wdt::{Config, SleepConfig, Watchdog, WatchdogHandle},
 };
 use embassy_time::{Duration, Timer};
 
@@ -13,7 +13,7 @@ impl Wdg {
         let mut config = Config::default();
 
         config.timeout_ticks = 32768 * 20;
-        config.action_during_sleep = crate::embassy_nrf::wdt::SleepConfig::PAUSE;
+        config.action_during_sleep = SleepConfig::PAUSE;
 
         let (_wdt, [handle]) = match Watchdog::try_new(wdt, config) {
             Ok(x) => x,
