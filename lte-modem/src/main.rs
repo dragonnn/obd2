@@ -10,6 +10,7 @@
 #![warn(clippy::large_futures)]
 #![feature(impl_trait_in_assoc_type)]
 extern crate alloc;
+//extern crate compiler_builtins;
 extern crate tinyrlibc;
 
 //use core::panic::PanicInfo;

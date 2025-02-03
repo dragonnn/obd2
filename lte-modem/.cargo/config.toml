@@ -3,8 +3,12 @@ runner = "probe-rs run --chip nRF9160_xxAA"
 
 
 [build]
-target = "thumbv8m.base-none-eabi"
+target = "thumbv8m.main-none-eabihf"
+rustflags = []
 
 [env]
 DEFMT_LOG = "info"
 DEFMT_RTT_BUFFER_SIZE = "512"
+
+[unstable]
+build-std = ["alloc", "core"]
