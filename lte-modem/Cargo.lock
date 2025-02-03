@@ -1812,7 +1812,8 @@ dependencies = [
 [[package]]
 name = "tinyrlibc"
 version = "0.5.0"
-source = "git+https://github.com/rust-embedded-community/tinyrlibc#930da4d9f88e3f5a46fe7253759e976cc8874a4c"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d07d242693682e46801cb0186c583858bce022f698401b3f04bbd729c9a87e7"
 dependencies = [
  "cc",
  "portable-atomic",
