@@ -22,8 +22,8 @@ fn panic() -> ! {
     cortex_m::peripheral::SCB::sys_reset();
 }*/
 use defmt::*;
-//use defmt_rtt as _;
-use defmt_brtt as _;
+use defmt_rtt as _;
+//use defmt_brtt as _;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use embedded_alloc::LlffHeap as Heap;
@@ -57,7 +57,6 @@ pub enum ResetReason {
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
-    let logger = unwrap!(defmt_brtt::init());
     defmt::info!("init");
     {
         use core::mem::MaybeUninit;
