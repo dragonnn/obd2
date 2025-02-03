@@ -51,8 +51,8 @@ tinyrlibc = "0.5.0"
 #compiler_builtins = { git = "https://github.com/rust-lang/compiler-builtins" }
 
 defmt = "0.3"
-#defmt-rtt = "0.4"
-defmt-brtt = { version = "0.1.1", features = ["rtt", "bbq", "async-await"] }
+defmt-rtt = "0.4"
+#defmt-brtt = { version = "0.1.1", features = ["rtt", "bbq", "async-await"] }
 
 static_cell = "2.1"
 cortex-m = { version = "0.7.6", features = ["critical-section-single-core"] }
