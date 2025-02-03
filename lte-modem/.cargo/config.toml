@@ -11,4 +11,4 @@ DEFMT_LOG = "info"
 DEFMT_RTT_BUFFER_SIZE = "512"
 
 [unstable]
-build-std = ["alloc", "core"]
+build-std = ["alloc", "core", "compiler_builtins"]
