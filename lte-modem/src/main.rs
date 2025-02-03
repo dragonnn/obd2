@@ -167,9 +167,10 @@ static SPM: [u8; 24052] = *include_bytes!("zephyr.bin");
 use cortex_m_rt::ExceptionFrame;
 #[cortex_m_rt::exception]
 unsafe fn HardFault(e: &ExceptionFrame) -> ! {
+    defmt::error!("HardFault: {}", defmt::Debug2Format(e));
     cortex_m::peripheral::SCB::sys_reset();
 
-    /*defmt::error!("HardFault: {}", defmt::Debug2Format(e));
+    /*
     let now = embassy_time::Instant::now();
 
     loop {
