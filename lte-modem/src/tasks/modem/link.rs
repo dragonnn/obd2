@@ -1,4 +1,7 @@
-use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use core::{
+    net::{Ipv4Addr, SocketAddr, SocketAddrV4},
+    sync::atomic::{AtomicBool, AtomicUsize, Ordering},
+};
 
 use defmt::*;
 use embassy_executor::Spawner;
@@ -85,12 +88,7 @@ pub async fn send_task(spawner: Spawner) {
                     }
                     match with_timeout(
                         Duration::from_secs(30),
-                        UdpSocket::bind(nrf_modem::no_std_net::SocketAddr::V4(
-                            nrf_modem::no_std_net::SocketAddrV4::new(
-                                nrf_modem::no_std_net::Ipv4Addr::new(0, 0, 0, 0),
-                                starting_port,
-                            ),
-                        )),
+                        UdpSocket::bind(SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), starting_port))),
                     )
                     .await
                     {
