@@ -71,7 +71,7 @@ impl Obd2 {
         self.obd2_pid_periods_disable = true;
     }
 
-    pub async fn init(&mut self) {
+    pub async fn init(&mut self) -> Result<(), SpiDeviceError<esp_hal::spi::Error, Infallible>> {
         let config = crate::mcp2515::Config::default()
             .mode(OperationMode::NormalOperation)
             .bitrate(clock_16mhz::CNF_500K_BPS)
@@ -79,10 +79,12 @@ impl Obd2 {
             .receive_buffer_0(RXB0CTRL::default().with_rxm(RXM::ReceiveAny).with_bukt(true))
             .receive_buffer_1(RXB1CTRL::default().with_rxm(RXM::ReceiveAny));
 
-        unwrap!(self.mcp2515.apply_config(&config).await);
+        self.mcp2515.apply_config(&config).await?;
 
         let interputs_config = CANINTE::default().with_rx0ie(true).with_rx1ie(true);
-        unwrap!(self.mcp2515.apply_interrupts_config(interputs_config).await);
+        self.mcp2515.apply_interrupts_config(interputs_config).await?;
+
+        Ok(())
     }
 
     pub async fn shutdown(&mut self) {
