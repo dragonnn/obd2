@@ -15,7 +15,7 @@ impl Pid for BmsPid {
     }
 
     fn parse(data: &[u8]) -> Result<Self, Obd2Error> {
-        if data.len() < 32 {
+        if data.len() < 60 {
             return Err(Obd2Error::FrameToShort);
         }
         let hv_max_temp = data[16] as i8 as f64; //14

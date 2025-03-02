@@ -16,7 +16,7 @@ impl Pid for TransaxlePid {
     }
 
     fn parse(data: &[u8]) -> Result<Self, Obd2Error> {
-        if data.len() < 7 {
+        if data.len() < 17 {
             return Err(Obd2Error::FrameToShort);
         }
 
