@@ -12,5 +12,5 @@ use crate::{tasks::power::ShutdownGuard, types::Mcp2515};
 pub async fn run(mut can_listen: Mcp2515) {
     info!("can listen task started");
     let _shutdown_guard = ShutdownGuard::new();
-    can_listen.shutdown().await;
+    with_timeout(Duration::from_secs(120), can_listen.shutdown()).await.ok();
 }
