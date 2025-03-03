@@ -29,6 +29,7 @@ pub enum KiaEvent {
     Obd2Event(Obd2Event),
     Obd2Debug(Obd2Debug),
     Obd2LoopEnd(Obd2PidSets, bool),
+    Obd2Init,
     Ticker,
 }
 
@@ -40,6 +41,7 @@ pub struct KiaState {
     pub power_events_pub: PowerEventPublisher,
     pub tx_frame_pub: TxFramePub,
     pub rtc: crate::types::Rtc,
+    pub obd2_init: bool,
 }
 
 #[state_machine(
@@ -217,7 +219,7 @@ impl KiaState {
     }
 
     #[state(entry_action = "enter_ignition_off")]
-    async fn ignition_off(&mut self, event: &KiaEvent, timeout: &Instant) -> Response<State> {
+    async fn ignition_off(&mut self, event: &KiaEvent, timeout: &mut Instant) -> Response<State> {
         let now = self.rtc.lock().await.current_time().and_utc().timestamp();
         let last_ignition_on = unsafe { LAST_IGNITION_ON };
         let shutdown_duration = if last_ignition_on != 0 && now - last_ignition_on > 60 * 60 {
@@ -232,6 +234,10 @@ impl KiaState {
             now,
             event
         );
+
+        if !self.obd2_init {
+            *timeout = Instant::now();
+        }
 
         match event {
             KiaEvent::Obd2Event(Obd2Event::Icu3Pid(icu3_pid)) => {
@@ -258,7 +264,7 @@ impl KiaState {
                         Handled
                     }
                 } else {
-                    if timeout.elapsed().as_secs() > 10 * 60 || (*all && timeout.elapsed().as_secs() > 60) {
+                    if timeout.elapsed().as_secs() > 20 * 60 || (*all && timeout.elapsed().as_secs() > 120) {
                         Transition(State::shutdown(shutdown_duration))
                     } else {
                         Handled
@@ -300,6 +306,8 @@ impl KiaState {
         self.power_events_pub.publish_immediate(PowerEvent::RwdtFeed);
         if let KiaEvent::Obd2Event(_) = event {
             trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
+        } else if let &KiaEvent::Obd2Init = event {
+            self.obd2_init = true;
         } else {
             match event {
                 KiaEvent::Obd2Debug(_) | KiaEvent::Obd2LoopEnd(_, _) => {
@@ -314,10 +322,15 @@ impl KiaState {
 }
 
 pub async fn run(rtc: crate::types::Rtc) {
-    let mut state = KiaState { power_events_pub: get_power_events_pub(), tx_frame_pub: extra_txframes_pub(), rtc }
-        .uninitialized_state_machine()
-        .init()
-        .await;
+    let mut state = KiaState {
+        power_events_pub: get_power_events_pub(),
+        tx_frame_pub: extra_txframes_pub(),
+        rtc,
+        obd2_init: false,
+    }
+    .uninitialized_state_machine()
+    .init()
+    .await;
 
     loop {
         match with_timeout(Duration::from_secs(5), EVENTS.receive()).await {

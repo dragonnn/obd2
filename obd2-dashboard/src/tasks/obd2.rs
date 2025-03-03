@@ -115,7 +115,15 @@ impl Obd2PidSets {
 pub async fn run(mut obd2: Obd2) {
     info!("obd2 task started");
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
-    obd2.init().await;
+    {
+        let lock = crate::locks::SPI_BUS.lock().await;
+        loop {
+            if obd2.init().await.is_ok() {
+                break;
+            }
+        }
+    }
+    KIA_EVENTS.send(KiaEvent::Obd2Init).await;
     embassy_time::Timer::after(Duration::from_millis(100)).await;
     info!("obd2 init done");
     let mut current_sets = OBD2_SETS_CHANGED.wait().await;

@@ -57,24 +57,29 @@ where
     }
 
     pub async fn apply_config(&mut self, config: &Config<'_>) -> Result<(), SPI::Error> {
-        self.reset().await?;
-        let mut canctrl = [0u8; 1];
-        embassy_time::Timer::after_millis(100).await;
-        self.read_registers(0x0F, &mut canctrl).await?;
-        info!("canctrl: {:b}", canctrl[0]);
-        if canctrl[0] != 0b10000111 {
-            error!("MCP2515 is not in configuration mode");
-        }
-
-        self.set_bitrate(config.cnf).await?;
-        self.write_register(config.rxb0ctrl).await?;
-        self.write_register(config.rxb1ctrl).await?;
-        for &(filter, id_header) in config.filters {
-            self.set_filter(filter, id_header).await?;
-        }
+        let mut ok_inits = 0u8;
         loop {
+            self.reset().await?;
+            let mut canctrl = [0u8; 1];
+            embassy_time::Timer::after_millis(100).await;
+            self.read_registers(0x0F, &mut canctrl).await?;
+            info!("canctrl: {:b}", canctrl[0]);
+            if canctrl[0] != 0b10000111 {
+                error!("MCP2515 is not in configuration mode");
+            }
+
+            self.set_bitrate(config.cnf).await?;
+            self.write_register(config.rxb0ctrl).await?;
+            self.write_register(config.rxb1ctrl).await?;
+            for &(filter, id_header) in config.filters {
+                self.set_filter(filter, id_header).await?;
+            }
+
             if self.apply_canctrl(config.canctrl).await {
-                break;
+                ok_inits += 1;
+                if ok_inits >= 3 {
+                    break;
+                }
             } else {
                 Timer::after(Duration::from_millis(100)).await;
             }
@@ -136,7 +141,7 @@ where
         info!("config.canctrl.clken: {:?}", config.canctrl.clken());
         while !self.apply_canctrl(config.canctrl).await {
             self.reset().await;
-            Timer::after(Duration::from_millis(100)).await;
+            Timer::after(Duration::from_secs(1)).await;
         }
     }
 
