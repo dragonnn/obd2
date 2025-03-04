@@ -116,7 +116,6 @@ pub async fn run(mut obd2: Obd2) {
     info!("obd2 task started");
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     {
-        let lock = crate::locks::SPI_BUS.lock().await;
         loop {
             if obd2.init().await.is_ok() {
                 break;
