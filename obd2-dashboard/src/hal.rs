@@ -1,8 +1,9 @@
-use defmt::{info, unwrap};
+use defmt::{info, unwrap, warn};
 //use defmt_rtt as _;
 use display_interface_spi::SPIInterface;
 use embassy_embedded_hal::shared_bus::asynch::spi::{SpiDevice, SpiDeviceWithConfig};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
+use embassy_time::Instant;
 use esp_backtrace as _;
 use esp_hal::{
     aes::dma::AesDma,
@@ -23,7 +24,7 @@ use esp_hal::{
     Async,
 };
 use esp_ieee802154::{Config, Frame, Ieee802154};
-use fugit::ExtU32;
+use fugit::{ExtU32, HertzU32};
 use sh1122::{display::DisplayRotation, AsyncDisplay, PixelCoord};
 use static_cell::StaticCell;
 
@@ -56,11 +57,13 @@ macro_rules! mk_static {
 
 pub struct SpiBus {
     spi: SpiDmaBus<'static, Async>,
+    speed: Option<HertzU32>,
+    elapsed: Instant,
 }
 
 impl SpiBus {
     pub fn new(spi: SpiDmaBus<'static, Async>) -> Self {
-        Self { spi }
+        Self { spi, speed: None, elapsed: Instant::now() }
     }
 }
 
@@ -91,15 +94,30 @@ impl embedded_hal_async::spi::SpiBus for SpiBus {
     }
 }
 
+const SPI_RAMP_UP_SECS: u64 = 200;
+
 impl embassy_embedded_hal::SetConfig for SpiBus {
     type Config = u32;
 
     type ConfigError = ();
 
     fn set_config(&mut self, config: &Self::Config) -> Result<(), Self::ConfigError> {
-        //self.spi.change_bus_frequency(config.MHz());
-        let mut config = esp_hal::spi::master::Config::default().with_frequency(config.MHz()).with_mode(SpiMode::_0);
+        let mut mhz = config.MHz();
+        let mut elapsed_secs = self.elapsed.elapsed().as_secs();
+        if elapsed_secs < SPI_RAMP_UP_SECS {
+            if elapsed_secs < 1 {
+                elapsed_secs = 1;
+            }
+            mhz = (mhz * elapsed_secs as u32) / SPI_RAMP_UP_SECS as u32;
+        }
+
+        if self.speed == Some(mhz) {
+            return Ok(());
+        }
+
+        let config = esp_hal::spi::master::Config::default().with_frequency(config.MHz()).with_mode(SpiMode::_0);
         self.spi.apply_config(&config).ok();
+        self.speed = Some(mhz);
         Ok(())
     }
 }

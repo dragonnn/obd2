@@ -305,11 +305,15 @@ impl LcdState {
 #[embassy_executor::task]
 pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&'static str>) {
     info!("lcd init start");
-    unwrap!(display1.init(None).await);
-    unwrap!(display2.init(None).await);
-
-    display1.set_contrast(50).await.ok();
-    display2.set_contrast(50).await.ok();
+    embassy_time::Timer::after(Duration::from_millis(100)).await;
+    for _ in 0..3 {
+        unwrap!(display1.init(None).await);
+        unwrap!(display2.init(None).await);
+    }
+    for _ in 0..3 {
+        display1.set_contrast(50).await.ok();
+        display2.set_contrast(50).await.ok();
+    }
 
     display1.clear();
     display2.clear();
