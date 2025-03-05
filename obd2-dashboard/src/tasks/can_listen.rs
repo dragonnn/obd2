@@ -16,9 +16,6 @@ use crate::{
 pub async fn run(mut can_listen: Mcp2515) {
     info!("can listen task started");
     embassy_time::Timer::after(Duration::from_secs(10)).await;
-    {
-        let lock = crate::locks::SPI_BUS.lock().await;
-    }
     let _shutdown_guard = ShutdownGuard::new();
     let config = crate::mcp2515::Config::default()
         .mode(OperationMode::NormalOperation)
