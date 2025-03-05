@@ -38,7 +38,6 @@ pub struct Hal {
     pub buttons: types::Cap1188,
     pub obd2: obd2::Obd2,
     pub can_listen: types::Mcp2515,
-    #[cfg(feature = "usb_serial")]
     pub usb_serial: types::UsbSerial,
     pub power: power::Power,
     pub led: types::Led,
@@ -211,8 +210,7 @@ pub fn init() -> Hal {
     let mcp2515 = Mcp2515::new(mcp2515_spi, int_mcp2515);
     let mcp2515_2 = Mcp2515::new(mcp2515_2_spi, int_mcp2515_2);
 
-    #[cfg(feature = "usb_serial")]
-    let usb_serial = UsbSerialJtag::new_async(peripherals.USB_DEVICE);
+    let usb_serial = UsbSerialJtag::new(peripherals.USB_DEVICE).into_async();
 
     info!("HAL initialized");
 
@@ -233,7 +231,6 @@ pub fn init() -> Hal {
         buttons: cap1188,
         obd2: obd2::Obd2::new(mcp2515),
         can_listen: mcp2515_2,
-        #[cfg(feature = "usb_serial")]
         usb_serial,
         power: power::Power::new(ing, delay, rtc, rs),
         led,

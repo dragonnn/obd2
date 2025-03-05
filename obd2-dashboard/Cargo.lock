@@ -377,16 +377,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "defmt-rtt"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bab697b3dbbc1750b7c8b821aa6f6e7f2480b47a99bc057a2ed7b170ebef0c51"
-dependencies = [
- "critical-section",
- "defmt",
-]
-
-[[package]]
 name = "delegate"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1257,7 +1247,6 @@ dependencies = [
  "dbc-codegen",
  "defmt",
  "defmt-brtt",
- "defmt-rtt",
  "display-interface",
  "display-interface-spi",
  "embassy-embedded-hal",

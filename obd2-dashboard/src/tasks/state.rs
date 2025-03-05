@@ -236,7 +236,8 @@ impl KiaState {
         );
 
         if !self.obd2_init {
-            *timeout = Instant::now();
+            error!("obd2 not inited");
+            //*timeout = Instant::now();
         }
 
         match event {
@@ -258,13 +259,13 @@ impl KiaState {
             KiaEvent::Obd2LoopEnd(set, all) => {
                 if set != &Obd2PidSets::IgnitionOff {
                     set_obd2_sets(Obd2PidSets::IgnitionOff).await;
-                    if timeout.elapsed().as_secs() > 10 * 60 {
+                    if timeout.elapsed().as_secs() > 5 * 60 {
                         Transition(State::shutdown(shutdown_duration))
                     } else {
                         Handled
                     }
                 } else {
-                    if timeout.elapsed().as_secs() > 20 * 60 || (*all && timeout.elapsed().as_secs() > 120) {
+                    if timeout.elapsed().as_secs() > 10 * 60 || (*all && timeout.elapsed().as_secs() > 120) {
                         Transition(State::shutdown(shutdown_duration))
                     } else {
                         Handled
@@ -283,6 +284,7 @@ impl KiaState {
 
     #[action]
     async fn enter_shutdown(&mut self, duration: &embassy_time::Duration) {
+        warn!("shutting down for {:?}", duration);
         ieee802154::send_now();
         self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::Shutdown((*duration).into())));
         embassy_time::Timer::after_millis(200).await;
