@@ -1,0 +1,29 @@
+[package]
+name = "sh1122"
+description = "SPI driver for the SH1122 OLED display controller"
+version = "0.1.0"
+authors = ["Max Vasiliev <max@vasiliev.me>"]
+keywords = ["no-std", "sh1122", "oled", "embedded", "embedded-hal-driver"]
+repository = "https://github.com/skammer/sh1122"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+exclude = [".gitignore", "demo.jpg"]
+edition = "2021"
+
+[dependencies]
+embedded-hal = "1.0.0"
+nb = "1.0.0"
+embedded-graphics = "0.8.0"
+embedded-graphics-core = { version = "0.4.0", optional = true }
+display-interface = "0.5.0"
+embassy-time = "0.4"
+modular-bitfield = "0.11.2"
+
+[dependencies.itertools]
+version = "0.12.1"
+default-features = false
+
+[features]
+default = ["graphics"]
+graphics = ["embedded-graphics-core"]
+std = []
