@@ -57,6 +57,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bbqueue"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd3baa8859d1a4c7411039a75c0599a4640ef1c9a8fc811e4325b00e6cfe0a55"
+dependencies = [
+ "defmt",
+]
+
+[[package]]
 name = "bit_field"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -332,6 +341,17 @@ checksum = "86f6162c53f659f65d00619fe31f14556a6e9f8752ccc4a41bd177ffcf3d6130"
 dependencies = [
  "bitflags 1.3.2",
  "defmt-macros",
+]
+
+[[package]]
+name = "defmt-brtt"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2f0ac3635d0c89d12b8101fcb44a7625f5f030a1c0491124b74467eb5a58a78"
+dependencies = [
+ "bbqueue",
+ "critical-section",
+ "defmt",
 ]
 
 [[package]]
@@ -1236,6 +1256,7 @@ dependencies = [
  "critical-section",
  "dbc-codegen",
  "defmt",
+ "defmt-brtt",
  "defmt-rtt",
  "display-interface",
  "display-interface-spi",

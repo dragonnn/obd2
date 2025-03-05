@@ -184,14 +184,24 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
         ..Default::default()
     });
 
+    let local_timeout = Duration::from_secs(1);
+    let remote_timeout = Duration::from_secs(10);
+
     let mut ieee802154 = AsyncIeee802154::new(ieee802154);
+    ieee802154
+        .transmit_txmessage(
+            TxFrame::State(types::State::Shutdown(core::time::Duration::from_secs(0))).into(),
+            1,
+            remote_timeout,
+        )
+        .await
+        .ok();
     let _shutdown_guard = ShutdownGuard::new();
     let mut shutdown_signal = get_shutdown_signal();
 
     let ieee802154_send_sub = IEEE802154_SEND.receiver();
     let ieee802154_receive_pub = IEEE802154_RECEIVE.sender();
-    let local_timeout = Duration::from_secs(1);
-    let remote_timeout = Duration::from_secs(10);
+
     loop {
         match select3(ieee802154.receive(), ieee802154_send_sub.receive(), shutdown_signal.next_message_pure()).await {
             First(rxmessage) => {
