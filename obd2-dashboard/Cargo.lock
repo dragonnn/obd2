@@ -885,7 +885,6 @@ dependencies = [
  "byte",
  "cfg-if",
  "critical-section",
- "defmt",
  "document-features",
  "esp-config",
  "esp-hal",
@@ -936,7 +935,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c6b5438361891c431970194a733415006fb3d00b6eb70b3dcb66fd58f04d9b39"
 dependencies = [
  "anyhow",
- "defmt",
 ]
 
 [[package]]

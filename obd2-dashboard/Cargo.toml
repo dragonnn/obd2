@@ -39,7 +39,7 @@ panic-persist = { version = "0.3.0", features = [
 
 esp-println = { version = "0.13.0", features = ["esp32c6"] }
 esp-alloc = { version = "0.6.0" }
-esp-ieee802154 = { version = "0.5.0", features = ["esp32c6", "defmt"] }
+esp-ieee802154 = { version = "0.5.0", features = ["esp32c6"] }
 ieee802154 = "0.6.1"
 serde-encrypt = { version = "0.7.0", default-features = false }
 serde = { version = "1.0", default-features = false, features = [
