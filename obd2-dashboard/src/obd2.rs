@@ -79,7 +79,7 @@ impl Obd2 {
             .receive_buffer_0(RXB0CTRL::default().with_rxm(RXM::ReceiveAny).with_bukt(true))
             .receive_buffer_1(RXB1CTRL::default().with_rxm(RXM::ReceiveAny));
 
-        self.mcp2515.apply_config(&config).await?;
+        self.mcp2515.apply_config(&config, true).await?;
 
         let interputs_config = CANINTE::default().with_rx0ie(true).with_rx1ie(true);
         self.mcp2515.apply_interrupts_config(interputs_config).await?;

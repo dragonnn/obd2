@@ -24,7 +24,7 @@ pub async fn run(mut can_listen: Mcp2515) {
         .receive_buffer_0(RXB0CTRL::default().with_rxm(RXM::ReceiveAny).with_bukt(true))
         .receive_buffer_1(RXB1CTRL::default().with_rxm(RXM::ReceiveAny));
 
-    can_listen.apply_config(&config).await.ok();
+    can_listen.apply_config(&config, false).await.ok();
 
     let interputs_config = CANINTE::default().with_rx0ie(true).with_rx1ie(true);
     can_listen.apply_interrupts_config(interputs_config).await.ok();

@@ -9,8 +9,10 @@ extern crate alloc;
 use core::{mem::MaybeUninit, panic::PanicInfo};
 
 use defmt::{error, expect, info, unwrap};
-//use defmt_rtt as _;
+#[cfg(feature = "defmt-brtt")]
 use defmt_brtt as _;
+#[cfg(not(feature = "defmt-brtt"))]
+use defmt_rtt as _;
 use embassy_executor::Spawner;
 use esp_hal_embassy::main;
 use panic_persist::{self as _, get_panic_message_utf8};
@@ -44,6 +46,7 @@ fn init_heap() {
 
 #[main]
 async fn main(spawner: Spawner) {
+    #[cfg(feature = "defmt-brtt")]
     let logger = unwrap!(defmt_brtt::init());
     info!("heap init");
     init_heap();
@@ -64,6 +67,7 @@ async fn main(spawner: Spawner) {
     spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
     spawner.spawn(tasks::can_listen::run(hal.can_listen)).ok();
     spawner.spawn(tasks::power::run(hal.power)).ok();
+    #[cfg(feature = "defmt-brtt")]
     spawner.spawn(tasks::usb::run(hal.usb_serial, logger)).ok();
     spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner)).ok();
 

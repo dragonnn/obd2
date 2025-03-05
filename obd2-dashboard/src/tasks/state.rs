@@ -29,7 +29,7 @@ pub enum KiaEvent {
     Obd2Event(Obd2Event),
     Obd2Debug(Obd2Debug),
     Obd2LoopEnd(Obd2PidSets, bool),
-    Obd2Init,
+    Obd2Init(bool),
     Ticker,
 }
 
@@ -308,8 +308,8 @@ impl KiaState {
         self.power_events_pub.publish_immediate(PowerEvent::RwdtFeed);
         if let KiaEvent::Obd2Event(_) = event {
             trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
-        } else if let &KiaEvent::Obd2Init = event {
-            self.obd2_init = true;
+        } else if let &KiaEvent::Obd2Init(obd2_init) = event {
+            self.obd2_init = obd2_init;
         } else {
             match event {
                 KiaEvent::Obd2Debug(_) | KiaEvent::Obd2LoopEnd(_, _) => {

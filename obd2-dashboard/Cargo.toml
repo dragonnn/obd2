@@ -30,8 +30,8 @@ esp-backtrace = { version = "0.15.0", features = [
 riscv = "0.12.1"
 defmt = "0.3.10"
 #defmt-serial = "0.8.0"
-#defmt-rtt = "0.4.0"
-defmt-brtt = { version = "0.1.1", features = ["async-await"] }
+defmt-rtt = "0.4.0"
+defmt-brtt = { version = "0.1.1", features = ["async-await"], optional = true }
 panic-persist = { version = "0.3.0", features = [
     "custom-panic-handler",
     "utf8",
@@ -122,7 +122,7 @@ opt-level = "s"
 #esp-hal-embassy = { git = "https://github.com/esp-rs/esp-hal/", rev = "f95ab0def50130a9d7da0ba0101c921e239ecdb5" }
 
 [features]
-usb_serial = []
+defmt-brtt = ["dep:defmt-brtt"]
 
 [profile.dev.package.esp-wifi]
 opt-level = 3

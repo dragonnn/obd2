@@ -121,6 +121,7 @@ pub async fn run(mut obd2: Obd2) {
                 if obd2.init().await.is_ok() {
                     break;
                 }
+                KIA_EVENTS.send(KiaEvent::Obd2Init(false)).await;
             }
         })
         .await
@@ -129,7 +130,7 @@ pub async fn run(mut obd2: Obd2) {
             panic!("obd2 init timeout");
         }
     }
-    KIA_EVENTS.send(KiaEvent::Obd2Init).await;
+    KIA_EVENTS.send(KiaEvent::Obd2Init(true)).await;
     embassy_time::Timer::after(Duration::from_millis(100)).await;
     info!("obd2 init done");
     let mut current_sets = OBD2_SETS_CHANGED.wait().await;
