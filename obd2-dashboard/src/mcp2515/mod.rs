@@ -19,6 +19,8 @@ pub use frame::*;
 pub use idheader::*;
 pub use registers::*;
 
+use crate::event::{KiaEvent, KIA_EVENTS};
+
 pub struct Mcp2515<SPI, INT> {
     spi: SPI,
     int: INT,
@@ -56,7 +58,7 @@ where
         }
     }
 
-    pub async fn apply_config(&mut self, config: &Config<'_>) -> Result<(), SPI::Error> {
+    pub async fn apply_config(&mut self, config: &Config<'_>, obd2: bool) -> Result<(), SPI::Error> {
         let mut ok_inits = 0u8;
         loop {
             self.reset().await?;
@@ -81,6 +83,9 @@ where
                     break;
                 }
             } else {
+                if obd2 {
+                    KIA_EVENTS.send(KiaEvent::Obd2Init(false)).await;
+                }
                 Timer::after(Duration::from_millis(100)).await;
             }
         }

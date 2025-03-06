@@ -38,6 +38,7 @@ pub struct Hal {
     pub buttons: types::Cap1188,
     pub obd2: obd2::Obd2,
     pub can_listen: types::Mcp2515,
+    #[cfg(feature = "defmt-brtt")]
     pub usb_serial: types::UsbSerial,
     pub power: power::Power,
     pub led: types::Led,
@@ -177,15 +178,15 @@ pub fn init() -> Hal {
     cs_cap1188.set_high();
     cs_mcp2515.set_high();
     cs_mcp2515_2.set_high();
-    delay.delay_micros(2u32);
+    delay.delay_micros(20u32);
     rs.set_high();
 
-    delay.delay_micros(2u32);
+    delay.delay_micros(20u32);
 
     rs.set_low();
-    delay.delay_micros(2u32);
+    delay.delay_micros(20u32);
     rs.set_high();
-    delay.delay_micros(2u32);
+    delay.delay_micros(20u32);
 
     let dc2 = unsafe { core::ptr::read(&dc) };
 
@@ -210,6 +211,7 @@ pub fn init() -> Hal {
     let mcp2515 = Mcp2515::new(mcp2515_spi, int_mcp2515);
     let mcp2515_2 = Mcp2515::new(mcp2515_2_spi, int_mcp2515_2);
 
+    #[cfg(feature = "defmt-brtt")]
     let usb_serial = UsbSerialJtag::new(peripherals.USB_DEVICE).into_async();
 
     info!("HAL initialized");
@@ -231,6 +233,7 @@ pub fn init() -> Hal {
         buttons: cap1188,
         obd2: obd2::Obd2::new(mcp2515),
         can_listen: mcp2515_2,
+        #[cfg(feature = "defmt-brtt")]
         usb_serial,
         power: power::Power::new(ing, delay, rtc, rs),
         led,

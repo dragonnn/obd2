@@ -188,14 +188,6 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
     let remote_timeout = Duration::from_secs(10);
 
     let mut ieee802154 = AsyncIeee802154::new(ieee802154);
-    ieee802154
-        .transmit_txmessage(
-            TxFrame::State(types::State::Shutdown(core::time::Duration::from_secs(0))).into(),
-            1,
-            remote_timeout,
-        )
-        .await
-        .ok();
     let _shutdown_guard = ShutdownGuard::new();
     let mut shutdown_signal = get_shutdown_signal();
 

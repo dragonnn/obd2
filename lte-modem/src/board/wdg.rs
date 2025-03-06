@@ -12,8 +12,8 @@ impl Wdg {
     pub async fn new(wdt: peripherals::WDT) -> Self {
         let mut config = Config::default();
 
-        config.timeout_ticks = 32768 * 20;
-        config.action_during_sleep = SleepConfig::PAUSE;
+        config.timeout_ticks = 32768 * 300;
+        //config.action_during_sleep = SleepConfig::PAUSE;
 
         let (_wdt, [handle]) = match Watchdog::try_new(wdt, config) {
             Ok(x) => x,
