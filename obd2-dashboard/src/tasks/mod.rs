@@ -6,5 +6,6 @@ pub mod led;
 pub mod obd2;
 pub mod power;
 pub mod state;
+pub mod temperature;
 #[cfg(feature = "defmt-brtt")]
 pub mod usb;

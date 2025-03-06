@@ -61,6 +61,7 @@ async fn main(spawner: Spawner) {
 
     info!("init");
     hal.led.set_low();
+    spawner.spawn(tasks::temperature::run(hal.temperature)).ok();
     spawner.spawn(tasks::lcd::run(hal.display1, hal.display2, panic)).ok();
     spawner.spawn(tasks::led::run(hal.led)).ok();
     spawner.spawn(tasks::buttons::run(hal.buttons)).ok();

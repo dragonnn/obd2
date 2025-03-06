@@ -124,6 +124,8 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
                         txmessage_pub.send(TxFrame::State(state.clone()).into()).await;
                     }
                 }
+
+                txmessage_pub.send(TxFrame::Temperature(crate::tasks::temperature::get_temperature()).into()).await;
                 info!("send_ticker elapsed: {:?}ms", now.elapsed().as_millis());
                 send_ticker.reset();
             }

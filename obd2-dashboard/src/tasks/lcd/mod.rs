@@ -306,6 +306,10 @@ impl LcdState {
 pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&'static str>) {
     info!("lcd init start");
     embassy_time::Timer::after(Duration::from_millis(100)).await;
+    let temp = crate::tasks::temperature::get_temperature();
+    if temp < 10.0 {
+        embassy_time::Timer::after(Duration::from_secs(2)).await;
+    }
     for _ in 0..3 {
         unwrap!(display1.init(None).await);
         unwrap!(display2.init(None).await);

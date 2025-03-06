@@ -209,6 +209,7 @@ pub enum TxFrame {
     Shutdown,
     State(State),
     Error(Error),
+    Temperature(f32),
 }
 
 impl Into<TxMessage> for TxFrame {

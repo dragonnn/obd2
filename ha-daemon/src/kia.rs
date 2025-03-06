@@ -146,6 +146,13 @@ impl KiaHandler {
                     .update(state.into())
                     .await;
             }
+            TxFrame::Temperature(temperature) => {
+                self.ha_sensors
+                    .get("obd2_temperature")
+                    .unwrap()
+                    .update((*temperature).into())
+                    .await;
+            }
             TxFrame::Modem(types::Modem::Battery {
                 voltage,
                 low_voltage,

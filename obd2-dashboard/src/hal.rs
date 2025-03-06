@@ -44,6 +44,7 @@ pub struct Hal {
     pub led: types::Led,
     pub ieee802154: Ieee802154<'static>,
     pub rtc: types::Rtc,
+    pub temperature: types::TemperatureSensor,
 }
 
 macro_rules! mk_static {
@@ -227,6 +228,8 @@ pub fn init() -> Hal {
     static RTC: StaticCell<Mutex<CriticalSectionRawMutex, Rtc<'static>>> = StaticCell::new();
     let rtc = RTC.init(Mutex::new(rtc));
 
+    let temperature = unwrap!(esp_hal::tsens::TemperatureSensor::new(peripherals.TSENS, Default::default()).ok());
+
     Hal {
         display1,
         display2,
@@ -239,5 +242,6 @@ pub fn init() -> Hal {
         led,
         ieee802154,
         rtc,
+        temperature,
     }
 }

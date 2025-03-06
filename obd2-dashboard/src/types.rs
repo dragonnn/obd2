@@ -34,3 +34,4 @@ pub type Display1 = Sh1122;
 pub type Led = Output<'static>;
 pub type Rs = Output<'static>;
 pub type Rtc = &'static Mutex<CriticalSectionRawMutex, esp_hal::rtc_cntl::Rtc<'static>>;
+pub type TemperatureSensor = esp_hal::tsens::TemperatureSensor<'static>;
