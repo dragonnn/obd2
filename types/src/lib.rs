@@ -309,7 +309,7 @@ impl TxMessage {
         ret
     }
 
-    pub fn to_vec(&self) -> Result<heapless::Vec<u8, 512>, postcard::Error> {
+    pub fn to_vec(&self) -> Result<heapless07::Vec<u8, 512>, postcard::Error> {
         to_vec_crc32::<_, 512>(self, CRC.digest())
     }
 
@@ -432,6 +432,10 @@ impl PartialEq for Modem {
 pub enum RxFrame {
     TxFrameAck(MessageId),
     Modem(Modem),
+    Obd2Frame {
+        pid: u16,
+        frame: heapless08::Vec<u8, 8>,
+    },
 }
 
 impl Into<RxMessage> for RxFrame {
@@ -470,7 +474,7 @@ impl RxMessage {
         ret
     }
 
-    pub fn to_vec(&self) -> Result<heapless::Vec<u8, 512>, postcard::Error> {
+    pub fn to_vec(&self) -> Result<heapless07::Vec<u8, 512>, postcard::Error> {
         to_vec_crc32::<_, 512>(self, CRC.digest())
     }
 
