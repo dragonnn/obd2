@@ -116,7 +116,7 @@ pub async fn run(mut obd2: Obd2) {
     info!("obd2 task started");
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     {
-        if with_timeout(Duration::from_secs(480), async {
+        with_timeout(Duration::from_secs(30 * 60), async {
             loop {
                 if obd2.init().await.is_ok() {
                     break;
@@ -124,10 +124,7 @@ pub async fn run(mut obd2: Obd2) {
             }
         })
         .await
-        .is_err()
-        {
-            panic!("obd2 init timeout");
-        }
+        .ok();
     }
     KIA_EVENTS.send(KiaEvent::Obd2Init).await;
     embassy_time::Timer::after(Duration::from_millis(100)).await;

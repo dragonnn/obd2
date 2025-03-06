@@ -235,11 +235,6 @@ impl KiaState {
             event
         );
 
-        if !self.obd2_init {
-            error!("obd2 not inited");
-            //*timeout = Instant::now();
-        }
-
         match event {
             KiaEvent::Obd2Event(Obd2Event::Icu3Pid(icu3_pid)) => {
                 if icu3_pid.on_board_charger_wakeup_output {
@@ -257,19 +252,25 @@ impl KiaState {
             }
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             KiaEvent::Obd2LoopEnd(set, all) => {
+                let mut timeout_duration = Duration::from_secs(2 * 60);
+
+                if !all {
+                    timeout_duration = Duration::from_secs(10 * 60);
+                }
+
+                if !self.obd2_init {
+                    error!("obd2 not inited");
+                    timeout_duration = Duration::from_secs(30 * 60);
+                }
+
                 if set != &Obd2PidSets::IgnitionOff {
                     set_obd2_sets(Obd2PidSets::IgnitionOff).await;
-                    if timeout.elapsed().as_secs() > 5 * 60 {
-                        Transition(State::shutdown(shutdown_duration))
-                    } else {
-                        Handled
-                    }
+                }
+
+                if timeout.elapsed() > timeout_duration {
+                    Transition(State::shutdown(shutdown_duration))
                 } else {
-                    if timeout.elapsed().as_secs() > 10 * 60 || (*all && timeout.elapsed().as_secs() > 120) {
-                        Transition(State::shutdown(shutdown_duration))
-                    } else {
-                        Handled
-                    }
+                    Handled
                 }
             }
             _ => {
