@@ -44,7 +44,7 @@ mod tasks;
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
 
-#[derive(Debug, Format)]
+#[derive(Debug, Format, PartialEq, PartialOrd)]
 pub enum ResetReason {
     Dog,
     Off,
@@ -133,14 +133,19 @@ async fn main(spawner: Spawner) {
         //}
     } else {
         if reset_reasons.len() > 0 {
-            use core::fmt::Write;
-            info!("reset reasons: {:?}", reset_reasons);
-            let mut reset_reasons_str = heapless::String::<256>::new();
-            core::write!(reset_reasons_str, "{:?}", reset_reasons).ok();
-            info!("{}", reset_reasons_str);
-            reset_reasons_str.pop();
-            let reset_reasons_str = reset_reasons_str.trim_start_matches("[");
-            board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &reset_reasons_str).await.ok();
+            if reset_reasons.len() == 2 && reset_reasons[0] == ResetReason::Dog && reset_reasons[1] == ResetReason::Sreq
+            {
+            } else {
+                use core::fmt::Write;
+                info!("reset reasons: {:?}", reset_reasons);
+                let mut reset_reasons_str = heapless::String::<256>::new();
+                core::write!(reset_reasons_str, "{:?}", reset_reasons).ok();
+                info!("{}", reset_reasons_str);
+                reset_reasons_str.pop();
+                let reset_reasons_str = reset_reasons_str.trim_start_matches("[");
+                warn!("trying to send sms panic");
+                //board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &reset_reasons_str).await.ok();
+            }
         }
     }
 

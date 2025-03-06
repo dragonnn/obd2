@@ -68,7 +68,7 @@ impl Modem {
             let mut ret = Ok(Ok(()));
             for _ in 0..5 {
                 ret = embassy_time::with_timeout(
-                    Duration::from_secs(5 * 60),
+                    Duration::from_secs(30),
                     nrf_modem::Sms::new(number, text).send::<354>(),
                 )
                 .await

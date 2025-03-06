@@ -91,17 +91,31 @@ where
 
         let mut bh1749nuc = Self { i2c, irq, enabled: false };
 
-        let mut system_control = SystemControl::from(bh1749nuc.get_u8_value(REG_SYSTEM_CONTROL).await.unwrap());
-        let manufacture_id = bh1749nuc.get_u8_value(REG_MANUFACTURER_ID).await.unwrap();
-
-        assert_eq!(system_control.part_id(), VALUE_PARTID);
-        assert_eq!(manufacture_id, VALUE_MANUFACTURER_ID);
-
-        system_control.set_sw_reset(true);
-
-        bh1749nuc.set_u8_value(REG_SYSTEM_CONTROL, system_control.into()).await;
+        for i in 0..120 {
+            if bh1749nuc.inner_init().await.is_ok() {
+                break;
+            }
+        }
 
         bh1749nuc
+    }
+
+    async fn inner_init(&mut self) -> Result<(), ()> {
+        let mut system_control = SystemControl::from(self.get_u8_value(REG_SYSTEM_CONTROL).await?);
+        let manufacture_id = self.get_u8_value(REG_MANUFACTURER_ID).await?;
+
+        if system_control.part_id() != VALUE_PARTID {
+            return Err(());
+        }
+
+        if manufacture_id != VALUE_MANUFACTURER_ID {
+            return Err(());
+        }
+        system_control.set_sw_reset(true);
+
+        self.set_u8_value(REG_SYSTEM_CONTROL, system_control.into()).await;
+
+        Ok(())
     }
 
     async fn set_u8_bit(&mut self, reg: u8, bit: u8, value: bool) {
