@@ -35,8 +35,10 @@ where
         Self { spi, int }
     }
 
-    pub async fn apply_canctrl(&mut self, canctrl: CANCTRL) -> bool {
-        info!("Applying canctrl config: {:?}", canctrl.reqop());
+    pub async fn apply_canctrl(&mut self, canctrl: CANCTRL, debug: bool) -> bool {
+        if debug {
+            info!("Applying canctrl config: {:?}", canctrl.reqop());
+        }
         self.write_register(canctrl).await.ok();
         let mut canctrl_read = [0u8; 1];
         self.read_registers(CANCTRL::ADDRESS, &mut canctrl_read).await.ok();
@@ -45,12 +47,14 @@ where
         if canctrl_read[0] != written_canctrl
             && !(canctrl_read_parsed.reqop() == OperationMode::ListenOnly && canctrl.reqop() == OperationMode::Sleep)
         {
-            error!(
-                "MCP2515 canctrl config failed, expected: {:b}, got: {:b} with mode: {:?}",
-                written_canctrl,
-                canctrl_read[0],
-                canctrl_read_parsed.reqop()
-            );
+            if debug {
+                error!(
+                    "MCP2515 canctrl config failed, expected: {:b}, got: {:b} with mode: {:?}",
+                    written_canctrl,
+                    canctrl_read[0],
+                    canctrl_read_parsed.reqop()
+                );
+            }
             false
         } else {
             info!("MCP2515 canctrl config success with mode: {:?}", canctrl_read_parsed.reqop());
@@ -60,14 +64,22 @@ where
 
     pub async fn apply_config(&mut self, config: &Config<'_>, obd2: bool) -> Result<(), SPI::Error> {
         let mut ok_inits = 0u8;
+        let mut previous_canctrl = 0;
+        let mut last_init_state_event = embassy_time::Instant::now();
         loop {
             self.reset().await?;
             let mut canctrl = [0u8; 1];
             embassy_time::Timer::after_millis(100).await;
             self.read_registers(0x0F, &mut canctrl).await?;
-            info!("canctrl: {:b}", canctrl[0]);
-            if canctrl[0] != 0b10000111 {
-                error!("MCP2515 is not in configuration mode");
+            let mut debug = false;
+            if previous_canctrl != canctrl[0] {
+                debug = true;
+                previous_canctrl = canctrl[0];
+
+                info!("canctrl: {:b}", canctrl[0]);
+                if canctrl[0] != 0b10000111 {
+                    error!("MCP2515 is not in configuration mode");
+                }
             }
 
             self.set_bitrate(config.cnf).await?;
@@ -77,14 +89,15 @@ where
                 self.set_filter(filter, id_header).await?;
             }
 
-            if self.apply_canctrl(config.canctrl).await {
+            if self.apply_canctrl(config.canctrl, debug).await {
                 ok_inits += 1;
                 if ok_inits >= 3 {
                     break;
                 }
             } else {
-                if obd2 {
+                if obd2 && last_init_state_event.elapsed().as_secs() > 10 {
                     KIA_EVENTS.send(KiaEvent::Obd2Init(false)).await;
+                    last_init_state_event = embassy_time::Instant::now();
                 }
                 Timer::after(Duration::from_millis(10)).await;
             }
@@ -136,7 +149,7 @@ where
         let mut config = crate::mcp2515::Config::default().mode(OperationMode::Configuration);
         config.canctrl.set_abat(true);
         info!("Set config mode");
-        self.apply_canctrl(config.canctrl).await;
+        self.apply_canctrl(config.canctrl, true).await;
         info!("Set config mode end");
         self.write_registers(CNF3::ADDRESS, &[0]).await;
         self.write_registers(CNF2::ADDRESS, &[0]).await;
@@ -144,7 +157,7 @@ where
         config.canctrl.set_reqop(OperationMode::Sleep);
         info!("Shutting down MCP2515");
         info!("config.canctrl.clken: {:?}", config.canctrl.clken());
-        while !self.apply_canctrl(config.canctrl).await {
+        while !self.apply_canctrl(config.canctrl, true).await {
             self.reset().await;
             Timer::after(Duration::from_secs(1)).await;
         }
