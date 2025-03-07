@@ -1,13 +1,15 @@
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-use defmt::{error, info, Format};
+use defmt::*;
 use embassy_futures::select::select;
+pub use embassy_sync::watch::Watch;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex, signal::Signal};
 use embassy_time::{with_timeout, Duration};
 use serde::{Deserialize, Serialize};
 pub use types::{Pid as Obd2Event, PidError as Obd2Error};
 
 static OBD2_SETS_CHANGED: Signal<CriticalSectionRawMutex, Obd2PidSets> = Signal::new();
+static OBD2_INITED: embassy_sync::watch::Watch<CriticalSectionRawMutex, bool, 10> = Watch::new_with(false);
 
 use crate::{
     debug::internal_debug,
@@ -114,6 +116,7 @@ impl Obd2PidSets {
 #[embassy_executor::task]
 pub async fn run(mut obd2: Obd2) {
     info!("obd2 task started");
+    let obd2_inited = OBD2_INITED.sender();
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     {
         with_timeout(Duration::from_secs(30 * 60), async {
@@ -127,6 +130,7 @@ pub async fn run(mut obd2: Obd2) {
         .await
         .ok();
     }
+    obd2_inited.send(true);
     KIA_EVENTS.send(KiaEvent::Obd2Init(true)).await;
     embassy_time::Timer::after(Duration::from_millis(100)).await;
     info!("obd2 init done");
@@ -156,4 +160,16 @@ pub async fn run(mut obd2: Obd2) {
 pub async fn set_obd2_sets(sets: Obd2PidSets) {
     error!("obd2 sets changed: {:?}", sets);
     OBD2_SETS_CHANGED.signal(sets);
+}
+
+pub async fn obd2_init_wait() {
+    let mut obd2_inited_recv = unwrap!(OBD2_INITED.receiver());
+    while obd2_inited_recv.try_changed_and(|o| *o) != Some(true) {
+        obd2_inited_recv.changed().await;
+    }
+}
+
+pub fn obd2_inited() -> bool {
+    let mut obd2_inited_recv = unwrap!(OBD2_INITED.receiver());
+    obd2_inited_recv.try_changed_and(|o| *o) == Some(true)
 }

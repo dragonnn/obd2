@@ -86,7 +86,7 @@ where
                 if obd2 {
                     KIA_EVENTS.send(KiaEvent::Obd2Init(false)).await;
                 }
-                Timer::after(Duration::from_millis(100)).await;
+                Timer::after(Duration::from_millis(10)).await;
             }
         }
         Ok(())
