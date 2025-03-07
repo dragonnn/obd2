@@ -1,6 +1,6 @@
 use embassy_futures::select::select;
 
-use super::power::get_shutdown_signal;
+use super::{obd2::obd2_inited, power::get_shutdown_signal};
 
 #[embassy_executor::task]
 pub async fn run(mut led: crate::types::Led) {
@@ -10,7 +10,11 @@ pub async fn run(mut led: crate::types::Led) {
                 led.set_low();
                 embassy_time::Timer::after(embassy_time::Duration::from_millis(10)).await;
                 led.set_high();
-                embassy_time::Timer::after(embassy_time::Duration::from_secs(2)).await;
+                if obd2_inited() {
+                    embassy_time::Timer::after(embassy_time::Duration::from_secs(2)).await;
+                } else {
+                    embassy_time::Timer::after(embassy_time::Duration::from_millis(250)).await;
+                }
             }
         },
         get_shutdown_signal().next_message(),

@@ -1,7 +1,7 @@
 use defmt::*;
 use embassy_futures::select::{select, Either::*};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, signal::Signal};
-use embassy_time::{Duration, Timer};
+use embassy_time::{with_timeout, Duration, Timer};
 use embedded_graphics::geometry::{Point, Size};
 use heapless::String;
 use statig::prelude::*;
@@ -10,6 +10,7 @@ use crate::{
     debug::DEBUG_STRING_LEN,
     display::widgets::{Battery, BatteryOrientation, DebugScroll},
     event::Obd2Event,
+    tasks::obd2::obd2_init_wait,
     types::{Display1, Display2, Sh1122},
 };
 
@@ -305,11 +306,12 @@ impl LcdState {
 #[embassy_executor::task]
 pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&'static str>) {
     info!("lcd init start");
-    embassy_time::Timer::after(Duration::from_millis(100)).await;
+    embassy_time::Timer::after(Duration::from_millis(200)).await;
     let temp = crate::tasks::temperature::get_temperature();
-    if temp < 10.0 {
+    if temp < 100.0 {
         embassy_time::Timer::after(Duration::from_secs(2)).await;
     }
+    with_timeout(Duration::from_secs(60), obd2_init_wait()).await.ok();
     for _ in 0..3 {
         unwrap!(display1.init(None).await);
         unwrap!(display2.init(None).await);
