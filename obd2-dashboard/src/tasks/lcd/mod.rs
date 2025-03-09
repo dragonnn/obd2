@@ -311,22 +311,38 @@ pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&
     if temp < 100.0 {
         embassy_time::Timer::after(Duration::from_secs(2)).await;
     }
-    with_timeout(Duration::from_secs(60), obd2_init_wait()).await.ok();
-    for _ in 0..3 {
-        unwrap!(display1.init(None).await);
-        unwrap!(display2.init(None).await);
+    with_timeout(Duration::from_secs(5 * 60), obd2_init_wait()).await.ok();
+    embassy_time::Timer::after(Duration::from_millis(100)).await;
+    {
+        let lock = crate::locks::SPI_BUS.lock().await;
+        for _ in 0..3 {
+            error!("display init");
+            unwrap!(display1.init(None).await);
+            embassy_time::Timer::after(Duration::from_millis(100)).await;
+
+            unwrap!(display2.init(None).await);
+            embassy_time::Timer::after(Duration::from_millis(100)).await;
+        }
     }
+    embassy_time::Timer::after(Duration::from_millis(100)).await;
     for _ in 0..3 {
         display1.set_contrast(50).await.ok();
+        embassy_time::Timer::after(Duration::from_millis(100)).await;
+
         display2.set_contrast(50).await.ok();
+        embassy_time::Timer::after(Duration::from_millis(100)).await;
     }
+    embassy_time::Timer::after(Duration::from_millis(100)).await;
 
     display1.clear();
     display2.clear();
+    embassy_time::Timer::after(Duration::from_millis(100)).await;
 
     display1.flush().await.ok();
     display2.flush().await.ok();
     info!("lcd init end");
+    embassy_time::Timer::after(Duration::from_millis(100)).await;
+
     let mut context = LcdContext { panic };
     let mut state =
         LcdState::new(display1, display2).uninitialized_state_machine().init_with_context(&mut context).await;

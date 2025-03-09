@@ -165,7 +165,10 @@ pub async fn set_obd2_sets(sets: Obd2PidSets) {
 pub async fn obd2_init_wait() {
     let mut obd2_inited_recv = unwrap!(OBD2_INITED.receiver());
     while obd2_inited_recv.try_changed_and(|o| *o) != Some(true) {
-        obd2_inited_recv.changed().await;
+        match with_timeout(Duration::from_millis(100), obd2_inited_recv.changed()).await {
+            Ok(true) => break,
+            Err(_) | Ok(false) => {}
+        }
     }
 }
 
