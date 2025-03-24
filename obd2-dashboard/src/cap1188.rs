@@ -90,7 +90,7 @@ where
         self.write_register(CAP1188_MAIN, &[0b1000_0000]).await?;
         self.write_register(
             CAP1188_CONFIGURATION_1,
-            &Cap1188Configuration1::from_bytes([0x20]).with_dis_ana_noise(true).with_dis_dig_noise(true).into_bytes(),
+            &Cap1188Configuration1::from_bytes([0x20]).with_dis_ana_noise(true).into_bytes(),
         )
         .await?;
 
