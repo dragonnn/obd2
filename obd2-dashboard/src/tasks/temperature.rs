@@ -11,7 +11,6 @@ static TEMPERATURE: AtomicI32 = AtomicI32::new(0);
 pub async fn run(temperature: crate::types::TemperatureSensor) {
     loop {
         let temp = temperature.get_temperature().to_celsius();
-        info!("Temperature: {}°C", temp);
         TEMPERATURE.store(temp as i32 * 1000, Ordering::Relaxed);
 
         embassy_time::Timer::after(Duration::from_secs(1)).await;

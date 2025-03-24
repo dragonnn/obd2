@@ -202,6 +202,7 @@ impl Obd2 {
     pub async fn handle_pid<PID: Pid + core::any::Any>(&mut self) -> bool {
         if !self.obd2_pid_errors.is_empty() && self.obd2_pid_errors.iter().all(|(_, errors)| *errors >= 10) {
             warn!("too many errors, clearing errors");
+            self.init().await.ok();
             self.obd2_pid_errors.clear();
         }
 

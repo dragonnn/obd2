@@ -28,6 +28,7 @@ mod mcp2515;
 mod obd2;
 mod pid;
 mod power;
+mod prelude;
 mod tasks;
 mod types;
 

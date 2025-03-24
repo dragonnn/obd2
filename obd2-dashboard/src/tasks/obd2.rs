@@ -1,4 +1,4 @@
-use core::sync::atomic::{AtomicUsize, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use defmt::*;
 use embassy_futures::select::select;
@@ -10,6 +10,7 @@ pub use types::{Pid as Obd2Event, PidError as Obd2Error};
 
 static OBD2_SETS_CHANGED: Signal<CriticalSectionRawMutex, Obd2PidSets> = Signal::new();
 static OBD2_INITED: embassy_sync::watch::Watch<CriticalSectionRawMutex, bool, 10> = Watch::new_with(false);
+static OBD2_INIT: AtomicBool = AtomicBool::new(false);
 
 use crate::{
     debug::internal_debug,
@@ -119,7 +120,7 @@ pub async fn run(mut obd2: Obd2) {
     let obd2_inited = OBD2_INITED.sender();
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     {
-        with_timeout(Duration::from_secs(30 * 60), async {
+        with_timeout(Duration::from_secs(60), async {
             loop {
                 if obd2.init().await.is_ok() {
                     break;
@@ -131,6 +132,7 @@ pub async fn run(mut obd2: Obd2) {
         .ok();
     }
     obd2_inited.send(true);
+    OBD2_INIT.store(true, Ordering::Relaxed);
     KIA_EVENTS.send(KiaEvent::Obd2Init(true)).await;
     embassy_time::Timer::after(Duration::from_millis(100)).await;
     info!("obd2 init done");
@@ -167,12 +169,16 @@ pub async fn obd2_init_wait() {
     while obd2_inited_recv.try_changed_and(|o| *o) != Some(true) {
         match with_timeout(Duration::from_millis(100), obd2_inited_recv.changed()).await {
             Ok(true) => break,
-            Err(_) | Ok(false) => {}
+            Ok(false) => {}
+            Err(_) => {
+                if OBD2_INIT.load(Ordering::Relaxed) {
+                    break;
+                }
+            }
         }
     }
 }
 
 pub fn obd2_inited() -> bool {
-    let mut obd2_inited_recv = unwrap!(OBD2_INITED.receiver());
-    obd2_inited_recv.try_changed_and(|o| *o) == Some(true)
+    OBD2_INIT.load(Ordering::Relaxed)
 }

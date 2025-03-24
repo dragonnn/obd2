@@ -35,7 +35,8 @@ where
         Self { spi, int }
     }
 
-    pub async fn apply_canctrl(&mut self, canctrl: CANCTRL, debug: bool) -> bool {
+    pub async fn apply_canctrl(&mut self, canctrl: CANCTRL, mut debug: bool) -> bool {
+        debug = true;
         if debug {
             info!("Applying canctrl config: {:?}", canctrl.reqop());
         }

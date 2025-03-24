@@ -103,22 +103,22 @@ impl embassy_embedded_hal::SetConfig for SpiBus {
     type ConfigError = ();
 
     fn set_config(&mut self, config: &Self::Config) -> Result<(), Self::ConfigError> {
-        let mut mhz = config.MHz();
+        let mut khz = config.kHz();
         let mut elapsed_secs = self.elapsed.elapsed().as_secs();
         if elapsed_secs < SPI_RAMP_UP_SECS {
             if elapsed_secs < 1 {
                 elapsed_secs = 1;
             }
-            mhz = (mhz * elapsed_secs as u32) / SPI_RAMP_UP_SECS as u32;
+            khz = (khz * elapsed_secs as u32) / SPI_RAMP_UP_SECS as u32;
         }
 
-        if self.speed == Some(mhz) {
+        if self.speed == Some(khz) {
             return Ok(());
         }
 
         let config = esp_hal::spi::master::Config::default().with_frequency(config.MHz()).with_mode(SpiMode::_0);
         self.spi.apply_config(&config).ok();
-        self.speed = Some(mhz);
+        self.speed = Some(khz);
         Ok(())
     }
 }
