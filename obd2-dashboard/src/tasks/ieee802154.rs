@@ -20,7 +20,7 @@ use types::{MessageId, Pid, RxFrame, RxMessage, TxFrame, TxMessage};
 use super::power::ShutdownGuard;
 use crate::{
     event::{event_bus_sub, Event, KiaEvent},
-    tasks::power::get_shutdown_signal,
+    tasks::{obd2, power::get_shutdown_signal},
 };
 
 static SEND_NOW_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
@@ -143,26 +143,28 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
                 }
                 txmessage_pub.send(extra_txframe.into()).await;
             }
-            Fourth(received_frame) => {
-                if let types::RxFrame::Modem(modem) = received_frame.frame {
-                    match modem {
-                        types::Modem::Reset => info!("modem reset"),
-                        types::Modem::GnssState(gnss_state) => info!("gnss_state: {:?}", gnss_state),
-                        types::Modem::GnssFix(gnss_fix) => {
-                            warn!("gnss_fix: {:?}", gnss_fix);
-                        }
-                        types::Modem::Connected => info!("modem connected"),
-                        types::Modem::Disconnected => info!("modem disconnected"),
-                        types::Modem::Battery { voltage, low_voltage, soc, charging } => info!(
-                            "battery: voltage: {:?} low_voltage: {:?} soc: {:?} charging: {:?}",
-                            voltage, low_voltage, soc, charging
-                        ),
-                        types::Modem::Boot => info!("modem boot"),
-                        types::Modem::Ping => info!("modem ping"),
-                        types::Modem::Pong => info!("modem pong"),
+            Fourth(received_frame) => match received_frame.frame {
+                types::RxFrame::Modem(modem) => match modem {
+                    types::Modem::Reset => info!("modem reset"),
+                    types::Modem::GnssState(gnss_state) => info!("gnss_state: {:?}", gnss_state),
+                    types::Modem::GnssFix(gnss_fix) => {
+                        warn!("gnss_fix: {:?}", gnss_fix);
                     }
+                    types::Modem::Connected => info!("modem connected"),
+                    types::Modem::Disconnected => info!("modem disconnected"),
+                    types::Modem::Battery { voltage, low_voltage, soc, charging } => info!(
+                        "battery: voltage: {:?} low_voltage: {:?} soc: {:?} charging: {:?}",
+                        voltage, low_voltage, soc, charging
+                    ),
+                    types::Modem::Boot => info!("modem boot"),
+                    types::Modem::Ping => info!("modem ping"),
+                    types::Modem::Pong => info!("modem pong"),
+                },
+                RxFrame::Obd2Frame(obd2_frame) => {
+                    obd2::send_custom_frame(obd2_frame).await;
                 }
-            }
+                _ => {}
+            },
         }
     }
 }

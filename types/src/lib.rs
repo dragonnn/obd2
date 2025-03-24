@@ -20,6 +20,12 @@ static CRC: Crc<u32> = Crc::<u32>::new(&CRC_32_ISCSI);
 static SHARED_KEY: &[u8; 32] = include_bytes!("../../shared_key.bin");
 
 #[derive(Default, Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+pub struct Obd2Frame {
+    pub pid: u16,
+    pub data: heapless08::Vec<u8, 512>,
+}
+
+#[derive(Default, Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub struct AcPid {
     pub gear: i32,
 }
@@ -205,6 +211,7 @@ impl Eq for Pid {}
 pub enum TxFrame {
     Obd2Pid(Pid),
     Obd2PidError(PidError),
+    Obd2Frame(Obd2Frame),
     Modem(Modem),
     Shutdown,
     State(State),
@@ -432,10 +439,7 @@ impl PartialEq for Modem {
 pub enum RxFrame {
     TxFrameAck(MessageId),
     Modem(Modem),
-    Obd2Frame {
-        pid: u16,
-        frame: heapless08::Vec<u8, 8>,
-    },
+    Obd2Frame(Obd2Frame),
 }
 
 impl Into<RxMessage> for RxFrame {

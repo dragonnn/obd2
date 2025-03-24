@@ -3,9 +3,10 @@ use core::{any::TypeId, convert::Infallible};
 use defmt::{error, info, unwrap, warn};
 use embassy_embedded_hal::shared_bus::SpiDeviceError;
 use embassy_time::{with_timeout, Duration, Instant};
-use embedded_can::Frame as _;
+use embedded_can::{Frame as _, StandardId};
 use heapless::Entry;
 use static_cell::make_static;
+use types::Obd2Frame;
 
 use crate::{
     debug::internal_debug,
@@ -92,13 +93,9 @@ impl Obd2 {
         self.mcp2515.shutdown().await;
     }
 
-    pub async fn request_pid<PID: Pid>(&mut self) -> Result<(PID, alloc::vec::Vec<u8>), Obd2Error> {
+    async fn request<'a>(&'a mut self, request: &CanFrame) -> Result<&'a [u8], Obd2Error> {
         let mut _lock = Some(crate::locks::SPI_BUS.lock().await);
-
         self.mcp2515.clear_interrupts().await?;
-        let request = PID::request();
-
-        internal_debug!("req pid {:x}: {:x?}", request.id_header.get_i32(), request.data);
         let flow_control = unwrap!(CanFrame::new(request.id(), &[0x30, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
         self.mcp2515.load_tx_buffer(TxBuffer::TXB0, &request).await?;
         self.mcp2515.request_to_send(TxBuffer::TXB0).await?;
@@ -125,7 +122,9 @@ impl Obd2 {
                 match obd2_frame_type {
                     0x02 | 0x04 | 0x00 => {
                         //internal_debug!("single frame {:x?}", can_frame.data);
-                        obd2_data = Some(can_frame.data.as_slice());
+                        self.obd2_message_buffer.clear();
+                        self.obd2_message_buffer.extend_from_slice(&can_frame.data);
+                        obd2_data = Some(self.obd2_message_buffer.as_slice());
                         break 'outer;
                     }
                     0x10 => {
@@ -167,7 +166,9 @@ impl Obd2 {
                     _ => {
                         if can_frame.data[0] == 0x03 {
                             //internal_debug!("single frame in 0x03 {:x?}", can_frame.data);
-                            obd2_data = Some(can_frame.data.as_slice());
+                            self.obd2_message_buffer.clear();
+                            self.obd2_message_buffer.extend_from_slice(&can_frame.data);
+                            obd2_data = Some(self.obd2_message_buffer.as_slice());
                             break 'outer;
                         } else {
                             internal_debug!("unknown frame {:x?}", can_frame.data);
@@ -188,16 +189,21 @@ impl Obd2 {
         }
 
         if let Some(obd2_data) = obd2_data {
-            let pid = PID::parse(obd2_data)?;
-            let mut buffer = alloc::vec::Vec::new();
-            if obd2_debug_pids_enabled() {
-                buffer.extend_from_slice(obd2_data);
-            }
-            Ok((pid, buffer))
+            Ok(obd2_data)
         } else {
             error!("no obd2_data found");
             Err(Obd2Error::DataNotFound)
         }
+    }
+
+    pub async fn request_pid<PID: Pid>(&mut self) -> Result<(PID, alloc::vec::Vec<u8>), Obd2Error> {
+        let request = PID::request();
+
+        internal_debug!("req pid {:x}: {:x?}", request.id_header.get_i32(), request.data);
+        let obd2_data = self.request(&request).await?;
+
+        let pid = PID::parse(&obd2_data)?;
+        Ok((pid, if obd2_debug_pids_enabled() { obd2_data.to_vec() } else { alloc::vec::Vec::new() }))
     }
 
     pub async fn reset(&mut self) {
@@ -279,6 +285,14 @@ impl Obd2 {
         self.obd2_pid_errors.clear();
         self.obd2_pid_errors_periods.clear();
         self.obd2_pid_periods.clear();
+    }
+
+    pub async fn send_custom_frame(&mut self, frame: Obd2Frame) -> Result<Obd2Frame, Obd2Error> {
+        let can_id = unwrap!(StandardId::new(frame.pid));
+        let can_frame = unwrap!(CanFrame::new(can_id, &frame.data));
+
+        let response = self.request(&can_frame).await?;
+        Ok(Obd2Frame { pid: frame.pid, data: unwrap!(heapless::Vec::from_slice(response)) })
     }
 }
 

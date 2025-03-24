@@ -1,9 +1,9 @@
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use defmt::*;
-use embassy_futures::select::select;
+use embassy_futures::select::{select, Either};
 pub use embassy_sync::watch::Watch;
-use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex, signal::Signal};
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, mutex::Mutex, signal::Signal};
 use embassy_time::{with_timeout, Duration};
 use serde::{Deserialize, Serialize};
 pub use types::{Pid as Obd2Event, PidError as Obd2Error};
@@ -11,13 +11,14 @@ pub use types::{Pid as Obd2Event, PidError as Obd2Error};
 static OBD2_SETS_CHANGED: Signal<CriticalSectionRawMutex, Obd2PidSets> = Signal::new();
 static OBD2_INITED: embassy_sync::watch::Watch<CriticalSectionRawMutex, bool, 10> = Watch::new_with(false);
 static OBD2_INIT: AtomicBool = AtomicBool::new(false);
+static OBD2_CUSTOM_FRAMES: Channel<CriticalSectionRawMutex, types::Obd2Frame, 8> = Channel::new();
 
 use crate::{
     debug::internal_debug,
     event::{KiaEvent, KIA_EVENTS},
     obd2::{Obd2, Pid},
     pid,
-    tasks::power::get_shutdown_signal,
+    tasks::{ieee802154::extra_txframes_pub, power::get_shutdown_signal},
 };
 
 #[derive(PartialEq, Clone)]
@@ -122,6 +123,7 @@ impl Obd2PidSets {
 pub async fn run(mut obd2: Obd2) {
     info!("obd2 task started");
     let obd2_inited = OBD2_INITED.sender();
+    let ieee802154_extra_txframes_pub = extra_txframes_pub();
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     {
         with_timeout(Duration::from_secs(60), async {
@@ -140,6 +142,7 @@ pub async fn run(mut obd2: Obd2) {
     KIA_EVENTS.send(KiaEvent::Obd2Init(true)).await;
     embassy_time::Timer::after(Duration::from_millis(100)).await;
     info!("obd2 init done");
+    let obd2_custom_frames_recv = OBD2_CUSTOM_FRAMES.receiver();
     let mut current_sets = OBD2_SETS_CHANGED.wait().await;
     select(
         async {
@@ -154,7 +157,15 @@ pub async fn run(mut obd2: Obd2) {
                 let all = current_sets.handle(&mut obd2).await;
 
                 KIA_EVENTS.send(KiaEvent::Obd2LoopEnd(current_sets, all)).await;
-                current_sets.loop_delay().await;
+                match select(obd2_custom_frames_recv.receive(), current_sets.loop_delay()).await {
+                    Either::First(obd2_custom_frame) => {
+                        warn!("obd2 custom frame: {:?}", obd2_custom_frame);
+                        if let Ok(response) = obd2.send_custom_frame(obd2_custom_frame).await {
+                            ieee802154_extra_txframes_pub.publish(types::TxFrame::Obd2Frame(response)).await;
+                        }
+                    }
+                    Either::Second(_) => {}
+                }
             }
         },
         get_shutdown_signal().next_message(),
@@ -185,4 +196,8 @@ pub async fn obd2_init_wait() {
 
 pub fn obd2_inited() -> bool {
     OBD2_INIT.load(Ordering::Relaxed)
+}
+
+pub async fn send_custom_frame(frame: types::Obd2Frame) {
+    OBD2_CUSTOM_FRAMES.send(frame).await;
 }
