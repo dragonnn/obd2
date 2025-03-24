@@ -19,10 +19,14 @@ mod serializer;
 static CRC: Crc<u32> = Crc::<u32>::new(&CRC_32_ISCSI);
 static SHARED_KEY: &[u8; 32] = include_bytes!("../../shared_key.bin");
 
-#[derive(Default, Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Default, Debug, PartialEq, Clone, Deserialize, Serialize)]
 pub struct Obd2Frame {
     pub pid: u16,
-    pub data: heapless08::Vec<u8, 512>,
+    pub data: alloc::vec::Vec<u8>,
+}
+
+impl defmt::Format for Obd2Frame {
+    fn format(&self, f: defmt::Formatter) {}
 }
 
 #[derive(Default, Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
