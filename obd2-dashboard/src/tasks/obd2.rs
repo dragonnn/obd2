@@ -74,6 +74,10 @@ impl Obd2PidSets {
         ret = obd2.handle_pid::<pid::OnBoardChargerPid>().await && ret;
         ret = obd2.handle_pid::<pid::Icu1Smk>().await && ret;
 
+        if !ret {
+            obd2.reset().await;
+        }
+
         ret
     }
 

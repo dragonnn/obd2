@@ -56,6 +56,7 @@ const CAP1188_MAIN: u8 = 0x00; // Main Control register. Controls the primary po
 const CAP1188_MAIN_INT: u8 = 0x01; // Main Control Int register. Indicates that there is an interrupt.
 const CAP1188_LEDPOL: u8 = 0x73; // LED Polarity. Controls the output polarity of LEDs.
 const CAP1188_CONFIGURATION_1: u8 = 0x20; // Configuration 1;
+const CAP1188_CALIBRATION_ACTIVE: u8 = 0x26; // Calibration Active. Controls the calibration process.
 
 impl<SPI, INT> Cap1188<SPI, INT>
 where
@@ -89,7 +90,7 @@ where
         self.write_register(CAP1188_MAIN, &[0b1000_0000]).await?;
         self.write_register(
             CAP1188_CONFIGURATION_1,
-            &Cap1188Configuration1::from_bytes([0x20]).with_dis_ana_noise(true).into_bytes(),
+            &Cap1188Configuration1::from_bytes([0x20]).with_dis_ana_noise(true).with_dis_dig_noise(true).into_bytes(),
         )
         .await?;
 
@@ -140,5 +141,18 @@ where
 
     pub async fn wait_for_released(&mut self) {
         self.int.wait_for_any_edge().await.ok();
+    }
+
+    pub async fn calibrate(&mut self) -> Result<(), SPI::Error> {
+        self.write_register(CAP1188_CALIBRATION_ACTIVE, &[0xFF]).await?;
+        loop {
+            let mut out_buf = [0; 1];
+            self.read_register(CAP1188_CALIBRATION_ACTIVE, &mut out_buf).await?;
+            if out_buf[0] == 0 {
+                info!("calibration done");
+                break;
+            }
+        }
+        Ok(())
     }
 }

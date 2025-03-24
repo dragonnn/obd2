@@ -37,6 +37,7 @@ pub async fn run(mut cap1188: Cap1188) {
     }*/
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     cap1188.reset().await.ok();
+
     loop {
         match cap1188.init().await {
             Ok(true) => {
@@ -54,6 +55,7 @@ pub async fn run(mut cap1188: Cap1188) {
         }
     }
     info!("cap1188 task started");
+    cap1188.calibrate().await.ok();
     let mut old_touched = unwrap!(cap1188.touched().await);
     let mut old_touched_bytes = old_touched.into_bytes()[0];
     let mut last_touched = embassy_time::Instant::now();
