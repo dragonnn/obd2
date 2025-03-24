@@ -24,7 +24,7 @@ impl LcdMenuState {
     pub fn handle_button(&mut self, button: &Action) -> Option<Response<State>> {
         info!("menu button: {:?}", button);
         match button {
-            Action::Pressed(Button::B4) => Some(Transition(State::main(LcdMainState::new()))),
+            Action::Pressed(Button::B5) => Some(Transition(State::main(LcdMainState::new()))),
             Action::Pressed(Button::B2) => Some(Transition(State::debug(LcdDebugState::new()))),
             Action::Pressed(Button::B1) => Some(Transition(State::obd2_pids(LcdObd2Pids::new()))),
             Action::Pressed(Button::B0) => Some(Transition(State::settings(LcdSettingsState::new()))),
