@@ -81,7 +81,7 @@ impl HaWs {
     pub async fn send(&mut self, msg: crate::ha::OutgoingMessage) -> HaWsResult<()> {
         let text = serde_json::to_string(&msg)?;
         trace!("send: {}", text);
-        self.ws.send(Message::Text(text)).await?;
+        self.ws.send(Message::Text(text.into())).await?;
         Ok(())
     }
 }

@@ -1,13 +1,14 @@
 use crate::{config::Config, ha::device::UpdateLocation, sensor, HaStateEvent};
 use openssl::ssl::{Ssl, SslContext, SslFiletype, SslMethod};
 use postcard::{from_bytes, to_stdvec, to_vec};
+use remoc::rch;
 use serde_encrypt::{shared_key::SharedKey, traits::SerdeEncryptSharedKey as _, EncryptedMessage};
 use std::{
     collections::HashMap, net::SocketAddr, path::PathBuf, pin::Pin, sync::Arc, time::Duration,
 };
 use tokio::{
     io::{AsyncReadExt as _, AsyncWriteExt as _},
-    sync::mpsc::UnboundedSender,
+    sync::mpsc::{UnboundedReceiver, UnboundedSender},
     time::timeout,
 };
 use tokio_openssl::SslStream;
@@ -34,10 +35,17 @@ impl KiaHandler {
         })
     }
 
-    pub async fn run(self: Arc<Self>) {
+    pub async fn run(
+        self: Arc<Self>,
+        mut rpc_custom_frame_receiver: UnboundedReceiver<(
+            types::Obd2Frame,
+            rch::oneshot::Sender<()>,
+            rch::oneshot::Sender<types::Obd2Frame>,
+        )>,
+    ) {
         tokio::spawn(async move {
             loop {
-                if let Err(err) = self.inner().await {
+                if let Err(err) = self.inner(&mut rpc_custom_frame_receiver).await {
                     error!("KiaHandler error: {:?}", err);
                 }
             }
@@ -174,7 +182,14 @@ impl KiaHandler {
         }
     }
 
-    async fn inner(&self) -> anyhow::Result<()> {
+    async fn inner(
+        &self,
+        rpc_custom_frame_receiver: &mut UnboundedReceiver<(
+            types::Obd2Frame,
+            rch::oneshot::Sender<()>,
+            rch::oneshot::Sender<types::Obd2Frame>,
+        )>,
+    ) -> anyhow::Result<()> {
         //let mut listener =
         //    UdpListener::bind(SocketAddr::from(([0, 0, 0, 0], self.config.kia.port))).await?;
         let shared_key_bytes = include_bytes!("../../shared_key.bin");
@@ -231,6 +246,51 @@ impl KiaHandler {
                 }
                 Err(err) => {
                     error!("Error deserializing message: {:?}", err);
+                }
+            }
+            if let Ok((frame, tx_sended, tx_response)) = rpc_custom_frame_receiver.try_recv() {
+                let txmessage: types::RxMessage = types::RxFrame::Obd2Frame(frame).into();
+                let encrypted_message = txmessage.to_vec_encrypted().unwrap();
+                socket
+                    .send_to(encrypted_message.as_slice(), new_peer)
+                    .await?;
+
+                tx_sended.send(()).unwrap();
+                let rx_frame =
+                    timeout(Duration::from_secs(120), socket.recv_from(&mut buffer)).await;
+                match rx_frame {
+                    Ok(Ok((n, _))) => {
+                        let data = buffer[..n].to_vec();
+                        match EncryptedMessage::deserialize(data) {
+                            Ok(encrypted_message) => {
+                                match TxMessage::decrypt_owned(&encrypted_message, &shared_key) {
+                                    Ok(txmessage) => {
+                                        info!("Received txframe: {:?}", txmessage);
+                                        match txmessage.frame {
+                                            types::TxFrame::Obd2Frame(obd2_frame) => {
+                                                tx_response.send(obd2_frame).unwrap();
+                                            }
+                                            _ => {
+                                                error!("Invalid txframe: {:?}", txmessage);
+                                            }
+                                        }
+                                    }
+                                    Err(err) => {
+                                        error!("Error decrypting message: {:?}", err);
+                                    }
+                                }
+                            }
+                            Err(err) => {
+                                error!("Error deserializing message: {:?}", err);
+                            }
+                        }
+                    }
+                    Ok(Err(err)) => {
+                        error!("Error receiving ack frame: {:?}", err);
+                    }
+                    Err(_) => {
+                        error!("Timeout waiting for ack frame");
+                    }
                 }
             }
         }

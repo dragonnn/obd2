@@ -19,6 +19,8 @@ mod db;
 mod ha;
 mod kia;
 mod prelude;
+mod rpc;
+mod rpc_server;
 mod sensor;
 
 use prelude::*;
@@ -313,7 +315,10 @@ async fn main() {
     event_sender.send(HaStateEvent::Step).unwrap();
 
     let kia = kia::KiaHandler::new(config, ha_sensors, event_sender);
-    kia.run().await;
+
+    let (rpc_custom_frame_request_sender, rpc_custom_frame_request_receiver) = unbounded_channel();
+
+    kia.run(rpc_custom_frame_request_receiver).await;
     tokio::spawn(async move {
         loop {
             let event = event_receiver.recv().await.unwrap();
@@ -322,6 +327,7 @@ async fn main() {
         }
     });
 
+    rpc_server::start(rpc_custom_frame_request_sender).await;
     tokio::signal::ctrl_c().await.unwrap();
     db.stop().await;
     db_join_handle.await.unwrap();
