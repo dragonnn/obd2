@@ -41,6 +41,12 @@ mod tasks;
 #[used]
 static SPM: [u8; 33684] = *include_bytes!("../spm.bin");
 
+/*
+#[link_section = ".spm"]
+#[used]
+static SPM: [u8; 24052] = *include_bytes!("zephyr.bin");
+*/
+
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
 
@@ -165,9 +171,6 @@ async fn main(spawner: Spawner) {
     tasks::modem::task(board.modem, &spawner).await;
 }
 
-#[link_section = ".spm"]
-#[used]
-static SPM: [u8; 24052] = *include_bytes!("zephyr.bin");
 use cortex_m_rt::ExceptionFrame;
 #[cortex_m_rt::exception]
 unsafe fn HardFault(e: &ExceptionFrame) -> ! {
