@@ -16,7 +16,7 @@ pub use adxl362::Adxl362;
 pub use adxl372::Adxl372;
 pub use bh1749nuc::Bh1749nuc;
 pub use button::Button;
-use defmt::error;
+use defmt::{debug, error, info};
 use embassy_embedded_hal::shared_bus::asynch::{i2c::I2cDevice, spi::SpiDevice};
 use embassy_nrf::{
     bind_interrupts,
@@ -97,9 +97,43 @@ pub struct Board {
     pub gnss_force_on: Option<Output<'static>>,
 }
 
+extern "C" {
+    static __start_ipc: u8;
+    static __end_ipc: u8;
+}
+
 impl Board {
     pub async fn new() -> Board {
+        info!("board initializing");
         let p = embassy_nrf::init(Default::default());
+        info!("nrf9160 initializing");
+
+        // The RAM memory space is divided into 32 regions of 8 KiB.
+        // Set IPC RAM to nonsecure
+        const SPU_REGION_SIZE: u32 = 0x2000; // 8kb
+        const RAM_START: u32 = 0x2000_0000; // 256kb
+        let ipc_start: u32 = unsafe { &__start_ipc as *const u8 } as u32;
+        let ipc_reg_offset = (ipc_start - RAM_START) / SPU_REGION_SIZE;
+        let ipc_reg_count = (unsafe { &__end_ipc as *const u8 } as u32 - ipc_start) / SPU_REGION_SIZE;
+        let spu = embassy_nrf::pac::SPU;
+        let range = ipc_reg_offset..(ipc_reg_offset + ipc_reg_count);
+        debug!("marking region as non secure: {}", range);
+        for i in range {
+            spu.ramregion(i as usize).perm().write(|w| {
+                w.set_execute(true);
+                w.set_write(true);
+                w.set_read(true);
+                w.set_secattr(false);
+                w.set_lock(false);
+            })
+        }
+
+        // Set regulator access registers to nonsecure
+        spu.periphid(4).perm().write(|w| w.set_secattr(false));
+        // Set clock and power access registers to nonsecure
+        spu.periphid(5).perm().write(|w| w.set_secattr(false));
+        // Set IPC access register to nonsecure
+        spu.periphid(42).perm().write(|w| w.set_secattr(false));
 
         defmt::info!("lightwell initializing");
         let mut lightwell = Rgb::new(p.PWM1, p.P0_29, p.P0_30, p.P0_31, true);
@@ -114,15 +148,22 @@ impl Board {
         defmt::info!("sense initializing");
         let sense = Rgb::new(p.PWM2, p.P0_00, p.P0_01, p.P0_02, true);
         defmt::info!("modem initializing");
-        let modem = Modem::new().await;
+        let modem = Modem::new(ipc_start).await;
 
-        embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
+        Timer::after(embassy_time::Duration::from_secs(10)).await;
         defmt::info!("battery initializing");
 
         Timer::after(Duration::from_millis(200)).await;
 
+        info!("twim2 initializing");
+
         let mut twi2 = destruct_twim::DestructTwim::new().await;
+
+        info!("twim2 initialized");
+
         twi2.reset(0xFF).await;
+
+        info!("twim2 reset");
 
         /*let twi2 = Twim::new(p.SERIAL2, TwiIrqs, p.P0_11, p.P0_12, twi2_config);
         unsafe {

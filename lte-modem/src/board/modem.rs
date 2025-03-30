@@ -1,5 +1,5 @@
 use cortex_m::peripheral::NVIC;
-use defmt::unwrap;
+use defmt::{info, unwrap};
 use embassy_nrf::{
     interrupt,
     interrupt::{Interrupt, InterruptExt, Priority},
@@ -7,7 +7,7 @@ use embassy_nrf::{
 };
 use embassy_time::Duration;
 use heapless::String;
-use nrf_modem::{ConnectionPreference, LteLink, SystemMode};
+use nrf_modem::{ConnectionPreference, LteLink, MemoryLayout, SystemMode};
 
 use super::gnss::Gnss;
 use crate::tasks::reset::ResetGuard;
@@ -20,7 +20,7 @@ fn IPC() {
 pub struct Modem {}
 
 impl Modem {
-    pub async fn new() -> Self {
+    pub async fn new(ipc_start: u32) -> Self {
         let mut cp = unwrap!(cortex_m::Peripherals::take());
 
         // Enable the modem interrupts
@@ -29,15 +29,21 @@ impl Modem {
             cp.NVIC.set_priority(pac::Interrupt::IPC, 0 << 5);
         }
 
-        nrf_modem::init(SystemMode {
-            lte_support: true,
-            lte_psm_support: false,
-            nbiot_support: false,
-            gnss_support: true,
-            preference: ConnectionPreference::Lte,
-        })
+        info!("modem initializing with ipc_start: {:#x}", ipc_start);
+
+        nrf_modem::init_with_custom_layout(
+            SystemMode {
+                lte_support: true,
+                lte_psm_support: false,
+                nbiot_support: false,
+                gnss_support: true,
+                preference: ConnectionPreference::Lte,
+            },
+            MemoryLayout { base_address: ipc_start, tx_area_size: 0x2000, rx_area_size: 0x2000, trace_area_size: 0 },
+        )
         .await
         .unwrap();
+        info!("modem initialized");
         Self {}
     }
 

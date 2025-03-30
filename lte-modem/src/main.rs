@@ -37,13 +37,13 @@ mod config;
 mod led;
 mod tasks;
 
-//#[link_section = ".spm"]
-//#[used]
-//static SPM: [u8; 33684] = *include_bytes!("../spm.bin");
-
 #[link_section = ".spm"]
 #[used]
-static SPM: [u8; 24052] = *include_bytes!("zephyr.bin");
+static SPM: [u8; 33684] = *include_bytes!("../spm.bin");
+
+//#[link_section = ".spm"]
+//#[used]
+//static SPM: [u8; 24052] = *include_bytes!("zephyr.bin");
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -68,11 +68,14 @@ async fn main(spawner: Spawner) {
         static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
         unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
     }
+    info!("heap initialized");
 
     let mut reset_reasons: heapless::Vec<ResetReason, 6> = heapless::Vec::new();
     unsafe {
+        info!("getting reset reasons");
         let pac = nrf9160_pac::Peripherals::steal();
-        let reset_reason = pac.POWER_NS.resetreas.read();
+        info!("got pac");
+        let reset_reason = pac.POWER_S.resetreas.read();
         if reset_reason.resetpin().bit_is_set() {
             reset_reasons.push(ResetReason::ResetPin).ok();
         }
@@ -95,10 +98,11 @@ async fn main(spawner: Spawner) {
             reset_reasons.push(ResetReason::CtrlAp).ok();
         }
     }
+    info!("got reset reasons");
     let panic_message = get_panic_message_utf8();
+    info!("got panic message");
     if let Some(panic) = panic_message {
         defmt::error!("{}", panic);
-        Timer::after(Duration::from_millis(500)).await;
     }
     defmt::info!("starting");
 
@@ -110,7 +114,7 @@ async fn main(spawner: Spawner) {
 
     Timer::after(Duration::from_secs(1)).await;
 
-    let gnss = unwrap!(board.modem.gnss().await);
+    //let gnss = unwrap!(board.modem.gnss().await);
 
     let sense = unwrap!(board.sense.take());
     let lightwell = unwrap!(board.lightwell.take());
@@ -130,7 +134,6 @@ async fn main(spawner: Spawner) {
     let gnss_force_on = unwrap!(board.gnss_force_on.take());
 
     //unwrap!(spawner.spawn(tasks::logger::task(logger, uarte_tx_debug, panic_message)));
-
     if let Some(panic) = panic_message {
         //if !panic.contains("twi reset") {
         board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, panic).await.ok();
