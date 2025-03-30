@@ -37,15 +37,13 @@ mod config;
 mod led;
 mod tasks;
 
-#[link_section = ".spm"]
-#[used]
-static SPM: [u8; 33684] = *include_bytes!("../spm.bin");
+//#[link_section = ".spm"]
+//#[used]
+//static SPM: [u8; 33684] = *include_bytes!("../spm.bin");
 
-/*
 #[link_section = ".spm"]
 #[used]
 static SPM: [u8; 24052] = *include_bytes!("zephyr.bin");
-*/
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
