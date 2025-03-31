@@ -48,6 +48,7 @@ impl Modem {
     }
 
     pub async fn link(&self, timeout: Duration) -> Result<LteLink, nrf_modem::Error> {
+        info!("link initializing");
         //TODO add proper error type
         let link = embassy_time::with_timeout(timeout, LteLink::new()).await.map_err(|_| {
             defmt::error!("link timeout");

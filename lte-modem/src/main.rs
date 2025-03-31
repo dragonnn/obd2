@@ -27,9 +27,9 @@ use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use embedded_alloc::LlffHeap as Heap;
-//use panic_probe as _;
-use panic_persist as _;
-use panic_persist::get_panic_message_utf8;
+use panic_probe as _;
+//use panic_persist as _;
+//use panic_persist::get_panic_message_utf8;
 use tinyrlibc as _;
 
 mod board;
@@ -69,9 +69,10 @@ async fn main(spawner: Spawner) {
         unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
     }
     info!("heap initialized");
+    let mut board = board::Board::new().await;
 
     let mut reset_reasons: heapless::Vec<ResetReason, 6> = heapless::Vec::new();
-    unsafe {
+    /*unsafe {
         info!("getting reset reasons");
         let pac = nrf9160_pac::Peripherals::steal();
         info!("got pac");
@@ -97,16 +98,15 @@ async fn main(spawner: Spawner) {
         if reset_reason.ctrlap().bit_is_set() {
             reset_reasons.push(ResetReason::CtrlAp).ok();
         }
-    }
-    info!("got reset reasons");
-    let panic_message = get_panic_message_utf8();
+    }*/
+    info!("got reset reasons: {:?}", reset_reasons);
+    /*let panic_message = get_panic_message_utf8();
     info!("got panic message");
     if let Some(panic) = panic_message {
         defmt::error!("{}", panic);
-    }
+    }*/
     defmt::info!("starting");
 
-    let mut board = board::Board::new().await;
     board.buzzer.on();
     Timer::after(Duration::from_millis(200)).await;
     board.buzzer.off();
@@ -134,7 +134,7 @@ async fn main(spawner: Spawner) {
     let gnss_force_on = unwrap!(board.gnss_force_on.take());
 
     //unwrap!(spawner.spawn(tasks::logger::task(logger, uarte_tx_debug, panic_message)));
-    if let Some(panic) = panic_message {
+    /*if let Some(panic) = panic_message {
         //if !panic.contains("twi reset") {
         board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, panic).await.ok();
         //}
@@ -154,7 +154,7 @@ async fn main(spawner: Spawner) {
                 //board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &reset_reasons_str).await.ok();
             }
         }
-    }
+    }*/
 
     defmt::info!("starting tasks");
     unwrap!(spawner.spawn(tasks::battery::task(battery, charging_control)));
@@ -172,11 +172,13 @@ async fn main(spawner: Spawner) {
     tasks::modem::task(board.modem, &spawner).await;
 }
 
-use cortex_m_rt::ExceptionFrame;
+/*use cortex_m_rt::ExceptionFrame;
 #[cortex_m_rt::exception]
 unsafe fn HardFault(e: &ExceptionFrame) -> ! {
-    defmt::error!("HardFault: {}", defmt::Debug2Format(e));
-    cortex_m::peripheral::SCB::sys_reset();
+    loop {
+        defmt::error!("HardFault: {}", defmt::Debug2Format(e));
+    }
+    //cortex_m::peripheral::SCB::sys_reset();
 
     /*
     let now = embassy_time::Instant::now();
@@ -187,4 +189,4 @@ unsafe fn HardFault(e: &ExceptionFrame) -> ! {
             cortex_m::peripheral::SCB::sys_reset();
         }
     }*/
-}
+}*/

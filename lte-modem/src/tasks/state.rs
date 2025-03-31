@@ -26,7 +26,6 @@ pub async fn task(mut sense: Sense, mut lightwell: Lightwell, mut wdg: Wdg, mut 
 
     loop {
         wdg.pet().await;
-        warn!("State loop");
         match select::select4(
             state_loop(&mut state, &mut sense, &mut lightwell, &mut wdg, &mut light_sensor),
             battery_state_sub.next(),

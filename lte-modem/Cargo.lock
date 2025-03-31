@@ -556,6 +556,7 @@ dependencies = [
  "embassy-embedded-hal",
  "embassy-hal-internal",
  "embassy-sync",
+ "embassy-time",
  "embassy-time-driver",
  "embassy-time-queue-utils",
  "embassy-usb-driver",
@@ -1133,6 +1134,7 @@ checksum = "d334027d6703534f2a80de0794ae435c0e029358d28278533d3935e69b221b01"
 dependencies = [
  "cortex-m",
  "cortex-m-rt",
+ "defmt",
 ]
 
 [[package]]
@@ -1199,12 +1201,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
-name = "panic-persist"
-version = "0.3.0"
+name = "panic-probe"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32bb382689ecd2c4d2d4df9fd56700ba8d43b7b31cca11018cc0e6f8aef39fd5"
+checksum = "4047d9235d1423d66cc97da7d07eddb54d4f154d6c13805c6d0793956f4f25b0"
 dependencies = [
  "cortex-m",
+ "defmt",
 ]
 
 [[package]]
@@ -1764,10 +1767,10 @@ dependencies = [
  "modular-bitfield",
  "nmea0183",
  "nrf-modem",
- "nrf9160-pac",
+ "nrf-pac",
  "nrfxlib-sys",
  "num-traits",
- "panic-persist",
+ "panic-probe",
  "persistent-buff",
  "postcard 1.1.1",
  "rand",

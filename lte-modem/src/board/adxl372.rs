@@ -1,4 +1,5 @@
 use bitfield_struct::bitfield;
+use defmt::{error, info};
 use embassy_nrf::gpio::{AnyPin, Input, Pull};
 use embedded_hal_async::spi::{Operation, SpiBus, SpiDevice};
 
@@ -104,15 +105,29 @@ where
     pub async fn new(mut spi_device: S, irq: AnyPin) -> Self {
         let irq = Input::new(irq, Pull::Up);
         let mut new = Self { spi_device, irq };
+        info!("init");
         new.write_one(REG_RESET, VALUE_RESET).await;
-        embassy_time::Timer::after(embassy_time::Duration::from_millis(150)).await;
+        info!("reset");
+
+        info!("reset done");
         let dev_ad = new.read_one(REG_DEVID_AD).await;
         let dev_mst = new.read_one(REG_DEVID_MST).await;
         let partid = new.read_one(REG_PARTID).await;
 
-        assert_eq!(dev_ad, VALUE_DEVID_AD);
-        assert_eq!(dev_mst, VALUE_DEVID_MST);
-        assert_eq!(partid, VALUE_PARTID);
+        //assert_eq!(dev_ad, VALUE_DEVID_AD);
+        //assert_eq!(dev_mst, VALUE_DEVID_MST);
+        //assert_eq!(partid, VALUE_PARTID);
+        if dev_ad != VALUE_DEVID_AD {
+            error!("ADXL372 device ID mismatch");
+        }
+        if dev_mst != VALUE_DEVID_MST {
+            error!("ADXL372 master device ID mismatch");
+        }
+        if partid != VALUE_PARTID {
+            error!("ADXL372 part ID mismatch");
+        }
+
+        info!("ADXL372 device ID: {:#X}", dev_ad);
 
         new
     }
@@ -129,11 +144,9 @@ where
     }
 
     async fn read_one(&mut self, reg: u8) -> u8 {
+        let mut tx = [(reg << 1) | RNW];
         let mut rx: [u8; 1] = [0; 1];
-        self.spi_device
-            .transaction(&mut [Operation::Write(&[(reg << 1) | RNW]), Operation::Read(&mut rx)])
-            .await
-            .unwrap();
+        self.spi_device.transaction(&mut [Operation::Write(&tx), Operation::Read(&mut rx)]).await.unwrap();
         rx[0]
     }
 

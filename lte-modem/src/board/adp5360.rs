@@ -14,6 +14,7 @@ const REG_CHARGER_STATUS1: u8 = 0x08;
 const REG_BAT_CAP: u8 = 0x20;
 const REG_BAT_SOC: u8 = 0x21;
 const REG_FUEL_GAUGE_MODE: u8 = 0x27;
+const REG_BUCK_CONFIGURE: u8 = 0x29;
 const REG_INTERRUPT_ENABLE1: u8 = 0x32;
 const REG_INTERRUPT_ENABLE2: u8 = 0x33;
 const REG_INTERRUPT_FLAG1: u8 = 0x34;
@@ -40,6 +41,49 @@ pub struct ChargerFunctionSettings {
     __: B1,
     pub cool_mode_current: bool,
     pub enable_jeita: bool,
+}
+
+impl defmt::Format for ChargerFunctionSettings {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(
+            fmt,
+            "ChargerFunctionSettings {{ enable_charging: {}, enable_adaptive_current: {}, enable_end_of_charge: {}, enable_ldo: {}, off_isolation_fet: {}, cool_mode_current: {}, enable_jeita: {} }}",
+            self.enable_charging(),
+            self.enable_adaptive_current(),
+            self.enable_end_of_charge(),
+            self.enable_ldo(),
+            self.off_isolation_fet(),
+            self.cool_mode_current(),
+            self.enable_jeita()
+        );
+    }
+}
+
+#[bitfield]
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Default)]
+pub struct BuckSettings {
+    pub buck_output: bool,
+    pub output_discharge_function: bool,
+    pub stop_feature: bool,
+    pub fpwm_mode: bool,
+    pub current_limit: B2,
+    pub soft_start_time: B2,
+}
+
+impl defmt::Format for BuckSettings {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(
+            fmt,
+            "BuckSettings {{ buck_output: {}, output_discharge_function: {}, stop_feature: {}, fpwm_mode: {}, current_limit: {}, soft_start_time: {} }}",
+            self.buck_output(),
+            self.output_discharge_function(),
+            self.stop_feature(),
+            self.fpwm_mode(),
+            self.current_limit(),
+            self.soft_start_time()
+        );
+    }
 }
 
 #[derive(Format)]
@@ -99,6 +143,7 @@ where
             last_soc_update: Instant::now(),
             last_charger_status: ChargerStatus::Off,
         };
+
         adp5360.set_u8_value(REG_BAT_CAP, 0xFF).await;
         adp5360.set_u8_bit(REG_FUEL_GAUGE_MODE, FUEL_GAUGE_MODE_ENABLE_BIT, true).await;
         adp5360.set_u8_bit(REG_FUEL_GAUGE_MODE, FUEL_GAUGE_MODE_SLEEP_MODE_BIT, true).await;
@@ -223,17 +268,33 @@ where
         self.get_u8_value(REG_CHARGER_FUNCTION_SETTING).await.map(|value| ChargerFunctionSettings::from_bytes([value]))
     }
 
+    async fn buck_settings(&mut self) -> Result<BuckSettings, ()> {
+        let ret = self.get_u8_value(REG_BUCK_CONFIGURE).await.map(|value| BuckSettings::from_bytes([value]));
+        info!("buck settings: {:?}", ret);
+        ret
+    }
+
     pub async fn disable_charging(&mut self) {
+        self.buck_settings().await.ok();
+        warn!("wtf disable charging");
         if let Ok(mut settings) = self.charger_settings().await {
+            info!("disable charging on: {:?}", settings);
             settings.set_enable_charging(false);
             self.set_u8_value(REG_CHARGER_FUNCTION_SETTING, settings.into_bytes()[0]).await;
+        } else {
+            error!("disable charging failed");
         }
     }
 
     pub async fn enable_charging(&mut self) {
+        self.buck_settings().await.ok();
+        warn!("wtf enable charging");
         if let Ok(mut settings) = self.charger_settings().await {
+            info!("enable charging on: {:?}", settings);
             settings.set_enable_charging(true);
             self.set_u8_value(REG_CHARGER_FUNCTION_SETTING, settings.into_bytes()[0]).await;
+        } else {
+            error!("enable charging failed");
         }
     }
 }

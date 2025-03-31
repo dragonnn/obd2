@@ -28,11 +28,13 @@ embassy-time = { version = "0.4.0", features = [
     "defmt-timestamp-uptime",
 ] }
 embassy-nrf = { version = "0.3.1", features = [
+    "rt",
     "defmt",
     "nrf9160-s",
     "time-driver-rtc1",
     "gpiote",
     "unstable-pac",
+    "time",
 ] }
 embassy-usb = { version = "0.4.0", features = ["defmt"], optional = true }
 embedded-io = { version = "0.6.1", features = ["defmt-03"] }
@@ -41,7 +43,8 @@ embedded-io-async = { version = "0.6.1", optional = true, features = [
 ] }
 embedded-hal-bus = { version = "0.3.0", features = ["async"] }
 embedded-alloc = "0.6.0"
-nrf9160-pac = { version = "0.12.2" }
+nrf-pac = { version = "*", features = ["defmt"] }
+#nrf9160-pac = { version = "0.12.2" }
 #nrf-modem = { path = "./nrf-modem", features = ["nrf9160", "defmt"] }
 nrfxlib-sys = "2.7.1"
 #nrf-modem = { git = "https://github.com/dragonnn/nrf-modem", features = [] }
@@ -55,9 +58,12 @@ defmt-rtt = "0.4"
 #defmt-brtt = { version = "0.1.1", features = ["rtt", "bbq", "async-await"] }
 
 static_cell = "2.1"
-cortex-m = { version = "0.7.6", features = ["critical-section-single-core"] }
+cortex-m = { version = "0.7.6", features = [
+    "inline-asm",
+    "critical-section-single-core",
+] }
 cortex-m-rt = "0.7.0"
-#panic-probe = { version = "0.3", features = ["print-defmt"] }
+panic-probe = { version = "0.3", features = ["print-defmt"] }
 futures = { version = "0.3.31", default-features = false, features = [
     "async-await",
 ] }
@@ -83,7 +89,7 @@ num-traits = { version = "0.2", default-features = false, features = ["libm"] }
 
 rmodbus = { version = "*", default-features = false, features = ["heapless"] }
 
-panic-persist = { version = "0.3.0", features = ["utf8"] }
+#panic-persist = { version = "0.3.0", features = ["utf8"] }
 
 persistent-buff = "0.2.6"
 

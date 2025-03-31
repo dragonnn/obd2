@@ -51,17 +51,18 @@ impl DestructTwim {
         let serial = SERIAL2::steal();
         let twi2 = Twim::new(serial, TwiIrqs, sda, scl, twi2_config);
 
-        let pac = nrf9160_pac::Peripherals::steal();
+        /*let pac = nrf9160_pac::Peripherals::steal();
         pac.TWIM2_S.frequency.write(|w| w.frequency().bits(267386));
         //pac.TWIM2_S.frequency.write(|w| w.frequency().bits(267386));
+        */
         twi2
     }
 
     pub fn clear_errors() {
-        unsafe {
+        /*unsafe {
             let pac = nrf9160_pac::Peripherals::steal();
             pac.TWIM2_S.errorsrc.write(|e| e.anack().bit(true).dnack().bit(true).overrun().bit(true));
-        }
+        }*/
     }
 
     pub async fn reset(&mut self, address: u8) {

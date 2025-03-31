@@ -68,7 +68,6 @@ static CHANNEL: PubSubChannel<CriticalSectionRawMutex, State, TASKS_SUBSCRIBERS,
 pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
     let mut current_charging = true;
     let mut charging_control = async |charing: bool, battery: &mut Battery| {
-        //charing = true;
         if charing && !current_charging {
             warn!("enable charging");
             Timer::after_secs(1).await;
@@ -89,6 +88,7 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
 
     charging_control(false, &mut battery).await;
     embassy_time::Timer::after(Duration::from_secs(10)).await;
+    charging_control(true, &mut battery).await;
 
     let mut state_channel_sub = state_channel_sub();
     let mut current_state = None;
