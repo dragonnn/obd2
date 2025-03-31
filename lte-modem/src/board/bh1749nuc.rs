@@ -91,8 +91,6 @@ where
 
         let mut bh1749nuc = Self { i2c, irq, enabled: false };
 
-        return bh1749nuc;
-
         for i in 0..2 {
             if bh1749nuc.inner_init().await.is_ok() {
                 break;
@@ -121,7 +119,6 @@ where
     }
 
     async fn set_u8_bit(&mut self, reg: u8, bit: u8, value: bool) {
-        return;
         if let Ok(mut reg_value) = self.get_u8_value(reg).await {
             if value {
                 reg_value |= 1 << bit;
@@ -133,7 +130,6 @@ where
     }
 
     async fn set_u8_value(&mut self, reg: u8, value: u8) {
-        return;
         match with_timeout(I2C_TIMEOUT, self.i2c.write(I2C_ADDRESS, &[reg, value])).await {
             Ok(Ok(_)) => {}
             Ok(Err(err)) => {
@@ -146,7 +142,6 @@ where
     }
 
     async fn get_u8_value(&mut self, reg: u8) -> Result<u8, ()> {
-        return Ok(0);
         let mut buf = [0u8; 1];
         match with_timeout(I2C_TIMEOUT, self.i2c.write_read(I2C_ADDRESS, &[reg], &mut buf)).await {
             Ok(Ok(_)) => Ok(buf[0]),
@@ -164,7 +159,6 @@ where
     }
 
     async fn get_u8_values(&mut self, reg: u8, buf: &mut [u8]) {
-        return;
         match with_timeout(I2C_TIMEOUT, self.i2c.write_read(I2C_ADDRESS, &[reg], buf)).await {
             Ok(Ok(_)) => {}
             Ok(Err(err)) => {
@@ -240,7 +234,6 @@ where
     }
 
     pub async fn w(&mut self) -> u16 {
-        return 0xFFFF;
         let r = self.r().await;
         let g = self.g().await;
         let b = self.b().await;

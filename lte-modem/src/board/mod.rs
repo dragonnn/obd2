@@ -202,7 +202,6 @@ impl Board {
         lightwell.r(64);
         lightwell.g(64);
         lightwell.b(64);
-        Timer::after(embassy_time::Duration::from_secs(5)).await;
 
         defmt::info!("wdg initializing");
         let wdg = Wdg::new(p.WDT).await;
