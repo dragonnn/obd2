@@ -230,9 +230,9 @@ impl Board {
         let spim3_dev1 = SpiDevice::new(spim3, spim3_dev1_cs);
         let spim3_dev2_cs = Output::new(p.P0_07, Level::High, OutputDrive::Standard);
         let spim3_dev2 = SpiDevice::new(spim3, spim3_dev2_cs);
-        defmt::info!("low power accelerometer initalizing");
+        defmt::info!("low power accelerometer initializing");
         let low_power_accelerometer = Adxl362::new(spim3_dev1, p.P0_09.degrade()).await;
-        defmt::info!("hi g accelerometer initalizing");
+        defmt::info!("hi g accelerometer initializing");
         let hi_g_accelerometer = Adxl372::new(spim3_dev2, p.P0_06.degrade()).await;
         defmt::info!("button initializing");
 
