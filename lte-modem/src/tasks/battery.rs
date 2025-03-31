@@ -86,10 +86,6 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
         current_charging = charing;
     };
 
-    charging_control(false, &mut battery).await;
-    embassy_time::Timer::after(Duration::from_secs(10)).await;
-    charging_control(true, &mut battery).await;
-
     let mut state_channel_sub = state_channel_sub();
     let mut current_state = None;
 

@@ -20,8 +20,9 @@ pub async fn task() {
     .await
     .ok();
 
-    //panic!("reset: {:?}", reason);
     error!("reset: {:?}", reason);
+    embassy_time::Timer::after(Duration::from_secs(1)).await;
+    panic!("reset: {:?}", reason);
 }
 
 pub struct ResetGuard;

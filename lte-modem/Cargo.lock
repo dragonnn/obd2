@@ -1201,13 +1201,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
-name = "panic-probe"
-version = "0.3.2"
+name = "panic-persist"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4047d9235d1423d66cc97da7d07eddb54d4f154d6c13805c6d0793956f4f25b0"
+checksum = "32bb382689ecd2c4d2d4df9fd56700ba8d43b7b31cca11018cc0e6f8aef39fd5"
 dependencies = [
  "cortex-m",
- "defmt",
 ]
 
 [[package]]
@@ -1770,7 +1769,7 @@ dependencies = [
  "nrf-pac",
  "nrfxlib-sys",
  "num-traits",
- "panic-probe",
+ "panic-persist",
  "persistent-buff",
  "postcard 1.1.1",
  "rand",

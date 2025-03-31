@@ -27,9 +27,9 @@ use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use embedded_alloc::LlffHeap as Heap;
-use panic_probe as _;
 //use panic_persist as _;
-//use panic_persist::get_panic_message_utf8;
+use panic_persist::get_panic_message_utf8;
+//use panic_probe as _;
 use tinyrlibc as _;
 
 mod board;
@@ -74,37 +74,37 @@ async fn main(spawner: Spawner) {
     let mut reset_reasons: heapless::Vec<ResetReason, 6> = heapless::Vec::new();
     /*unsafe {
         info!("getting reset reasons");
-        let pac = nrf9160_pac::Peripherals::steal();
+        let reset_reason = embassy_nrf::pac::POWER_S.resetreas().read();
         info!("got pac");
-        let reset_reason = pac.POWER_S.resetreas.read();
-        if reset_reason.resetpin().bit_is_set() {
+
+        if reset_reason.resetpin() {
             reset_reasons.push(ResetReason::ResetPin).ok();
         }
-        if reset_reason.dog().bit_is_set() {
+        if reset_reason.dog() {
             reset_reasons.push(ResetReason::Dog).ok();
         }
-        if reset_reason.off().bit_is_set() {
+        if reset_reason.off() {
             reset_reasons.push(ResetReason::Off).ok();
         }
-        if reset_reason.dif().bit_is_set() {
+        if reset_reason.dif() {
             reset_reasons.push(ResetReason::Dif).ok();
         }
-        if reset_reason.sreq().bit_is_set() {
+        if reset_reason.sreq() {
             reset_reasons.push(ResetReason::Sreq).ok();
         }
-        if reset_reason.lockup().bit_is_set() {
+        if reset_reason.lockup() {
             reset_reasons.push(ResetReason::LockUp).ok();
         }
-        if reset_reason.ctrlap().bit_is_set() {
+        if reset_reason.ctrlap() {
             reset_reasons.push(ResetReason::CtrlAp).ok();
         }
     }*/
     info!("got reset reasons: {:?}", reset_reasons);
-    /*let panic_message = get_panic_message_utf8();
+    let panic_message = get_panic_message_utf8();
     info!("got panic message");
     if let Some(panic) = panic_message {
         defmt::error!("{}", panic);
-    }*/
+    }
     defmt::info!("starting");
 
     board.buzzer.on();
@@ -134,7 +134,7 @@ async fn main(spawner: Spawner) {
     let gnss_force_on = unwrap!(board.gnss_force_on.take());
 
     //unwrap!(spawner.spawn(tasks::logger::task(logger, uarte_tx_debug, panic_message)));
-    /*if let Some(panic) = panic_message {
+    if let Some(panic) = panic_message {
         //if !panic.contains("twi reset") {
         board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, panic).await.ok();
         //}
@@ -151,10 +151,10 @@ async fn main(spawner: Spawner) {
                 reset_reasons_str.pop();
                 let reset_reasons_str = reset_reasons_str.trim_start_matches("[");
                 warn!("trying to send sms panic");
-                //board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &reset_reasons_str).await.ok();
+                board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &reset_reasons_str).await.ok();
             }
         }
-    }*/
+    }
 
     defmt::info!("starting tasks");
     unwrap!(spawner.spawn(tasks::battery::task(battery, charging_control)));

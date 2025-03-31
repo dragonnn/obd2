@@ -181,6 +181,20 @@ impl Board {
 
         info!("nrf9160 initializing");
 
+        let mut twi2 = destruct_twim::DestructTwim::new().await;
+
+        info!("twim2 initialized");
+
+        twi2.reset(0xFF).await;
+
+        info!("twim2 reset");
+
+        let twim2 = TWIM2.init(Mutex::<CriticalSectionRawMutex, _>::new(twi2));
+
+        let twim2_dev1 = I2cDevice::new(twim2);
+
+        let battery = Adp5360::new(twim2_dev1, p.P0_17.degrade()).await;
+
         let modem = Modem::new(ipc_start).await;
 
         defmt::info!("lightwell initializing");
@@ -200,20 +214,6 @@ impl Board {
         let sense = Rgb::new(p.PWM2, p.P0_00, p.P0_01, p.P0_02, true);
 
         info!("twim2 initializing");
-
-        let mut twi2 = destruct_twim::DestructTwim::new().await;
-
-        info!("twim2 initialized");
-
-        twi2.reset(0xFF).await;
-
-        info!("twim2 reset");
-
-        let twim2 = TWIM2.init(Mutex::<CriticalSectionRawMutex, _>::new(twi2));
-
-        let twim2_dev1 = I2cDevice::new(twim2);
-
-        let battery = Adp5360::new(twim2_dev1, p.P0_17.degrade()).await;
 
         let twim2_dev2 = I2cDevice::new(twim2);
 

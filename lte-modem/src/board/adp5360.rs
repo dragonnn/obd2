@@ -15,6 +15,9 @@ const REG_BAT_CAP: u8 = 0x20;
 const REG_BAT_SOC: u8 = 0x21;
 const REG_FUEL_GAUGE_MODE: u8 = 0x27;
 const REG_BUCK_CONFIGURE: u8 = 0x29;
+const REG_BUCK_VOLTAGE_CONFIGURE: u8 = 0x2A;
+const REG_BUCK_BOOST_CONFIGURE: u8 = 0x2B;
+const REG_BUCK_BOOST_VOLTAGE_CONFIGURE: u8 = 0x2C;
 const REG_INTERRUPT_ENABLE1: u8 = 0x32;
 const REG_INTERRUPT_ENABLE2: u8 = 0x33;
 const REG_INTERRUPT_FLAG1: u8 = 0x34;
@@ -86,6 +89,59 @@ impl defmt::Format for BuckSettings {
     }
 }
 
+#[bitfield]
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Default)]
+pub struct BuckVoltageSettings {
+    pub voltage: B6,
+    pub delay: B2,
+}
+
+impl defmt::Format for BuckVoltageSettings {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(fmt, "BuckVoltageSettings {{ delay: {}, voltage: {} }}", self.delay(), self.voltage());
+    }
+}
+
+#[bitfield]
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Default)]
+pub struct BuckBoostSettings {
+    pub buck_boost_output: bool,
+    pub output_discharge_function: bool,
+    pub stop_feature: bool,
+    pub current_limit: B3,
+    pub soft_start_time: B2,
+}
+
+impl defmt::Format for BuckBoostSettings {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(
+            fmt,
+            "BuckBoostSettings {{ buck_boost_output: {}, output_discharge_function: {}, stop_feature: {}, current_limit: {}, soft_start_time: {} }}",
+            self.buck_boost_output(),
+            self.output_discharge_function(),
+            self.stop_feature(),
+            self.current_limit(),
+            self.soft_start_time()
+        );
+    }
+}
+
+#[bitfield]
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Default)]
+pub struct BuckBoostVoltageSettings {
+    pub voltage: B6,
+    pub delay: B2,
+}
+
+impl defmt::Format for BuckBoostVoltageSettings {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(fmt, "BuckBoostVoltageSettings {{ delay: {}, voltage: {} }}", self.delay(), self.voltage());
+    }
+}
+
 #[derive(Format)]
 #[bitenum(u8, exhaustive: false)]
 pub enum InterputEvent {
@@ -152,6 +208,28 @@ where
 
         let mut interput_reason = [0u8; 2];
         adp5360.get_u8_values(REG_INTERRUPT_FLAG1, &mut interput_reason).await;
+
+        let buck_settings = BuckSettings::default()
+            .with_buck_output(true)
+            .with_output_discharge_function(true)
+            .with_current_limit(3)
+            .with_soft_start_time(0);
+
+        adp5360.set_u8_value(REG_BUCK_CONFIGURE, buck_settings.into()).await;
+
+        let buck_voltage_settings = BuckVoltageSettings::default().with_delay(0).with_voltage(24);
+        adp5360.set_u8_value(REG_BUCK_VOLTAGE_CONFIGURE, buck_voltage_settings.into()).await;
+
+        let buck_boost_settings = BuckBoostSettings::default()
+            .with_buck_boost_output(true)
+            .with_output_discharge_function(false)
+            .with_current_limit(3)
+            .with_soft_start_time(0);
+
+        adp5360.set_u8_value(REG_BUCK_BOOST_CONFIGURE, buck_boost_settings.into()).await;
+
+        let buck_boost_voltage_settings = BuckBoostVoltageSettings::default().with_delay(0).with_voltage(19);
+        adp5360.set_u8_value(REG_BUCK_BOOST_VOLTAGE_CONFIGURE, buck_boost_voltage_settings.into()).await;
 
         adp5360
     }
@@ -274,9 +352,33 @@ where
         ret
     }
 
+    async fn buck_voltage_settings(&mut self) -> Result<BuckVoltageSettings, ()> {
+        let ret =
+            self.get_u8_value(REG_BUCK_VOLTAGE_CONFIGURE).await.map(|value| BuckVoltageSettings::from_bytes([value]));
+        info!("buck voltage settings: {:?}", ret);
+        ret
+    }
+
+    async fn buck_boost_settings(&mut self) -> Result<BuckBoostSettings, ()> {
+        let ret = self.get_u8_value(REG_BUCK_BOOST_CONFIGURE).await.map(|value| BuckBoostSettings::from_bytes([value]));
+        info!("buck boost settings: {:?}", ret);
+        ret
+    }
+
+    async fn buck_boost_voltage_settings(&mut self) -> Result<BuckBoostVoltageSettings, ()> {
+        let ret = self
+            .get_u8_value(REG_BUCK_BOOST_VOLTAGE_CONFIGURE)
+            .await
+            .map(|value| BuckBoostVoltageSettings::from_bytes([value]));
+        info!("buck boost voltage settings: {:?}", ret);
+        ret
+    }
+
     pub async fn disable_charging(&mut self) {
-        self.buck_settings().await.ok();
-        warn!("wtf disable charging");
+        /*self.buck_settings().await.ok();
+        self.buck_voltage_settings().await.ok();
+        self.buck_boost_settings().await.ok();
+        self.buck_boost_voltage_settings().await.ok();*/
         if let Ok(mut settings) = self.charger_settings().await {
             info!("disable charging on: {:?}", settings);
             settings.set_enable_charging(false);
@@ -287,8 +389,10 @@ where
     }
 
     pub async fn enable_charging(&mut self) {
-        self.buck_settings().await.ok();
-        warn!("wtf enable charging");
+        /*self.buck_settings().await.ok();
+        self.buck_voltage_settings().await.ok();
+        self.buck_boost_settings().await.ok();
+        self.buck_boost_voltage_settings().await.ok();*/
         if let Ok(mut settings) = self.charger_settings().await {
             info!("enable charging on: {:?}", settings);
             settings.set_enable_charging(true);
