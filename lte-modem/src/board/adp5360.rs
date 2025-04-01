@@ -375,10 +375,6 @@ where
     }
 
     pub async fn disable_charging(&mut self) {
-        /*self.buck_settings().await.ok();
-        self.buck_voltage_settings().await.ok();
-        self.buck_boost_settings().await.ok();
-        self.buck_boost_voltage_settings().await.ok();*/
         if let Ok(mut settings) = self.charger_settings().await {
             info!("disable charging on: {:?}", settings);
             settings.set_enable_charging(false);
@@ -389,10 +385,6 @@ where
     }
 
     pub async fn enable_charging(&mut self) {
-        /*self.buck_settings().await.ok();
-        self.buck_voltage_settings().await.ok();
-        self.buck_boost_settings().await.ok();
-        self.buck_boost_voltage_settings().await.ok();*/
         if let Ok(mut settings) = self.charger_settings().await {
             info!("enable charging on: {:?}", settings);
             settings.set_enable_charging(true);

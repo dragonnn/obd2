@@ -66,7 +66,7 @@ static CHANNEL: PubSubChannel<CriticalSectionRawMutex, State, TASKS_SUBSCRIBERS,
 
 #[embassy_executor::task]
 pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
-    let mut current_charging = true;
+    let mut current_charging = false;
     let mut charging_control = async |charing: bool, battery: &mut Battery| {
         if charing && !current_charging {
             warn!("enable charging");

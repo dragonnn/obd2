@@ -64,26 +64,23 @@ pub async fn task(mut sense: Sense, mut lightwell: Lightwell, mut wdg: Wdg, mut 
                     state.battery = new_battery_state
                 }
             }
-            select::Either4::Third(event) => {
-                match event {
-                    Event::MonitionDetection => state.monition_detect = true,
-                    Event::ButtonDetection => state.button_detect = true,
-                    Event::UarteRx => {
-                        lightwell.off();
-                        lightwell.g(128);
-                        Timer::after_millis(10).await;
-                        lightwell.off();
-                    }
-                    Event::UarteTx => {
-                        lightwell.off();
-                        lightwell.b(128);
-                        lightwell.g(128);
-                        Timer::after_millis(10).await;
-                        lightwell.off();
-                    }
+            select::Either4::Third(event) => match event {
+                Event::MonitionDetection => state.monition_detect = true,
+                Event::ButtonDetection => state.button_detect = true,
+                Event::UarteRx => {
+                    lightwell.off();
+                    lightwell.g(128);
+                    Timer::after_millis(10).await;
+                    lightwell.off();
                 }
-                info!("Monition detected");
-            }
+                Event::UarteTx => {
+                    lightwell.off();
+                    lightwell.b(128);
+                    lightwell.g(128);
+                    Timer::after_millis(10).await;
+                    lightwell.off();
+                }
+            },
             _ => {
                 wdg.pet().await;
             }
