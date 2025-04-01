@@ -158,14 +158,14 @@ impl Board {
 
         defmt::info!("modem initializing");
 
-        spu.periphid(0).perm().write(|w| {
+        /*spu.periphid(0).perm().write(|w| {
             w.set_secattr(true);
             w.set_dmasec(false);
             //w.set_dma(true);
             w.set_lock(false);
-        });
+        });*/
 
-        spu.gpioport(0).perm().write(|w| {
+        /*spu.gpioport(0).perm().write(|w| {
             let secure = false;
             w.set_pin28(secure);
 
@@ -177,7 +177,7 @@ impl Board {
             w.set_pin24(secure);
             w.set_pin25(secure);
             w.set_pin26(secure);
-        });
+        });*/
 
         info!("nrf9160 initializing");
 
