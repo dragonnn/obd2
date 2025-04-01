@@ -91,7 +91,7 @@ where
 
         let mut bh1749nuc = Self { i2c, irq, enabled: false };
 
-        for i in 0..120 {
+        for i in 0..2 {
             if bh1749nuc.inner_init().await.is_ok() {
                 break;
             }

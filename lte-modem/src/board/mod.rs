@@ -16,7 +16,7 @@ pub use adxl362::Adxl362;
 pub use adxl372::Adxl372;
 pub use bh1749nuc::Bh1749nuc;
 pub use button::Button;
-use defmt::error;
+use defmt::{debug, error, info, warn};
 use embassy_embedded_hal::shared_bus::asynch::{i2c::I2cDevice, spi::SpiDevice};
 use embassy_nrf::{
     bind_interrupts,
@@ -97,13 +97,111 @@ pub struct Board {
     pub gnss_force_on: Option<Output<'static>>,
 }
 
+extern "C" {
+    static __start_ipc: u8;
+    static __end_ipc: u8;
+}
+
 impl Board {
     pub async fn new() -> Board {
-        let p = embassy_nrf::init(Default::default());
+        info!("board initializing");
+        let mut config = embassy_nrf::config::Config::default();
+        //config.dcdc = embassy_nrf::config::DcdcConfig { regmain: true };
+        //config.hfclk_source = embassy_nrf::config::HfclkSource::ExternalXtal;
+        //config.lfclk_source = embassy_nrf::config::LfclkSource::ExternalXtal;
+
+        let p = embassy_nrf::init(config);
+
+        let charging_control = Output::new(p.P0_14, Level::Low, OutputDrive::Standard);
+
+        // The RAM memory space is divided into 32 regions of 8 KiB.
+        // Set IPC RAM to nonsecure
+        const SPU_REGION_SIZE: u32 = 8192; // 8kb
+        const RAM_START: u32 = 0x2000_0000; // 256kb
+        let ipc_start: u32 = unsafe { &__start_ipc as *const u8 } as u32;
+        let ipc_reg_offset = (ipc_start - RAM_START) / SPU_REGION_SIZE;
+        let ipc_reg_count = (unsafe { &__end_ipc as *const u8 } as u32 - ipc_start) / SPU_REGION_SIZE;
+        let spu = embassy_nrf::pac::SPU;
+        let range = ipc_reg_offset..(ipc_reg_offset + ipc_reg_count);
+        debug!("marking region as non secure: {}", range);
+        for i in range {
+            info!("setting region {:x} as nonsecure", i * SPU_REGION_SIZE);
+            spu.ramregion(i as usize).perm().write(|w| {
+                w.set_execute(true);
+                w.set_write(true);
+                w.set_read(true);
+                w.set_secattr(false);
+                w.set_lock(false);
+            })
+        }
+
+        /*let spu_reg_offset = RAM_START / SPU_REGION_SIZE;
+        let spu_reg_count = RAM_END / SPU_REGION_SIZE;
+        let range = spu_reg_offset..(spu_reg_offset + spu_reg_count);
+        for i in range {
+            info!("setting region {} as nonsecure", i);
+            spu.ramregion(i as usize).perm().write(|w| {
+                w.set_execute(true);
+                w.set_write(true);
+                w.set_read(true);
+                w.set_secattr(false);
+                w.set_lock(false);
+            })
+        }*/
+
+        // Set regulator access registers to nonsecure
+        spu.periphid(4).perm().write(|w| w.set_secattr(false));
+        // Set clock and power access registers to nonsecure
+        spu.periphid(5).perm().write(|w| w.set_secattr(false));
+        // Set IPC access register to nonsecure
+        spu.periphid(42).perm().write(|w| w.set_secattr(false));
+
+        defmt::info!("modem initializing");
+
+        spu.periphid(0).perm().write(|w| {
+            w.set_secattr(true);
+            w.set_dmasec(false);
+            //w.set_dma(true);
+            w.set_lock(false);
+        });
+
+        spu.gpioport(0).perm().write(|w| {
+            let secure = false;
+            w.set_pin28(secure);
+
+            w.set_pin29(secure);
+            w.set_pin30(secure);
+            w.set_pin31(secure);
+
+            w.set_pin14(secure);
+            w.set_pin24(secure);
+            w.set_pin25(secure);
+            w.set_pin26(secure);
+        });
+
+        info!("nrf9160 initializing");
+
+        let mut twi2 = destruct_twim::DestructTwim::new().await;
+
+        info!("twim2 initialized");
+
+        twi2.reset(0xFF).await;
+
+        info!("twim2 reset");
+
+        let twim2 = TWIM2.init(Mutex::<CriticalSectionRawMutex, _>::new(twi2));
+
+        let twim2_dev1 = I2cDevice::new(twim2);
+
+        let battery = Adp5360::new(twim2_dev1, p.P0_17.degrade()).await;
+
+        let modem = Modem::new(ipc_start).await;
 
         defmt::info!("lightwell initializing");
         let mut lightwell = Rgb::new(p.PWM1, p.P0_29, p.P0_30, p.P0_31, true);
         lightwell.r(64);
+        lightwell.g(64);
+        lightwell.b(64);
 
         defmt::info!("wdg initializing");
         let wdg = Wdg::new(p.WDT).await;
@@ -113,28 +211,8 @@ impl Board {
 
         defmt::info!("sense initializing");
         let sense = Rgb::new(p.PWM2, p.P0_00, p.P0_01, p.P0_02, true);
-        defmt::info!("modem initializing");
-        let modem = Modem::new().await;
 
-        embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
-        defmt::info!("battery initializing");
-
-        Timer::after(Duration::from_millis(200)).await;
-
-        let mut twi2 = destruct_twim::DestructTwim::new().await;
-        twi2.reset(0xFF).await;
-
-        /*let twi2 = Twim::new(p.SERIAL2, TwiIrqs, p.P0_11, p.P0_12, twi2_config);
-        unsafe {
-            let pac = nrf9160_pac::Peripherals::steal();
-            pac.TWIM2_NS.frequency.write(|w| w.frequency().bits(2673868));
-        }*/
-
-        let twim2 = TWIM2.init(Mutex::<CriticalSectionRawMutex, _>::new(twi2));
-
-        let twim2_dev1 = I2cDevice::new(twim2);
-
-        let battery = Adp5360::new(twim2_dev1, p.P0_17.degrade()).await;
+        info!("twim2 initializing");
 
         let twim2_dev2 = I2cDevice::new(twim2);
 
@@ -151,14 +229,16 @@ impl Board {
         let spim3_dev1 = SpiDevice::new(spim3, spim3_dev1_cs);
         let spim3_dev2_cs = Output::new(p.P0_07, Level::High, OutputDrive::Standard);
         let spim3_dev2 = SpiDevice::new(spim3, spim3_dev2_cs);
-        defmt::info!("low power accelerometer initalizing");
+        defmt::info!("low power accelerometer initializing");
         let low_power_accelerometer = Adxl362::new(spim3_dev1, p.P0_09.degrade()).await;
-        defmt::info!("hi g accelerometer initalizing");
+        defmt::info!("hi g accelerometer initializing");
         let hi_g_accelerometer = Adxl372::new(spim3_dev2, p.P0_06.degrade()).await;
+        defmt::info!("button initializing");
 
         let button = Button::new(p.P0_26.degrade()).await;
         //rxd - p0.25 -> MCU_IF7
         //txd - p0.24 -> MCU_IF6
+        info!("uarte initializing");
         let mut uart_config = uarte::Config::default();
         uart_config.baudrate = uarte::Baudrate::BAUD1M;
         uart_config.parity = uarte::Parity::INCLUDED;
@@ -182,12 +262,13 @@ impl Board {
         let uarte_tx_gnss = Uarte::new(p.SERIAL0, UartIrqs, p.P0_13, p.P0_16, uart_config)
             .split_with_idle(p.TIMER1, p.PPI_CH2, p.PPI_CH3);
 
+        info!("uarte initialized");
+
         lightwell.r(0);
 
-        let charging_control = Output::new(p.P0_14, Level::High, OutputDrive::Standard);
         let gnss_pss = Input::new(p.P0_21, Pull::Down);
         let gnss_force_on = Output::new(p.P0_15, Level::High, OutputDrive::Standard);
-
+        warn!("board initialized");
         Self {
             modem,
             buzzer,

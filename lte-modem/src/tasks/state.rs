@@ -4,7 +4,10 @@ use embassy_time::{Duration, Instant, Timer};
 use futures::StreamExt;
 use types::GnssFix;
 
-use super::TASKS_SUBSCRIBERS;
+use super::{
+    uarte::{wait_for_uarte_rx, wait_for_uarte_tx},
+    TASKS_SUBSCRIBERS,
+};
 use crate::{
     board::{LightSensor, Lightwell, Sense, Wdg},
     tasks::{battery::State as BatteryState, gnss::Fix, montion_detection::State as MontionDetectionState},
@@ -17,6 +20,13 @@ pub struct State {
     battery: BatteryState,
 }
 
+pub enum Event {
+    MonitionDetection,
+    ButtonDetection,
+    UarteTx,
+    UarteRx,
+}
+
 #[embassy_executor::task]
 pub async fn task(mut sense: Sense, mut lightwell: Lightwell, mut wdg: Wdg, mut light_sensor: LightSensor) {
     let mut battery_state_sub = BatteryState::subscribe().await;
@@ -26,14 +36,22 @@ pub async fn task(mut sense: Sense, mut lightwell: Lightwell, mut wdg: Wdg, mut 
 
     loop {
         wdg.pet().await;
-        warn!("State loop");
         match select::select4(
             state_loop(&mut state, &mut sense, &mut lightwell, &mut wdg, &mut light_sensor),
             battery_state_sub.next(),
             async {
-                match select::select(monition_detection_sub.next(), button_sub.next()).await {
-                    select::Either::First(_) => true,
-                    select::Either::Second(_) => false,
+                match select::select4(
+                    monition_detection_sub.next(),
+                    button_sub.next(),
+                    wait_for_uarte_tx(),
+                    wait_for_uarte_rx(),
+                )
+                .await
+                {
+                    select::Either4::First(_) => Event::MonitionDetection,
+                    select::Either4::Second(_) => Event::ButtonDetection,
+                    select::Either4::Third(_) => Event::UarteTx,
+                    select::Either4::Fourth(_) => Event::UarteRx,
                 }
             },
             Timer::after_secs(20),
@@ -46,13 +64,25 @@ pub async fn task(mut sense: Sense, mut lightwell: Lightwell, mut wdg: Wdg, mut 
                     state.battery = new_battery_state
                 }
             }
-            select::Either4::Third(monition_or_button) => {
-                info!("Monition detected");
-                if monition_or_button {
-                    state.monition_detect = true;
-                } else {
-                    state.button_detect = true;
+            select::Either4::Third(event) => {
+                match event {
+                    Event::MonitionDetection => state.monition_detect = true,
+                    Event::ButtonDetection => state.button_detect = true,
+                    Event::UarteRx => {
+                        lightwell.off();
+                        lightwell.g(128);
+                        Timer::after_millis(10).await;
+                        lightwell.off();
+                    }
+                    Event::UarteTx => {
+                        lightwell.off();
+                        lightwell.b(128);
+                        lightwell.g(128);
+                        Timer::after_millis(10).await;
+                        lightwell.off();
+                    }
                 }
+                info!("Monition detected");
             }
             _ => {
                 wdg.pet().await;
@@ -80,6 +110,8 @@ async fn state_loop(
     let mut last_battery_state_time = Instant::now();
 
     let mut w = light_sensor.w().await;
+
+    drop(sense);
 
     loop {
         wdg.pet().await;
@@ -143,15 +175,14 @@ async fn state_loop(
             state.button_detect = false;
         } else {
             light_sensor.shutdown().await;
-            if w > 15 {
-                sense.g(g);
-                sense.r(r);
+            if true {
+                lightwell.g(g);
+                lightwell.r(r);
                 Timer::after(Duration::from_millis(40)).await;
-                sense.g(0);
-                sense.r(0);
+                lightwell.g(0);
+                lightwell.r(0);
                 Timer::after(Duration::from_millis(2000 - 40)).await;
             } else {
-                warn!("Light sensor shutdown");
                 Timer::after(Duration::from_secs(30)).await;
                 w = light_sensor.w().await;
                 light_sensor.shutdown().await;

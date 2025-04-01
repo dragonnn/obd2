@@ -184,8 +184,8 @@ impl GnssState {
                         return;
                     }
                 }
-                Ok(Err(_)) => {
-                    error!("gnss disable backup read error");
+                Ok(Err(e)) => {
+                    error!("gnss disable backup read error: {}", e);
                 }
                 Err(_) => {
                     error!("gnss disable backup timeout");

@@ -556,6 +556,7 @@ dependencies = [
  "embassy-embedded-hal",
  "embassy-hal-internal",
  "embassy-sync",
+ "embassy-time",
  "embassy-time-driver",
  "embassy-time-queue-utils",
  "embassy-usb-driver",
@@ -1133,6 +1134,7 @@ checksum = "d334027d6703534f2a80de0794ae435c0e029358d28278533d3935e69b221b01"
 dependencies = [
  "cortex-m",
  "cortex-m-rt",
+ "defmt",
 ]
 
 [[package]]
@@ -1764,7 +1766,7 @@ dependencies = [
  "modular-bitfield",
  "nmea0183",
  "nrf-modem",
- "nrf9160-pac",
+ "nrf-pac",
  "nrfxlib-sys",
  "num-traits",
  "panic-persist",

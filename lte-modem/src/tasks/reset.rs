@@ -1,5 +1,6 @@
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
+use defmt::error;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use embassy_time::{with_timeout, Duration};
 
@@ -19,6 +20,8 @@ pub async fn task() {
     .await
     .ok();
 
+    error!("reset: {:?}", reason);
+    embassy_time::Timer::after(Duration::from_secs(1)).await;
     panic!("reset: {:?}", reason);
 }
 

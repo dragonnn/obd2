@@ -1,4 +1,5 @@
 use bitfield_struct::bitfield;
+use defmt::error;
 use embassy_nrf::gpio::{AnyPin, Input, Pull};
 use embedded_hal::spi::Operation;
 use embedded_hal_async::spi::{SpiBus, SpiDevice};
@@ -114,11 +115,24 @@ where
         //assert_eq!(dev_ad, VALUE_DEVID_AD);
         //assert_eq!(dev_mst, VALUE_DEVID_MST);
         //assert_eq!(partid, VALUE_PARTID);
+        if dev_ad != VALUE_DEVID_AD {
+            error!("ADXL362: dev_ad: {:#X} != {:#X}", dev_ad, VALUE_DEVID_AD);
+        }
+
+        if dev_mst != VALUE_DEVID_MST {
+            error!("ADXL362: dev_mst: {:#X} != {:#X}", dev_mst, VALUE_DEVID_MST);
+        }
+
+        if partid != VALUE_PARTID {
+            error!("ADXL362: partid: {:#X} != {:#X}", partid, VALUE_PARTID);
+        }
+
         new
     }
 
     async fn write_one(&mut self, reg: u8, value: u8) {
-        self.spi_device.write(&[WRITE_REG, reg, value]).await.unwrap();
+        let mut tx = [WRITE_REG, reg, value];
+        self.spi_device.write(&tx).await.unwrap();
     }
 
     async fn write_two(&mut self, reg: u8, value: u16) {
@@ -130,7 +144,8 @@ where
 
     async fn read_one(&mut self, reg: u8) -> u8 {
         let mut rx: [u8; 1] = [0; 1];
-        self.spi_device.transaction(&mut [Operation::Write(&[READ_REG, reg]), Operation::Read(&mut rx)]).await.unwrap();
+        let mut tx = [READ_REG, reg];
+        self.spi_device.transaction(&mut [Operation::Write(&tx), Operation::Read(&mut rx)]).await.unwrap();
         rx[0]
     }
 

@@ -6,6 +6,7 @@
 #![feature(stdarch_arm_hints)]
 #![feature(stdarch_arm_neon_intrinsics)]
 #![feature(async_closure)]
+#![feature(mem_copy_fn)]
 #![allow(clippy::uninlined_format_args)]
 #![warn(clippy::large_futures)]
 #![feature(impl_trait_in_assoc_type)]
@@ -27,9 +28,9 @@ use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use embedded_alloc::LlffHeap as Heap;
-//use panic_probe as _;
-use panic_persist as _;
+//use panic_persist as _;
 use panic_persist::get_panic_message_utf8;
+//use panic_probe as _;
 use tinyrlibc as _;
 
 mod board;
@@ -41,11 +42,9 @@ mod tasks;
 #[used]
 static SPM: [u8; 33684] = *include_bytes!("../spm.bin");
 
-/*
-#[link_section = ".spm"]
-#[used]
-static SPM: [u8; 24052] = *include_bytes!("zephyr.bin");
-*/
+//#[link_section = ".spm"]
+//#[used]
+//static SPM: [u8; 24052] = *include_bytes!("zephyr.bin");
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -70,41 +69,45 @@ async fn main(spawner: Spawner) {
         static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
         unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
     }
+    info!("heap initialized");
+    let mut board = board::Board::new().await;
 
     let mut reset_reasons: heapless::Vec<ResetReason, 6> = heapless::Vec::new();
-    unsafe {
-        let pac = nrf9160_pac::Peripherals::steal();
-        let reset_reason = pac.POWER_NS.resetreas.read();
-        if reset_reason.resetpin().bit_is_set() {
+    /*unsafe {
+        info!("getting reset reasons");
+        let reset_reason = embassy_nrf::pac::POWER_S.resetreas().read();
+        info!("got pac");
+
+        if reset_reason.resetpin() {
             reset_reasons.push(ResetReason::ResetPin).ok();
         }
-        if reset_reason.dog().bit_is_set() {
+        if reset_reason.dog() {
             reset_reasons.push(ResetReason::Dog).ok();
         }
-        if reset_reason.off().bit_is_set() {
+        if reset_reason.off() {
             reset_reasons.push(ResetReason::Off).ok();
         }
-        if reset_reason.dif().bit_is_set() {
+        if reset_reason.dif() {
             reset_reasons.push(ResetReason::Dif).ok();
         }
-        if reset_reason.sreq().bit_is_set() {
+        if reset_reason.sreq() {
             reset_reasons.push(ResetReason::Sreq).ok();
         }
-        if reset_reason.lockup().bit_is_set() {
+        if reset_reason.lockup() {
             reset_reasons.push(ResetReason::LockUp).ok();
         }
-        if reset_reason.ctrlap().bit_is_set() {
+        if reset_reason.ctrlap() {
             reset_reasons.push(ResetReason::CtrlAp).ok();
         }
-    }
+    }*/
+    info!("got reset reasons: {:?}", reset_reasons);
     let panic_message = get_panic_message_utf8();
+    info!("got panic message");
     if let Some(panic) = panic_message {
         defmt::error!("{}", panic);
-        Timer::after(Duration::from_millis(500)).await;
     }
     defmt::info!("starting");
 
-    let mut board = board::Board::new().await;
     board.buzzer.on();
     Timer::after(Duration::from_millis(200)).await;
     board.buzzer.off();
@@ -112,7 +115,7 @@ async fn main(spawner: Spawner) {
 
     Timer::after(Duration::from_secs(1)).await;
 
-    let gnss = unwrap!(board.modem.gnss().await);
+    //let gnss = unwrap!(board.modem.gnss().await);
 
     let sense = unwrap!(board.sense.take());
     let lightwell = unwrap!(board.lightwell.take());
@@ -132,7 +135,6 @@ async fn main(spawner: Spawner) {
     let gnss_force_on = unwrap!(board.gnss_force_on.take());
 
     //unwrap!(spawner.spawn(tasks::logger::task(logger, uarte_tx_debug, panic_message)));
-
     if let Some(panic) = panic_message {
         //if !panic.contains("twi reset") {
         board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, panic).await.ok();
@@ -150,7 +152,7 @@ async fn main(spawner: Spawner) {
                 reset_reasons_str.pop();
                 let reset_reasons_str = reset_reasons_str.trim_start_matches("[");
                 warn!("trying to send sms panic");
-                //board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &reset_reasons_str).await.ok();
+                board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &reset_reasons_str).await.ok();
             }
         }
     }
@@ -164,18 +166,20 @@ async fn main(spawner: Spawner) {
     unwrap!(spawner.spawn(tasks::montion_detection::task(low_power_accelerometer)));
     unwrap!(spawner.spawn(tasks::button::task(button)));
     unwrap!(spawner.spawn(tasks::reset::task()));
-    tasks::uarte::run(&spawner, uarte, uarte_send, uarte_receive, uarte_reset);
+    tasks::uarte::run(&spawner, uarte, uarte_send, uarte_receive, uarte_reset).await;
 
     defmt::info!("entering main loop");
 
     tasks::modem::task(board.modem, &spawner).await;
 }
 
-use cortex_m_rt::ExceptionFrame;
+/*use cortex_m_rt::ExceptionFrame;
 #[cortex_m_rt::exception]
 unsafe fn HardFault(e: &ExceptionFrame) -> ! {
-    defmt::error!("HardFault: {}", defmt::Debug2Format(e));
-    cortex_m::peripheral::SCB::sys_reset();
+    loop {
+        defmt::error!("HardFault: {}", defmt::Debug2Format(e));
+    }
+    //cortex_m::peripheral::SCB::sys_reset();
 
     /*
     let now = embassy_time::Instant::now();
@@ -186,4 +190,4 @@ unsafe fn HardFault(e: &ExceptionFrame) -> ! {
             cortex_m::peripheral::SCB::sys_reset();
         }
     }*/
-}
+}*/
