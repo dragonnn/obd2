@@ -292,7 +292,7 @@ impl Obd2 {
         let can_frame = unwrap!(CanFrame::new(can_id, &frame.data));
 
         let response = self.request(&can_frame).await?;
-        Ok(Obd2Frame { pid: frame.pid, data: unwrap!(heapless::Vec::from_slice(response)) })
+        Ok(Obd2Frame { pid: frame.pid, data: response.to_vec() })
     }
 }
 
