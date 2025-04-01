@@ -6,6 +6,7 @@
 #![feature(stdarch_arm_hints)]
 #![feature(stdarch_arm_neon_intrinsics)]
 #![feature(async_closure)]
+#![feature(mem_copy_fn)]
 #![allow(clippy::uninlined_format_args)]
 #![warn(clippy::large_futures)]
 #![feature(impl_trait_in_assoc_type)]
@@ -165,7 +166,7 @@ async fn main(spawner: Spawner) {
     unwrap!(spawner.spawn(tasks::montion_detection::task(low_power_accelerometer)));
     unwrap!(spawner.spawn(tasks::button::task(button)));
     unwrap!(spawner.spawn(tasks::reset::task()));
-    tasks::uarte::run(&spawner, uarte, uarte_send, uarte_receive, uarte_reset);
+    tasks::uarte::run(&spawner, uarte, uarte_send, uarte_receive, uarte_reset).await;
 
     defmt::info!("entering main loop");
 

@@ -22,16 +22,21 @@ static STATE_CHANNEL: PubSubChannel<CriticalSectionRawMutex, types::State, 16, 8
 static CURRENT_STATE: Mutex<CriticalSectionRawMutex, types::State> =
     Mutex::new(types::State::Shutdown(core::time::Duration::from_secs(15 * 60)));
 static UARTE_RESET: Signal<CriticalSectionRawMutex, ()> = Signal::new();
+static UARTE_RX_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
+static UARTE_TX_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 
 use crate::board::{BoardUarteRx, BoardUarteTx};
 
-pub fn run(
+pub async fn run(
     spawner: &Spawner,
     uarte: (BoardUarteTx, BoardUarteRx),
     uarte_send: Output<'static>,
     uarte_receive: Input<'static>,
-    uarte_reset: Output<'static>,
+    mut uarte_reset: Output<'static>,
 ) {
+    uarte_reset.set_low();
+    embassy_time::Timer::after(Duration::from_millis(10)).await;
+    uarte_reset.set_high();
     spawner.spawn(send_task(uarte.0, uarte_send)).unwrap();
     spawner.spawn(receive_task(uarte.1, uarte_receive, uarte_reset)).unwrap();
 }
@@ -46,6 +51,7 @@ async fn send_task(mut send: BoardUarteTx, mut uarte_send: Output<'static>) {
             uarte_send.set_high();
             embassy_time::Timer::after(Duration::from_millis(10)).await;
             send.write(&encrypted_message).await.unwrap();
+            UARTE_TX_SIGNAL.signal(());
             uarte_send.set_low();
             embassy_time::Timer::after(Duration::from_millis(10)).await;
         }
@@ -87,6 +93,7 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
         } else {
             let result = receive.read_until_idle(&mut buffer).await;
             if let Ok(result) = result {
+                UARTE_RX_SIGNAL.signal(());
                 if result > 0 {
                     vec_buffer.extend_from_slice(&buffer[..result]);
 
@@ -147,4 +154,11 @@ pub async fn set_current_state(state: types::State) {
 
 pub fn reset() {
     UARTE_RESET.signal(());
+}
+
+pub async fn wait_for_uarte_rx() {
+    UARTE_RX_SIGNAL.wait().await;
+}
+pub async fn wait_for_uarte_tx() {
+    UARTE_TX_SIGNAL.wait().await;
 }
