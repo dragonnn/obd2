@@ -32,6 +32,7 @@ static PID_ERRORS_SEND: Mutex<CriticalSectionRawMutex, heapless::FnvIndexSet<typ
 
 static LAST_SEND: Mutex<CriticalSectionRawMutex, Instant> = Mutex::new(Instant::from_ticks(0));
 static LAST_RECEIVE: Mutex<CriticalSectionRawMutex, Instant> = Mutex::new(Instant::from_ticks(0));
+static LAST_POSITION: Mutex<CriticalSectionRawMutex, Instant> = Mutex::new(Instant::from_ticks(0));
 
 #[embassy_executor::task]
 pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
@@ -149,6 +150,7 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
                     types::Modem::GnssState(gnss_state) => info!("gnss_state: {:?}", gnss_state),
                     types::Modem::GnssFix(gnss_fix) => {
                         warn!("gnss_fix: {:?}", gnss_fix);
+                        *LAST_POSITION.lock().await = Instant::now();
                     }
                     types::Modem::Connected => info!("modem connected"),
                     types::Modem::Disconnected => info!("modem disconnected"),
@@ -502,6 +504,10 @@ pub fn last_send() -> Option<Instant> {
     LAST_SEND.try_lock().ok().map(|lock| *lock)
 }
 
-pub fn last_recieve() -> Option<Instant> {
+pub fn last_receive() -> Option<Instant> {
     LAST_RECEIVE.try_lock().ok().map(|lock| *lock)
+}
+
+pub fn last_position() -> Option<Instant> {
+    LAST_POSITION.try_lock().ok().map(|lock| *lock)
 }

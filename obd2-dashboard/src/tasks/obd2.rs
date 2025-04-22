@@ -159,6 +159,7 @@ pub async fn run(mut obd2: Obd2) {
                 KIA_EVENTS.send(KiaEvent::Obd2LoopEnd(current_sets, all)).await;
                 match select(obd2_custom_frames_recv.receive(), current_sets.loop_delay()).await {
                     Either::First(obd2_custom_frame) => {
+                        crate::tasks::state::EVENTS.send(KiaEvent::IgnitionOffResetTimeout).await;
                         warn!("obd2 custom frame: {:?}", obd2_custom_frame);
                         if let Ok(response) = obd2.send_custom_frame(obd2_custom_frame).await {
                             ieee802154_extra_txframes_pub.publish(types::TxFrame::Obd2Frame(response)).await;

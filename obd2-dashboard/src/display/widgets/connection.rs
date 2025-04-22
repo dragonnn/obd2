@@ -2,7 +2,12 @@ use alloc::{borrow::Cow, string::ToString as _};
 use core::fmt::Write;
 
 use display_interface::DisplayError;
-use embedded_graphics::{image::Image, pixelcolor::Gray4, prelude::*};
+use embedded_graphics::{
+    image::Image,
+    pixelcolor::Gray4,
+    prelude::*,
+    primitives::{Rectangle, StyledDrawable as _},
+};
 use embedded_iconoir::prelude::IconoirNewIcon as _;
 
 #[derive(Clone, Debug)]
@@ -44,31 +49,27 @@ impl Connection {
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
-            self.redraw = false;
+            let icon = embedded_iconoir::icons::size18px::connectivity::DataTransferBoth::new(GrayColor::WHITE);
+            let image = Image::new(&icon, self.position);
+            image.draw(target)?;
 
-            match (self.last_receive, self.last_send) {
-                (true, true) => {
-                    let icon = embedded_iconoir::icons::size24px::connectivity::DataTransferBoth::new(GrayColor::WHITE);
-                    let image = Image::new(&icon, Point::zero());
-                    image.draw(target)?;
-                }
-                (true, false) => {
-                    let icon = embedded_iconoir::icons::size24px::connectivity::DataTransferDown::new(GrayColor::WHITE);
-                    let image = Image::new(&icon, Point::zero());
-                    image.draw(target)?;
-                }
-                (false, true) => {
-                    let icon = embedded_iconoir::icons::size24px::connectivity::DataTransferUp::new(GrayColor::WHITE);
-                    let image = Image::new(&icon, Point::zero());
-                    image.draw(target)?;
-                }
-                (false, false) => {
-                    let icon =
-                        embedded_iconoir::icons::size24px::connectivity::DataTransferWarning::new(GrayColor::WHITE);
-                    let image = Image::new(&icon, Point::zero());
-                    image.draw(target)?;
-                }
-            };
+            let style = embedded_graphics::primitives::PrimitiveStyleBuilder::new()
+                .stroke_width(0)
+                .stroke_color(Gray4::BLACK)
+                .fill_color(Gray4::BLACK)
+                .build();
+
+            if !self.last_receive {
+                let bounding_box = Rectangle::new(self.position, Size::new(18 / 2, 18));
+                bounding_box.draw_styled(&style, target)?;
+            }
+
+            if !self.last_send {
+                let bounding_box = Rectangle::new(self.position + Point::new(6, 0), Size::new(18 / 2, 18));
+                bounding_box.draw_styled(&style, target)?;
+            }
+
+            self.redraw = false;
         }
 
         Ok(())

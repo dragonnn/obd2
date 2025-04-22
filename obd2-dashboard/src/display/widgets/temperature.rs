@@ -146,11 +146,11 @@ impl Temperature {
             let character_style = MonoTextStyle::new(&PROFONT_10_POINT, Gray4::WHITE);
 
             let text_style =
-                TextStyleBuilder::new().alignment(Alignment::Center).line_height(LineHeight::Percent(100)).build();
+                TextStyleBuilder::new().alignment(Alignment::Left).line_height(LineHeight::Percent(100)).build();
 
             let mut rotate_target = RotatedDrawTarget::new(target);
 
-            let text_position = Point::new(24, self.position.x + 20);
+            let text_position = Point::new(0, 256 - self.position.x + 5);
 
             let text = Text::with_text_style(text.as_str(), text_position, character_style, text_style);
             let text_box = Rectangle::with_center(text_position - Point::new(1, 2), Size::new(42, 12));

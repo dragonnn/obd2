@@ -24,6 +24,7 @@ pub static EVENTS: Channel<CriticalSectionRawMutex, KiaEvent, 128> = Channel::ne
 #[derive(Format, PartialEq, Clone)]
 pub enum KiaEvent {
     IgnitionOff,
+    IgnitionOffResetTimeout,
     IgnitionOn,
     Button(crate::tasks::buttons::Action),
     Obd2Event(Obd2Event),
@@ -236,6 +237,10 @@ impl KiaState {
         );
 
         match event {
+            KiaEvent::IgnitionOffResetTimeout => {
+                *timeout = Instant::now();
+                Handled
+            }
             KiaEvent::Obd2Event(Obd2Event::Icu3Pid(icu3_pid)) => {
                 if icu3_pid.on_board_charger_wakeup_output {
                     Transition(State::check_charging(None, Instant::now()))

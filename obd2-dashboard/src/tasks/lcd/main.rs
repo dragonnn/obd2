@@ -3,11 +3,12 @@ use embedded_graphics::geometry::{Point, Size};
 
 use crate::{
     display::widgets::{
-        Arrow, ArrowDirection, Battery, Battery12V, BatteryOrientation, GearboxGear, IceFuelRate, MotorElectric,
-        MotorIce, Power, Temperature, Value,
+        Arrow, ArrowDirection, Battery, Battery12V, BatteryOrientation, Connection, GearboxGear, IceFuelRate,
+        MotorElectric, MotorIce, Position, Power, Temperature, Value,
     },
     event::Obd2Event,
     pid::{BmsPid, IceTemperaturePid},
+    tasks::ieee802154::{last_position, last_receive, last_send},
     types::{Display1, Display2, Sh1122},
 };
 
@@ -29,6 +30,9 @@ pub struct LcdMainState {
     gearbox_gear: GearboxGear,
     vehicle_speed: Value,
 
+    connection: Connection,
+    position: Position,
+
     ice_fuel_rate_value: f64,
     hv_battery_current: f64,
     vehicle_speed_value: f64,
@@ -46,8 +50,8 @@ impl LcdMainState {
                 4,
                 true,
             ),
-            aux_battery: Battery12V::new(Point::new(58, 31)),
-            ice_temperature: Temperature::new(Point::new(120, 0), Size::new(16, 64), 0.0, 130.0, 4),
+            aux_battery: Battery12V::new(Point::new(256 - 18 * 2 - 16 * 2 - 2, 31)),
+            ice_temperature: Temperature::new(Point::new(256 - 18 * 2, 0), Size::new(16, 64), 0.0, 130.0, 4),
 
             electric_power: Power::new(Point::new(128 + 36, 14)),
             electric_power_arrow: Arrow::new(
@@ -65,6 +69,9 @@ impl LcdMainState {
             gearbox_gear: GearboxGear::new(Point::new(40, 14)),
             vehicle_speed: Value::new(Point::new(58, 12), &profont::PROFONT_14_POINT, "km/h", 0),
             ice_fuel_rate: IceFuelRate::new(Point::new(60, 24)),
+
+            connection: Connection::new(Point::new(256 - 18, 0)),
+            position: Position::new(Point::new(256 - 18, 18)),
 
             ice_fuel_rate_value: 0.0,
             hv_battery_current: 0.0,
@@ -119,6 +126,16 @@ impl LcdMainState {
     }
 
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
+        if let Some(last_send) = last_send() {
+            self.connection.update_last_send(last_send.elapsed().as_millis() < 250);
+        }
+        if let Some(last_receive) = last_receive() {
+            self.connection.update_last_receive(last_receive.elapsed().as_millis() < 250);
+        }
+        if let Some(last_position) = last_position() {
+            self.position.update_last_position(last_position.elapsed().as_millis() < 250);
+        }
+
         if self.motor_ice.update_on(self.ice_fuel_rate_value > 0.0) {
             self.gearbox_gear.force_redraw();
         }
@@ -139,6 +156,8 @@ impl LcdMainState {
         self.ice_fuel_rate.draw(display2).ok();
         self.vehicle_speed.draw(display2).ok();
         self.motor_electric_rpm.draw(display1).ok();
+        self.connection.draw(display2).ok();
+        self.position.draw(display2).ok();
 
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);
