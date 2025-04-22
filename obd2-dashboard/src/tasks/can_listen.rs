@@ -14,6 +14,7 @@ use crate::{
 };
 #[embassy_executor::task]
 pub async fn run(mut can_listen: Mcp2515) {
+    return;
     embassy_time::Timer::after(Duration::from_secs(10)).await;
     let _shutdown_guard = ShutdownGuard::new();
     let config = crate::mcp2515::Config::default()

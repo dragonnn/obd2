@@ -149,7 +149,6 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
                     types::Modem::Reset => info!("modem reset"),
                     types::Modem::GnssState(gnss_state) => info!("gnss_state: {:?}", gnss_state),
                     types::Modem::GnssFix(gnss_fix) => {
-                        warn!("gnss_fix: {:?}", gnss_fix);
                         *LAST_POSITION.lock().await = Instant::now();
                     }
                     types::Modem::Connected => info!("modem connected"),
@@ -203,7 +202,10 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
     loop {
         match select3(ieee802154.receive(), ieee802154_send_sub.receive(), shutdown_signal.next_message_pure()).await {
             First(rxmessage) => {
-                *LAST_RECEIVE.lock().await = Instant::now();
+                if let RxFrame::Modem(types::Modem::GnssFix(_)) = rxmessage.frame {
+                } else {
+                    *LAST_RECEIVE.lock().await = Instant::now();
+                }
                 info!("got rx message: {:?}", rxmessage);
                 if ieee802154_receive_pub.is_full() {
                     warn!("ieee802154_receive_pub is full");
@@ -441,7 +443,7 @@ impl AsyncIeee802154 {
                     self.rxmessage_buffer.push(rxmessage).ok();
                 }
             } else {
-                warn!("no ack received_frame: {:?}", rxmessage);
+                warn!("no ack received_frame");
                 self.rxmessage_buffer.push(rxmessage).ok();
             }
         }
@@ -491,6 +493,7 @@ pub async fn insert_send_pid(pid: &Pid) {
 }
 
 pub async fn insert_send_pid_error(pid_error: &types::PidError) {
+    error!("new pid error: {:?}", pid_error);
     let mut pid_errors_send = PID_ERRORS_SEND.lock().await;
     pid_errors_send.remove(pid_error);
     pid_errors_send.insert(pid_error.clone()).ok();
