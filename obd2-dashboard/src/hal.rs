@@ -95,7 +95,7 @@ impl embedded_hal_async::spi::SpiBus for SpiBus {
     }
 }
 
-const SPI_RAMP_UP_SECS: u64 = 200;
+//const SPI_RAMP_UP_SECS: u64 = 200;
 
 impl embassy_embedded_hal::SetConfig for SpiBus {
     type Config = u32;
@@ -103,14 +103,14 @@ impl embassy_embedded_hal::SetConfig for SpiBus {
     type ConfigError = ();
 
     fn set_config(&mut self, config: &Self::Config) -> Result<(), Self::ConfigError> {
-        let mut khz = config.kHz();
-        let mut elapsed_secs = self.elapsed.elapsed().as_secs();
+        let khz = config.kHz();
+        /*let mut elapsed_secs = self.elapsed.elapsed().as_secs();
         if elapsed_secs < SPI_RAMP_UP_SECS {
             if elapsed_secs < 1 {
                 elapsed_secs = 1;
             }
             khz = (khz * elapsed_secs as u32) / SPI_RAMP_UP_SECS as u32;
-        }
+        }*/
 
         if self.speed == Some(khz) {
             return Ok(());

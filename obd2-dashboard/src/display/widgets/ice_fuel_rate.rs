@@ -55,16 +55,16 @@ impl IceFuelRate {
             if self.vehicle_speed > 0.0 {
                 fuel_per_100km = self.ice_fuel_rate / self.vehicle_speed * 100.0;
             }
-            write!(text, "{:.1} l/100km", fuel_per_100km).ok();
+            write!(text, "{:.1}", fuel_per_100km).ok();
 
-            let character_style = MonoTextStyle::new(&PROFONT_12_POINT, Gray4::WHITE);
+            let character_style = MonoTextStyle::new(&PROFONT_10_POINT, Gray4::WHITE);
 
             // Create a new text style.
             let text_style =
                 TextStyleBuilder::new().alignment(Alignment::Left).line_height(LineHeight::Percent(100)).build();
 
-            let text = Text::with_text_style(text.as_str(), self.position, character_style, text_style);
-            let new_bounding_box = text.bounding_box();
+            let draw_text = Text::with_text_style(text.as_str(), self.position, character_style, text_style);
+            let new_bounding_box = draw_text.bounding_box();
             if new_bounding_box.size.width > self.bounding_box.map(|bb| bb.size.width).unwrap_or(0) {
                 self.bounding_box = Some(new_bounding_box);
             }
@@ -72,7 +72,27 @@ impl IceFuelRate {
                 bb.draw_styled(&PrimitiveStyleBuilder::new().fill_color(Gray4::BLACK).build(), target)?;
             }
 
-            text.draw(target)?;
+            draw_text.draw(target)?;
+
+            text.clear();
+            write!(text, "l/100").ok();
+
+            let character_style = MonoTextStyle::new(&PROFONT_7_POINT, Gray4::WHITE);
+
+            // Create a new text style.
+            let text_style =
+                TextStyleBuilder::new().alignment(Alignment::Left).line_height(LineHeight::Percent(100)).build();
+            let draw_text = Text::with_text_style(
+                text.as_str(),
+                new_bounding_box.top_left + Point::new(new_bounding_box.size.width as i32 + 4, 8),
+                character_style,
+                text_style,
+            );
+
+            let new_bounding_box = draw_text.bounding_box();
+            new_bounding_box.draw_styled(&PrimitiveStyleBuilder::new().fill_color(Gray4::BLACK).build(), target)?;
+
+            draw_text.draw(target)?;
 
             self.redraw = false;
         }

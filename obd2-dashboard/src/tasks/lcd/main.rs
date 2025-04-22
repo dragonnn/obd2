@@ -46,9 +46,8 @@ impl LcdMainState {
                 4,
                 true,
             ),
-            aux_battery: Battery12V::new(Point::new(256 - 41 - 22, 31)),
-            ice_temperature: Temperature::new(Point::new(256 - 21, 0), Size::new(16, 64), 0.0, 130.0, 4),
-            ice_fuel_rate: IceFuelRate::new(Point::new(60, 44)),
+            aux_battery: Battery12V::new(Point::new(58, 31)),
+            ice_temperature: Temperature::new(Point::new(120, 0), Size::new(16, 64), 0.0, 130.0, 4),
 
             electric_power: Power::new(Point::new(128 + 36, 14)),
             electric_power_arrow: Arrow::new(
@@ -64,7 +63,8 @@ impl LcdMainState {
             motor_ice: MotorIce::new(Point::new(0, 0)),
 
             gearbox_gear: GearboxGear::new(Point::new(40, 14)),
-            vehicle_speed: Value::new(Point::new(58, 32), &profont::PROFONT_14_POINT, "km/h", 0),
+            vehicle_speed: Value::new(Point::new(58, 12), &profont::PROFONT_14_POINT, "km/h", 0),
+            ice_fuel_rate: IceFuelRate::new(Point::new(60, 24)),
 
             ice_fuel_rate_value: 0.0,
             hv_battery_current: 0.0,
