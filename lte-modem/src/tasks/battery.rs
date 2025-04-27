@@ -45,7 +45,7 @@ impl State {
 impl Into<types::Modem> for State {
     fn into(self) -> types::Modem {
         types::Modem::Battery {
-            voltage: self.voltage as f64 / 1000.0,
+            voltage: self.voltage as f32 / 1000.0,
             low_voltage: self.low_voltage,
             soc: self.capacity,
             charging: self.charging,
@@ -159,7 +159,7 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
         if last_modem_battery_send.map(|l| l.elapsed().as_secs() > 60).unwrap_or(true) {
             last_modem_battery_send = Some(Instant::now());
             tx_channel_pub.publish_immediate(TxMessage::new(TxFrame::Modem(Modem::Battery {
-                voltage: battery_voltage as f64 / 1000.0,
+                voltage: battery_voltage as f32 / 1000.0,
                 low_voltage,
                 soc: battery_soc,
                 charging: state.charging,

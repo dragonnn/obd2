@@ -406,8 +406,8 @@ pub enum GnssState {
 
 #[derive(Debug, PartialEq, Format, Clone, Copy, Deserialize, Serialize)]
 pub struct GnssFix {
-    pub latitude: f32,
-    pub longitude: f32,
+    pub latitude: f64,
+    pub longitude: f64,
     pub altitude: f32,
     pub accuracy: f32,
 
@@ -424,17 +424,17 @@ pub struct GnssFix {
 use num_traits::real::Real;
 
 impl core::ops::Sub for GnssFix {
-    type Output = f32;
+    type Output = f64;
 
     fn sub(self, other: Self) -> Self::Output {
         let r = 6378.137;
-        let d_lat = (other.latitude * core::f32::consts::PI / 180.0)
-            - (self.latitude * core::f32::consts::PI / 180.0);
-        let d_lon = (other.longitude * core::f32::consts::PI / 180.0)
-            - (self.longitude * core::f32::consts::PI / 180.0);
+        let d_lat = (other.latitude * core::f64::consts::PI / 180.0)
+            - (self.latitude * core::f64::consts::PI / 180.0);
+        let d_lon = (other.longitude * core::f64::consts::PI / 180.0)
+            - (self.longitude * core::f64::consts::PI / 180.0);
         let a = (d_lat / 2.0).sin() * (d_lat / 2.0).sin()
-            + (self.latitude * core::f32::consts::PI / 180.0).cos()
-                * (other.latitude * core::f32::consts::PI / 180.0).cos()
+            + (self.latitude * core::f64::consts::PI / 180.0).cos()
+                * (other.latitude * core::f64::consts::PI / 180.0).cos()
                 * (d_lon / 2.0).sin()
                 * (d_lon / 2.0).sin();
         let c = 2.0 * a.sqrt().atan2((1.0 - a).sqrt());
