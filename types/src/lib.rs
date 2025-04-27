@@ -114,6 +114,15 @@ pub struct Icu2Pid {
     pub signal_back_av: bool,
 }
 
+impl Icu2Pid {
+    pub fn is_open(&self) -> bool {
+        self.actuator_back_door_driver_side_unlock
+            || self.actuator_back_door_passenger_side_unlock
+            || self.trunk_open
+            || self.engine_hood_open
+    }
+}
+
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct Icu3Pid {
     pub on_board_charger_wakeup_output: bool,

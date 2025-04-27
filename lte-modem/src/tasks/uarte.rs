@@ -16,7 +16,7 @@ use embassy_sync::{
 };
 use embassy_time::{with_timeout, Duration, Instant};
 use serde_encrypt::{shared_key::SharedKey, traits::SerdeEncryptSharedKey as _, EncryptedMessage};
-use types::Modem;
+use types::{MessageId, Modem, RxFrame::TxFrameAck};
 
 static STATE_CHANNEL: PubSubChannel<CriticalSectionRawMutex, types::State, 16, 8, 2> = PubSubChannel::new();
 static PID_CHANNEL: PubSubChannel<CriticalSectionRawMutex, types::Pid, 16, 8, 1> = PubSubChannel::new();
@@ -57,6 +57,11 @@ async fn send_task(mut send: BoardUarteTx, mut uarte_send: Output<'static>) {
                 }
             }
         }
+        if let types::RxFrame::TxFrameAck(MessageId::Modem(_)) = msg.frame {
+            warn!("not sending modem ack");
+            send_msg = false;
+        }
+
         if send_msg {
             if let Ok(encrypted_message) = msg.to_vec_encrypted() {
                 uarte_send.set_high();

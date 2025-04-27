@@ -189,8 +189,8 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
         ..Default::default()
     });
 
-    let local_timeout = Duration::from_millis(250);
-    let remote_timeout = Duration::from_secs(10);
+    let local_timeout = Duration::from_millis(50);
+    let remote_timeout = Duration::from_secs(4);
 
     let mut ieee802154 = AsyncIeee802154::new(ieee802154);
     let _shutdown_guard = ShutdownGuard::new();
@@ -438,7 +438,7 @@ impl AsyncIeee802154 {
                 if ack == txmessage_id {
                     return ack;
                 } else {
-                    warn!("ack != txmessage_id");
+                    warn!("ack != txmessage_id got: ack: {:?} txmessage_id: {:?}", ack, txmessage_id);
                     self.rxmessage_buffer.push(rxmessage).ok();
                 }
             } else {

@@ -242,6 +242,7 @@ pub async fn send_task(spawner: Spawner) {
 
 #[embassy_executor::task]
 pub async fn recv_task(socket_rx: OwnedUdpReceiveSocket) {
+    warn!("recv task start");
     let mut rx_buf = [0; 512];
     let rx_pub = unwrap!(RX_CHANNEL.dyn_publisher());
     loop {
@@ -249,6 +250,7 @@ pub async fn recv_task(socket_rx: OwnedUdpReceiveSocket) {
             Either::First(_) => break,
             Either::Second(Ok((readed, _peer))) => match types::RxMessage::from_bytes_encrypted(&readed) {
                 Ok(rx_message) => {
+                    info!("got rx message {:?}", rx_message);
                     rx_pub.publish_immediate(rx_message);
                 }
                 Err(_err) => {

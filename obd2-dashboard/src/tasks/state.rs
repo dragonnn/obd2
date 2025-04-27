@@ -62,7 +62,9 @@ impl KiaState {
     async fn init(&mut self, event: &KiaEvent) -> Response<State> {
         //info!("init got event: {:?}", event);
         match event {
-            KiaEvent::IgnitionOff => Transition(State::ignition_off(Instant::now(), Duration::from_secs(60), false)),
+            KiaEvent::IgnitionOff => {
+                Transition(State::ignition_off(Instant::now(), Duration::from_secs(60), false, false))
+            }
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             _ => Handled,
         }
@@ -150,14 +152,14 @@ impl KiaState {
                         Transition(State::charging(None, 0))
                     } else {
                         if timeout.elapsed().as_secs() > 5 * 60 {
-                            Transition(State::ignition_off(Instant::now(), Duration::from_secs(60), false))
+                            Transition(State::ignition_off(Instant::now(), Duration::from_secs(60), false, false))
                         } else {
                             Handled
                         }
                     }
                 } else {
                     if timeout.elapsed().as_secs() > 5 * 60 {
-                        Transition(State::ignition_off(Instant::now(), Duration::from_secs(60), false))
+                        Transition(State::ignition_off(Instant::now(), Duration::from_secs(60), false, false))
                     } else {
                         Handled
                     }
@@ -241,11 +243,16 @@ impl KiaState {
         timeout: &mut Instant,
         shutdown_duration: &mut Duration,
         got_any_timeout_reset: &mut bool,
+        car_is_open: &mut bool,
     ) -> Response<State> {
         match event {
             KiaEvent::IgnitionOffResetTimeout => {
                 *timeout = Instant::now();
                 *got_any_timeout_reset = true;
+                Handled
+            }
+            KiaEvent::Obd2Event(Obd2Event::Icu2Pid(icu2_pid)) => {
+                *car_is_open = icu2_pid.is_open();
                 Handled
             }
             KiaEvent::Obd2Event(Obd2Event::Icu3Pid(icu3_pid)) => {
@@ -264,7 +271,8 @@ impl KiaState {
             }
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             KiaEvent::Obd2LoopEnd(set, all) => {
-                let mut timeout_duration = Duration::from_secs(2 * 60);
+                let mut timeout_duration =
+                    if *car_is_open { Duration::from_secs(30 * 60) } else { Duration::from_secs(2 * 60) };
 
                 if *got_any_timeout_reset {
                     timeout_duration = Duration::from_secs(30 * 60);

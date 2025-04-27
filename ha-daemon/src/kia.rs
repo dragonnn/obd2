@@ -89,6 +89,51 @@ impl KiaHandler {
                     .update(state.into())
                     .await;
             }
+            TxFrame::Obd2Pid(types::Pid::Icu2Pid(icu2_pid)) => {
+                let trunk_open = if icu2_pid.trunk_open { "on" } else { "off" };
+                self.ha_sensors
+                    .get("trunk_open")
+                    .unwrap()
+                    .update(trunk_open.into())
+                    .await;
+
+                //driver_door_open
+                let driver_door_open = if icu2_pid.actuator_back_door_driver_side_unlock {
+                    "on"
+                } else {
+                    "off"
+                };
+                self.ha_sensors
+                    .get("driver_door_open")
+                    .unwrap()
+                    .update(driver_door_open.into())
+                    .await;
+
+                //passenger_door_open
+                let passenger_door_open = if icu2_pid.actuator_back_door_passenger_side_unlock {
+                    "on"
+                } else {
+                    "off"
+                };
+
+                self.ha_sensors
+                    .get("passenger_door_open")
+                    .unwrap()
+                    .update(passenger_door_open.into())
+                    .await;
+
+                //engine_hood_open
+                let engine_hood_open = if icu2_pid.engine_hood_open {
+                    "on"
+                } else {
+                    "off"
+                };
+                self.ha_sensors
+                    .get("engine_hood_open")
+                    .unwrap()
+                    .update(engine_hood_open.into())
+                    .await;
+            }
             TxFrame::Obd2Pid(types::Pid::Icu1Smk(icu_smk_1)) => {
                 self.ha_sensors
                     .get("aux_voltage")
