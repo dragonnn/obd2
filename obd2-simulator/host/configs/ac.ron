@@ -35,7 +35,7 @@
                     //    COMPRESOR ON 35
                     //    0x00 - OFF
                     //    0x01 - ON (or anything else)
-                    0xff, 0x00,          0xff
+                    0xff, 0x01,          0xff
                 ]
             )),
         ]
