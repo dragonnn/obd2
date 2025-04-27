@@ -199,7 +199,6 @@ impl Obd2 {
     pub async fn request_pid<PID: Pid>(&mut self) -> Result<(PID, alloc::vec::Vec<u8>), Obd2Error> {
         let request = PID::request();
 
-        internal_debug!("req pid {:x}: {:x?}", request.id_header.get_i32(), request.data);
         let obd2_data = self.request(&request).await?;
 
         let pid = PID::parse(&obd2_data)?;

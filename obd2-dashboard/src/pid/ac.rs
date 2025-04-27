@@ -4,6 +4,7 @@ use embedded_can::{Frame as _, StandardId};
 pub use types::AcPid;
 
 use crate::{
+    debug::internal_debug,
     event::Obd2Event,
     mcp2515::CanFrame,
     obd2::{Obd2Error, Pid},
@@ -19,6 +20,9 @@ impl Pid for AcPid {
         if data.len() < 7 {
             return Err(Obd2Error::FrameToShort);
         }
+
+        internal_debug!("AC PID data: {:x?}", data);
+        info!("AC PID data: {:?}", data);
         Ok(Self { gear: data[2] as i32 })
     }
 

@@ -1,6 +1,8 @@
 [target.riscv32imac-unknown-none-elf]
 #runner = "espflash flash --monitor -p /dev/ttyACM0 -L defmt"
-runner = "probe-rs run --chip esp32c6"
+#runner = "probe-rs run --chip esp32c6 --host ws://X.X.X.X:3000 --token pi"
+#runner = "probe-rs run --chip esp32c6"
+runner = "./.cargo/run.sh"
 #runner = ".cargo/run.sh"
 [build]
 rustflags = [
@@ -12,6 +14,7 @@ rustflags = [
     "force-frame-pointers",
     "-C",
     "link-arg=-Tdefmt.x",
+    "-Clink-args=-Map=app.map",
 ]
 
 target = "riscv32imac-unknown-none-elf"
@@ -22,6 +25,6 @@ build-std = ["alloc", "core"]
 [env]
 DEFMT_LOG = "info"
 #DEFMT_RTT_BUFFER_SIZE = "4096"
-ESP_IEEE802154_RX_QUEUE_SIZE = "10"
+ESP_IEEE802154_RX_QUEUE_SIZE = "32"
 ESP_HAL_PLACE_SPI_DRIVER_IN_RAM = "true"
 ESP_HAL_EMBASSY_CONFIG_LOW_POWER_WAIT = "true"
