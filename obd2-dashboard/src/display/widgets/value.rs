@@ -21,7 +21,7 @@ use crate::display::RotatedDrawTarget;
 pub struct Value {
     position: Point,
 
-    value: f64,
+    value: f32,
     font: &'static MonoFont<'static>,
     unit: &'static str,
     precision: usize,
@@ -49,7 +49,7 @@ impl Value {
         Self { position, value: 0.0, unit, redraw: true, bounding_box: None, precision, font }
     }
 
-    pub fn update_value(&mut self, value: f64) {
+    pub fn update_value(&mut self, value: f32) {
         if self.value != value {
             self.value = value;
             self.redraw = true;

@@ -17,7 +17,7 @@ use profont::*;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Battery12V {
-    voltage: f64,
+    voltage: f32,
     position: Point,
     redraw: bool,
     inited: bool,
@@ -28,7 +28,7 @@ impl Battery12V {
         Self { position, voltage: 0.0, redraw: true, inited: false }
     }
 
-    pub fn update_voltage(&mut self, voltage: f64) {
+    pub fn update_voltage(&mut self, voltage: f32) {
         if self.voltage != voltage {
             self.voltage = voltage;
             self.redraw = true;

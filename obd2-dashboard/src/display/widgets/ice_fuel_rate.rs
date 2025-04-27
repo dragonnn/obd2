@@ -21,8 +21,8 @@ use crate::display::RotatedDrawTarget;
 pub struct IceFuelRate {
     position: Point,
 
-    ice_fuel_rate: f64,
-    vehicle_speed: f64,
+    ice_fuel_rate: f32,
+    vehicle_speed: f32,
 
     redraw: bool,
     bounding_box: Option<Rectangle>,
@@ -33,14 +33,14 @@ impl IceFuelRate {
         Self { position, ice_fuel_rate: 0.0, vehicle_speed: 0.0, redraw: true, bounding_box: None }
     }
 
-    pub fn update_ice_fuel_rate(&mut self, ice_fuel_rate: f64) {
+    pub fn update_ice_fuel_rate(&mut self, ice_fuel_rate: f32) {
         if self.ice_fuel_rate != ice_fuel_rate {
             self.ice_fuel_rate = ice_fuel_rate;
             self.redraw = true;
         }
     }
 
-    pub fn update_vehicle_speed(&mut self, vehicle_speed: f64) {
+    pub fn update_vehicle_speed(&mut self, vehicle_speed: f32) {
         if self.vehicle_speed != vehicle_speed {
             self.vehicle_speed = vehicle_speed;
             self.redraw = true;

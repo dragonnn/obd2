@@ -19,10 +19,10 @@ use crate::display::RotatedDrawTarget;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Temperature {
-    max_temp: f64,
-    min_temp: f64,
-    current_temp: f64,
-    current_temp_percentage: f64,
+    max_temp: f32,
+    min_temp: f32,
+    current_temp: f32,
+    current_temp_percentage: f32,
 
     size: Size,
     position: Point,
@@ -32,7 +32,7 @@ pub struct Temperature {
 }
 
 impl Temperature {
-    pub fn new(position: Point, size: Size, min: f64, max: f64, bars: i32) -> Self {
+    pub fn new(position: Point, size: Size, min: f32, max: f32, bars: i32) -> Self {
         Self {
             position,
             size,
@@ -46,7 +46,7 @@ impl Temperature {
         }
     }
 
-    pub fn update_temp(&mut self, temp: f64) {
+    pub fn update_temp(&mut self, temp: f32) {
         if self.current_temp != temp {
             self.current_temp = temp;
             self.current_temp_percentage = (temp - self.min_temp) / (self.max_temp - self.min_temp);
@@ -113,7 +113,7 @@ impl Temperature {
 
             let mut size = self.size;
             size.width /= 2;
-            size.height = ((self.size.height as f64 - 8.0) * self.current_temp_percentage).round() as u32;
+            size.height = ((self.size.height as f32 - 8.0) * self.current_temp_percentage).round() as u32;
             size.width -= 6;
 
             style.fill_color = Some(color);

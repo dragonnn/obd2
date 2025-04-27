@@ -21,10 +21,10 @@ impl Pid for IcuPid {
         }
 
         let bat_discharge_warning_first_event_milage =
-            data[7] as f64 * 6553.6 + data[8] as f64 * 25.55 + data[9] as f64 * 0.1;
+            data[7] as f32 * 6553.6 + data[8] as f32 * 25.55 + data[9] as f32 * 0.1;
         let bat_discharge_warning_first_event_soc = data[10];
         let bat_discharge_warning_final_event_milage =
-            data[11] as f64 * 6553.6 + data[12] as f64 * 25.55 + data[13] as f64 * 0.1;
+            data[11] as f32 * 6553.6 + data[12] as f32 * 25.55 + data[13] as f32 * 0.1;
         let bat_discharge_warning_final_event_soc = data[14];
         let ret = Self {
             bat_discharge_warning_first_event_milage,

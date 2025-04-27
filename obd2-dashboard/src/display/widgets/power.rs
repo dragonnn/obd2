@@ -21,8 +21,8 @@ use crate::display::RotatedDrawTarget;
 pub struct Power {
     position: Point,
 
-    power: f64,
-    current: f64,
+    power: f32,
+    current: f32,
 
     redraw: bool,
     bounding_box: Option<Rectangle>,
@@ -33,14 +33,14 @@ impl Power {
         Self { position, power: 0.0, current: 0.0, redraw: true, bounding_box: None }
     }
 
-    pub fn update_power(&mut self, power: f64) {
+    pub fn update_power(&mut self, power: f32) {
         if self.power != power {
             self.power = power;
             self.redraw = true;
         }
     }
 
-    pub fn update_current(&mut self, current: f64) {
+    pub fn update_current(&mut self, current: f32) {
         if self.current != current {
             self.current = current;
             self.redraw = true;

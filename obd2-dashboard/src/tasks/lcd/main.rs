@@ -33,9 +33,9 @@ pub struct LcdMainState {
     connection: Connection,
     position: Position,
 
-    ice_fuel_rate_value: f64,
-    hv_battery_current: f64,
-    vehicle_speed_value: f64,
+    ice_fuel_rate_value: f32,
+    hv_battery_current: f32,
+    vehicle_speed_value: f32,
 }
 
 impl LcdMainState {
@@ -92,7 +92,7 @@ impl LcdMainState {
                 self.ice_fuel_rate.update_ice_fuel_rate(ice_fuel_rate_pid.fuel_rate);
             }
             Obd2Event::VehicleSpeedPid(vehicle_speed_pid) => {
-                let speed = vehicle_speed_pid.vehicle_speed as f64;
+                let speed = vehicle_speed_pid.vehicle_speed as f32;
                 self.vehicle_speed.update_value(speed + speed * 0.1);
                 self.ice_fuel_rate.update_vehicle_speed(speed);
                 self.vehicle_speed_value = speed;

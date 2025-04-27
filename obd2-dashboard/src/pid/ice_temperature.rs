@@ -20,7 +20,7 @@ impl Pid for IceTemperaturePid {
             return Err(Obd2Error::FrameToShort);
         }
 
-        Ok(Self { temperature: (data[3] as i8 - 40) as f64 })
+        Ok(Self { temperature: (data[3] as i8 - 40) as f32 })
     }
 
     fn into_error() -> types::PidError {

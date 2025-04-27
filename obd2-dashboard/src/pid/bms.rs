@@ -18,28 +18,28 @@ impl Pid for BmsPid {
         if data.len() < 60 {
             return Err(Obd2Error::FrameToShort);
         }
-        let hv_max_temp = data[16] as i8 as f64; //14
-        let hv_min_temp = data[17] as i8 as f64;
+        let hv_max_temp = data[16] as i8 as f32; //14
+        let hv_min_temp = data[17] as i8 as f32;
 
-        let hv_dc_voltage = (((data[14] as u32) << 8) as f64 + data[15] as f64) / 10.0;
+        let hv_dc_voltage = (((data[14] as u32) << 8) as f32 + data[15] as f32) / 10.0;
 
-        let hv_soc = data[6] as f64 / 2.0;
+        let hv_soc = data[6] as f32 / 2.0;
 
-        let hv_cell_voltage_deviation = data[22] as f64 / 50.0;
+        let hv_cell_voltage_deviation = data[22] as f32 / 50.0;
 
         //info!("hv_cell_voltage_deviation: {}", hv_cell_voltage_deviation);
         //0_Niro_Auxillary Battery Voltage	Aux Batt Volts	2101	ad*0.1
-        let aux_dc_voltage = data[31] as f64 * 0.1;
+        let aux_dc_voltage = data[31] as f32 * 0.1;
         //info!("aux_dc_voltage: {}", aux_dc_voltage);
         //0_Niro_Battery Current	Batt Current	2101	((Signed(K)*256)+L)/10
-        let hv_battery_current = (data[12] as i8 as i32 * 256 + data[13] as i32) as f64 / 10.0;
+        let hv_battery_current = (data[12] as i8 as i32 * 256 + data[13] as i32) as f32 / 10.0;
         //warn!("hv_battery_current: {}", hv_battery_current);
         //0_Niro_Minimum Cell Voltage	Min Cell V	2101	z/50
-        let hv_min_cell_voltage = (data[27] as f64) / 50.0;
+        let hv_min_cell_voltage = (data[27] as f32) / 50.0;
         //0_Niro_Maximum Cell Voltage	Max Cell V	2101	x/50
-        let hv_max_cell_voltage = (data[25] as f64) / 50.0;
+        let hv_max_cell_voltage = (data[25] as f32) / 50.0;
 
-        let motor_electric_rpm = (data[55] as i32 * 256) as f64 + data[56] as f64;
+        let motor_electric_rpm = (data[55] as i32 * 256) as f32 + data[56] as f32;
 
         Ok(Self {
             hv_max_temp,

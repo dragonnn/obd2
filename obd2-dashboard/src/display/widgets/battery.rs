@@ -26,12 +26,12 @@ pub enum BatteryOrientation {
 
 #[derive(Default)]
 pub struct Battery {
-    min_temp: f64,
-    max_temp: f64,
-    voltage: f64,
-    cell_voltage_deviation: f64,
-    cell_voltage: f64,
-    percentage: f64,
+    min_temp: f32,
+    max_temp: f32,
+    voltage: f32,
+    cell_voltage_deviation: f32,
+    cell_voltage: f32,
+    percentage: f32,
     size: Size,
     position: Point,
     orientation: BatteryOrientation,
@@ -143,42 +143,42 @@ impl Battery {
         Ok((position, size))
     }
 
-    pub fn update_percentage(&mut self, percentage: f64) {
+    pub fn update_percentage(&mut self, percentage: f32) {
         if self.percentage != percentage {
             self.percentage = percentage;
             self.redraw = true;
         }
     }
 
-    pub fn update_voltage(&mut self, voltage: f64) {
+    pub fn update_voltage(&mut self, voltage: f32) {
         if self.voltage != voltage {
             self.voltage = voltage;
             self.redraw = true;
         }
     }
 
-    pub fn update_cell_voltage_deviation(&mut self, cell_voltage_deviation: f64) {
+    pub fn update_cell_voltage_deviation(&mut self, cell_voltage_deviation: f32) {
         if self.cell_voltage_deviation != cell_voltage_deviation {
             self.cell_voltage_deviation = cell_voltage_deviation;
             self.redraw = true;
         }
     }
 
-    pub fn update_cell_voltage(&mut self, cell_voltage: f64) {
+    pub fn update_cell_voltage(&mut self, cell_voltage: f32) {
         if self.cell_voltage != cell_voltage {
             self.cell_voltage = cell_voltage;
             self.redraw = true;
         }
     }
 
-    pub fn update_min_temp(&mut self, min_temp: f64) {
+    pub fn update_min_temp(&mut self, min_temp: f32) {
         if self.min_temp != min_temp {
             self.min_temp = min_temp;
             self.redraw = true;
         }
     }
 
-    pub fn update_max_temp(&mut self, max_temp: f64) {
+    pub fn update_max_temp(&mut self, max_temp: f32) {
         if self.max_temp != max_temp {
             self.max_temp = max_temp;
             self.redraw = true;
@@ -210,20 +210,20 @@ impl Battery {
             bar_style.fill_color = Some(Gray4::new(0x02));
             match self.orientation {
                 VerticalDown => {
-                    size.height = ((size.height as f64 * self.percentage) / 100.0).round() as u32;
+                    size.height = ((size.height as f32 * self.percentage) / 100.0).round() as u32;
                     Rectangle::new(position, size).draw_styled(&bar_style, target)?;
                 }
                 VerticalTop => {
-                    size.height = ((size.height as f64 * self.percentage) / 100.0).round() as u32;
+                    size.height = ((size.height as f32 * self.percentage) / 100.0).round() as u32;
                     position.y += org_size.height as i32 - size.height as i32;
                     Rectangle::new(position, size).draw_styled(&bar_style, target)?;
                 }
                 HorizontalRight => {
-                    size.width = ((size.width as f64 * self.percentage) / 100.0).round() as u32;
+                    size.width = ((size.width as f32 * self.percentage) / 100.0).round() as u32;
                     Rectangle::new(position, size).draw_styled(&bar_style, target)?;
                 }
                 HorizontalLeft => {
-                    size.width = ((size.width as f64 * self.percentage) / 100.0).round() as u32;
+                    size.width = ((size.width as f32 * self.percentage) / 100.0).round() as u32;
                     position.x += org_size.width as i32 - size.width as i32;
                     Rectangle::new(position, size).draw_styled(&bar_style, target)?;
                 }
@@ -240,7 +240,7 @@ impl Battery {
                         }
                     }
                     HorizontalLeft | HorizontalRight => {
-                        let bar_size = ((org_size.width as i32 - self.bars * 2) as f64 / (self.bars + 1) as f64).floor()
+                        let bar_size = ((org_size.width as i32 - self.bars * 2) as f32 / (self.bars + 1) as f32).floor()
                             as i32
                             + self.bars * 2;
 

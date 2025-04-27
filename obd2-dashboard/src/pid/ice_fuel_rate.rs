@@ -20,7 +20,7 @@ impl Pid for IceFuelRatePid {
             return Err(Obd2Error::FrameToShort);
         }
         //info!("fuel rate: {=[u8]:#04x}", data);
-        Ok(Self { fuel_rate: (data[3] as i32 * 256 + data[4] as i32) as f64 / 20.0 })
+        Ok(Self { fuel_rate: (data[3] as i32 * 256 + data[4] as i32) as f32 / 20.0 })
     }
 
     fn into_error() -> types::PidError {
