@@ -20,7 +20,10 @@ use nrf_modem::{
 use postcard::{from_bytes, from_bytes_crc32, to_vec, to_vec_crc32};
 use types::{Modem, RxFrame, RxMessage, TxFrame, TxMessage};
 
-use crate::{board::Gnss, tasks::uarte::current_state};
+use crate::{
+    board::Gnss,
+    tasks::{reset::request_reset, uarte::current_state},
+};
 
 static TX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, TxMessage, 256, 1, 16> = PubSubChannel::new();
 static RX_CHANNEL: PubSubChannel<CriticalSectionRawMutex, RxMessage, 256, 2, 16> = PubSubChannel::new();
@@ -43,6 +46,7 @@ pub async fn send_task(spawner: Spawner) {
     let mut rx_channel_sub = rx_channel_sub();
     let mut rx_channel_pub = rx_channel_pub();
     let mut txframe_shutdown = false;
+    let mut link_socket_errors = 0;
 
     rx_channel_pub.publish_immediate(RxMessage::new(RxFrame::Modem(Modem::Boot)));
 
@@ -93,6 +97,7 @@ pub async fn send_task(spawner: Spawner) {
                     .await
                     {
                         Ok(Ok(s)) => {
+                            link_socket_errors = 0;
                             let (socket_rx, socket_tx) = s.split_owned().await.unwrap();
                             info!("connected");
                             spawner.spawn(recv_task(socket_rx)).ok();
@@ -123,11 +128,19 @@ pub async fn send_task(spawner: Spawner) {
                         }
                         Ok(Err(e)) => {
                             error!("link socket connect error {:?}", e);
+                            link_socket_errors += 1;
                         }
                         Err(_) => {
                             error!("link socket connect timeout");
+                            link_socket_errors += 1;
                         }
                     }
+                }
+                if link_socket_errors > 5 {
+                    use core::fmt::Write;
+                    let mut reason = heapless::String::new();
+                    core::write!(reason, "link socket errors").ok();
+                    request_reset(reason);
                 }
                 let mut drop_socket = false;
                 if let Some(current_socket) = &mut socket {

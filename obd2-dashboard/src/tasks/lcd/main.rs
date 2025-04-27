@@ -1,4 +1,4 @@
-use defmt::{unwrap, warn};
+use defmt::{info, unwrap, warn};
 use embedded_graphics::geometry::{Point, Size};
 
 use crate::{

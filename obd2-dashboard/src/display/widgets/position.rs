@@ -34,6 +34,7 @@ impl Position {
         if self.last_position == last_position {
             return;
         }
+        self.last_position = last_position;
 
         self.redraw = true;
     }

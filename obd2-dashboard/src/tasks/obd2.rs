@@ -66,7 +66,6 @@ impl Obd2PidSets {
         ret = obd2.handle_pid::<pid::IceTemperaturePid>().await && ret;
         ret = obd2.handle_pid::<pid::IceFuelRatePid>().await && ret;
         ret = obd2.handle_pid::<pid::VehicleSpeedPid>().await && ret;
-        ret = obd2.handle_pid::<pid::AcPid>().await && ret;
         ret = obd2.handle_pid::<pid::HybridDcDcPid>().await && ret;
         ret = obd2.handle_pid::<pid::IcuPid>().await && ret;
         ret = obd2.handle_pid::<pid::Icu2Pid>().await && ret;
@@ -75,7 +74,11 @@ impl Obd2PidSets {
         ret = obd2.handle_pid::<pid::OnBoardChargerPid>().await && ret;
         ret = obd2.handle_pid::<pid::Icu1Smk>().await && ret;
 
+        //ac pid not working
+        obd2.handle_pid::<pid::AcPid>().await;
+
         if !ret {
+            error!("obd2 pid error in handle_ignition_on");
             obd2.reset().await;
         }
 

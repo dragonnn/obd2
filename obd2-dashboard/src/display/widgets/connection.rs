@@ -60,12 +60,12 @@ impl Connection {
                 .build();
 
             if !self.last_receive {
-                let bounding_box = Rectangle::new(self.position, Size::new(18 / 2, 18));
+                let bounding_box = Rectangle::new(self.position + Point::new(0, 0), Size::new(18 / 2, 18));
                 bounding_box.draw_styled(&style, target)?;
             }
 
             if !self.last_send {
-                let bounding_box = Rectangle::new(self.position + Point::new(6, 0), Size::new(18 / 2, 18));
+                let bounding_box = Rectangle::new(self.position + Point::new(18 / 2, 0), Size::new(18 / 2, 18));
                 bounding_box.draw_styled(&style, target)?;
             }
 
