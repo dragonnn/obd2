@@ -52,18 +52,18 @@ pub struct AcPid {
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct BmsPid {
-    pub hv_max_temp: f64,
-    pub hv_min_temp: f64,
-    pub hv_dc_voltage: f64,
-    pub hv_soc: f64,
-    pub hv_cell_voltage_deviation: f64,
-    pub hv_min_cell_voltage: f64,
-    pub hv_max_cell_voltage: f64,
-    pub hv_battery_current: f64,
+    pub hv_max_temp: f32,
+    pub hv_min_temp: f32,
+    pub hv_dc_voltage: f32,
+    pub hv_soc: f32,
+    pub hv_cell_voltage_deviation: f32,
+    pub hv_min_cell_voltage: f32,
+    pub hv_max_cell_voltage: f32,
+    pub hv_battery_current: f32,
 
-    pub aux_dc_voltage: f64,
+    pub aux_dc_voltage: f32,
 
-    pub motor_electric_rpm: f64,
+    pub motor_electric_rpm: f32,
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
@@ -78,19 +78,19 @@ pub struct IceEnginePid {
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct IceFuelRatePid {
-    pub fuel_rate: f64,
+    pub fuel_rate: f32,
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct IceTemperaturePid {
-    pub temperature: f64,
+    pub temperature: f32,
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct IcuPid {
-    pub bat_discharge_warning_first_event_milage: f64,
+    pub bat_discharge_warning_first_event_milage: f32,
     pub bat_discharge_warning_first_event_soc: u8,
-    pub bat_discharge_warning_final_event_milage: f64,
+    pub bat_discharge_warning_final_event_milage: f32,
     pub bat_discharge_warning_final_event_soc: u8,
 }
 
@@ -161,22 +161,22 @@ pub struct VehicleSpeedPid {
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct OnBoardChargerPid {
-    pub ac_input_voltage_instant: f64,
-    pub ac_input_voltage_rms: f64,
-    pub pfc_output_voltage: f64,
-    pub obc_output_voltage: f64,
-    pub ac_input_current: f64,
-    pub obc_output_current: f64,
+    pub ac_input_voltage_instant: f32,
+    pub ac_input_voltage_rms: f32,
+    pub pfc_output_voltage: f32,
+    pub obc_output_voltage: f32,
+    pub ac_input_current: f32,
+    pub obc_output_current: f32,
     pub ac_input_frequency: u8,
     pub obc_temperature_a: i8,
-    pub cp_voltage: f64,
-    pub cp_duty: f64,
-    pub cp_frequency: f64,
-    pub pd_voltage: f64,
-    pub interlock_voltage: f64,
-    pub aux_dc_voltage: f64,
-    pub ig3_voltage: f64,
-    pub pfc1_current_sensor_offset: f64,
+    pub cp_voltage: f32,
+    pub cp_duty: f32,
+    pub cp_frequency: f32,
+    pub pd_voltage: f32,
+    pub interlock_voltage: f32,
+    pub aux_dc_voltage: f32,
+    pub ig3_voltage: f32,
+    pub pfc1_current_sensor_offset: f32,
 }
 
 #[derive(Debug, Format, Clone, Deserialize, Serialize)]
@@ -380,7 +380,7 @@ impl SerdeEncryptSharedKey for TxMessage {
 #[derive(Debug, Format, Clone, Deserialize, Serialize)]
 pub enum Modem {
     Battery {
-        voltage: f64,
+        voltage: f32,
         low_voltage: bool,
         soc: u8,
         charging: bool,
@@ -406,8 +406,8 @@ pub enum GnssState {
 
 #[derive(Debug, PartialEq, Format, Clone, Copy, Deserialize, Serialize)]
 pub struct GnssFix {
-    pub latitude: f64,
-    pub longitude: f64,
+    pub latitude: f32,
+    pub longitude: f32,
     pub altitude: f32,
     pub accuracy: f32,
 
@@ -424,17 +424,17 @@ pub struct GnssFix {
 use num_traits::real::Real;
 
 impl core::ops::Sub for GnssFix {
-    type Output = f64;
+    type Output = f32;
 
     fn sub(self, other: Self) -> Self::Output {
         let r = 6378.137;
-        let d_lat = (other.latitude * core::f64::consts::PI / 180.0)
-            - (self.latitude * core::f64::consts::PI / 180.0);
-        let d_lon = (other.longitude * core::f64::consts::PI / 180.0)
-            - (self.longitude * core::f64::consts::PI / 180.0);
+        let d_lat = (other.latitude * core::f32::consts::PI / 180.0)
+            - (self.latitude * core::f32::consts::PI / 180.0);
+        let d_lon = (other.longitude * core::f32::consts::PI / 180.0)
+            - (self.longitude * core::f32::consts::PI / 180.0);
         let a = (d_lat / 2.0).sin() * (d_lat / 2.0).sin()
-            + (self.latitude * core::f64::consts::PI / 180.0).cos()
-                * (other.latitude * core::f64::consts::PI / 180.0).cos()
+            + (self.latitude * core::f32::consts::PI / 180.0).cos()
+                * (other.latitude * core::f32::consts::PI / 180.0).cos()
                 * (d_lon / 2.0).sin()
                 * (d_lon / 2.0).sin();
         let c = 2.0 * a.sqrt().atan2((1.0 - a).sqrt());
