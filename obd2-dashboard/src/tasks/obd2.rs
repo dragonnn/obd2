@@ -59,28 +59,69 @@ impl Obd2PidSets {
     }
 
     async fn handle_ignition_on(obd2: &mut Obd2) -> bool {
-        let mut ret = true;
-        obd2.enable_obd2_pid_periods();
-        ret = obd2.handle_pid::<pid::BmsPid>().await && ret;
-        ret = obd2.handle_pid::<pid::TransaxlePid>().await && ret;
-        ret = obd2.handle_pid::<pid::IceTemperaturePid>().await && ret;
-        ret = obd2.handle_pid::<pid::IceFuelRatePid>().await && ret;
-        ret = obd2.handle_pid::<pid::VehicleSpeedPid>().await && ret;
-        ret = obd2.handle_pid::<pid::HybridDcDcPid>().await && ret;
-        ret = obd2.handle_pid::<pid::IcuPid>().await && ret;
-        ret = obd2.handle_pid::<pid::Icu2Pid>().await && ret;
-        ret = obd2.handle_pid::<pid::Icu3Pid>().await && ret;
-        ret = obd2.handle_pid::<pid::IceEnginePid>().await && ret;
-        ret = obd2.handle_pid::<pid::OnBoardChargerPid>().await && ret;
-        ret = obd2.handle_pid::<pid::Icu1Smk>().await && ret;
-        ret = obd2.handle_pid::<pid::AcPid>().await && ret;
+        let mut all_ok = true;
+        let mut any_ok = false;
 
-        if !ret {
+        obd2.enable_obd2_pid_periods();
+
+        let ret = obd2.handle_pid::<pid::BmsPid>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        let ret = obd2.handle_pid::<pid::TransaxlePid>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        let ret = obd2.handle_pid::<pid::IceTemperaturePid>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        let ret = obd2.handle_pid::<pid::IceFuelRatePid>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        let ret = obd2.handle_pid::<pid::VehicleSpeedPid>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        let ret = obd2.handle_pid::<pid::HybridDcDcPid>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        let ret = obd2.handle_pid::<pid::IcuPid>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        let ret = obd2.handle_pid::<pid::Icu2Pid>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        let ret = obd2.handle_pid::<pid::Icu3Pid>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        let ret = obd2.handle_pid::<pid::IceEnginePid>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        let ret = obd2.handle_pid::<pid::OnBoardChargerPid>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        let ret = obd2.handle_pid::<pid::Icu1Smk>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        let ret = obd2.handle_pid::<pid::AcPid>().await;
+        all_ok = ret && all_ok;
+        any_ok = ret || any_ok;
+
+        if !any_ok {
             error!("obd2 pid error in handle_ignition_on");
             obd2.reset().await;
         }
 
-        ret
+        all_ok
     }
 
     async fn handle_charging(obd2: &mut Obd2) -> bool {

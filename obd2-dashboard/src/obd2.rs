@@ -86,6 +86,8 @@ impl Obd2 {
         let interputs_config = CANINTE::default().with_rx0ie(true).with_rx1ie(true);
         self.mcp2515.apply_interrupts_config(interputs_config).await?;
 
+        info!("obd2 init done");
+
         Ok(())
     }
 
@@ -221,7 +223,7 @@ impl Obd2 {
             if !self.obd2_pid_periods_disable {
                 if let Some(last_time) = self.obd2_pid_periods.get(&type_id).map(|time| *time) {
                     if Instant::now() - last_time < period {
-                        return false;
+                        return true;
                     }
                 }
                 self.obd2_pid_periods.insert(type_id, Instant::now()).ok();

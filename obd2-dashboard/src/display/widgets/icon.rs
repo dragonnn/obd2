@@ -29,8 +29,8 @@ impl<I> Default for Icon<I> {
 }
 
 impl<I: embedded_iconoir::prelude::IconoirIcon> Icon<I> {
-    pub fn new(position: Point) -> Self {
-        Self { position, ..Default::default() }
+    pub fn new(position: Point, enabled: bool) -> Self {
+        Self { position, last_enabled: enabled, ..Default::default() }
     }
 
     pub fn enabled(&mut self, enabled: bool) {

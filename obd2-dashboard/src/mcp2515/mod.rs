@@ -36,9 +36,6 @@ where
     }
 
     pub async fn apply_canctrl(&mut self, canctrl: CANCTRL, mut debug: bool) -> bool {
-        if debug {
-            info!("Applying canctrl config: {:?}", canctrl.reqop());
-        }
         self.write_register(canctrl).await.ok();
         let mut canctrl_read = [0u8; 1];
         self.read_registers(CANCTRL::ADDRESS, &mut canctrl_read).await.ok();

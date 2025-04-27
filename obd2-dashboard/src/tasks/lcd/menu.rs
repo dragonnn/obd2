@@ -26,9 +26,7 @@ impl LcdMenuState {
         match button {
             Action::Pressed(Button::B4) => Some(Transition(State::main(LcdMainState::new()))),
             Action::Pressed(Button::B2) => Some(Transition(State::debug(LcdDebugState::new()))),
-            Action::Pressed(Button::B1) | Action::Pressed(Button::B3) => {
-                Some(Transition(State::obd2_pids(LcdObd2Pids::new())))
-            }
+            Action::Pressed(Button::B1) => Some(Transition(State::obd2_pids(LcdObd2Pids::new()))),
             Action::Pressed(Button::B0) => Some(Transition(State::settings(LcdSettingsState::new()))),
             Action::Pressed(Button::B3) => {
                 esp_hal::reset::software_reset();

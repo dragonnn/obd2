@@ -73,7 +73,7 @@ impl LcdMainState {
 
             connection: Connection::new(Point::new(256 - 18, 0)),
             position: Position::new(Point::new(256 - 18, 18)),
-            ac_compressor: Icon::new(Point::new(256 - 18, 18 + 18)),
+            ac_compressor: Icon::new(Point::new(256 - 18, 18 + 18), false),
 
             ice_fuel_rate_value: 0.0,
             hv_battery_current: 0.0,

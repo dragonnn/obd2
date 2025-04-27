@@ -206,9 +206,8 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
                 } else {
                     *LAST_RECEIVE.lock().await = Instant::now();
                 }
-                info!("got rx message: {:?}", rxmessage);
                 if ieee802154_receive_pub.is_full() {
-                    warn!("ieee802154_receive_pub is full");
+                    error!("ieee802154_receive_pub is full");
                     ieee802154_receive_pub.clear();
                 }
                 ieee802154_receive_pub.send(rxmessage).await;
