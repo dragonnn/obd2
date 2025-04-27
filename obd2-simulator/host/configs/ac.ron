@@ -19,14 +19,23 @@
                 message: [
                     0x62, 0x1, 0x0, 0x7f, 0xd0, 0x7,
                     //          VEHICLE FRONT TEMP SURROUND TEMP  EVAPORATOR TEMP FOTOELECTRIC DRIVER SENSOR? % DRIVER MIXING AIR
-                    0xe8, 0xff, 0x77,              0x70,          0x75,           0x9,                        0x84,
-                    // % PASSENGER MIX FOTOELECTRIC PASSENGER SENSOR?   % PASSENGER MIXING AIR  % WIND DIRECTOR POSITION PASSANGER       % INPUT  
-                       0x11,           0x9,                             0x85,                   0x10,                              0xff, 0xf,    0xFF,
+                    //          0x00 - -40C        0x00 - -40C    0x00 - -40C     0x00 - 0V                    0x00 - 0%          
+                    //          0x7f - 24C         0x7f - 24C     0x7f - 24C      0xff - 5V                    0xff - 100%
+                    //          0xff - 88C         0xff - 88C     0xff - 88C
+                    0xe8, 0xff, 0xff,              0x00,          0xff,           0xff,                        0xff,
+                    // % PASSENGER AIR DIRECTOR FOTOELECTRIC PASSENGER SENSOR?    % PASSENGER MIXING AIR  % WIND DIRECTOR POSITION PASSANGER       % INPUT
+                    // 0x00 - 0%                0x00 - 0V                         0x00 - 0%               0x00 - 0%                                0x00 - 0%
+                    // 0xff - 100%              0xff - 5V                         0xFF - 100%             0xff - 100%                              0xff - 100%
+                       0xff,                    0xff,                             0xaa,                   0x12,                              0xff, 0xff,    0xFF,
                     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                    //    % HUMIDITY % UNFROST OPEN DRIVER VENT TEMP DRIVER FLOOR TEMP SPEED ICE COOLING TEMP
-                    0xff, 0x3f,      0xf2,          0x79,            0x77,             0x00, 0x5d,
-                    //    COMPRESOR ON
-                    0xff, 0x1,          0xff
+                    //    % HUMIDITY    % UNFROST OPEN DRIVER VENT TEMP DRIVER FLOOR TEMP SPEED           ICE COOLING TEMP
+                    //    0x00 - 0%     0x00 - 0%      0x00 - -40C      0x00 - -40C       0x00 - 0km/h    0x00 - -48C
+                    //    0xff - 255%   0xff - 100%    0xff - 87.5C     0xff - 87.5C      0xff - 255km/h  0xff - 143.25
+                    0xff, 0xff,         0xff,          0xff,            0xff,             0x70,           0x31,
+                    //    COMPRESOR ON 35
+                    //    0x00 - OFF
+                    //    0x01 - ON (or anything else)
+                    0xff, 0x00,          0xff
                 ]
             )),
         ]

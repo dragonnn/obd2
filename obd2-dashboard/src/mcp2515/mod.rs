@@ -36,7 +36,6 @@ where
     }
 
     pub async fn apply_canctrl(&mut self, canctrl: CANCTRL, mut debug: bool) -> bool {
-        debug = true;
         if debug {
             info!("Applying canctrl config: {:?}", canctrl.reqop());
         }
@@ -58,7 +57,6 @@ where
             }
             false
         } else {
-            info!("MCP2515 canctrl config success with mode: {:?}", canctrl_read_parsed.reqop());
             true
         }
     }
@@ -92,7 +90,7 @@ where
 
             if self.apply_canctrl(config.canctrl, debug).await {
                 ok_inits += 1;
-                if ok_inits >= 3 {
+                if ok_inits >= 2 {
                     break;
                 }
             } else {

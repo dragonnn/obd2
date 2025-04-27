@@ -31,7 +31,23 @@ impl defmt::Format for Obd2Frame {
 
 #[derive(Default, Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub struct AcPid {
-    pub gear: i32,
+    pub vehicle_front_temp: f32,
+    pub surround_temp: f32,
+    pub evaporator_temp: f32,
+
+    pub driver_mixing_air: f32,
+    pub passenger_air_direction: f32,
+    pub passenger_mixing_air: f32,
+    pub air_direction: f32,
+    pub input: f32,
+    pub humidity: u8,
+    pub defrost_open: f32,
+
+    pub driver_vent_temp: f32,
+    pub driver_floor_temp: f32,
+    pub speed: u8,
+    pub ice_cooling_temp: f32,
+    pub compressor_on: bool,
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]

@@ -219,10 +219,10 @@ impl Obd2 {
         let type_id = TypeId::of::<PID>();
         if let Some(period) = PID::period() {
             if !self.obd2_pid_periods_disable {
-                let last_time =
-                    self.obd2_pid_periods.get(&type_id).map(|time| *time).unwrap_or(Instant::from_millis(0));
-                if Instant::now() - last_time < period {
-                    return false;
+                if let Some(last_time) = self.obd2_pid_periods.get(&type_id).map(|time| *time) {
+                    if Instant::now() - last_time < period {
+                        return false;
+                    }
                 }
                 self.obd2_pid_periods.insert(type_id, Instant::now()).ok();
             }
@@ -255,7 +255,7 @@ impl Obd2 {
                 }
                 Err(_) => {
                     insert_send_pid_error(&PID::into_error()).await;
-                    //error!("timeout requesting pid: {}", core::any::type_name::<PID>());
+                    error!("timeout requesting pid: {}", core::any::type_name::<PID>());
                     internal_debug!("timeout requesting pid");
                     if obd2_debug_pids_enabled {
                         KIA_EVENTS.try_send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).ok();
@@ -264,6 +264,8 @@ impl Obd2 {
                 }
             }
         } else {
+            //ignore errors
+            ret = true;
             if obd2_debug_pids_enabled {
                 KIA_EVENTS.try_send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).ok();
             }

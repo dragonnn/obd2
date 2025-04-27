@@ -1,8 +1,8 @@
 [target.riscv32imac-unknown-none-elf]
 #runner = "espflash flash --monitor -p /dev/ttyACM0 -L defmt"
 #runner = "probe-rs run --chip esp32c6 --host ws://X.X.X.X:3000 --token pi"
-#runner = "probe-rs run --chip esp32c6"
-runner = "./.cargo/run.sh"
+runner = "probe-rs run --chip esp32c6"
+#runner = "./.cargo/run.sh"
 #runner = ".cargo/run.sh"
 [build]
 rustflags = [
