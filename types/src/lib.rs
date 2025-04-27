@@ -97,7 +97,7 @@ pub struct IcuPid {
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 pub struct Icu2Pid {
     pub back_door_driver_side_open: bool,
-    pub actuator_back_dor_driver_side_unlock: bool,
+    pub actuator_back_door_driver_side_unlock: bool,
     pub back_door_passenger_side_open: bool,
     pub actuator_back_door_passenger_side_unlock: bool,
     pub front_door_passenger_side_open: bool,

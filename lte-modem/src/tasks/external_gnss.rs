@@ -30,7 +30,7 @@ pub async fn task(
 
     let (uarte_tx, uarte_rx) = uarte_gnss;
     let mut state_channel_sub = state_channel_sub();
-    let mut gnss_state_context = GnssContext { uarte_rx };
+    let mut gnss_state_context = GnssContext { uarte_rx, fix: None };
     let mut gnss_state_machine =
         GnssState { uarte_tx, gnss_force_on, gnss_pss, fix_pub, rx_channel_pub, tx_channel_pub }.state_machine();
 
@@ -114,6 +114,7 @@ impl defmt::Format for GnssStateEvent {
 
 pub struct GnssContext {
     uarte_rx: BoardGnssUarteRx,
+    fix: Option<GnssFix>,
 }
 
 unsafe impl Sync for GnssContext {}
@@ -156,7 +157,7 @@ impl GnssState {
         warn!("backup mode: {:?}", event);
         match event {
             GnssStateEvent::State(state) => match state {
-                types::State::IgnitionOn => Transition(State::continuous_fix(Instant::now())),
+                types::State::IgnitionOn => Transition(State::continuous_fix(Instant::now(), None)),
                 types::State::IgnitionOff => Transition(State::single_fix(Instant::now())),
                 _ => Handled,
             },
@@ -167,6 +168,7 @@ impl GnssState {
 
     #[action]
     async fn disable_backup(&mut self, context: &mut GnssContext) {
+        context.fix = None;
         warn!("gnss disable backup");
         for _i in 0..20 {
             self.gnss_force_on.set_low();
@@ -205,8 +207,8 @@ impl GnssState {
         context: &mut GnssContext,
         event: &GnssStateEvent,
         timeout: &mut Instant,
+        last_fix_send: &mut Option<Instant>,
     ) -> Response<State> {
-        info!("steam fixes mode: {:?}", event);
         if timeout.elapsed().as_secs() > 20 {
             warn!("no nmea message in 20s, trying to renable");
             self.disable_backup(context).await;
@@ -217,8 +219,25 @@ impl GnssState {
                 *timeout = Instant::now();
                 if let ParseResult::RMC(Some(rmc)) = nmea {
                     let fix: super::gnss::FromFix = rmc.into();
-                    self.rx_channel_pub.publish_immediate(types::RxFrame::Modem(types::Modem::GnssFix(fix.0)).into());
-                    self.fix_pub.publish_immediate(fix.0);
+                    let mut distance = f64::MAX;
+                    if let Some(last_fix) = context.fix {
+                        distance = fix.0 - last_fix;
+                    }
+
+                    let mut fix_send = distance > 10.0;
+                    if let Some(last_fix_send) = last_fix_send {
+                        if last_fix_send.elapsed().as_secs() > 60 {
+                            fix_send = true;
+                        }
+                    }
+
+                    if fix_send {
+                        self.rx_channel_pub
+                            .publish_immediate(types::RxFrame::Modem(types::Modem::GnssFix(fix.0)).into());
+                        self.fix_pub.publish_immediate(fix.0);
+                        context.fix = Some(fix.0);
+                        last_fix_send.replace(Instant::now());
+                    }
                     super::gnss::STATE.lock().await.fix = Some(fix.0);
                 }
                 Handled
@@ -255,7 +274,7 @@ impl GnssState {
                 }
             }
             GnssStateEvent::State(state) => match state {
-                types::State::IgnitionOn => Transition(State::continuous_fix(Instant::now())),
+                types::State::IgnitionOn => Transition(State::continuous_fix(Instant::now(), None)),
                 _ => Handled,
             },
             _ => Handled,
@@ -273,7 +292,7 @@ impl GnssState {
             State::SingleFix { timeout: _ } => self
                 .tx_channel_pub
                 .publish_immediate(TxFrame::Modem(Modem::GnssState(types::GnssState::SingleFix)).into()),
-            State::ContinuousFix { timeout: _ } => self
+            State::ContinuousFix { timeout: _, last_fix_send: _ } => self
                 .tx_channel_pub
                 .publish_immediate(TxFrame::Modem(Modem::GnssState(types::GnssState::ContinuousFix)).into()),
         }

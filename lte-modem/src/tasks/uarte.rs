@@ -19,11 +19,13 @@ use serde_encrypt::{shared_key::SharedKey, traits::SerdeEncryptSharedKey as _, E
 use types::Modem;
 
 static STATE_CHANNEL: PubSubChannel<CriticalSectionRawMutex, types::State, 16, 8, 2> = PubSubChannel::new();
+static PID_CHANNEL: PubSubChannel<CriticalSectionRawMutex, types::Pid, 16, 8, 1> = PubSubChannel::new();
 static CURRENT_STATE: Mutex<CriticalSectionRawMutex, types::State> =
     Mutex::new(types::State::Shutdown(core::time::Duration::from_secs(15 * 60)));
 static UARTE_RESET: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 static UARTE_RX_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 static UARTE_TX_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
+static LAST_RECEIVED: Mutex<CriticalSectionRawMutex, Option<Instant>> = Mutex::new(None);
 
 use crate::board::{BoardUarteRx, BoardUarteTx};
 
@@ -46,14 +48,24 @@ async fn send_task(mut send: BoardUarteTx, mut uarte_send: Output<'static>) {
     let mut rx_channel_sub = crate::tasks::modem::link::rx_channel_sub();
     loop {
         let msg = rx_channel_sub.next_message_pure().await;
-        warn!("sending {:?}", msg);
-        if let Ok(encrypted_message) = msg.to_vec_encrypted() {
-            uarte_send.set_high();
-            embassy_time::Timer::after(Duration::from_millis(10)).await;
-            send.write(&encrypted_message).await.unwrap();
-            UARTE_TX_SIGNAL.signal(());
-            uarte_send.set_low();
-            embassy_time::Timer::after(Duration::from_millis(10)).await;
+        let mut send_msg = true;
+        if let types::RxFrame::Modem(Modem::GnssFix(_)) = msg.frame {
+            if let Some(last_received) = last_received() {
+                if last_received.elapsed().as_millis() < 100 {
+                    warn!("not sending gnss fix, last received {:?}", last_received);
+                    send_msg = false;
+                }
+            }
+        }
+        if send_msg {
+            if let Ok(encrypted_message) = msg.to_vec_encrypted() {
+                uarte_send.set_high();
+                embassy_time::Timer::after(Duration::from_millis(10)).await;
+                send.write(&encrypted_message).await.unwrap();
+                UARTE_TX_SIGNAL.signal(());
+                uarte_send.set_low();
+                embassy_time::Timer::after(Duration::from_millis(10)).await;
+            }
         }
     }
 }
@@ -63,6 +75,7 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
     let tx_channel_pub = crate::tasks::modem::link::tx_channel_pub();
     let rx_channel_pub = crate::tasks::modem::link::rx_channel_pub();
     let state_channel_pub = unwrap!(STATE_CHANNEL.publisher());
+    let pid_channel_pub = unwrap!(PID_CHANNEL.publisher());
 
     let mut last_communication = Instant::now();
     let mut last_reset = Instant::now();
@@ -100,11 +113,15 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
                     match types::TxMessage::from_bytes_encrypted(&vec_buffer) {
                         Ok(msg) => {
                             last_communication = Instant::now();
+                            LAST_RECEIVED.lock().await.replace(last_communication);
                             if let types::TxFrame::State(state) = &msg.frame {
                                 state_channel_pub.publish_immediate(state.clone());
                                 {
                                     *CURRENT_STATE.lock().await = state.clone();
                                 }
+                            }
+                            if let types::TxFrame::Obd2Pid(pid) = &msg.frame {
+                                pid_channel_pub.publish_immediate(pid.clone());
                             }
 
                             if let types::TxFrame::Modem(Modem::Ping) = &msg.frame {
@@ -114,7 +131,6 @@ async fn receive_task(mut receive: BoardUarteRx, mut uarte_receive: Input<'stati
                                     .publish_immediate(types::RxMessage::new(types::RxFrame::Modem(Modem::Pong)));
                             } else {
                                 if !msg.needs_ack() {
-                                    warn!("not remote ack, sending ack from modem");
                                     rx_channel_pub.publish_immediate(types::RxFrame::TxFrameAck(msg.id).into());
                                 }
                                 tx_channel_pub.publish_immediate(msg);
@@ -140,6 +156,10 @@ pub fn state_channel_sub() -> DynSubscriber<'static, types::State> {
     unwrap!(STATE_CHANNEL.dyn_subscriber())
 }
 
+pub fn pid_channel_sub() -> DynSubscriber<'static, types::Pid> {
+    unwrap!(PID_CHANNEL.dyn_subscriber())
+}
+
 pub fn state_channel_pub() -> DynPublisher<'static, types::State> {
     unwrap!(STATE_CHANNEL.dyn_publisher())
 }
@@ -161,4 +181,8 @@ pub async fn wait_for_uarte_rx() {
 }
 pub async fn wait_for_uarte_tx() {
     UARTE_TX_SIGNAL.wait().await;
+}
+
+pub fn last_received() -> Option<Instant> {
+    LAST_RECEIVED.try_lock().map(|l| l.clone()).unwrap_or(None)
 }

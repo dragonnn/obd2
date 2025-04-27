@@ -162,7 +162,6 @@ where
         match with_timeout(I2C_TIMEOUT, self.i2c.write_read(I2C_ADDRESS, &[reg], buf)).await {
             Ok(Ok(_)) => {}
             Ok(Err(err)) => {
-                defmt::error!("i2c error: {:?}", defmt::Debug2Format(&err));
                 self.i2c.reset().await;
             }
             Err(_) => {

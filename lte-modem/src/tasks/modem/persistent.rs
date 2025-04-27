@@ -15,6 +15,8 @@ pub struct PeristentState {
     restarts: u32,
     fix: Option<Fix>,
     state: Option<types::State>,
+
+    icu2_pid: Option<types::Icu2Pid>,
 }
 
 pub struct PeristentManager {
@@ -81,6 +83,11 @@ impl PeristentManager {
         self.serialize();
     }
 
+    pub fn update_icu2_pid(&mut self, icu2_pid: Option<types::Icu2Pid>) {
+        self.persistent_state.icu2_pid = icu2_pid;
+        self.serialize();
+    }
+
     pub fn get_booted(&self) -> bool {
         self.persistent_state.booted
     }
@@ -103,6 +110,10 @@ impl PeristentManager {
 
     pub fn get_state(&self) -> Option<types::State> {
         self.persistent_state.state.clone()
+    }
+
+    pub fn get_icu2_pid(&self) -> Option<types::Icu2Pid> {
+        self.persistent_state.icu2_pid.clone()
     }
 
     fn serialize(&mut self) {

@@ -2,7 +2,7 @@ use core::{fmt::Write, write};
 
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_futures::select::{select4, Either4};
+use embassy_futures::select::{select, select4, Either, Either4};
 use embassy_time::{Duration, Instant, Ticker};
 use futures::StreamExt;
 use heapless::String;
@@ -24,7 +24,7 @@ use crate::{
         battery::State as BatteryState,
         button::subscribe as button_subscribe,
         gnss::{Fix, State as GnssState},
-        uarte::{set_current_state, state_channel_pub, state_channel_sub},
+        uarte::{pid_channel_sub, set_current_state, state_channel_pub, state_channel_sub},
     },
 };
 
@@ -46,6 +46,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
     let mut battery_state_sub = BatteryState::subscribe().await;
     let mut battery_state = BatteryState::get().await;
     let mut state_channel_sub = state_channel_sub();
+    let mut pid_channel_sub = pid_channel_sub();
     let state_channel_pub = state_channel_pub();
 
     if !persistent_manager.get_booted() {
@@ -81,41 +82,16 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
             battery_state_sub.next(),
             fix_sub.next(),
             button_sub.next(),
-            state_channel_sub.next_message_pure(),
+            select(state_channel_sub.next_message_pure(), pid_channel_sub.next_message_pure()),
         )
         .await
         {
             Either4::First(new_battery_state) => {
                 if let Some(new_battery_state) = new_battery_state {
-                    /*if new_battery_state.charging != battery_state.charging {
-                        send_charging_state(
-                            &new_battery_state,
-                            &mut modem,
-                            distance,
-                            distance / (secs / 3600.0),
-                            persistent_manager.get_restarts(),
-                        )
-                        .await;
-                        distance = 0.0;
-                        secs = 0.0;
-                        persistent_manager.update_distance(distance);
-                        persistent_manager.update_secs(secs);
-                    }
-                    if new_battery_state.low_voltage != battery_state.low_voltage && new_battery_state.low_voltage {
-                        send_charging_state(
-                            &new_battery_state,
-                            &mut modem,
-                            distance,
-                            distance / (secs / 3600.0),
-                            persistent_manager.get_restarts(),
-                        )
-                        .await;
-                    }*/
                     battery_state = new_battery_state;
                 }
             }
             Either4::Second(new_fix) => {
-                error!("procesing new fix");
                 fix = process_new_fix(
                     &battery_state,
                     &fix,
@@ -156,27 +132,62 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                 }
                 last_button_press = Instant::now();
             }
-            Either4::Fourth(state) => {
-                let old_state = persistent_manager.get_state();
-                if persistent_manager.get_state() != Some(state.clone()) {
-                    persistent_manager.update_state(Some(state.clone()));
-                    if state == types::State::IgnitionOn || state == types::State::CheckCharging {
-                        embassy_time::Timer::after(Duration::from_secs(5)).await;
-                        warn!("sending obd2 state");
-                        send_obd2_state(
-                            &battery_state,
-                            &mut modem,
-                            distance,
-                            distance / (secs / 3600.0),
-                            persistent_manager.get_restarts(),
-                            &state,
-                            &old_state,
-                        )
-                        .await
-                        .ok();
+            Either4::Fourth(state) => match state {
+                Either::First(state) => {
+                    let old_state = persistent_manager.get_state();
+                    if persistent_manager.get_state() != Some(state.clone()) {
+                        persistent_manager.update_state(Some(state.clone()));
+                        if state == types::State::IgnitionOn || state == types::State::CheckCharging {
+                            embassy_time::Timer::after(Duration::from_secs(5)).await;
+                            warn!("sending obd2 state");
+                            send_obd2_state(
+                                &battery_state,
+                                &mut modem,
+                                distance,
+                                distance / (secs / 3600.0),
+                                persistent_manager.get_restarts(),
+                                &state,
+                                &old_state,
+                            )
+                            .await
+                            .ok();
+                        }
                     }
                 }
-            }
+                Either::Second(state) => {
+                    if let types::Pid::Icu2Pid(icu2_pid) = state {
+                        info!("checking icu2 pid");
+                        let old_icu2_pid = persistent_manager.get_icu2_pid();
+
+                        let mut should_send_icu2_pid_state = old_icu2_pid.is_none();
+                        if let Some(old_icu2_pid) = old_icu2_pid {
+                            if old_icu2_pid.actuator_back_door_passenger_side_unlock
+                                != icu2_pid.actuator_back_door_passenger_side_unlock
+                                || old_icu2_pid.actuator_back_door_passenger_side_unlock
+                                    != icu2_pid.actuator_back_door_passenger_side_unlock
+                            {
+                                should_send_icu2_pid_state = true;
+                            }
+
+                            if old_icu2_pid.trunk_open != icu2_pid.trunk_open {
+                                should_send_icu2_pid_state = true;
+                            }
+
+                            if old_icu2_pid.engine_hood_open != icu2_pid.engine_hood_open {
+                                should_send_icu2_pid_state = true;
+                            }
+                        }
+
+                        if should_send_icu2_pid_state {
+                            if let Err(err) = send_icu2_pid_state(&battery_state, &mut modem, &icu2_pid).await {
+                                defmt::error!("error sending icu2 pid state: {:?}", defmt::Debug2Format(&err));
+                            }
+                        }
+
+                        persistent_manager.update_icu2_pid(Some(icu2_pid.clone()));
+                    }
+                }
+            },
         }
     }
 }
@@ -206,6 +217,41 @@ async fn send_obd2_state(
         }
         _ => {}
     }
+
+    Ok(())
+}
+
+async fn send_icu2_pid_state(
+    battery_state: &BatteryState,
+    modem: &mut Modem,
+    icu2_pid: &types::Icu2Pid,
+) -> Result<(), ()> {
+    let mut icu_2_pid_event: String<64> = String::new();
+
+    if icu2_pid.trunk_open {
+        write!(&mut icu_2_pid_event, "trunk open...\n\n").ok();
+    } else if icu2_pid.actuator_back_door_driver_side_unlock || icu2_pid.actuator_back_door_passenger_side_unlock {
+        write!(&mut icu_2_pid_event, "unlock...\n\n").ok();
+    } else {
+        write!(&mut icu_2_pid_event, "closed...\n\n").ok();
+    }
+
+    write!(&mut icu_2_pid_event, "trunk: {}\n", if icu2_pid.trunk_open { "o" } else { "c" }).ok();
+    write!(
+        &mut icu_2_pid_event,
+        "driver: {}\n",
+        if icu2_pid.actuator_back_door_driver_side_unlock { "o" } else { "c" }
+    )
+    .ok();
+    write!(
+        &mut icu_2_pid_event,
+        "passenger: {}\n",
+        if icu2_pid.actuator_back_door_passenger_side_unlock { "o" } else { "c" }
+    )
+    .ok();
+    write!(&mut icu_2_pid_event, "engine hood: {}\n", if icu2_pid.engine_hood_open { "o" } else { "c" }).ok();
+
+    modem.send_sms(crate::config::SMS_NUMBERS, &icu_2_pid_event).await.ok();
 
     Ok(())
 }

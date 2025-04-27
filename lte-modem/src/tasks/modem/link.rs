@@ -283,7 +283,7 @@ impl TxMessageSend for OwnedUdpSendSocket {
         port: u16,
         rx: &mut RxChannelSub,
     ) -> Result<(), nrf_modem::Error> {
-        info!("sending message {:?}", message);
+        //info!("sending message {:?}", message);
         if ACK_TIMEOUT.load(Ordering::Relaxed) > 20 {
             use core::fmt::Write;
             let mut reason = heapless::String::new();

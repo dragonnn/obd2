@@ -62,7 +62,7 @@ impl KiaState {
     async fn init(&mut self, event: &KiaEvent) -> Response<State> {
         //info!("init got event: {:?}", event);
         match event {
-            KiaEvent::IgnitionOff => Transition(State::ignition_off(Instant::now())),
+            KiaEvent::IgnitionOff => Transition(State::ignition_off(Instant::now(), Duration::from_secs(60), false)),
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             _ => Handled,
         }
@@ -150,14 +150,14 @@ impl KiaState {
                         Transition(State::charging(None, 0))
                     } else {
                         if timeout.elapsed().as_secs() > 5 * 60 {
-                            Transition(State::ignition_off(Instant::now()))
+                            Transition(State::ignition_off(Instant::now(), Duration::from_secs(60), false))
                         } else {
                             Handled
                         }
                     }
                 } else {
                     if timeout.elapsed().as_secs() > 5 * 60 {
-                        Transition(State::ignition_off(Instant::now()))
+                        Transition(State::ignition_off(Instant::now(), Duration::from_secs(60), false))
                     } else {
                         Handled
                     }
@@ -211,34 +211,41 @@ impl KiaState {
     }
 
     #[action]
-    async fn enter_ignition_off(&mut self) {
+    async fn enter_ignition_off(&mut self, shutdown_duration: &mut Duration) {
         ieee802154::send_now();
         LCD_EVENTS.send(LcdEvent::PowerOff).await;
         set_obd2_sets(Obd2PidSets::IgnitionOff).await;
         set_obd2_sets(Obd2PidSets::IgnitionOff).await;
         self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::IgnitionOff));
-    }
 
-    #[state(entry_action = "enter_ignition_off")]
-    async fn ignition_off(&mut self, event: &KiaEvent, timeout: &mut Instant) -> Response<State> {
         let now = self.rtc.lock().await.current_time().and_utc().timestamp();
         let last_ignition_on = unsafe { LAST_IGNITION_ON };
-        let shutdown_duration = if last_ignition_on != 0 && now - last_ignition_on > 60 * 60 {
+        *shutdown_duration = if last_ignition_on != 0 && now - last_ignition_on > 60 * 60 {
             Duration::from_secs(60 * 60)
         } else {
             Duration::from_secs(15 * 60)
         };
+
         warn!(
-            "shutdown duration: {}min: last_ignition_on:{}sec now: {}sec on event: {:?}",
+            "shutdown duration: {}min: last_ignition_on:{}sec now: {}sec",
             shutdown_duration.as_secs() / 60,
             last_ignition_on,
-            now,
-            event
+            now
         );
+    }
 
+    #[state(entry_action = "enter_ignition_off")]
+    async fn ignition_off(
+        &mut self,
+        event: &KiaEvent,
+        timeout: &mut Instant,
+        shutdown_duration: &mut Duration,
+        got_any_timeout_reset: &mut bool,
+    ) -> Response<State> {
         match event {
             KiaEvent::IgnitionOffResetTimeout => {
                 *timeout = Instant::now();
+                *got_any_timeout_reset = true;
                 Handled
             }
             KiaEvent::Obd2Event(Obd2Event::Icu3Pid(icu3_pid)) => {
@@ -259,6 +266,10 @@ impl KiaState {
             KiaEvent::Obd2LoopEnd(set, all) => {
                 let mut timeout_duration = Duration::from_secs(2 * 60);
 
+                if *got_any_timeout_reset {
+                    timeout_duration = Duration::from_secs(30 * 60);
+                }
+
                 if !all {
                     timeout_duration = Duration::from_secs(10 * 60);
                 }
@@ -273,14 +284,14 @@ impl KiaState {
                 }
 
                 if timeout.elapsed() > timeout_duration {
-                    Transition(State::shutdown(shutdown_duration))
+                    Transition(State::shutdown(*shutdown_duration))
                 } else {
                     Handled
                 }
             }
             _ => {
                 if timeout.elapsed().as_secs() > 20 * 60 {
-                    Transition(State::shutdown(shutdown_duration))
+                    Transition(State::shutdown(*shutdown_duration))
                 } else {
                     Handled
                 }

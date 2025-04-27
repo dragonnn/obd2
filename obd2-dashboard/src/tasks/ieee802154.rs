@@ -189,7 +189,7 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
         ..Default::default()
     });
 
-    let local_timeout = Duration::from_secs(1);
+    let local_timeout = Duration::from_millis(250);
     let remote_timeout = Duration::from_secs(10);
 
     let mut ieee802154 = AsyncIeee802154::new(ieee802154);
@@ -362,7 +362,7 @@ impl AsyncIeee802154 {
                     return Ok(());
                 }
                 Err(_) => {
-                    error!("receive_ack timeout for txmessage: {:?}", txmessage);
+                    error!("receive_ack timeout for txmessage: {}ms", timeout.as_millis());
                 }
             }
         }
@@ -442,7 +442,7 @@ impl AsyncIeee802154 {
                     self.rxmessage_buffer.push(rxmessage).ok();
                 }
             } else {
-                warn!("no ack received_frame");
+                warn!("no ack received_frame: {:?}", rxmessage);
                 self.rxmessage_buffer.push(rxmessage).ok();
             }
         }

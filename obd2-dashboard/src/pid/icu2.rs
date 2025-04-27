@@ -20,7 +20,7 @@ impl Pid for Icu2Pid {
         }
 
         let back_door_driver_side_open = data[7] & 0b00000001 != 0;
-        let actuator_back_dor_driver_side_unlock = data[7] & 0b00000010 != 0;
+        let actuator_back_door_driver_side_unlock = data[7] & 0b00000010 != 0;
         let back_door_passenger_side_open = data[7] & 0b00000100 != 0;
         let actuator_back_door_passenger_side_unlock = data[7] & 0b00001000 != 0;
         let front_door_passenger_side_open = data[7] & 0b00010000 != 0;
@@ -37,7 +37,7 @@ impl Pid for Icu2Pid {
         let signal_back_av = data[9] & 0b00000100 != 0;
         let ret = Self {
             back_door_driver_side_open,
-            actuator_back_dor_driver_side_unlock,
+            actuator_back_door_driver_side_unlock,
             back_door_passenger_side_open,
             actuator_back_door_passenger_side_unlock,
             front_door_passenger_side_open,
@@ -52,6 +52,8 @@ impl Pid for Icu2Pid {
             ignition_2_on,
             signal_back_av,
         };
+
+        info!("Icu2Pid: {:?}", ret);
         Ok(ret)
     }
 
