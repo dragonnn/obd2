@@ -5,13 +5,13 @@ use embassy_time::{with_timeout, Duration, Timer};
 use embedded_graphics::geometry::{Point, Size};
 use heapless::String;
 use statig::prelude::*;
+use types::Pid as Obd2Event;
 
 use crate::{
     debug::DEBUG_STRING_LEN,
     display::widgets::{Battery, BatteryOrientation, DebugScroll},
-    event::Obd2Event,
-    tasks::obd2::obd2_init_wait,
-    types::{Display1, Display2, Sh1122},
+    tasks::obd2::{obd2_init_wait, Obd2Debug},
+    types::{Display1, Display2},
 };
 
 mod boot;
@@ -27,10 +27,7 @@ use menu::LcdMenuState;
 use obd2_pids::LcdObd2Pids;
 use settings::LcdSettingsState;
 
-use super::{
-    buttons::{Action, Button},
-    obd2::Obd2Debug,
-};
+use crate::tasks::buttons::{Action, Button};
 
 pub static EVENTS: Channel<CriticalSectionRawMutex, LcdEvent, 128> = Channel::new();
 pub use obd2_pids::obd2_debug_pids_enabled;
@@ -49,7 +46,7 @@ pub enum LcdEvent {
     DebugLine(String<DEBUG_STRING_LEN>),
     Obd2Event(Obd2Event),
     Obd2Debug(Obd2Debug),
-    Button(crate::tasks::buttons::Action),
+    Button(Action),
 }
 
 #[derive()]

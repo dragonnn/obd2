@@ -29,7 +29,7 @@ impl LcdMenuState {
             Action::Pressed(Button::B1) => Some(Transition(State::obd2_pids(LcdObd2Pids::new()))),
             Action::Pressed(Button::B0) => Some(Transition(State::settings(LcdSettingsState::new()))),
             Action::Pressed(Button::B3) => {
-                esp_hal::reset::software_reset();
+                crate::hal::reset();
                 None
             }
             _ => None,

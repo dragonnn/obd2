@@ -1,4 +1,3 @@
-use alloc::{borrow::Cow, string::ToString as _};
 use core::fmt::Write;
 
 use display_interface::DisplayError;

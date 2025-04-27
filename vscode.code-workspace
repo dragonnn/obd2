@@ -1,22 +1,31 @@
 {
 	"folders": [
 		{
+			"name": "types",
 			"path": "types"
 		},
 		{
+			"name": "lte-modem",
 			"path": "lte-modem"
 		},
 		{
+			"name": "ieee802154-bridge",
 			"path": "ieee802154-bridge"
 		},
 		{
+			"name": "obd2-dashboard",
 			"path": "obd2-dashboard"
 		},
 		{
-			"path": "obd2-simulator/host",
-			"name": "obd2-simulator/host"
+			"name": "obd2-simulator/host",
+			"path": "obd2-simulator/host"
 		},
 		{
+			"name": "obd2-simulator/display",
+			"path": "obd2-simulator/display"
+		},
+		{
+			"name": "ha-daemon",
 			"path": "ha-daemon"
 		}
 	],

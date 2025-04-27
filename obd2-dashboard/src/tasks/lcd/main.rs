@@ -1,15 +1,14 @@
 use defmt::{info, unwrap, warn};
 use embedded_graphics::geometry::{Point, Size};
+use types::{BmsPid, IceTemperaturePid, Pid as Obd2Event};
 
 use crate::{
     display::widgets::{
         Arrow, ArrowDirection, Battery, Battery12V, BatteryOrientation, Connection, GearboxGear, IceFuelRate, Icon,
         MotorElectric, MotorIce, Position, Power, Temperature, Value,
     },
-    event::Obd2Event,
-    pid::{BmsPid, IceTemperaturePid},
     tasks::ieee802154::{last_position, last_receive, last_send},
-    types::{Display1, Display2, Sh1122},
+    types::{Display1, Display2},
 };
 
 #[derive(Default)]

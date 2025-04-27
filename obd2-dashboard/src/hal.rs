@@ -245,3 +245,7 @@ pub fn init() -> Hal {
         temperature,
     }
 }
+
+pub fn reset() {
+    esp_hal::reset::software_reset();
+}
