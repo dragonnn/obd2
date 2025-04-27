@@ -55,7 +55,7 @@ impl IceFuelRate {
             if self.vehicle_speed > 0.0 {
                 fuel_per_100km = self.ice_fuel_rate / self.vehicle_speed * 100.0;
             }
-            write!(text, "{:.1}", fuel_per_100km).ok();
+            core::write!(text, "{:.1}", fuel_per_100km).ok();
 
             let character_style = MonoTextStyle::new(&PROFONT_10_POINT, Gray4::WHITE);
 
@@ -75,7 +75,7 @@ impl IceFuelRate {
             draw_text.draw(target)?;
 
             text.clear();
-            write!(text, "l/100").ok();
+            core::write!(text, "l/100").ok();
 
             let character_style = MonoTextStyle::new(&PROFONT_7_POINT, Gray4::WHITE);
 

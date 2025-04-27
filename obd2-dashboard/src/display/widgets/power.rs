@@ -50,7 +50,7 @@ impl Power {
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
             let mut text: String<16> = String::new();
-            write!(text, "{:.2}kW", self.power / 1000.0).ok();
+            core::write!(text, "{:.2}kW", self.power / 1000.0).ok();
 
             let character_style = MonoTextStyle::new(&PROFONT_12_POINT, Gray4::WHITE);
 

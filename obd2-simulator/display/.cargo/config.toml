@@ -1,0 +1,18 @@
+[env]
+DEFMT_LOG = "info"
+
+target = "x86_64-unknown-linux-musl"
+
+
+[target.x86_64-unknown-linux-musl]
+rustflags = [
+    "-C",
+    "link-arg=-T/usr/lib/ldscripts/elf_x86_64.x",
+    "-C",
+    "link-arg=-Tdefmt.x",
+    "-C",
+    "relocation-model=static",
+    "-C",
+    "target-feature=+crt-static",
+]
+#linker = "/usr/bin/clang"

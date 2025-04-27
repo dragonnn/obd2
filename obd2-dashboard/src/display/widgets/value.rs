@@ -59,8 +59,8 @@ impl Value {
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
             let mut text: String<16> = String::new();
-            write!(text, "{:.1$}", self.value, self.precision).ok();
-            write!(text, "{}", self.unit).ok();
+            core::write!(text, "{:.1$}", self.value, self.precision).ok();
+            core::write!(text, "{}", self.unit).ok();
 
             let character_style = MonoTextStyle::new(&self.font, Gray4::WHITE);
 

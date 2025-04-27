@@ -58,9 +58,9 @@ impl Obd2DebugSelector {
             for (pid, buffer) in &self.pids {
                 let mut text = String::<64>::new();
                 if let Some(data) = &buffer.data {
-                    write!(text, "{}: {:x?}", pid, data).ok();
+                    core::write!(text, "{}: {:x?}", pid, data).ok();
                 } else {
-                    write!(text, "{}: None", pid).ok();
+                    core::write!(text, "{}: None", pid).ok();
                 }
                 let text = Text::with_text_style(&text, position, character_style, text_style);
                 text.draw(target).map_err(|_| ())?;

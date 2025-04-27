@@ -256,7 +256,7 @@ impl Battery {
 
             if self.text {
                 let mut text: String<32> = String::new();
-                write!(text, "{:.1}%", self.percentage).ok();
+                core::write!(text, "{:.1}%", self.percentage).ok();
 
                 let character_style = MonoTextStyle::new(&PROFONT_14_POINT, Gray4::WHITE);
 
@@ -279,7 +279,8 @@ impl Battery {
                 text_position.x += 2;
                 text_position.y += org_size.height as i32 / 2 / 2 + org_size.height as i32 / 2 + 6;
                 text.clear();
-                write!(text, "{:.1}V {:.2}±{:.0}", self.voltage, self.cell_voltage, self.cell_voltage_deviation).ok();
+                core::write!(text, "{:.1}V {:.2}±{:.0}", self.voltage, self.cell_voltage, self.cell_voltage_deviation)
+                    .ok();
 
                 Text::with_text_style(text.as_str(), text_position, character_style, text_style).draw(target)?;
 
@@ -287,7 +288,7 @@ impl Battery {
                 text_position.x += 2;
                 text_position.y += org_size.height as i32 / 2 / 2 + 2;
                 text.clear();
-                write!(text, "{:.0}/{:.0}°C", self.min_temp, self.max_temp).ok();
+                core::write!(text, "{:.0}/{:.0}°C", self.min_temp, self.max_temp).ok();
 
                 Text::with_text_style(text.as_str(), text_position, character_style, text_style).draw(target)?;
             }
