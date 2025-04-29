@@ -287,9 +287,15 @@ impl AsyncIeee802154 {
         static RX_AVAILABLE_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 
         ieee802154.set_rx_available_callback_fn(|| {
+            if let Ok(mut last_receive) = LAST_RECEIVE.try_lock() {
+                *last_receive = Instant::now();
+            }
             RX_AVAILABLE_SIGNAL.signal(());
         });
         ieee802154.set_tx_done_callback_fn(|| {
+            if let Ok(mut last_send) = LAST_SEND.try_lock() {
+                *last_send = Instant::now();
+            }
             TX_DONE_SIGNAL.signal(());
         });
         ieee802154.start_receive();
