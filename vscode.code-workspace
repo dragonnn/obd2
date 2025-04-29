@@ -21,9 +21,13 @@
 			"path": "obd2-simulator/host"
 		},
 		{
-			"name": "obd2-simulator/display",
-			"path": "obd2-simulator/display"
+			"name": "obd2-simulator/display/server",
+			"path": "obd2-simulator/display/server"
 		},
+		{
+                        "name": "obd2-simulator/display/ui",
+                        "path": "obd2-simulator/display/ui"
+                },
 		{
 			"name": "ha-daemon",
 			"path": "ha-daemon"

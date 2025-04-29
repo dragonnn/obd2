@@ -1,8 +1,9 @@
 [env]
 DEFMT_LOG = "info"
+CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER = "/usr/bin/x86_64-linux-gnu-gcc"
 
+[build]
 target = "x86_64-unknown-linux-musl"
-
 
 [target.x86_64-unknown-linux-musl]
 rustflags = [

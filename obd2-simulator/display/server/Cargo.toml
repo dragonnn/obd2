@@ -12,8 +12,8 @@ embedded-iconoir = { version = "0.2.3", features = [
     "all-resolutions",
 ] }
 
-types = { path = "../../types", features = ["id_modem"] }
-statig = { path = "../../obd2-dashboard/crates/statig/statig", features = [
+types = { path = "../../../types", features = ["id_modem"] }
+statig = { path = "../../../obd2-dashboard/crates/statig/statig", features = [
     "async",
     "alloc",
 ] }
@@ -44,3 +44,6 @@ once_cell = { version = "1.20.2", default-features = false, features = [
     "critical-section",
 ] }
 defmt-serial = "0.10.0"
+
+remoc = "0.15.3"
+tokio = { version = "1.44.2", features = ["full"] }

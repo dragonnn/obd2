@@ -13,19 +13,19 @@ static COUNT: AtomicUsize = AtomicUsize::new(0);
 defmt::timestamp!("{=usize}", COUNT.fetch_add(1, Ordering::Relaxed));
 
 pub mod lcd {
-    include!("../../../obd2-dashboard/src/tasks/lcd/mod.rs");
+    include!("../../../../obd2-dashboard/src/tasks/lcd/mod.rs");
 }
 
 mod display {
-    include!("../../../obd2-dashboard/src/display/mod.rs");
+    include!("../../../../obd2-dashboard/src/display/mod.rs");
 }
 
 mod locks {
-    include!("../../../obd2-dashboard/src/locks.rs");
+    include!("../../../../obd2-dashboard/src/locks.rs");
 }
 
 mod debug {
-    include!("../../../obd2-dashboard/src/debug.rs");
+    include!("../../../../obd2-dashboard/src/debug.rs");
 }
 
 mod dummy_display;
