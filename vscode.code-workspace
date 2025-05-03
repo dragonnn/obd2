@@ -28,6 +28,10 @@
                         "name": "obd2-simulator/display/ui",
                         "path": "obd2-simulator/display/ui"
                 },
+                {
+                        "name": "obd2-simulator/display/ipc",
+                        "path": "obd2-simulator/display/ipc"
+                },
 		{
 			"name": "ha-daemon",
 			"path": "ha-daemon"

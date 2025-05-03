@@ -1,0 +1,11 @@
+[package]
+name = "ipc"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+remoc = { version = "0.15.3", features = [
+    "full",
+    "default-codec-postcard",
+], default-features = false }
+serde = { version = "1.0", features = ["derive"] }
