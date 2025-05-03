@@ -75,11 +75,35 @@ impl eframe::App for Ui {
                         ctx.load_texture("display2", display2, egui::TextureOptions::default());
                     let texture2 =
                         egui::load::SizedTexture::new(handle2.id(), egui::vec2(256.0, 64.0));
+                    ui.vertical(|ui| {
+                        ui.image(egui::ImageSource::Texture(texture1));
+                        ui.horizontal_centered(|ui| {
+                            ui.add_space(15.0);
+                            ui.style_mut().spacing.item_spacing = egui::vec2(38.0, 16.0);
+                            for i in 0..4 {
+                                if ui.button(format!("{}", i)).clicked() {
+                                    info!("Button {} clicked", i);
+                                    self.buttons_tx.send((i, true)).ok();
+                                }
+                            }
+                        });
+                    });
 
-                    ui.image(egui::ImageSource::Texture(texture1));
-                    ui.image(egui::ImageSource::Texture(texture2));
+                    ui.vertical(|ui| {
+                        ui.image(egui::ImageSource::Texture(texture2));
+                        ui.horizontal_centered(|ui| {
+                            ui.add_space(15.0 + 50.0);
+                            ui.style_mut().spacing.item_spacing = egui::vec2(38.0, 16.0);
+                            for i in 4..8 {
+                                if ui.button(format!("{}", i)).clicked() {
+                                    info!("Button {} clicked", i);
+                                    self.buttons_tx.send((i, true)).ok();
+                                }
+                            }
+                        });
+                    });
                 });
-                ui.horizontal_wrapped(|ui| {
+                /*ui.horizontal_wrapped(|ui| {
                     ui.style_mut().spacing.item_spacing = egui::vec2(86.0, 16.0);
                     for i in 0..6 {
                         if ui.button(format!("{}", i)).clicked() {
@@ -87,7 +111,7 @@ impl eframe::App for Ui {
                             self.buttons_tx.send((i, true)).ok();
                         }
                     }
-                });
+                });*/
                 ctx.request_repaint_after(std::time::Duration::from_millis(10));
             });
         });
