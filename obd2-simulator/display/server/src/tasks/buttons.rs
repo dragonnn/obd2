@@ -65,7 +65,13 @@ pub async fn run() {
                 5 => {
                     info!("Button B5 pressed");
                     LCD_EVENTS
-                        .send(LcdEvent::Button(Action::Pressed(Button::B6)))
+                        .send(LcdEvent::Button(Action::Pressed(Button::B1)))
+                        .await;
+                }
+                6 => {
+                    info!("Button B6 pressed");
+                    LCD_EVENTS
+                        .send(LcdEvent::Button(Action::Pressed(Button::B2)))
                         .await;
                 }
 

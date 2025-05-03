@@ -92,7 +92,7 @@ impl eframe::App for Ui {
                     ui.vertical(|ui| {
                         ui.image(egui::ImageSource::Texture(texture2));
                         ui.horizontal_centered(|ui| {
-                            ui.add_space(15.0 + 50.0);
+                            ui.add_space(15.0 + 53.0);
                             ui.style_mut().spacing.item_spacing = egui::vec2(38.0, 16.0);
                             for i in 4..8 {
                                 if ui.button(format!("{}", i)).clicked() {

@@ -18,19 +18,31 @@ static COUNT: AtomicUsize = AtomicUsize::new(0);
 defmt::timestamp!("{=usize}", COUNT.fetch_add(1, Ordering::Relaxed));
 
 pub mod lcd {
-    include!("../../../../obd2-dashboard/src/tasks/lcd/mod.rs");
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/obd2-dashboard/src/tasks/lcd/mod.rs"
+    ));
 }
 
 mod display {
-    include!("../../../../obd2-dashboard/src/display/mod.rs");
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/obd2-dashboard/src/display/mod.rs"
+    ));
 }
 
 mod locks {
-    include!("../../../../obd2-dashboard/src/locks.rs");
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/obd2-dashboard/src/locks.rs"
+    ));
 }
 
 mod debug {
-    include!("../../../../obd2-dashboard/src/debug.rs");
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/obd2-dashboard/src/debug.rs"
+    ));
 }
 
 mod dummy_display;
@@ -123,10 +135,13 @@ fn main() {
     });
 }
 
+use crate::debug::internal_debug;
+
 #[embassy_executor::task]
 async fn run() {
     tasks::lcd::EVENTS.send(tasks::lcd::LcdEvent::Main).await;
     loop {
         embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
+        internal_debug!("simulator tick");
     }
 }
