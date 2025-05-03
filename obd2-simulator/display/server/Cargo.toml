@@ -45,5 +45,9 @@ once_cell = { version = "1.20.2", default-features = false, features = [
 ] }
 defmt-serial = "0.10.0"
 
-remoc = "0.15.3"
+remoc = { version = "0.15.3", features = [
+    "full",
+    "default-codec-postcard",
+], default-features = false }
 tokio = { version = "1.44.2", features = ["full"] }
+ipc = { path = "../ipc" }

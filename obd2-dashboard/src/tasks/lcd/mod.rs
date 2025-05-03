@@ -203,7 +203,7 @@ impl LcdState {
     #[action]
     async fn enter_menu(&mut self, menu: &mut LcdMenuState) {
         let lock = crate::locks::SPI_BUS.lock().await;
-        warn!("enter_debug");
+        warn!("enter_menu");
         self.display_on().await;
         self.display1.clear();
         self.display2.clear();
@@ -228,7 +228,7 @@ impl LcdState {
     #[action]
     async fn enter_obd2_pids(&mut self, obd2_pids: &mut LcdObd2Pids) {
         let lock = crate::locks::SPI_BUS.lock().await;
-        warn!("enter_debug");
+        warn!("enter_obd2_pids");
         self.display_on().await;
         self.display1.clear();
         self.display2.clear();

@@ -1,13 +1,18 @@
 #![feature(impl_trait_in_assoc_type)]
 #![feature(trivial_bounds)]
 
-use std::sync::Arc;
+#[macro_use]
+extern crate defmt;
+
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::{Receiver, Sender, channel};
 
 use embassy_executor::Executor;
 use static_cell::StaticCell;
+
 extern crate alloc;
+
+mod ipc_client;
 
 static COUNT: AtomicUsize = AtomicUsize::new(0);
 defmt::timestamp!("{=usize}", COUNT.fetch_add(1, Ordering::Relaxed));
@@ -100,18 +105,28 @@ fn main() {
     });
 
     let executor = EXECUTOR.init(Executor::new());
+
+    let (display_tx, display_rx) = tokio::sync::mpsc::unbounded_channel();
+
+    let display1 = dummy_display::DummyDisplay::new(ipc::DisplayIndex::Index0, display_tx.clone());
+    let display2 = dummy_display::DummyDisplay::new(ipc::DisplayIndex::Index1, display_tx.clone());
+
+    ipc_client::start(display_rx);
+
     executor.run(|spawner| {
         spawner.spawn(run()).unwrap();
+
+        spawner
+            .spawn(tasks::lcd::run(display1, display2, None))
+            .ok();
+        spawner.spawn(tasks::buttons::run()).ok();
     });
 }
 
 #[embassy_executor::task]
 async fn run() {
+    tasks::lcd::EVENTS.send(tasks::lcd::LcdEvent::Main).await;
     loop {
         embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
-        //std::println!("Hello, world!");
-        defmt::info!("looop defmt");
-
-        //defmt::println!("wtffff");
     }
 }

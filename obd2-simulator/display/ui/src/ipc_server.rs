@@ -25,6 +25,7 @@ impl ipc::Ipc for IpcServer {
             .lock()
             .await
             .copy_from_slice(&data);
+        info!("Flushed display buffer {}", index);
         Ok(())
     }
 

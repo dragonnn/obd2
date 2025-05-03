@@ -6,7 +6,7 @@ use std::time::Duration;
 /// TCP port the server is listening on.
 pub const TCP_PORT: u16 = 9871;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 #[repr(u8)]
 pub enum DisplayIndex {
     Index0 = 0,

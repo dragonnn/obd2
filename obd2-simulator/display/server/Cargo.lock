@@ -382,6 +382,7 @@ dependencies = [
  "embedded-graphics",
  "embedded-iconoir",
  "heapless 0.8.0",
+ "ipc",
  "num-traits",
  "once_cell",
  "profont",
@@ -776,6 +777,14 @@ name = "ident_case"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
+
+[[package]]
+name = "ipc"
+version = "0.1.0"
+dependencies = [
+ "remoc",
+ "serde",
+]
 
 [[package]]
 name = "itoa"
@@ -1248,10 +1257,10 @@ dependencies = [
  "byteorder",
  "bytes",
  "futures",
+ "postcard 1.1.1",
  "rand 0.9.1",
  "remoc_macro",
  "serde",
- "serde_json",
  "tokio",
  "tokio-util",
  "tracing",

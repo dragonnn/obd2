@@ -88,6 +88,7 @@ impl eframe::App for Ui {
                         }
                     }
                 });
+                ctx.request_repaint_after(std::time::Duration::from_millis(10));
             });
         });
     }
