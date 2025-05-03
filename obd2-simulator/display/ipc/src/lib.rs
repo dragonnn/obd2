@@ -3,6 +3,8 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::time::Duration;
 
+use types::Pid;
+
 /// TCP port the server is listening on.
 pub const TCP_PORT: u16 = 9871;
 
@@ -24,4 +26,5 @@ pub trait Ipc {
     ) -> Result<(), rtc::CallError>;
 
     async fn buttons(&mut self) -> Result<rch::mpsc::Receiver<(u8, bool)>, rtc::CallError>;
+    async fn obd2_pids(&mut self) -> Result<rch::mpsc::Receiver<Pid>, rtc::CallError>;
 }

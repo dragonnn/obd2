@@ -28,6 +28,14 @@ pub fn start(mut display_rx: UnboundedReceiver<(DisplayIndex, Vec<u8>)>) {
                 }
             });
 
+            let mut obd2_pids = ipc_client.obd2_pids().await.unwrap();
+            tokio::spawn(async move {
+                loop {
+                    let event = obd2_pids.recv().await.unwrap().unwrap();
+                    crate::tasks::obd2::EVENTS.send(event).await;
+                }
+            });
+
             while let Some((index, data)) = display_rx.recv().await {
                 ipc_client.display_flush(index, data).await.unwrap();
             }

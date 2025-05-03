@@ -132,6 +132,7 @@ fn main() {
             .spawn(tasks::lcd::run(display1, display2, None))
             .ok();
         spawner.spawn(tasks::buttons::run()).ok();
+        spawner.spawn(tasks::obd2::run()).ok();
     });
 }
 

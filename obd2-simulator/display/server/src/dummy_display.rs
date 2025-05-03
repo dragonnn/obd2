@@ -39,7 +39,6 @@ impl DummyDisplay {
         if self.needs_flush {
             let data = self.buffer.to_vec();
             self.display_tx.send((self.index, data)).map_err(|_| ())?;
-            info!("Flushing display");
             self.needs_flush = false;
         }
         Ok(())

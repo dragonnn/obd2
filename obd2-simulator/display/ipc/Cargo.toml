@@ -9,3 +9,4 @@ remoc = { version = "0.15.3", features = [
     "default-codec-postcard",
 ], default-features = false }
 serde = { version = "1.0", features = ["derive"] }
+types = { path = "../../../types", features = ["id_modem"] }

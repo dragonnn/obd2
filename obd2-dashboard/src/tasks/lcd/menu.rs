@@ -8,7 +8,10 @@ use crate::{
     display::widgets::DebugScroll,
     tasks::{
         buttons::{Action, Button},
-        lcd::{debug::LcdDebugState, main::LcdMainState, obd2_pids::LcdObd2Pids, settings::LcdSettingsState},
+        lcd::{
+            ac::LcdAcState, debug::LcdDebugState, main::LcdMainState, obd2_pids::LcdObd2Pids,
+            settings::LcdSettingsState,
+        },
     },
     types::{Display1, Display2},
 };
@@ -25,6 +28,7 @@ impl LcdMenuState {
         info!("menu button: {:?}", button);
         match button {
             Action::Pressed(Button::B4) => Some(Transition(State::main(LcdMainState::new()))),
+            Action::Pressed(Button::B5) => Some(Transition(State::ac(LcdAcState::new()))),
             Action::Pressed(Button::B2) => Some(Transition(State::debug(LcdDebugState::new()))),
             Action::Pressed(Button::B1) => Some(Transition(State::obd2_pids(LcdObd2Pids::new()))),
             Action::Pressed(Button::B0) => Some(Transition(State::settings(LcdSettingsState::new()))),

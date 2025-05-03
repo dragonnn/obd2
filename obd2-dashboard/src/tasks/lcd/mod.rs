@@ -1,3 +1,4 @@
+use ac::LcdAcState;
 use defmt::*;
 use embassy_futures::select::{select, Either::*};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, signal::Signal};
@@ -14,6 +15,7 @@ use crate::{
     types::{Display1, Display2},
 };
 
+mod ac;
 mod boot;
 mod debug;
 mod main;
@@ -164,6 +166,34 @@ impl LcdState {
             }
             LcdEvent::Render => {
                 main.draw(&mut self.display1, &mut self.display2).await;
+                Handled
+            }
+            _ => Super,
+        };
+
+        ret
+    }
+
+    #[action]
+    async fn enter_ac(&mut self, ac_state: &mut LcdAcState) {
+        self.display_on().await;
+        let lock = crate::locks::SPI_BUS.lock().await;
+        self.display1.clear();
+        self.display2.clear();
+        warn!("enter_ac");
+        ac_state.draw(&mut self.display1, &mut self.display2).await;
+    }
+
+    #[state(entry_action = "enter_ac", superstate = "state_dispatch")]
+    async fn ac(&mut self, ac_state: &mut LcdAcState, event: &LcdEvent) -> Response<State> {
+        let lock = crate::locks::SPI_BUS.lock().await;
+        let ret = match event {
+            LcdEvent::Obd2Event(obd2_event) => {
+                ac_state.handle_obd2_event(obd2_event);
+                Handled
+            }
+            LcdEvent::Render => {
+                ac_state.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }
             _ => Super,

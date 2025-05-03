@@ -1,20 +1,21 @@
 use remoc::{codec, prelude::*};
 use std::{net::Ipv4Addr, sync::Arc};
+use types::Pid;
 
 use tokio::{
     net::TcpListener,
-    sync::{Mutex, RwLock, broadcast::Receiver},
+    sync::{Mutex, RwLock, broadcast::Receiver, mpsc::UnboundedSender},
 };
 
 #[derive(Debug)]
 pub struct IpcServer {
     display_buffers: [Arc<Mutex<Vec<u8>>>; 2],
     buttons_rx: Receiver<(u8, bool)>,
+    obd2_pids_rx: Receiver<Pid>,
 }
 
 #[rtc::async_trait]
 impl ipc::Ipc for IpcServer {
-    /// Increase the counter's value by the provided number.
     async fn display_flush(
         &mut self,
         index: ipc::DisplayIndex,
@@ -25,7 +26,6 @@ impl ipc::Ipc for IpcServer {
             .lock()
             .await
             .copy_from_slice(&data);
-        info!("Flushed display buffer {}", index);
         Ok(())
     }
 
@@ -44,15 +44,37 @@ impl ipc::Ipc for IpcServer {
 
         Ok(rx)
     }
+
+    async fn obd2_pids(&mut self) -> Result<rch::mpsc::Receiver<Pid>, rtc::CallError> {
+        let (tx, rx) = rch::mpsc::channel(1);
+
+        let mut obd2_pids_rx = self.obd2_pids_rx.resubscribe();
+        tokio::spawn(async move {
+            loop {
+                let pid = obd2_pids_rx.recv().await.unwrap();
+                if tx.send(pid).await.is_err() {
+                    break;
+                }
+            }
+        });
+
+        Ok(rx)
+    }
 }
 
-pub fn start(display_buffers: [Arc<Mutex<Vec<u8>>>; 2], buttons_rx: Receiver<(u8, bool)>) {
-    std::thread::spawn(|| {
+pub fn start(
+    display_buffers: [Arc<Mutex<Vec<u8>>>; 2],
+    buttons_rx: Receiver<(u8, bool)>,
+    obd2_pids_rx: Receiver<Pid>,
+    connected_tx: UnboundedSender<()>,
+) {
+    std::thread::spawn(move || {
         let tokio = tokio::runtime::Runtime::new().unwrap();
         tokio.block_on(async {
             let ipc_server = Arc::new(RwLock::new(IpcServer {
                 display_buffers,
                 buttons_rx,
+                obd2_pids_rx,
             }));
 
             let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, ipc::TCP_PORT))
@@ -63,6 +85,12 @@ pub fn start(display_buffers: [Arc<Mutex<Vec<u8>>>; 2], buttons_rx: Receiver<(u8
                 let (socket, addr) = listener.accept().await.unwrap();
                 let (socket_rx, socket_tx) = socket.into_split();
                 info!("Accepted connection from {}", addr);
+
+                let connected_tx = connected_tx.clone();
+                tokio::spawn(async move {
+                    tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+                    connected_tx.send(()).unwrap();
+                });
 
                 let ipc_server = ipc_server.clone();
                 // Spawn a task for each incoming connection.

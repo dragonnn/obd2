@@ -17,8 +17,11 @@ heapless08 = { package = "heapless", version = "0.8.0", features = [
 ] }
 num-traits = { version = "0.2", default-features = false, features = ["libm"] }
 
+egui-probe = { version = "0.8.0", optional = true, features = ["derive"] }
+
 [features]
 default = []
 id_modem = []
 id_obd2dashboard = []
 id_ha_daemon = []
+egui = ["dep:egui-probe"]

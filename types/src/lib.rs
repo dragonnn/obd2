@@ -30,9 +30,13 @@ impl defmt::Format for Obd2Frame {
 }
 
 #[derive(Default, Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+#[cfg_attr(feature = "egui", derive(egui_probe::EguiProbe))]
 pub struct AcPid {
+    #[cfg_attr(feature = "egui", egui_probe(range = -10.0..=55.0))]
     pub vehicle_front_temp: f32,
+    #[cfg_attr(feature = "egui", egui_probe(range = -10.0..=55.0))]
     pub surround_temp: f32,
+    #[cfg_attr(feature = "egui", egui_probe(range = -10.0..=55.0))]
     pub evaporator_temp: f32,
 
     pub driver_mixing_air: f32,
@@ -40,29 +44,45 @@ pub struct AcPid {
     pub passenger_mixing_air: f32,
     pub air_direction: f32,
     pub input: f32,
+    #[cfg_attr(feature = "egui", egui_probe(range = 0..=100))]
     pub humidity: u8,
     pub defrost_open: f32,
 
+    #[cfg_attr(feature = "egui", egui_probe(range = 0.0..=100.0))]
     pub driver_vent_temp: f32,
+    #[cfg_attr(feature = "egui", egui_probe(range = 0.0..=100.0))]
     pub driver_floor_temp: f32,
     pub speed: u8,
+    #[cfg_attr(feature = "egui", egui_probe(range = -10.0..=120.0))]
     pub ice_cooling_temp: f32,
+
+    #[cfg_attr(feature = "egui", egui_probe(toggle_switch))]
     pub compressor_on: bool,
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
+#[cfg_attr(feature = "egui", derive(egui_probe::EguiProbe))]
 pub struct BmsPid {
+    #[cfg_attr(feature = "egui", egui_probe(range = 0.0..=40.0))]
     pub hv_max_temp: f32,
+    #[cfg_attr(feature = "egui", egui_probe(range = 0.0..=40.0))]
     pub hv_min_temp: f32,
+    #[cfg_attr(feature = "egui", egui_probe(range = 320.0..=410.0))]
     pub hv_dc_voltage: f32,
+    #[cfg_attr(feature = "egui", egui_probe(range = 0.0..=100.0))]
     pub hv_soc: f32,
+    #[cfg_attr(feature = "egui", egui_probe(range = 0.0..=200.0))]
     pub hv_cell_voltage_deviation: f32,
+    #[cfg_attr(feature = "egui", egui_probe(range = 3.5..=4.1))]
     pub hv_min_cell_voltage: f32,
+    #[cfg_attr(feature = "egui", egui_probe(range = 3.5..=4.1))]
     pub hv_max_cell_voltage: f32,
+    #[cfg_attr(feature = "egui", egui_probe(range = -100.0..=100.0))]
     pub hv_battery_current: f32,
 
     pub aux_dc_voltage: f32,
 
+    #[cfg_attr(feature = "egui", egui_probe(range = -0.0..=5000.0))]
     pub motor_electric_rpm: f32,
 }
 
