@@ -38,10 +38,8 @@ impl Pid for TransaxlePid {
             }
         };
 
-        //31 - 32 - clutch 1 temp
-        //33 - 34 - clutch 2 temp
-        let clutch1_temp = ((data[31] as u16 * 256) + data[32] as u16) as i16 as f32;
-        let clutch2_temp = ((data[33] as u16 * 256) + data[34] as u16) as i16 as f32;
+        let clutch1_temp = ((data[32] as u16 * 256) + data[33] as u16) as i16 as f32;
+        let clutch2_temp = ((data[34] as u16 * 256) + data[35] as u16) as i16 as f32;
 
         Ok(Self { gear, clutch1_temp, clutch2_temp })
     }
