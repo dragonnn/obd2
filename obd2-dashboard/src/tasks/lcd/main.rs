@@ -100,6 +100,8 @@ impl LcdMainState {
             }
             Obd2Event::TransaxlePid(transaxle_pid) => {
                 self.gearbox_gear.update_gear(transaxle_pid.gear.into());
+                self.gearbox_gear.update_clutch1_temp(transaxle_pid.clutch1_temp);
+                self.gearbox_gear.update_clutch2_temp(transaxle_pid.clutch2_temp);
             }
             Obd2Event::AcPid(ac_pid) => {
                 self.ac_compressor.enabled(ac_pid.compressor_on);
