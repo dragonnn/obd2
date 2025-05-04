@@ -15,6 +15,13 @@ pub enum DisplayIndex {
     Index1 = 1,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub enum Ieee802154State {
+    LastSend(bool),
+    LastReceive(bool),
+    LastPosition(bool),
+}
+
 /// Remote counting service.
 #[rtc::remote]
 pub trait Ipc {
@@ -27,4 +34,5 @@ pub trait Ipc {
 
     async fn buttons(&mut self) -> Result<rch::mpsc::Receiver<(u8, bool)>, rtc::CallError>;
     async fn obd2_pids(&mut self) -> Result<rch::mpsc::Receiver<Pid>, rtc::CallError>;
+    async fn ieee802154(&mut self) -> Result<rch::mpsc::Receiver<Ieee802154State>, rtc::CallError>;
 }

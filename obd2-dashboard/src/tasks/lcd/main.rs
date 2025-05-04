@@ -4,8 +4,8 @@ use types::{BmsPid, IceTemperaturePid, Pid as Obd2Event};
 
 use crate::{
     display::widgets::{
-        Arrow, ArrowDirection, Battery, Battery12V, BatteryOrientation, Connection, GearboxGear, IceFuelRate, Icon,
-        MotorElectric, MotorIce, Position, Power, Temperature, Value,
+        Arrow, ArrowDirection, Battery, Battery12V, BatteryOrientation, Connection, GearboxGear, Humidity, IceFuelRate,
+        Icon, MotorElectric, MotorIce, Position, Power, Temperature, Value,
     },
     tasks::ieee802154::{last_position, last_receive, last_send},
     types::{Display1, Display2},
@@ -29,9 +29,11 @@ pub struct LcdMainState {
     gearbox_gear: GearboxGear,
     vehicle_speed: Value,
 
+    //humidity: Icon<embedded_iconoir::icons::size24px::design_tools::Droplet>,
+    humidity: Humidity,
+
     connection: Connection,
     position: Position,
-    ac_compressor: Icon<embedded_iconoir::icons::size18px::weather::SnowFlake>,
 
     ice_fuel_rate_value: f32,
     hv_battery_current: f32,
@@ -50,8 +52,8 @@ impl LcdMainState {
                 4,
                 true,
             ),
-            aux_battery: Battery12V::new(Point::new(256 - 18 * 2 - 16 * 2 - 6, 31)),
-            ice_temperature: Temperature::new(Point::new(256 - 18 * 2 - 4, 0), Size::new(16, 64), 0.0, 130.0, 4),
+            aux_battery: Battery12V::new(Point::new(84, 0)),
+            ice_temperature: Temperature::new(Point::new(127, 0), Size::new(16, 64), 0.0, 130.0, 4),
 
             electric_power: Power::new(Point::new(128 + 36, 14)),
             electric_power_arrow: Arrow::new(
@@ -70,9 +72,11 @@ impl LcdMainState {
             vehicle_speed: Value::new(Point::new(58, 48), &profont::PROFONT_14_POINT, "km/h", 0),
             ice_fuel_rate: IceFuelRate::new(Point::new(60, 60)),
 
+            //humidity: Icon::new(Point::new(256 - 18 - 18, 18 + 18), true),
+            humidity: Humidity::new(Point::new(220, 32)),
+
             connection: Connection::new(Point::new(256 - 18, 0)),
             position: Position::new(Point::new(256 - 18, 18)),
-            ac_compressor: Icon::new(Point::new(256 - 18, 18 + 18), false),
 
             ice_fuel_rate_value: 0.0,
             hv_battery_current: 0.0,
@@ -104,7 +108,8 @@ impl LcdMainState {
                 self.gearbox_gear.update_clutch2_temp(transaxle_pid.clutch2_temp);
             }
             Obd2Event::AcPid(ac_pid) => {
-                self.ac_compressor.enabled(ac_pid.compressor_on);
+                self.humidity.update_humidity(ac_pid.humidity);
+                self.humidity.update_compressor(ac_pid.compressor_on);
             }
             _ => {}
         }
@@ -164,7 +169,7 @@ impl LcdMainState {
         self.motor_electric_rpm.draw(display1).ok();
         self.connection.draw(display2).ok();
         self.position.draw(display2).ok();
-        self.ac_compressor.draw(display2).ok();
+        self.humidity.draw(display2).ok();
 
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);

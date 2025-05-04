@@ -1,6 +1,6 @@
-use std::net::Ipv4Addr;
+use std::{net::Ipv4Addr, sync::atomic::Ordering};
 
-use ipc::{DisplayIndex, Ipc as _};
+use ipc::{DisplayIndex, Ieee802154State, Ipc as _};
 use remoc::prelude::*;
 use tokio::sync::mpsc::UnboundedReceiver;
 
@@ -33,6 +33,26 @@ pub fn start(mut display_rx: UnboundedReceiver<(DisplayIndex, Vec<u8>)>) {
                 loop {
                     let event = obd2_pids.recv().await.unwrap().unwrap();
                     crate::tasks::obd2::EVENTS.send(event).await;
+                }
+            });
+
+            let mut ieee802154 = ipc_client.ieee802154().await.unwrap();
+            tokio::spawn(async move {
+                loop {
+                    let event = ieee802154.recv().await.unwrap().unwrap();
+                    match event {
+                        Ieee802154State::LastSend(last_send) => {
+                            crate::tasks::ieee802154::LAST_SEND.store(last_send, Ordering::Relaxed);
+                        }
+                        Ieee802154State::LastReceive(last_receive) => {
+                            crate::tasks::ieee802154::LAST_RECEIVE
+                                .store(last_receive, Ordering::Relaxed);
+                        }
+                        Ieee802154State::LastPosition(last_position) => {
+                            crate::tasks::ieee802154::LAST_POSITION
+                                .store(last_position, Ordering::Relaxed);
+                        }
+                    }
                 }
             });
 

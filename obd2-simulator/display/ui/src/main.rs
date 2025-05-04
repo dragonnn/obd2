@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use ipc::Ieee802154State;
 use tokio::sync::Mutex;
 use tokio::sync::broadcast::{Receiver, Sender, channel};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
@@ -19,6 +20,8 @@ fn main() -> eframe::Result<()> {
     ];
 
     let (buttons_tx, buttons_rx): (Sender<(u8, bool)>, Receiver<(u8, bool)>) = channel(10);
+    let (ieee802154_tx, ieee802154_rx): (Sender<Ieee802154State>, Receiver<Ieee802154State>) =
+        channel(10);
     let (obd2_pids_tx, obd2_pids_rx): (Sender<types::Pid>, Receiver<types::Pid>) = channel(10);
     let (connected_tx, connected_rx): (UnboundedSender<()>, UnboundedReceiver<()>) =
         unbounded_channel();
@@ -26,6 +29,7 @@ fn main() -> eframe::Result<()> {
     ipc_server::start(
         display_buffers.clone(),
         buttons_rx,
+        ieee802154_rx,
         obd2_pids_rx,
         connected_tx,
     );
@@ -38,7 +42,7 @@ fn main() -> eframe::Result<()> {
         w.with_app_id("com.example.obd2simulator")
             .with_title("OBD2 Simulator")
             .with_resizable(false)
-            .with_inner_size(egui::vec2(256.0 * 2.0 + 25.0, 600.0))
+            .with_inner_size(egui::vec2(256.0 * 2.0 + 25.0, 700.0))
             .with_maximized(false)
             .with_decorations(false)
             .with_visible(true)
@@ -50,6 +54,7 @@ fn main() -> eframe::Result<()> {
             Ok(Box::<Ui>::new(Ui::new(
                 display_buffers.clone(),
                 buttons_tx,
+                ieee802154_tx,
                 obd2_pids_tx,
                 connected_rx,
             )))
@@ -60,6 +65,7 @@ fn main() -> eframe::Result<()> {
 struct Ui {
     display_buffers: [Arc<Mutex<Vec<u8>>>; 2],
     buttons_tx: Sender<(u8, bool)>,
+    ieee802154_tx: Sender<Ieee802154State>,
     obd2_pids_tx: Sender<Pid>,
     connected_rx: UnboundedReceiver<()>,
 
@@ -68,18 +74,32 @@ struct Ui {
     ice_fuel_rate_pid: types::IceFuelRatePid,
     vehicle_speed_pid: types::VehicleSpeedPid,
     transaxle_pid: types::TransaxlePid,
+
+    ieee802154: Ieee802154Switch,
+}
+
+#[derive(egui_probe::EguiProbe, Default, Debug, Clone)]
+pub struct Ieee802154Switch {
+    #[egui_probe(toggle_switch)]
+    pub last_send: bool,
+    #[egui_probe(toggle_switch)]
+    pub last_receive: bool,
+    #[egui_probe(toggle_switch)]
+    pub last_position: bool,
 }
 
 impl Ui {
     fn new(
         display_buffers: [Arc<Mutex<Vec<u8>>>; 2],
         buttons_tx: Sender<(u8, bool)>,
+        ieee802154_tx: Sender<Ieee802154State>,
         obd2_pids_tx: Sender<Pid>,
         connected_rx: UnboundedReceiver<()>,
     ) -> Self {
         Self {
             display_buffers,
             buttons_tx,
+            ieee802154_tx,
             obd2_pids_tx,
             connected_rx,
 
@@ -88,6 +108,8 @@ impl Ui {
             ice_fuel_rate_pid: Default::default(),
             vehicle_speed_pid: Default::default(),
             transaxle_pid: Default::default(),
+
+            ieee802154: Ieee802154Switch::default(),
         }
     }
 }
@@ -162,7 +184,7 @@ impl eframe::App for Ui {
                 }
                 ui.horizontal(|ui| {
                     ui.vertical(|ui| {
-                        ui.label("Base PID");
+                        ui.label("BASE PID");
                         if egui_probe::Probe::new(&mut self.ice_fuel_rate_pid)
                             .show(ui)
                             .changed()
@@ -181,6 +203,22 @@ impl eframe::App for Ui {
                         {
                             self.obd2_pids_tx
                                 .send(Pid::VehicleSpeedPid(self.vehicle_speed_pid.clone()))
+                                .ok();
+                        }
+                        if egui_probe::Probe::new(&mut self.ieee802154)
+                            .show(ui)
+                            .changed()
+                            || connected
+                            || menu_button_pressed
+                        {
+                            self.ieee802154_tx
+                                .send(Ieee802154State::LastSend(self.ieee802154.last_send))
+                                .ok();
+                            self.ieee802154_tx
+                                .send(Ieee802154State::LastReceive(self.ieee802154.last_receive))
+                                .ok();
+                            self.ieee802154_tx
+                                .send(Ieee802154State::LastPosition(self.ieee802154.last_position))
                                 .ok();
                         }
                     });
@@ -219,7 +257,6 @@ impl eframe::App for Ui {
                             || connected
                             || menu_button_pressed
                         {
-                            info!("Transaxle PID changed: {:?}", self.transaxle_pid);
                             self.obd2_pids_tx
                                 .send(Pid::TransaxlePid(self.transaxle_pid.clone()))
                                 .ok();

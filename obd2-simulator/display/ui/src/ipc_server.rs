@@ -1,3 +1,4 @@
+use ipc::Ieee802154State;
 use remoc::{codec, prelude::*};
 use std::{net::Ipv4Addr, sync::Arc};
 use types::Pid;
@@ -11,6 +12,7 @@ use tokio::{
 pub struct IpcServer {
     display_buffers: [Arc<Mutex<Vec<u8>>>; 2],
     buttons_rx: Receiver<(u8, bool)>,
+    ieee802154_rx: Receiver<Ieee802154State>,
     obd2_pids_rx: Receiver<Pid>,
 }
 
@@ -60,11 +62,28 @@ impl ipc::Ipc for IpcServer {
 
         Ok(rx)
     }
+
+    async fn ieee802154(&mut self) -> Result<rch::mpsc::Receiver<Ieee802154State>, rtc::CallError> {
+        let (tx, rx) = rch::mpsc::channel(1);
+
+        let mut ieee802154_rx = self.ieee802154_rx.resubscribe();
+        tokio::spawn(async move {
+            loop {
+                let state = ieee802154_rx.recv().await.unwrap();
+                if tx.send(state).await.is_err() {
+                    break;
+                }
+            }
+        });
+
+        Ok(rx)
+    }
 }
 
 pub fn start(
     display_buffers: [Arc<Mutex<Vec<u8>>>; 2],
     buttons_rx: Receiver<(u8, bool)>,
+    ieee802154_rx: Receiver<Ieee802154State>,
     obd2_pids_rx: Receiver<Pid>,
     connected_tx: UnboundedSender<()>,
 ) {
@@ -75,6 +94,7 @@ pub fn start(
                 display_buffers,
                 buttons_rx,
                 obd2_pids_rx,
+                ieee802154_rx,
             }));
 
             let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, ipc::TCP_PORT))
