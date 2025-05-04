@@ -168,8 +168,8 @@ impl LcdMainState {
         self.vehicle_speed.draw(display2).ok();
         self.motor_electric_rpm.draw(display1).ok();
         self.connection.draw(display2).ok();
-        self.position.draw(display2).ok();
         self.humidity.draw(display2).ok();
+        self.position.draw(display2).ok();
 
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);
