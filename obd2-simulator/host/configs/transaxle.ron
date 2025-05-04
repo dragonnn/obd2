@@ -1,10 +1,32 @@
 [
     Request(
         can_id: 0x7e1,
+        message: [0x02, 0x10, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Raw(RawResponse(
+                can_id: 0x7e9,
+                message: [0x02, 0x50, 0x03, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa]
+            )),            
+        ]
+    ),
+
+    Request(
+        can_id: 0x7e1,
+        message: [0x02, 0x3e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Raw(RawResponse(
+                can_id: 0x7e9,
+                message: [0x02, 0x7e, 0x00, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa]
+            )),            
+        ]
+    ),
+    
+    /*Request(
+        can_id: 0x7e1,
         message: [0x03, 0x22, 0x01, 0xa4, 0x00, 0x00, 0x00, 0x00],
         response: [
             Consecutive(ConsecutiveResponse(
-                can_id: 0x7e1,
+                can_id: 0x7e9,
                 message: [
                     0x61, 0x01, 0xff, 0xff, 0xff, 0xff,
                     0xbd, 0x12, 0xfc, 0x16, 0xf8, 0x03, 0x00,
@@ -15,6 +37,38 @@
                     0x00, 0xb5, 0xf8, 0x00, 0x00, 0xb1, 0x1e,
                     0x00, 0xc2, 0xc6, 0xea, 0b01101101, 0x01, 0x8c,
                     0x02, 0x01, 0x00, 0x00, 0x03, 0xe8
+                ]
+            )),
+        ]
+    )*/
+    Request(
+        can_id: 0x7e1,
+        message: [0x03, 0x22, 0x01, 0xa4, 0x00, 0x00, 0x00, 0x00],
+        response: [
+            Consecutive(ConsecutiveResponse(
+                can_id: 0x7e9,
+                message: [
+                    0x62, 0x1, 0xa4, 0xff, 0xff, 0xe0, 
+                    0x0, 0x0, 0x0, 0x0, 0x31, 0x0, 0x0, 0x0, 
+                    0x0, 0x0, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 
+                    //                   current gear
+                    0xc7, 0xb, 0x1, 0x1, 0x00, 0x00, 0xf0, 0xfc, 
+                    //          Clutch 1   Clutch 2 temp i16
+                    //          same as 2  this x 256 +           0x00 - 0C       0xXMMMMMMM - number of DTCs?
+                    //                     0x7f is overflow       0xFF - 255C     0b10000000 - error detected
+                    //
+                    0b00000000, 0xff, 0x0, 0x19, 0x01,                  0x0f,           0b10000000,
+                  //0b00000000 - sport off
+                  //0b00000001 - sport on
+                  //0b00000010 - sport -
+                  //0b00000011 - sport not supported
+                  //0b000001XX - sport switch up
+                  //0b000011XX - sport switch not supported
+                  //0b00001000 - sport switch -
+                  //0b00010000 - sport mode switch down
+                  //0b00110000 - sport mode switch not supported
+                  //0b00100000 - sport mode switch -
+
                 ]
             )),
         ]

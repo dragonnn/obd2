@@ -80,6 +80,7 @@ pub struct BmsPid {
     #[cfg_attr(feature = "egui", egui_probe(range = -100.0..=100.0))]
     pub hv_battery_current: f32,
 
+    #[cfg_attr(feature = "egui", egui_probe(range = 0.0..=15.0))]
     pub aux_dc_voltage: f32,
 
     #[cfg_attr(feature = "egui", egui_probe(range = -0.0..=5000.0))]
