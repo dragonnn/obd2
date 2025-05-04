@@ -67,8 +67,8 @@ impl LcdMainState {
             motor_ice: MotorIce::new(Point::new(0, 0)),
 
             gearbox_gear: GearboxGear::new(Point::new(40, 14)),
-            vehicle_speed: Value::new(Point::new(58, 12), &profont::PROFONT_14_POINT, "km/h", 0),
-            ice_fuel_rate: IceFuelRate::new(Point::new(60, 24)),
+            vehicle_speed: Value::new(Point::new(58, 48), &profont::PROFONT_14_POINT, "km/h", 0),
+            ice_fuel_rate: IceFuelRate::new(Point::new(60, 60)),
 
             connection: Connection::new(Point::new(256 - 18, 0)),
             position: Position::new(Point::new(256 - 18, 18)),

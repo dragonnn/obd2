@@ -98,12 +98,16 @@ pub struct IceEnginePid {
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
+#[cfg_attr(feature = "egui", derive(egui_probe::EguiProbe))]
 pub struct IceFuelRatePid {
+    #[cfg_attr(feature = "egui", egui_probe(range = 0.0..=15.0))]
     pub fuel_rate: f32,
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
+#[cfg_attr(feature = "egui", derive(egui_probe::EguiProbe))]
 pub struct IceTemperaturePid {
+    #[cfg_attr(feature = "egui", egui_probe(range = 0.0..=120.0))]
     pub temperature: f32,
 }
 
@@ -166,6 +170,7 @@ pub struct Icu1Smk {
 #[derive(
     Debug, Format, PartialEq, Clone, Copy, strum::IntoStaticStr, Deserialize, Serialize, Default,
 )]
+#[cfg_attr(feature = "egui", derive(egui_probe::EguiProbe))]
 pub enum Gear {
     PN,
     R,
@@ -180,12 +185,19 @@ pub enum Gear {
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
+#[cfg_attr(feature = "egui", derive(egui_probe::EguiProbe))]
 pub struct TransaxlePid {
     pub gear: Gear,
+    #[cfg_attr(feature = "egui", egui_probe(range = 0.0..=100.0))]
+    pub clutch1_temp: f32,
+    #[cfg_attr(feature = "egui", egui_probe(range = 0.0..=100.0))]
+    pub clutch2_temp: f32,
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
+#[cfg_attr(feature = "egui", derive(egui_probe::EguiProbe))]
 pub struct VehicleSpeedPid {
+    #[cfg_attr(feature = "egui", egui_probe(range = 0..=180))]
     pub vehicle_speed: u8,
 }
 

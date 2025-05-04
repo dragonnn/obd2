@@ -37,8 +37,8 @@ fn main() -> eframe::Result<()> {
     options.window_builder = Some(Box::new(|w| {
         w.with_app_id("com.example.obd2simulator")
             .with_title("OBD2 Simulator")
-            .with_resizable(true)
-            .with_inner_size(egui::vec2(256.0 * 2.0 + 25.0, 500.0))
+            .with_resizable(false)
+            .with_inner_size(egui::vec2(256.0 * 2.0 + 25.0, 600.0))
             .with_maximized(false)
             .with_decorations(false)
             .with_visible(true)
@@ -65,6 +65,9 @@ struct Ui {
 
     ac_pid: types::AcPid,
     bms_pid: types::BmsPid,
+    ice_fuel_rate_pid: types::IceFuelRatePid,
+    vehicle_speed_pid: types::VehicleSpeedPid,
+    transaxle_pid: types::TransaxlePid,
 }
 
 impl Ui {
@@ -82,6 +85,9 @@ impl Ui {
 
             ac_pid: Default::default(),
             bms_pid: Default::default(),
+            ice_fuel_rate_pid: Default::default(),
+            vehicle_speed_pid: Default::default(),
+            transaxle_pid: Default::default(),
         }
     }
 }
@@ -154,6 +160,31 @@ impl eframe::App for Ui {
                 if menu_button_pressed {
                     std::thread::sleep(std::time::Duration::from_millis(50));
                 }
+                ui.horizontal(|ui| {
+                    ui.vertical(|ui| {
+                        ui.label("Base PID");
+                        if egui_probe::Probe::new(&mut self.ice_fuel_rate_pid)
+                            .show(ui)
+                            .changed()
+                            || connected
+                            || menu_button_pressed
+                        {
+                            self.obd2_pids_tx
+                                .send(Pid::IceFuelRatePid(self.ice_fuel_rate_pid.clone()))
+                                .ok();
+                        }
+                        if egui_probe::Probe::new(&mut self.vehicle_speed_pid)
+                            .show(ui)
+                            .changed()
+                            || connected
+                            || menu_button_pressed
+                        {
+                            self.obd2_pids_tx
+                                .send(Pid::VehicleSpeedPid(self.vehicle_speed_pid.clone()))
+                                .ok();
+                        }
+                    });
+                });
 
                 ui.horizontal(|ui| {
                     ui.vertical(|ui| {
@@ -174,6 +205,23 @@ impl eframe::App for Ui {
                         {
                             self.obd2_pids_tx
                                 .send(Pid::BmsPid(self.bms_pid.clone()))
+                                .ok();
+                        }
+                    });
+                });
+
+                ui.horizontal(|ui| {
+                    ui.vertical(|ui| {
+                        ui.label("TRANSAXLE PID");
+                        if egui_probe::Probe::new(&mut self.transaxle_pid)
+                            .show(ui)
+                            .changed()
+                            || connected
+                            || menu_button_pressed
+                        {
+                            info!("Transaxle PID changed: {:?}", self.transaxle_pid);
+                            self.obd2_pids_tx
+                                .send(Pid::TransaxlePid(self.transaxle_pid.clone()))
                                 .ok();
                         }
                     });
