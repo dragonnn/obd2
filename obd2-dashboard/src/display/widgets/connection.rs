@@ -48,8 +48,12 @@ impl Connection {
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
-            let icon = embedded_iconoir::icons::size18px::connectivity::DataTransferBoth::new(GrayColor::WHITE);
+            let icon = embedded_iconoir::icons::size18px::connectivity::DataTransferBoth::new(Gray4::new(0x04));
             let image = Image::new(&icon, self.position);
+
+            let icon_enabled = embedded_iconoir::icons::size18px::connectivity::DataTransferBoth::new(GrayColor::WHITE);
+            let image_enabled = Image::new(&icon_enabled, self.position);
+
             image.draw(target)?;
 
             let style = embedded_graphics::primitives::PrimitiveStyleBuilder::new()
@@ -58,14 +62,16 @@ impl Connection {
                 .fill_color(Gray4::BLACK)
                 .build();
 
-            if !self.last_receive {
+            if self.last_receive {
                 let bounding_box = Rectangle::new(self.position + Point::new(0, 0), Size::new(18 / 2, 18));
-                bounding_box.draw_styled(&style, target)?;
+                let mut clipped = target.clipped(&bounding_box);
+                image_enabled.draw(&mut clipped)?;
             }
 
-            if !self.last_send {
+            if self.last_send {
                 let bounding_box = Rectangle::new(self.position + Point::new(18 / 2, 0), Size::new(18 / 2, 18));
-                bounding_box.draw_styled(&style, target)?;
+                let mut clipped = target.clipped(&bounding_box);
+                image_enabled.draw(&mut clipped)?;
             }
 
             self.redraw = false;

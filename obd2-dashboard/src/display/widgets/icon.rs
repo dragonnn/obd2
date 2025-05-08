@@ -44,7 +44,13 @@ impl<I: embedded_iconoir::prelude::IconoirIcon> Icon<I> {
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
-            if self.last_enabled {
+            let color = if self.last_enabled { GrayColor::WHITE } else { Gray4::new(0x04) };
+
+            let icon = I::new(color);
+            let image = Image::new(&icon, self.position);
+            image.draw(target)?;
+
+            /*if self.last_enabled {
                 let icon = I::new(GrayColor::WHITE);
                 let image = Image::new(&icon, self.position);
                 image.draw(target)?;
@@ -60,7 +66,7 @@ impl<I: embedded_iconoir::prelude::IconoirIcon> Icon<I> {
                     let bounding_box = Rectangle::new(self.position, Size::new(18, 18));
                     bounding_box.draw_styled(&style, target)?;
                 }
-            }
+            }*/
 
             self.redraw = false;
         }

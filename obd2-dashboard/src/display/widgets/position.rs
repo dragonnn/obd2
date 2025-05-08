@@ -41,20 +41,10 @@ impl Position {
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
-            if self.last_position {
-                let icon = embedded_iconoir::icons::size18px::maps::Position::new(GrayColor::WHITE);
-                let image = Image::new(&icon, self.position);
-                image.draw(target)?;
-            } else {
-                let style = embedded_graphics::primitives::PrimitiveStyleBuilder::new()
-                    .stroke_width(0)
-                    .stroke_color(Gray4::BLACK)
-                    .fill_color(Gray4::BLACK)
-                    .build();
-
-                let bounding_box = Rectangle::new(self.position, Size::new(18, 18));
-                bounding_box.draw_styled(&style, target)?;
-            }
+            let color = if self.last_position { GrayColor::WHITE } else { Gray4::new(0x04) };
+            let icon = embedded_iconoir::icons::size18px::maps::Position::new(color);
+            let image = Image::new(&icon, self.position);
+            image.draw(target)?;
 
             self.redraw = false;
         }

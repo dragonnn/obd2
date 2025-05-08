@@ -73,10 +73,10 @@ impl LcdMainState {
             ice_fuel_rate: IceFuelRate::new(Point::new(60, 60)),
 
             //humidity: Icon::new(Point::new(256 - 18 - 18, 18 + 18), true),
-            humidity: Humidity::new(Point::new(220, 32)),
+            humidity: Humidity::new(Point::new(228, 32)),
 
             connection: Connection::new(Point::new(256 - 18, 0)),
-            position: Position::new(Point::new(256 - 18, 18)),
+            position: Position::new(Point::new(256 - 18, 16)),
 
             ice_fuel_rate_value: 0.0,
             hv_battery_current: 0.0,
@@ -110,6 +110,7 @@ impl LcdMainState {
             Obd2Event::AcPid(ac_pid) => {
                 self.humidity.update_humidity(ac_pid.humidity);
                 self.humidity.update_compressor(ac_pid.compressor_on);
+                self.humidity.update_evaporator_temp(ac_pid.evaporator_temp);
             }
             _ => {}
         }
