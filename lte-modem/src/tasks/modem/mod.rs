@@ -143,7 +143,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                 }
                 Either::Second(state) => {
                     if let types::Pid::Icu2Pid(icu2_pid) = state {
-                        info!("checking icu2 pid");
+                        info!("checking icu2 pid: {:?}", icu2_pid);
                         let old_icu2_pid = persistent_manager.get_icu2_pid();
 
                         if let Some(old_icu2_pid) = old_icu2_pid {
@@ -165,6 +165,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                             }
 
                             if should_send_icu2_pid_state {
+                                warn!("sending icu2 pid state sms");
                                 if let Err(err) =
                                     send_icu2_pid_state(&icu2_pid, persistent_manager.get_restarts()).await
                                 {
