@@ -1,14 +1,183 @@
-use core::{fmt::Write, sync::atomic::Ordering, write};
+use core::{
+    fmt::Write,
+    hash::{Hash, Hasher},
+    sync::atomic::Ordering,
+    write,
+};
 
-use defmt::warn;
-use embassy_time::Duration;
-use heapless::String;
+use defmt::*;
+use derivative::Derivative;
+use embassy_futures::select::{select, Either::*};
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
+use embassy_time::{Duration, Timer};
+use heapless::{String, Vec};
 
 use crate::{board::Modem, tasks};
 
+static SMS_STATE_CHANNEL: Channel<CriticalSectionRawMutex, SmsData, 16> = Channel::new();
+
+pub async fn send_state_delayed(
+    event: SmsEvent,
+    force_new_fix: bool,
+    new_fix_if_missing: bool,
+    restarts: u32,
+    all_numbers: bool,
+) -> Result<(), nrf_modem::Error> {
+    //let mut event_string = String::new();
+    //write!(&mut event_string, "{}", event).ok();
+    let sms_data = SmsData { event, force_new_fix, new_fix_if_missing, restarts, all_numbers };
+    if SMS_STATE_CHANNEL.try_send(sms_data).is_err() {
+        defmt::error!("sms channel full, dropping message");
+    }
+    Ok(())
+}
+
+#[derive(Format, Clone, Default)]
+pub struct SmsData {
+    pub event: SmsEvent,
+    pub force_new_fix: bool,
+    pub new_fix_if_missing: bool,
+    pub restarts: u32,
+    pub all_numbers: bool,
+}
+
+#[derive(Format, Clone, Derivative)]
+#[derivative(Hash)]
+pub enum SmsEvent {
+    Driving(#[derivative(Hash = "ignore")] bool),
+    Closed {
+        #[derivative(Hash = "ignore")]
+        trunk_open: bool,
+        #[derivative(Hash = "ignore")]
+        engine_hood_open: bool,
+        #[derivative(Hash = "ignore")]
+        actuator_back_door_passenger_side_unlock: bool,
+        #[derivative(Hash = "ignore")]
+        actuator_back_door_driver_side_unlock: bool,
+    },
+    Fix(#[derivative(Hash = "ignore")] bool),
+    MovementOnBattery(#[derivative(Hash = "ignore")] f64),
+    Custom(&'static str),
+}
+
+impl PartialEq for SmsEvent {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (SmsEvent::Driving(_), SmsEvent::Driving(_)) => true,
+            (SmsEvent::Closed { .. }, SmsEvent::Closed { .. }) => true,
+            (SmsEvent::Fix(_), SmsEvent::Fix(_)) => true,
+            (SmsEvent::MovementOnBattery(_), SmsEvent::MovementOnBattery(_)) => true,
+            (SmsEvent::Custom(a), SmsEvent::Custom(b)) => a == b,
+            _ => false,
+        }
+    }
+}
+
+impl Eq for SmsEvent {}
+
+impl Default for SmsEvent {
+    fn default() -> Self {
+        SmsEvent::Custom("default")
+    }
+}
+
+impl SmsEvent {
+    pub fn to_string(&self) -> String<64> {
+        let mut s = String::new();
+        match self {
+            SmsEvent::Driving(driving) => {
+                if *driving {
+                    write!(&mut s, "driving...").ok();
+                } else {
+                    write!(&mut s, "parked...").ok();
+                }
+            }
+            SmsEvent::Closed {
+                trunk_open,
+                engine_hood_open,
+                actuator_back_door_passenger_side_unlock,
+                actuator_back_door_driver_side_unlock,
+            } => {
+                if *trunk_open {
+                    write!(&mut s, "trunk open...\n\n").ok();
+                } else if *actuator_back_door_driver_side_unlock || *actuator_back_door_passenger_side_unlock {
+                    write!(&mut s, "unlock...\n\n").ok();
+                } else {
+                    write!(&mut s, "closed...\n\n").ok();
+                }
+
+                write!(&mut s, "trunk: {}\n", if *trunk_open { "o" } else { "c" }).ok();
+                write!(&mut s, "driver: {}\n", if *actuator_back_door_driver_side_unlock { "o" } else { "c" }).ok();
+                write!(&mut s, "passenger: {}\n", if *actuator_back_door_passenger_side_unlock { "o" } else { "c" })
+                    .ok();
+                write!(&mut s, "engine hood: {}\n", if *engine_hood_open { "o" } else { "c" }).ok();
+            }
+            SmsEvent::Fix(fix) => {
+                if *fix {
+                    write!(&mut s, "found fix...").ok();
+                } else {
+                    write!(&mut s, "lost fix...").ok();
+                }
+            }
+            SmsEvent::MovementOnBattery(distance) => {
+                write!(&mut s, "movement on battery: {:.2}m", distance).ok();
+            }
+            SmsEvent::Custom(msg) => {
+                write!(&mut s, "{}", msg).ok();
+            }
+        }
+        s
+    }
+}
+
+#[embassy_executor::task]
+pub async fn task(modem: Modem) {
+    let sms_channel_sub = SMS_STATE_CHANNEL.receiver();
+    let mut events = heapless::FnvIndexSet::<SmsEvent, 8>::new();
+    let mut default_sms_data = SmsData::default();
+    loop {
+        match select(sms_channel_sub.receive(), async {
+            if events.is_empty() {
+                futures::pending!();
+            } else if events.len() == events.capacity() {
+                ()
+            } else {
+                Timer::after_secs(60).await;
+            }
+        })
+        .await
+        {
+            First(msg) => {
+                defmt::info!("sms task got message: {:?}", msg);
+                events.insert(msg.event).ok();
+                default_sms_data.force_new_fix |= msg.force_new_fix;
+                default_sms_data.new_fix_if_missing |= msg.new_fix_if_missing;
+                default_sms_data.restarts = msg.restarts;
+                default_sms_data.all_numbers |= msg.all_numbers;
+            }
+            Second(_) => {
+                if let Err(err) = send_state(
+                    &modem,
+                    &events,
+                    default_sms_data.force_new_fix,
+                    default_sms_data.new_fix_if_missing,
+                    default_sms_data.restarts,
+                    default_sms_data.all_numbers,
+                )
+                .await
+                {
+                    defmt::error!("error sending sms: {:?}", err);
+                }
+                default_sms_data = SmsData::default();
+                events.clear();
+            }
+        }
+    }
+}
+
 pub async fn send_state(
     modem: &Modem,
-    event: &str,
+    events: &heapless::FnvIndexSet<SmsEvent, 8>,
     force_new_fix: bool,
     new_fix_if_missing: bool,
     restarts: u32,
@@ -25,10 +194,12 @@ pub async fn send_state(
     let montion_detect = tasks::montion_detection::State::get().await;
 
     let mut sms: String<300> = String::new();
+    for event in events {
+        write!(&mut sms, "{}\n", event.to_string()).map_err(|_| nrf_modem::Error::OutOfMemory)?;
+    }
     write!(
         &mut sms,
-        "{}\n\nbat: {}{}%\nv: {:.2}V\nmontions: {}\nrestarts: {}\n",
-        event,
+        "\n\nbat: {}{}%\nv: {:.2}V\nmontions: {}\nrestarts: {}\n",
         if battery.charging { "+" } else { "-" },
         battery.capacity,
         battery.voltage as f32 / 1000.0,

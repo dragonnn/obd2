@@ -17,6 +17,7 @@ fn IPC() {
     nrf_modem::ipc_irq_handler();
 }
 
+#[derive(Clone, Copy)]
 pub struct Modem {}
 
 impl Modem {

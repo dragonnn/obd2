@@ -97,6 +97,7 @@ statig = { path = "../obd2-dashboard/crates/statig/statig", features = [
     "alloc",
 ] }
 nmea0183 = "0.5.0"
+derivative = { version = "2.2.0", features = ["use_core"] }
 
 [build-dependencies]
 dotenv-build = "0.1"
