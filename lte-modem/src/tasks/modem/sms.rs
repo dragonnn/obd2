@@ -128,6 +128,31 @@ impl SmsEvent {
         }
         s
     }
+
+    fn is_driving(&self) -> bool {
+        matches!(self, SmsEvent::Driving(true))
+    }
+
+    fn is_parked(&self) -> bool {
+        matches!(self, SmsEvent::Driving(false))
+    }
+
+    fn is_closed(&self) -> bool {
+        if let SmsEvent::Closed {
+            trunk_open,
+            engine_hood_open,
+            actuator_back_door_passenger_side_unlock,
+            actuator_back_door_driver_side_unlock,
+        } = self
+        {
+            !trunk_open
+                && !engine_hood_open
+                && !actuator_back_door_passenger_side_unlock
+                && !actuator_back_door_driver_side_unlock
+        } else {
+            false
+        }
+    }
 }
 
 #[embassy_executor::task]
@@ -135,25 +160,36 @@ pub async fn task(modem: Modem) {
     let sms_channel_sub = SMS_STATE_CHANNEL.receiver();
     let mut events = heapless::FnvIndexSet::<SmsEvent, 8>::new();
     let mut default_sms_data = SmsData::default();
+    let mut has_parked = false;
+    let mut has_driving = false;
+    let mut has_closed = false;
+
     loop {
         match select(sms_channel_sub.receive(), async {
             if events.is_empty() {
                 futures::pending!();
-            } else if events.len() == events.capacity() {
+            } else if events.len() == events.capacity() || (has_parked && has_closed) || (has_driving && has_closed) {
                 ()
             } else {
-                Timer::after_secs(60).await;
+                Timer::after_secs(120).await;
             }
         })
         .await
         {
             First(msg) => {
                 defmt::info!("sms task got message: {:?}", msg);
-                events.insert(msg.event).ok();
                 default_sms_data.force_new_fix |= msg.force_new_fix;
                 default_sms_data.new_fix_if_missing |= msg.new_fix_if_missing;
                 default_sms_data.restarts = msg.restarts;
                 default_sms_data.all_numbers |= msg.all_numbers;
+                if msg.event.is_driving() {
+                    has_driving = true;
+                } else if msg.event.is_parked() {
+                    has_parked = true;
+                } else if msg.event.is_closed() {
+                    has_closed = true;
+                }
+                events.insert(msg.event).ok();
             }
             Second(_) => {
                 if let Err(err) = send_state(
