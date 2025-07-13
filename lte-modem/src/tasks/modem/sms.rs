@@ -167,7 +167,7 @@ pub async fn task(modem: Modem) {
     loop {
         match select(sms_channel_sub.receive(), async {
             if events.is_empty() {
-                futures::pending!();
+                Timer::after_secs(60 * 60).await;
             } else if events.len() == events.capacity() || (has_parked && has_closed) || (has_driving && has_closed) {
                 ()
             } else {
@@ -192,20 +192,23 @@ pub async fn task(modem: Modem) {
                 events.insert(msg.event).ok();
             }
             Second(_) => {
-                if let Err(err) = send_state(
-                    &modem,
-                    &events,
-                    default_sms_data.force_new_fix,
-                    default_sms_data.new_fix_if_missing,
-                    default_sms_data.restarts,
-                    default_sms_data.all_numbers,
-                )
-                .await
-                {
-                    defmt::error!("error sending sms: {:?}", err);
+                if !events.is_empty() {
+                    info!("sms task timeout, sending state");
+                    if let Err(err) = send_state(
+                        &modem,
+                        &events,
+                        default_sms_data.force_new_fix,
+                        default_sms_data.new_fix_if_missing,
+                        default_sms_data.restarts,
+                        default_sms_data.all_numbers,
+                    )
+                    .await
+                    {
+                        defmt::error!("error sending sms: {:?}", err);
+                    }
+                    default_sms_data = SmsData::default();
+                    events.clear();
                 }
-                default_sms_data = SmsData::default();
-                events.clear();
             }
         }
     }
@@ -235,11 +238,10 @@ pub async fn send_state(
     }
     write!(
         &mut sms,
-        "\n\nbat: {}{}%\nv: {:.2}V\nmontions: {}\nrestarts: {}\n",
+        "\n\nbat: {}{}%\nv: {:.2}V\nrestarts: {}\n",
         if battery.charging { "+" } else { "-" },
         battery.capacity,
         battery.voltage as f32 / 1000.0,
-        montion_detect.0,
         restarts
     )
     .map_err(|_| nrf_modem::Error::OutOfMemory)?;
