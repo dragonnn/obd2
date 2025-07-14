@@ -106,11 +106,10 @@ impl SmsEvent {
                     write!(&mut s, "closed...\n\n").ok();
                 }
 
-                write!(&mut s, "trunk: {}\n", if *trunk_open { "o" } else { "c" }).ok();
-                write!(&mut s, "driver: {}\n", if *actuator_back_door_driver_side_unlock { "o" } else { "c" }).ok();
-                write!(&mut s, "passenger: {}\n", if *actuator_back_door_passenger_side_unlock { "o" } else { "c" })
-                    .ok();
-                write!(&mut s, "engine hood: {}\n", if *engine_hood_open { "o" } else { "c" }).ok();
+                write!(&mut s, "t:{},", if *trunk_open { "o" } else { "c" }).ok();
+                write!(&mut s, "d:{},", if *actuator_back_door_driver_side_unlock { "o" } else { "c" }).ok();
+                write!(&mut s, "p:{},", if *actuator_back_door_passenger_side_unlock { "o" } else { "c" }).ok();
+                write!(&mut s, "e:{}\n", if *engine_hood_open { "o" } else { "c" }).ok();
             }
             SmsEvent::Fix(fix) => {
                 if *fix {
@@ -230,15 +229,13 @@ pub async fn send_state(
             fix = Some(new_fix);
         }
     }
-    let montion_detect = tasks::montion_detection::State::get().await;
-
-    let mut sms: String<300> = String::new();
+    let mut sms: String<400> = String::new();
     for event in events {
-        write!(&mut sms, "{}\n", event.to_string()).map_err(|_| nrf_modem::Error::OutOfMemory)?;
+        write!(&mut sms, "{}\n", event.to_string()).ok();
     }
     write!(
         &mut sms,
-        "\n\nbat: {}{}%\nv: {:.2}V\nrestarts: {}\n",
+        "\n\nbat: {}{}%\nv: {:.2}V\res: {}\n",
         if battery.charging { "+" } else { "-" },
         battery.capacity,
         battery.voltage as f32 / 1000.0,
@@ -260,9 +257,9 @@ pub async fn send_state(
             fix.month,
             fix.year
         )
-        .map_err(|_| nrf_modem::Error::OutOfMemory)?;
+        .ok();
     } else {
-        writeln!(&mut sms, "fix: none").map_err(|_| nrf_modem::Error::OutOfMemory)?;
+        writeln!(&mut sms, "fix: none").ok();
     }
     defmt::info!("starting sms send");
     let mut link = Err(nrf_modem::Error::NrfError(0));
@@ -279,13 +276,22 @@ pub async fn send_state(
     let link = link?;
 
     if let Some(dbm) = modem.dbm().await.unwrap() {
-        writeln!(&mut sms, "dbm: {}", dbm).map_err(|_| nrf_modem::Error::OutOfMemory)?;
+        writeln!(&mut sms, "dbm: {}", dbm).ok();
     } else {
-        writeln!(&mut sms, "dbm: --").map_err(|_| nrf_modem::Error::OutOfMemory)?;
+        writeln!(&mut sms, "dbm: --").ok();
     }
 
     //write!(&mut sms, "twi2_resets: {}", crate::board::TWI2_RESETS.load(Ordering::SeqCst))
     //    .map_err(|_| nrf_modem::Error::OutOfMemory)?;
+    if sms.capacity() == sms.len() {
+        sms.pop();
+        sms.pop();
+        sms.pop();
+        sms.push('.').ok();
+        sms.push('.').ok();
+        sms.push('.').ok();
+    }
+
     if all_numbers {
         modem.send_sms(crate::config::SMS_NUMBERS, &sms).await?;
     } else {
