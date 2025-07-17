@@ -30,11 +30,6 @@ impl Power {
     }
 
     pub fn deep_sleep(&mut self, duration: Duration) {
-        if esp_hal::debugger::debugger_connected() {
-            error!("debugger connected, not going to deep sleep");
-            esp_hal::reset::software_reset();
-        }
-
         let timer = TimerWakeupSource::new(duration.into());
         info!("going to deep sleep with timer wakeup: {:?}", defmt::Debug2Format(&timer));
 

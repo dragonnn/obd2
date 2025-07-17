@@ -103,7 +103,7 @@ impl SmsEvent {
                 } else if *actuator_back_door_driver_side_unlock || *actuator_back_door_passenger_side_unlock {
                     write!(&mut s, "unlock...\n\n").ok();
                 } else {
-                    write!(&mut s, "closed...\n\n").ok();
+                    write!(&mut s, "closed...\n").ok();
                 }
 
                 write!(&mut s, "t:{},", if *trunk_open { "o" } else { "c" }).ok();
@@ -206,6 +206,7 @@ pub async fn task(modem: Modem) {
                     {
                         defmt::error!("error sending sms: {:?}", err);
                     }
+                    info!("sms sended");
                     default_sms_data = SmsData::default();
                     events.clear();
                 }
@@ -230,7 +231,7 @@ pub async fn send_state(
             fix = Some(new_fix);
         }
     }
-    let mut sms: String<400> = String::new();
+    let mut sms: String<300> = String::new();
     for event in events {
         write!(&mut sms, "{}\n", event.to_string()).ok();
     }

@@ -250,7 +250,6 @@ pub async fn recv_task(socket_rx: OwnedUdpReceiveSocket) {
             Either::First(_) => break,
             Either::Second(Ok((readed, _peer))) => match types::RxMessage::from_bytes_encrypted(&readed) {
                 Ok(rx_message) => {
-                    info!("got rx message {:?}", rx_message);
                     rx_pub.publish_immediate(rx_message);
                 }
                 Err(_err) => {
