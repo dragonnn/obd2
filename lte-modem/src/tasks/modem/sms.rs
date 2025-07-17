@@ -170,7 +170,7 @@ pub async fn task(modem: Modem) {
             } else if events.len() == events.capacity() || (has_parked && has_closed) || (has_driving && has_closed) {
                 ()
             } else {
-                Timer::after_secs(120).await;
+                Timer::after_secs(5 * 60).await;
             }
         })
         .await
@@ -188,6 +188,7 @@ pub async fn task(modem: Modem) {
                 } else if msg.event.is_closed() {
                     has_closed = true;
                 }
+                events.remove(&msg.event);
                 events.insert(msg.event).ok();
             }
             Second(_) => {
