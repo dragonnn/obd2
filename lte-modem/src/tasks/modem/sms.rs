@@ -166,8 +166,8 @@ pub async fn task(modem: Modem) {
     loop {
         match select(sms_channel_sub.receive(), async {
             if events.is_empty() {
-                Timer::after_secs(60 * 60).await;
-            } else if events.len() == events.capacity() || (has_parked && has_closed) || (has_driving && has_closed) {
+                core::future::pending::<()>().await;
+            } else if events.len() == events.capacity() || (has_closed && (has_driving || has_parked)) {
                 ()
             } else {
                 Timer::after_secs(5 * 60).await;
