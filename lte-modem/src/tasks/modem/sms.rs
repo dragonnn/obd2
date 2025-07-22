@@ -170,7 +170,7 @@ pub async fn task(modem: Modem) {
             } else if events.len() == events.capacity() || (has_closed && (has_driving || has_parked)) {
                 ()
             } else {
-                Timer::after_secs(15 * 60).await;
+                Timer::after_secs(10 * 60).await;
             }
         })
         .await
