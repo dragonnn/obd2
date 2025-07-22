@@ -337,18 +337,22 @@ pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&
     {
         let _lock = crate::locks::SPI_BUS.lock().await;
         error!("display init");
+        embassy_time::Timer::after(Duration::from_millis(10)).await;
         unwrap!(display1.init(None).await);
+        embassy_time::Timer::after(Duration::from_millis(10)).await;
         unwrap!(display2.init(None).await);
+        embassy_time::Timer::after(Duration::from_millis(10)).await;
+
+        display1.set_contrast(50).await.ok();
+        display2.set_contrast(50).await.ok();
+
+        display1.clear();
+        display2.clear();
+
+        display1.flush().await.ok();
+        display2.flush().await.ok();
     }
 
-    display1.set_contrast(50).await.ok();
-    display2.set_contrast(50).await.ok();
-
-    display1.clear();
-    display2.clear();
-
-    display1.flush().await.ok();
-    display2.flush().await.ok();
     info!("lcd init end");
 
     let mut context = LcdContext { panic };

@@ -209,6 +209,10 @@ pub async fn task(modem: Modem) {
                     info!("sms sended");
                     default_sms_data = SmsData::default();
                     events.clear();
+
+                    has_parked = false;
+                    has_driving = false;
+                    has_closed = false;
                 }
             }
         }

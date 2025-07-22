@@ -65,7 +65,7 @@ pub async fn run(mut cap1188: Cap1188) {
         async {
             loop {
                 if old_touched_bytes > 0 {
-                    embassy_time::with_timeout(embassy_time::Duration::from_millis(100), cap1188.wait_for_touched())
+                    embassy_time::with_timeout(embassy_time::Duration::from_secs(60), cap1188.wait_for_touched())
                         .await
                         .ok();
                     warn!("cap1188 touched timeout on bytes: {:?}", old_touched_bytes);
