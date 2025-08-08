@@ -184,6 +184,17 @@ pub enum Gear {
     U,
 }
 
+#[derive(
+    Debug, Format, PartialEq, Clone, Copy, strum::IntoStaticStr, Deserialize, Serialize, Default,
+)]
+#[cfg_attr(feature = "egui", derive(egui_probe::EguiProbe))]
+pub enum LcdEvent {
+    #[default]
+    Main,
+    PowerOff,
+    Charging,
+}
+
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
 #[cfg_attr(feature = "egui", derive(egui_probe::EguiProbe))]
 pub struct TransaxlePid {

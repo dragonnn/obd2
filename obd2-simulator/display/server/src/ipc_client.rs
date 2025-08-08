@@ -27,6 +27,30 @@ pub fn start(mut display_rx: UnboundedReceiver<(DisplayIndex, Vec<u8>)>) {
                     crate::tasks::buttons::EVENTS.send(event).await;
                 }
             });
+            let mut lcd_events = ipc_client.lcd_events().await.unwrap();
+            tokio::spawn(async move {
+                loop {
+                    let event = lcd_events.recv().await.unwrap().unwrap();
+                    info!("LCD event: {:?}", event);
+                    match event {
+                        types::LcdEvent::Main => {
+                            crate::tasks::lcd::EVENTS
+                                .send(crate::lcd::LcdEvent::Main)
+                                .await;
+                        }
+                        types::LcdEvent::PowerOff => {
+                            crate::tasks::lcd::EVENTS
+                                .send(crate::lcd::LcdEvent::PowerOff)
+                                .await;
+                        }
+                        types::LcdEvent::Charging => {
+                            crate::tasks::lcd::EVENTS
+                                .send(crate::lcd::LcdEvent::Charging)
+                                .await;
+                        }
+                    }
+                }
+            });
 
             let mut obd2_pids = ipc_client.obd2_pids().await.unwrap();
             tokio::spawn(async move {

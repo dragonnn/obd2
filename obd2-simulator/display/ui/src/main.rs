@@ -4,7 +4,7 @@ use ipc::Ieee802154State;
 use tokio::sync::Mutex;
 use tokio::sync::broadcast::{Receiver, Sender, channel};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
-use types::Pid;
+use types::{LcdEvent, Pid};
 
 #[macro_use]
 extern crate tracing;
@@ -25,10 +25,12 @@ fn main() -> eframe::Result<()> {
     let (obd2_pids_tx, obd2_pids_rx): (Sender<types::Pid>, Receiver<types::Pid>) = channel(10);
     let (connected_tx, connected_rx): (UnboundedSender<()>, UnboundedReceiver<()>) =
         unbounded_channel();
+    let (lcd_events_tx, lcd_events_rx): (Sender<LcdEvent>, Receiver<LcdEvent>) = channel(10);
 
     ipc_server::start(
         display_buffers.clone(),
         buttons_rx,
+        lcd_events_rx,
         ieee802154_rx,
         obd2_pids_rx,
         connected_tx,
@@ -54,6 +56,7 @@ fn main() -> eframe::Result<()> {
             Ok(Box::<Ui>::new(Ui::new(
                 display_buffers.clone(),
                 buttons_tx,
+                lcd_events_tx,
                 ieee802154_tx,
                 obd2_pids_tx,
                 connected_rx,
@@ -65,6 +68,7 @@ fn main() -> eframe::Result<()> {
 struct Ui {
     display_buffers: [Arc<Mutex<Vec<u8>>>; 2],
     buttons_tx: Sender<(u8, bool)>,
+    lcd_events_tx: Sender<LcdEvent>,
     ieee802154_tx: Sender<Ieee802154State>,
     obd2_pids_tx: Sender<Pid>,
     connected_rx: UnboundedReceiver<()>,
@@ -74,8 +78,15 @@ struct Ui {
     ice_fuel_rate_pid: types::IceFuelRatePid,
     vehicle_speed_pid: types::VehicleSpeedPid,
     transaxle_pid: types::TransaxlePid,
+    events: Events,
 
     ieee802154: Ieee802154Switch,
+}
+
+#[derive(Debug, PartialEq, Clone, Default, egui_probe::EguiProbe)]
+pub struct Events {
+    pub send: bool,
+    pub lcd_event: LcdEvent,
 }
 
 #[derive(egui_probe::EguiProbe, Default, Debug, Clone)]
@@ -92,6 +103,7 @@ impl Ui {
     fn new(
         display_buffers: [Arc<Mutex<Vec<u8>>>; 2],
         buttons_tx: Sender<(u8, bool)>,
+        lcd_events_tx: Sender<LcdEvent>,
         ieee802154_tx: Sender<Ieee802154State>,
         obd2_pids_tx: Sender<Pid>,
         connected_rx: UnboundedReceiver<()>,
@@ -99,6 +111,7 @@ impl Ui {
         Self {
             display_buffers,
             buttons_tx,
+            lcd_events_tx,
             ieee802154_tx,
             obd2_pids_tx,
             connected_rx,
@@ -108,6 +121,7 @@ impl Ui {
             ice_fuel_rate_pid: Default::default(),
             vehicle_speed_pid: Default::default(),
             transaxle_pid: Default::default(),
+            events: Events::default(),
 
             ieee802154: Ieee802154Switch::default(),
         }
@@ -260,6 +274,19 @@ impl eframe::App for Ui {
                             self.obd2_pids_tx
                                 .send(Pid::TransaxlePid(self.transaxle_pid.clone()))
                                 .ok();
+                        }
+                    });
+                });
+
+                ui.horizontal(|ui| {
+                    ui.vertical(|ui| {
+                        ui.label("EVENTS");
+                        if egui_probe::Probe::new(&mut self.events).show(ui).changed()
+                            || connected
+                            || menu_button_pressed
+                        {
+                            info!("Sending LCD event: {:?}", self.events.lcd_event);
+                            self.lcd_events_tx.send(self.events.lcd_event.clone()).ok();
                         }
                     });
                 });

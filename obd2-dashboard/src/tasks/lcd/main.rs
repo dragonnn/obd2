@@ -42,7 +42,6 @@ pub struct LcdMainState {
 
 impl LcdMainState {
     pub fn new() -> Self {
-        warn!("LcdMainState::new()");
         Self {
             hv_battery: Battery::new(
                 Point::new(9, 1),

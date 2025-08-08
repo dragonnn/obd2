@@ -2,6 +2,7 @@ use remoc::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 use std::time::Duration;
+use types::LcdEvent;
 
 use types::Pid;
 
@@ -33,6 +34,7 @@ pub trait Ipc {
     ) -> Result<(), rtc::CallError>;
 
     async fn buttons(&mut self) -> Result<rch::mpsc::Receiver<(u8, bool)>, rtc::CallError>;
+    async fn lcd_events(&mut self) -> Result<rch::mpsc::Receiver<LcdEvent>, rtc::CallError>;
     async fn obd2_pids(&mut self) -> Result<rch::mpsc::Receiver<Pid>, rtc::CallError>;
     async fn ieee802154(&mut self) -> Result<rch::mpsc::Receiver<Ieee802154State>, rtc::CallError>;
 }

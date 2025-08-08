@@ -1,7 +1,7 @@
 use ipc::Ieee802154State;
 use remoc::{codec, prelude::*};
 use std::{net::Ipv4Addr, sync::Arc};
-use types::Pid;
+use types::{LcdEvent, Pid};
 
 use tokio::{
     net::TcpListener,
@@ -12,6 +12,7 @@ use tokio::{
 pub struct IpcServer {
     display_buffers: [Arc<Mutex<Vec<u8>>>; 2],
     buttons_rx: Receiver<(u8, bool)>,
+    lcd_events_rx: Receiver<LcdEvent>,
     ieee802154_rx: Receiver<Ieee802154State>,
     obd2_pids_rx: Receiver<Pid>,
 }
@@ -39,6 +40,22 @@ impl ipc::Ipc for IpcServer {
             loop {
                 let (button, pressed) = buttons_rx.recv().await.unwrap();
                 if tx.send((button, pressed)).await.is_err() {
+                    break;
+                }
+            }
+        });
+
+        Ok(rx)
+    }
+
+    async fn lcd_events(&mut self) -> Result<rch::mpsc::Receiver<LcdEvent>, rtc::CallError> {
+        let (tx, rx) = rch::mpsc::channel(1);
+
+        let mut lcd_events_rx = self.lcd_events_rx.resubscribe();
+        tokio::spawn(async move {
+            loop {
+                let event = lcd_events_rx.recv().await.unwrap();
+                if tx.send(event).await.is_err() {
                     break;
                 }
             }
@@ -83,6 +100,7 @@ impl ipc::Ipc for IpcServer {
 pub fn start(
     display_buffers: [Arc<Mutex<Vec<u8>>>; 2],
     buttons_rx: Receiver<(u8, bool)>,
+    lcd_events_rx: Receiver<LcdEvent>,
     ieee802154_rx: Receiver<Ieee802154State>,
     obd2_pids_rx: Receiver<Pid>,
     connected_tx: UnboundedSender<()>,
@@ -93,6 +111,7 @@ pub fn start(
             let ipc_server = Arc::new(RwLock::new(IpcServer {
                 display_buffers,
                 buttons_rx,
+                lcd_events_rx,
                 obd2_pids_rx,
                 ieee802154_rx,
             }));
