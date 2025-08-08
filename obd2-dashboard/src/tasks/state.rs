@@ -167,6 +167,7 @@ impl KiaState {
     #[action]
     async fn enter_charging(&mut self) {
         ieee802154::send_now();
+        LCD_EVENTS.send(LcdEvent::Charging).await;
         set_obd2_sets(Obd2PidSets::Charging).await;
         self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::Charging));
     }

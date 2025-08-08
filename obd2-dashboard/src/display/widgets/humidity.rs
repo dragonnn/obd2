@@ -112,8 +112,6 @@ impl Humidity {
                 compressor.draw(target)?;
             }
 
-            info!("Humidity bounding box: {:?}", bounding_box.size.height);
-
             let mut text: String<16> = String::new();
             core::write!(text, "{:.0}%\n{:.0}°C", self.humidity, self.evaporator_temp).ok();
 

@@ -1,8 +1,8 @@
 use ac::LcdAcState;
 use defmt::*;
-use embassy_futures::select::{Either::*, select};
+use embassy_futures::select::{select, Either::*};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, signal::Signal};
-use embassy_time::{Duration, Timer, with_timeout};
+use embassy_time::{with_timeout, Duration, Timer};
 use embedded_graphics::geometry::{Point, Size};
 use heapless::String;
 use statig::prelude::*;
@@ -11,18 +11,20 @@ use types::Pid as Obd2Event;
 use crate::{
     debug::DEBUG_STRING_LEN,
     display::widgets::{Battery, BatteryOrientation, DebugScroll},
-    tasks::obd2::{Obd2Debug, obd2_init_wait},
+    tasks::obd2::{obd2_init_wait, Obd2Debug},
     types::{Display1, Display2},
 };
 
 mod ac;
 mod boot;
+mod charging;
 mod debug;
 mod main;
 mod menu;
 mod obd2_pids;
 mod settings;
 
+use charging::LcdChargingState;
 use debug::LcdDebugState;
 use main::LcdMainState;
 use menu::LcdMenuState;
@@ -45,6 +47,7 @@ pub enum LcdEvent {
     Debug,
     Menu,
     Render,
+    Charging,
     DebugLine(String<DEBUG_STRING_LEN>),
     Obd2Event(Obd2Event),
     Obd2Debug(Obd2Debug),
@@ -129,6 +132,7 @@ impl LcdState {
             }
             LcdEvent::Menu => Transition(State::menu(LcdMenuState::new())),
             LcdEvent::PowerOff => Transition(State::init()),
+            LcdEvent::Charging => Transition(State::charging(LcdChargingState::new())),
             _ => Handled,
         }
     }
@@ -194,6 +198,34 @@ impl LcdState {
             }
             LcdEvent::Render => {
                 ac_state.draw(&mut self.display1, &mut self.display2).await;
+                Handled
+            }
+            _ => Super,
+        };
+
+        ret
+    }
+
+    #[action]
+    async fn enter_charging(&mut self, charging_state: &mut LcdChargingState) {
+        self.display_on().await;
+        let lock = crate::locks::SPI_BUS.lock().await;
+        self.display1.clear();
+        self.display2.clear();
+        warn!("enter_ac");
+        charging_state.draw(&mut self.display1, &mut self.display2).await;
+    }
+
+    #[state(entry_action = "enter_charging", superstate = "state_dispatch")]
+    async fn charging(&mut self, charging_state: &mut LcdChargingState, event: &LcdEvent) -> Response<State> {
+        let lock = crate::locks::SPI_BUS.lock().await;
+        let ret = match event {
+            LcdEvent::Obd2Event(obd2_event) => {
+                charging_state.handle_obd2_event(obd2_event);
+                Handled
+            }
+            LcdEvent::Render => {
+                charging_state.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }
             _ => Super,
