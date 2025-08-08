@@ -44,7 +44,7 @@ impl LcdChargingState {
                 true,
             ),
             obc: OnBoardCharger::new(Point::new(256 - 72, 0)),
-            grid: Grid::new(Point::new(20, 0)),
+            grid: Grid::new(Point::new(26, 0)),
 
             electric_power: Power::new(Point::new(128 + 32, 14)),
             electric_power_arrow: Arrow::new(
@@ -60,7 +60,7 @@ impl LcdChargingState {
 
             dc_current: Value::new(Point::new(128 + 10, 54), &PROFONT_12_POINT, "A", 1),
             ac_voltage: Value::new(Point::new(4, 14), &PROFONT_12_POINT, "V", 0),
-            ac_current: Value::new(Point::new(4, 27), &PROFONT_12_POINT, "A", 0),
+            ac_current: Value::new(Point::new(4, 27), &PROFONT_12_POINT, "A", 1),
 
             hv_battery_current: 0.0,
         }
