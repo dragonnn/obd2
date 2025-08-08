@@ -1,7 +1,7 @@
 use defmt::{info, unwrap};
 use embedded_graphics::{image::Image, pixelcolor::BinaryColor, prelude::*};
 use embedded_iconoir::prelude::*;
-use statig::Response::{self, Transition};
+use statig::{self, Outcome as Response, Outcome::Transition};
 
 use super::State;
 use crate::{

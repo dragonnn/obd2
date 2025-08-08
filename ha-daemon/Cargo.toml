@@ -31,7 +31,7 @@ remoc = "0.15.3"
 log = "0.4.26"
 env_logger = "0.11.7"
 futures-util = "0.3.30"
-statig = { version = "0.3.0", features = ["async"] }
+statig = { version = "0.4.1", features = ["async"] }
 anyhow = "1.0.97"
 thiserror = "2.0.12"
 #jaq-interpret = "1.5.0"

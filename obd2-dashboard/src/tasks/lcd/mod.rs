@@ -1,8 +1,8 @@
 use ac::LcdAcState;
 use defmt::*;
-use embassy_futures::select::{select, Either::*};
+use embassy_futures::select::{Either::*, select};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, signal::Signal};
-use embassy_time::{with_timeout, Duration, Timer};
+use embassy_time::{Duration, Timer, with_timeout};
 use embedded_graphics::geometry::{Point, Size};
 use heapless::String;
 use statig::prelude::*;
@@ -11,7 +11,7 @@ use types::Pid as Obd2Event;
 use crate::{
     debug::DEBUG_STRING_LEN,
     display::widgets::{Battery, BatteryOrientation, DebugScroll},
-    tasks::obd2::{obd2_init_wait, Obd2Debug},
+    tasks::obd2::{Obd2Debug, obd2_init_wait},
     types::{Display1, Display2},
 };
 
@@ -73,8 +73,8 @@ impl LcdState {
     initial = "State::init()",
     state(derive()),
     superstate(derive()),
-    on_transition = "Self::on_transition",
-    on_dispatch = "Self::on_dispatch"
+    after_transition = "Self::after_transition",
+    before_dispatch = "Self::before_dispatch"
 )]
 impl LcdState {
     async fn display_on(&mut self) {
@@ -316,7 +316,7 @@ impl LcdState {
 
 impl LcdState {
     // The `on_transition` callback that will be called after every transition.
-    fn on_transition(&mut self, source: &State, target: &State) {
+    async fn after_transition(&mut self, source: &State, target: &State) {
         //info!("lcd transitioned from `{}` to `{}`", source, target);
         self.is_debug = false;
         match target {
@@ -325,7 +325,7 @@ impl LcdState {
         }
     }
 
-    fn on_dispatch(&mut self, state: StateOrSuperstate<Self>, event: &LcdEvent) {
+    async fn before_dispatch(&mut self, state: StateOrSuperstate<'_, State, Superstate>, event: &LcdEvent) {
         //info!("lcd dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
     }
 }

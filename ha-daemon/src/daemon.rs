@@ -52,8 +52,8 @@ pub enum HaStateEvent {
     initial = "State::load()",
     state(derive(Debug)),
     superstate(derive(Debug)),
-    on_dispatch = "Self::on_dispatch",
-    on_transition = "Self::on_transition"
+    after_transition = "Self::after_transition",
+    before_dispatch = "Self::before_dispatch"
 )]
 impl HaState {
     #[action]
@@ -257,11 +257,15 @@ impl HaState {
 }
 
 impl HaState {
-    fn on_transition(&mut self, source: &State, target: &State) {
+    async fn after_transition(&mut self, source: &State, target: &State) {
         trace!("transitioned from `{:?}` to `{:?}`", source, target);
     }
 
-    fn on_dispatch(&mut self, state: StateOrSuperstate<HaState>, event: &HaStateEvent) {
+    async fn before_dispatch(
+        &mut self,
+        state: StateOrSuperstate<'_, State, Superstate>,
+        event: &HaStateEvent,
+    ) {
         trace!("dispatched `{:?}` to `{:?}`", event, state);
     }
 }
@@ -319,13 +323,27 @@ async fn main() {
     let (rpc_custom_frame_request_sender, rpc_custom_frame_request_receiver) = unbounded_channel();
 
     kia.run(rpc_custom_frame_request_receiver).await;
-    tokio::spawn(async move {
+    std::thread::spawn(move || {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        rt.block_on(async {
+            loop {
+                let event = event_receiver.recv().await.unwrap();
+                trace!("event: {:?}", event);
+                ha_state_machine.handle(&event).await;
+            }
+        });
+    });
+
+    /*tokio::spawn(async move {
         loop {
             let event = event_receiver.recv().await.unwrap();
             trace!("event: {:?}", event);
             ha_state_machine.handle(&event).await;
         }
-    });
+    });*/
 
     rpc_server::start(rpc_custom_frame_request_sender).await;
     tokio::signal::ctrl_c().await.unwrap();

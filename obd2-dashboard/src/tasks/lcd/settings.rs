@@ -2,7 +2,7 @@ use core::sync::atomic::AtomicBool;
 
 use defmt::*;
 use embedded_graphics::prelude::*;
-use statig::Response::{self, Handled, Transition};
+use statig::{self, Outcome as Response, Outcome::Transition};
 
 use super::State;
 use crate::{

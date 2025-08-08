@@ -137,10 +137,8 @@ pub struct GnssState {
     state(derive(Format, Debug, PartialEq, Eq)),
     // Derive the Debug trait on the `Superstate` enum.
     superstate(derive(Format, Debug)),
-    // Set the `on_transition` callback.
-    on_transition = "Self::on_transition",
-    // Set the `on_dispatch` callback.
-    on_dispatch = "Self::on_dispatch"
+    after_transition = "Self::after_transition",
+    before_dispatch = "Self::before_dispatch"
 )]
 impl GnssState {
     #[action]
@@ -283,7 +281,7 @@ impl GnssState {
 }
 
 impl GnssState {
-    fn on_transition(&mut self, source: &State, target: &State) {
+    async fn after_transition(&mut self, source: &State, target: &State) {
         trace!("transitioned from `{:?}` to `{:?}`", source, target);
         match target {
             State::Backup {} => self
@@ -298,7 +296,7 @@ impl GnssState {
         }
     }
 
-    fn on_dispatch(&mut self, state: StateOrSuperstate<GnssState>, event: &GnssStateEvent) {
+    async fn before_dispatch(&mut self, state: StateOrSuperstate<'_, State, Superstate>, event: &GnssStateEvent) {
         trace!("dispatched `{:?}` to `{:?}`", event, state);
     }
 }

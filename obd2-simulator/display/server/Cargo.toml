@@ -13,10 +13,7 @@ embedded-iconoir = { version = "0.2.3", features = [
 ] }
 
 types = { path = "../../../types", features = ["id_modem"] }
-statig = { path = "../../../obd2-dashboard/crates/statig/statig", features = [
-    "async",
-    "alloc",
-] }
+statig = { version = "0.4.1", features = ["async"] }
 
 profont = "0.7.0"
 

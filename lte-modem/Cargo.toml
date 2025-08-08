@@ -92,10 +92,7 @@ panic-persist = { version = "0.3.0", features = ["utf8"] }
 persistent-buff = "0.2.6"
 
 types = { path = "../types", features = ["id_modem"] }
-statig = { path = "../obd2-dashboard/crates/statig/statig", features = [
-    "async",
-    "alloc",
-] }
+statig = { version = "0.4.1", features = ["async"] }
 nmea0183 = "0.5.0"
 derivative = { version = "2.2.0", features = ["use_core"] }
 

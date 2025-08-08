@@ -97,7 +97,7 @@ bitvec = { version = "1.0", default-features = false }
 
 strum = { version = "0.26", features = ["derive"], default-features = false }
 enum_dispatch = "0.3.13"
-statig = { path = "./crates/statig/statig", features = ["async", "alloc"] }
+statig = { version = "0.4.1", features = ["async"] }
 
 types = { path = "../types", features = ["id_obd2dashboard"] }
 

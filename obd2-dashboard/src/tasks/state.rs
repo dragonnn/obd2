@@ -46,16 +46,11 @@ pub struct KiaState {
 }
 
 #[state_machine(
-    // This sets the initial state to `led_on`.
     initial = "State::init()",
-    // Derive the Debug trait on the `State` enum.
     state(derive(Format, Debug)),
-    // Derive the Debug trait on the `Superstate` enum.
     superstate(derive(Format, Debug)),
-    // Set the `on_transition` callback.
-    on_transition = "Self::on_transition",
-    // Set the `on_dispatch` callback.
-    on_dispatch = "Self::on_dispatch"
+    after_transition = "Self::after_transition",
+    before_dispatch = "Self::before_dispatch"
 )]
 impl KiaState {
     #[state()]
@@ -325,11 +320,11 @@ impl KiaState {
 
 impl KiaState {
     // The `on_transition` callback that will be called after every transition.
-    fn on_transition(&mut self, source: &State, target: &State) {
+    async fn after_transition(&mut self, source: &State, target: &State) {
         info!("kia transitioned from `{}` to `{}`", source, target);
     }
 
-    fn on_dispatch(&mut self, state: StateOrSuperstate<Self>, event: &KiaEvent) {
+    async fn before_dispatch(&mut self, state: StateOrSuperstate<'_, State, Superstate>, event: &KiaEvent) {
         self.power_events_pub.publish_immediate(PowerEvent::RwdtFeed);
         if let KiaEvent::Obd2Event(_) = event {
             trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
