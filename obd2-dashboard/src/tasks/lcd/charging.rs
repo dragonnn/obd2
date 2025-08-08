@@ -1,11 +1,12 @@
 use defmt::{info, unwrap, warn};
 use embedded_graphics::geometry::{Point, Size};
+use profont::PROFONT_12_POINT;
 use types::{BmsPid, IceTemperaturePid, OnBoardChargerPid, Pid as Obd2Event};
 
 use crate::{
     display::widgets::{
-        Arrow, ArrowDirection, Battery, Battery12V, BatteryOrientation, Connection, GearboxGear, IceFuelRate, Icon,
-        MotorElectric, MotorIce, Position, Power, Temperature, Value,
+        Arrow, ArrowDirection, Battery, Battery12V, BatteryOrientation, Connection, GearboxGear, Grid, IceFuelRate,
+        Icon, MotorElectric, MotorIce, OnBoardCharger, Position, Power, Temperature, Value,
     },
     tasks::ieee802154::{last_position, last_receive, last_send},
     types::{Display1, Display2},
@@ -14,6 +15,8 @@ use crate::{
 #[derive(Default)]
 pub struct LcdChargingState {
     hv_battery: Battery,
+    obc: OnBoardCharger,
+    grid: Grid,
 
     electric_power: Power,
     electric_power_arrow: Arrow,
@@ -21,6 +24,10 @@ pub struct LcdChargingState {
     obc_temperature: Temperature,
 
     connection: Connection,
+
+    dc_current: Value,
+    ac_voltage: Value,
+    ac_current: Value,
 
     hv_battery_current: f32,
 }
@@ -36,8 +43,10 @@ impl LcdChargingState {
                 4,
                 true,
             ),
+            obc: OnBoardCharger::new(Point::new(256 - 72, 0)),
+            grid: Grid::new(Point::new(20, 0)),
 
-            electric_power: Power::new(Point::new(128 + 36, 14)),
+            electric_power: Power::new(Point::new(128 + 32, 14)),
             electric_power_arrow: Arrow::new(
                 Point { x: 9 + 128, y: 64 / 2 - 9 },
                 Size { width: 54, height: 16 },
@@ -45,9 +54,13 @@ impl LcdChargingState {
                 ArrowDirection::Reverse,
             ),
 
-            obc_temperature: Temperature::new(Point::new(127, 0), Size::new(16, 64), 0.0, 100.0, 4),
+            obc_temperature: Temperature::new(Point::new(235, 0), Size::new(16, 64), 0.0, 100.0, 4),
 
             connection: Connection::new(Point::new(256 - 18, 0)),
+
+            dc_current: Value::new(Point::new(128 + 10, 54), &PROFONT_12_POINT, "A", 1),
+            ac_voltage: Value::new(Point::new(4, 14), &PROFONT_12_POINT, "V", 0),
+            ac_current: Value::new(Point::new(4, 27), &PROFONT_12_POINT, "A", 0),
 
             hv_battery_current: 0.0,
         }
@@ -81,11 +94,14 @@ impl LcdChargingState {
         } else {
             self.electric_power_arrow.update_direction(ArrowDirection::Reverse);
         }
+        self.dc_current.update_value(bms_pid.hv_battery_current);
         self.hv_battery_current = bms_pid.hv_battery_current;
     }
 
     fn update_obc_pid(&mut self, obc: &OnBoardChargerPid) {
         self.obc_temperature.update_temp(obc.obc_temperature_a as f32);
+        self.ac_voltage.update_value(obc.ac_input_voltage_rms);
+        self.ac_current.update_value(obc.ac_input_current);
     }
 
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
@@ -95,11 +111,16 @@ impl LcdChargingState {
         if let Some(last_receive) = last_receive() {
             self.connection.update_last_receive(last_receive.elapsed().as_millis() < 250);
         }
+        self.obc.draw(display1).ok();
+        self.grid.draw(display2).ok();
         self.hv_battery.draw(display1).ok();
         self.electric_power.draw(display1).ok();
         self.electric_power_arrow.draw(display1).ok();
-        self.obc_temperature.draw(display2).ok();
+        self.obc_temperature.draw(display1).ok();
         self.connection.draw(display2).ok();
+        self.dc_current.draw(display1).ok();
+        self.ac_voltage.draw(display2).ok();
+        self.ac_current.draw(display2).ok();
 
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);

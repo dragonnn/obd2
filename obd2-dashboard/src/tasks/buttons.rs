@@ -4,6 +4,7 @@ use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal}
 use embassy_time::Timer;
 
 use crate::{
+    cap1188::Cap1188Inputs,
     event::{KiaEvent, LcdEvent, KIA_EVENTS, LCD_EVENTS},
     tasks::power::get_shutdown_signal,
     types::Cap1188,
@@ -55,7 +56,7 @@ pub async fn run(mut cap1188: Cap1188) {
         }
     }
     info!("cap1188 task started");
-    //cap1188.calibrate().await.ok();
+    cap1188.calibrate().await.ok();
     let mut old_touched = unwrap!(cap1188.touched().await);
     let mut old_touched_bytes = old_touched.into_bytes()[0];
     let mut last_touched = embassy_time::Instant::now();
@@ -65,11 +66,13 @@ pub async fn run(mut cap1188: Cap1188) {
         async {
             loop {
                 if old_touched_bytes > 0 {
-                    embassy_time::with_timeout(embassy_time::Duration::from_secs(60), cap1188.wait_for_touched())
+                    embassy_time::with_timeout(embassy_time::Duration::from_secs(250), cap1188.wait_for_touched())
                         .await
                         .ok();
                     warn!("cap1188 touched timeout on bytes: {:?}", old_touched_bytes);
                     cap1188.calibrate().await.ok();
+                    old_touched_bytes = 0;
+                    old_touched = Cap1188Inputs::default();
                 } else {
                     cap1188.wait_for_touched().await;
                 }

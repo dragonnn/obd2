@@ -163,8 +163,9 @@ impl Obd2PidSets {
 
 #[embassy_executor::task]
 pub async fn run(mut obd2: Obd2) {
-    info!("obd2 task started");
     let obd2_inited = OBD2_INITED.sender();
+    info!("obd2 task started");
+
     let ieee802154_extra_txframes_pub = extra_txframes_pub();
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     {

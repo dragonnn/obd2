@@ -257,7 +257,6 @@ impl Obd2 {
                 }
                 Err(_) => {
                     insert_send_pid_error(&PID::into_error()).await;
-                    error!("timeout requesting pid: {}", core::any::type_name::<PID>());
                     internal_debug!("timeout requesting pid");
                     if obd2_debug_pids_enabled {
                         KIA_EVENTS.try_send(KiaEvent::Obd2Debug(Obd2Debug::new::<PID>(None))).ok();
