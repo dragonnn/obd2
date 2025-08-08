@@ -213,6 +213,7 @@ pub struct VehicleSpeedPid {
 }
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize, Default)]
+#[cfg_attr(feature = "egui", derive(egui_probe::EguiProbe))]
 pub struct OnBoardChargerPid {
     pub ac_input_voltage_instant: f32,
     pub ac_input_voltage_rms: f32,

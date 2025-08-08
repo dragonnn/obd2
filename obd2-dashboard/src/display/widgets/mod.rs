@@ -11,6 +11,7 @@ mod icon;
 mod motor_electric;
 mod motor_ice;
 mod obd2_debug_selector;
+mod on_board_charger;
 mod position;
 mod power;
 mod slider;

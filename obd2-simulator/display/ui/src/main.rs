@@ -44,7 +44,7 @@ fn main() -> eframe::Result<()> {
         w.with_app_id("com.example.obd2simulator")
             .with_title("OBD2 Simulator")
             .with_resizable(false)
-            .with_inner_size(egui::vec2(256.0 * 2.0 + 25.0, 700.0))
+            .with_inner_size(egui::vec2(256.0 * 2.0 + 25.0, 1000.0))
             .with_maximized(false)
             .with_decorations(false)
             .with_visible(true)
@@ -78,6 +78,7 @@ struct Ui {
     ice_fuel_rate_pid: types::IceFuelRatePid,
     vehicle_speed_pid: types::VehicleSpeedPid,
     transaxle_pid: types::TransaxlePid,
+    on_board_charger_pid: types::OnBoardChargerPid,
     events: Events,
 
     ieee802154: Ieee802154Switch,
@@ -121,6 +122,7 @@ impl Ui {
             ice_fuel_rate_pid: Default::default(),
             vehicle_speed_pid: Default::default(),
             transaxle_pid: Default::default(),
+            on_board_charger_pid: Default::default(),
             events: Events::default(),
 
             ieee802154: Ieee802154Switch::default(),
@@ -273,6 +275,19 @@ impl eframe::App for Ui {
                         {
                             self.obd2_pids_tx
                                 .send(Pid::TransaxlePid(self.transaxle_pid.clone()))
+                                .ok();
+                        }
+                    });
+                    ui.vertical(|ui| {
+                        ui.label("OBC PID");
+                        if egui_probe::Probe::new(&mut self.on_board_charger_pid)
+                            .show(ui)
+                            .changed()
+                            || connected
+                            || menu_button_pressed
+                        {
+                            self.obd2_pids_tx
+                                .send(Pid::OnBoardChargerPid(self.on_board_charger_pid.clone()))
                                 .ok();
                         }
                     });

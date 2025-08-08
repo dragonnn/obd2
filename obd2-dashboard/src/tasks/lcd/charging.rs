@@ -1,6 +1,6 @@
 use defmt::{info, unwrap, warn};
 use embedded_graphics::geometry::{Point, Size};
-use types::{BmsPid, IceTemperaturePid, Pid as Obd2Event};
+use types::{BmsPid, IceTemperaturePid, OnBoardChargerPid, Pid as Obd2Event};
 
 use crate::{
     display::widgets::{
@@ -17,6 +17,8 @@ pub struct LcdChargingState {
 
     electric_power: Power,
     electric_power_arrow: Arrow,
+
+    obc_temperature: Temperature,
 
     connection: Connection,
 
@@ -43,6 +45,8 @@ impl LcdChargingState {
                 ArrowDirection::Reverse,
             ),
 
+            obc_temperature: Temperature::new(Point::new(127, 0), Size::new(16, 64), 0.0, 100.0, 4),
+
             connection: Connection::new(Point::new(256 - 18, 0)),
 
             hv_battery_current: 0.0,
@@ -54,7 +58,9 @@ impl LcdChargingState {
             Obd2Event::BmsPid(bms_pid) => {
                 self.update_bms_pid(bms_pid);
             }
-            Obd2Event::OnBoardChargerPid(obc) => {}
+            Obd2Event::OnBoardChargerPid(obc) => {
+                self.update_obc_pid(obc);
+            }
             _ => {}
         }
     }
@@ -78,6 +84,10 @@ impl LcdChargingState {
         self.hv_battery_current = bms_pid.hv_battery_current;
     }
 
+    fn update_obc_pid(&mut self, obc: &OnBoardChargerPid) {
+        self.obc_temperature.update_temp(obc.obc_temperature_a as f32);
+    }
+
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
         if let Some(last_send) = last_send() {
             self.connection.update_last_send(last_send.elapsed().as_millis() < 250);
@@ -88,6 +98,7 @@ impl LcdChargingState {
         self.hv_battery.draw(display1).ok();
         self.electric_power.draw(display1).ok();
         self.electric_power_arrow.draw(display1).ok();
+        self.obc_temperature.draw(display2).ok();
         self.connection.draw(display2).ok();
 
         unwrap!(display1.flush().await);
