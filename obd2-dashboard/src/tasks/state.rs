@@ -192,6 +192,7 @@ impl KiaState {
             }
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             KiaEvent::Obd2LoopEnd(set, _all) => {
+                LCD_EVENTS.send(LcdEvent::Render).await;
                 if obc_pid.is_none() {
                     if *obc_pid_wait > 50 {
                         Transition(State::check_charging(None, Instant::now()))

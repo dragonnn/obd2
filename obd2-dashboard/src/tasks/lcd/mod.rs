@@ -212,7 +212,7 @@ impl LcdState {
         let lock = crate::locks::SPI_BUS.lock().await;
         self.display1.clear();
         self.display2.clear();
-        warn!("enter_ac");
+        warn!("enter_charging");
         charging_state.draw(&mut self.display1, &mut self.display2).await;
     }
 
@@ -228,6 +228,7 @@ impl LcdState {
                 charging_state.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }
+            LcdEvent::Charging => Handled,
             _ => Super,
         };
 
