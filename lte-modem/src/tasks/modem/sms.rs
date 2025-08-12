@@ -241,7 +241,7 @@ pub async fn send_state(
     }
     write!(
         &mut sms,
-        "\n\nbat: {}{}%\nv: {:.2}V\res: {}\n",
+        "\n\nbat: {}{}%\nv: {:.2}V\nres: {}\n",
         if battery.charging { "+" } else { "-" },
         battery.capacity,
         battery.voltage as f32 / 1000.0,
