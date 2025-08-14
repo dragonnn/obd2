@@ -223,6 +223,7 @@ impl LcdState {
         let ret = match event {
             LcdEvent::Obd2Event(obd2_event) => {
                 charging_state.handle_obd2_event(obd2_event);
+                charging_state.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }
             LcdEvent::Render => {
