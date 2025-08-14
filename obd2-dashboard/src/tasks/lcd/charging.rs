@@ -32,6 +32,12 @@ pub struct LcdChargingState {
     hv_battery_current: f32,
 }
 
+impl defmt::Format for LcdChargingState {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "LcdChargingState {{  }}");
+    }
+}
+
 impl LcdChargingState {
     pub fn new() -> Self {
         Self {

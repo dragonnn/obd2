@@ -40,6 +40,12 @@ pub struct LcdMainState {
     vehicle_speed_value: f32,
 }
 
+impl defmt::Format for LcdMainState {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "LcdMainState {{  }}");
+    }
+}
+
 impl LcdMainState {
     pub fn new() -> Self {
         Self {

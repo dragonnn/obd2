@@ -74,7 +74,7 @@ impl LcdState {
 
 #[state_machine(
     initial = "State::init()",
-    state(derive()),
+    state(derive(Format)),
     superstate(derive()),
     after_transition = "Self::after_transition",
     before_dispatch = "Self::before_dispatch"
@@ -146,6 +146,7 @@ impl LcdState {
     async fn init(&mut self, event: &LcdEvent) -> Response<State> {
         match event {
             LcdEvent::Main => Transition(State::main(LcdMainState::new())),
+            LcdEvent::Charging => Transition(State::charging(LcdChargingState::new())),
             _ => Handled,
         }
     }
@@ -350,7 +351,7 @@ impl LcdState {
 impl LcdState {
     // The `on_transition` callback that will be called after every transition.
     async fn after_transition(&mut self, source: &State, target: &State) {
-        //info!("lcd transitioned from `{}` to `{}`", source, target);
+        info!("lcd transitioned from `{}` to `{}`", source, target);
         self.is_debug = false;
         match target {
             State::Debug { debug: _ } => self.is_debug = true,

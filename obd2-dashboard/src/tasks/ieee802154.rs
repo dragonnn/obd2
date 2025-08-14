@@ -364,7 +364,6 @@ impl AsyncIeee802154 {
             .await
             {
                 Ok(ack) => {
-                    info!("transmit_tx message ok, elapsed: {}ms", elapsed.elapsed().as_millis());
                     return Ok(());
                 }
                 Err(_) => {

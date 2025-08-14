@@ -19,6 +19,12 @@ use crate::{
 #[derive(Default)]
 pub struct LcdMenuState {}
 
+impl defmt::Format for LcdMenuState {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "LcdMenuState {{  }}");
+    }
+}
+
 impl LcdMenuState {
     pub fn new() -> Self {
         Self {}

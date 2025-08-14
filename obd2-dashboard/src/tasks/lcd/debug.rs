@@ -10,6 +10,12 @@ pub struct LcdDebugState {
     debug: DebugScroll,
 }
 
+impl defmt::Format for LcdDebugState {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "LcdDebugState {{  }}");
+    }
+}
+
 impl LcdDebugState {
     pub fn new() -> Self {
         Self { debug: DebugScroll::new() }

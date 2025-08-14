@@ -135,6 +135,7 @@ impl KiaState {
         obc_pid: &mut Option<OnBoardChargerPid>,
         timeout: &Instant,
     ) -> Response<State> {
+        info!("check_charging got event: {:?}", event);
         match event {
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             KiaEvent::Obd2Event(Obd2Event::OnBoardChargerPid(new_obc_pid)) => {

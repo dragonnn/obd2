@@ -15,6 +15,12 @@ pub struct LcdObd2Pids {
     debug: Obd2DebugSelector,
 }
 
+impl defmt::Format for LcdObd2Pids {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "LcdObd2Pids {{  }}");
+    }
+}
+
 impl LcdObd2Pids {
     pub fn new() -> Self {
         OBD2_DEBUG_PIDS_ENABLED.store(true, core::sync::atomic::Ordering::Relaxed);

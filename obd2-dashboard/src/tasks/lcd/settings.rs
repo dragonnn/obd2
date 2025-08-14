@@ -28,6 +28,19 @@ pub struct LcdSettingsState {
     edit: LcdSettingsEdit,
 }
 
+impl defmt::Format for LcdSettingsState {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "LcdSettingsState {{ contrast: {}, current_contrast: {}, init: {}, edit: {:?} }}",
+            self.contrast,
+            self.current_contrast,
+            self.init,
+            self.edit
+        );
+    }
+}
+
 impl LcdSettingsState {
     pub fn new() -> Self {
         error!("LcdSettingsState::new()");

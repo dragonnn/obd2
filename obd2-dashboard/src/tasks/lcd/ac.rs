@@ -16,6 +16,12 @@ pub struct LcdAcState {
     ac_compressor: Icon<embedded_iconoir::icons::size18px::weather::SnowFlake>,
 }
 
+impl defmt::Format for LcdAcState {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "LcdAcState {{  }}");
+    }
+}
+
 impl LcdAcState {
     pub fn new() -> Self {
         warn!("LcdAcState::new()");
