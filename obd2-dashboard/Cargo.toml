@@ -123,6 +123,7 @@ opt-level = "s"
 
 [features]
 defmt-brtt = ["dep:defmt-brtt"]
+xiao = []
 
 [profile.dev.package.esp-wifi]
 opt-level = 3

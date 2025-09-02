@@ -141,9 +141,23 @@ pub fn init() -> Hal {
 
     let mut rtc = Rtc::new(peripherals.LPWR);
 
-    let sclk = peripherals.GPIO6;
-    let mosi = peripherals.GPIO7;
-    let miso = peripherals.GPIO2;
+    let sclk;
+    let mosi;
+    let miso;
+
+    #[cfg(not(feature = "xiao"))]
+    {
+        sclk = peripherals.GPIO6;
+        mosi = peripherals.GPIO7;
+        miso = peripherals.GPIO2;
+    }
+
+    #[cfg(feature = "xiao")]
+    {
+        sclk = peripherals.GPIO19;
+        mosi = peripherals.GPIO18;
+        miso = peripherals.GPIO20;
+    }
 
     let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(32000);
     let dma_rx_buf = unwrap!(DmaRxBuf::new(rx_descriptors, rx_buffer).ok());
@@ -160,9 +174,24 @@ pub fn init() -> Hal {
         .into_async();
 
     let mut dc = Output::new(peripherals.GPIO23, false.into());
-    let mut cs_display1 = Output::new(peripherals.GPIO18, false.into());
-    let mut cs_display2 = Output::new(peripherals.GPIO19, false.into());
-    let mut cs_cap1188 = Output::new(peripherals.GPIO20, false.into());
+    let mut cs_display1;
+    let mut cs_display2;
+    let mut cs_cap1188;
+
+    #[cfg(not(feature = "xiao"))]
+    {
+        cs_display1 = Output::new(peripherals.GPIO18, false.into());
+        cs_display2 = Output::new(peripherals.GPIO19, false.into());
+        cs_cap1188 = Output::new(peripherals.GPIO20, false.into());
+    }
+
+    #[cfg(feature = "xiao")]
+    {
+        cs_display1 = Output::new(peripherals.GPIO7, false.into());
+        cs_display2 = Output::new(peripherals.GPIO8, false.into());
+        cs_cap1188 = Output::new(peripherals.GPIO9, false.into());
+    }
+
     let mut cs_mcp2515 = Output::new(peripherals.GPIO17, false.into());
     let mut cs_mcp2515_2 = Output::new(peripherals.GPIO16, false.into());
     let int_mcp2515 = Input::new(peripherals.GPIO4, Pull::Up);

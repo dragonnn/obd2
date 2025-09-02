@@ -174,6 +174,7 @@ pub async fn run(mut obd2: Obd2) {
                 if obd2.init().await.is_ok() {
                     break;
                 }
+                warn!("obd2 init failed, retrying");
                 KIA_EVENTS.send(KiaEvent::Obd2Init(false)).await;
             }
         })

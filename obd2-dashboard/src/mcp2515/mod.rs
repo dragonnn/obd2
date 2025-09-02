@@ -62,14 +62,16 @@ where
         let mut ok_inits = 0u8;
         let mut previous_canctrl = 0;
         let mut last_init_state_event = embassy_time::Instant::now();
+        let mut first_run = true;
         loop {
             self.reset().await?;
             let mut canctrl = [0u8; 1];
             embassy_time::Timer::after_millis(100).await;
             self.read_registers(0x0F, &mut canctrl).await?;
             let mut debug = false;
-            if previous_canctrl != canctrl[0] {
+            if previous_canctrl != canctrl[0] || first_run {
                 debug = true;
+                first_run = false;
                 previous_canctrl = canctrl[0];
 
                 info!("canctrl: {:b}", canctrl[0]);
