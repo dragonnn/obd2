@@ -59,7 +59,6 @@ impl Pid for AcPid {
             compressor_on,
         };
 
-        info!("AC PID ret: {:?}", ret);
         Ok(ret)
     }
 

@@ -182,6 +182,7 @@ impl KiaState {
     ) -> Response<State> {
         match event {
             KiaEvent::Obd2Event(Obd2Event::OnBoardChargerPid(new_obc_pid)) => {
+                LCD_EVENTS.send(LcdEvent::Obd2Event(Obd2Event::OnBoardChargerPid(new_obc_pid.clone()))).await;
                 let ret = if new_obc_pid.ac_input_current == 0.0 {
                     warn!("ac input current is zero");
                     Transition(State::check_charging(None, Instant::now()))
@@ -190,6 +191,10 @@ impl KiaState {
                 };
                 *obc_pid = Some(new_obc_pid.clone());
                 ret
+            }
+            KiaEvent::Obd2Event(obd2_event) => {
+                LCD_EVENTS.send(LcdEvent::Obd2Event(obd2_event.clone())).await;
+                Handled
             }
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             KiaEvent::Obd2LoopEnd(set, _all) => {

@@ -57,6 +57,7 @@ const CAP1188_MAIN_INT: u8 = 0x01; // Main Control Int register. Indicates that 
 const CAP1188_LEDPOL: u8 = 0x73; // LED Polarity. Controls the output polarity of LEDs.
 const CAP1188_CONFIGURATION_1: u8 = 0x20; // Configuration 1;
 const CAP1188_CALIBRATION_ACTIVE: u8 = 0x26; // Calibration Active. Controls the calibration process.
+const CAP1188_SENSITIVITY_CONTROL: u8 = 0x1F; // Sensitivity Control. Controls the sensitivity of the touch inputs.23
 
 impl<SPI, INT> Cap1188<SPI, INT>
 where
@@ -83,6 +84,11 @@ where
             error!("cap1188.rs: Revision {}", prod_id[2]);
             return Ok(false);
         }
+
+        let default_sense = 0x2F; // default after boot
+        let max_sens = (default_sense & 0x0F) | (0b0010 << 4); // set bits 7–4 to 0000
+        info!("cap1188.rs: Setting sensitivity to {}", max_sens);
+        self.write_register(CAP1188_SENSITIVITY_CONTROL, &[max_sens]).await?;
 
         self.write_register(CAP1188_MTBLK, &[0]).await?;
         self.write_register(CAP1188_LEDLINK, &[0xFF]).await?;

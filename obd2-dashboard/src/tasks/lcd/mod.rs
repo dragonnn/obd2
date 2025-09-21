@@ -121,7 +121,7 @@ impl LcdState {
     async fn state_dispatch(&mut self, event: &LcdEvent) -> Response<State> {
         //let lock = crate::locks::SPI_BUS.lock().await;
         match event {
-            LcdEvent::Main => Transition(State::main(LcdMainState::new())),
+            // LcdEvent::Main => Transition(State::main(LcdMainState::new())),
             LcdEvent::Debug => Transition(State::debug(LcdDebugState::new())),
             LcdEvent::Button(Action::Pressed(pressed)) => {
                 if *pressed != Button::B3 {
