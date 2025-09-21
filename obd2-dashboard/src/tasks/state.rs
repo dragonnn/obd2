@@ -144,7 +144,7 @@ impl KiaState {
             }
             KiaEvent::Obd2LoopEnd(set, _all) => {
                 if let Some(obc_pid) = obc_pid {
-                    if obc_pid.ac_input_current > 0.0 {
+                    if obc_pid.ac_input_current > 0.5 && obc_pid.ac_input_voltage_rms > 20.0  {
                         Transition(State::charging(None, 0))
                     } else {
                         if timeout.elapsed().as_secs() > 5 * 60 {
@@ -266,7 +266,7 @@ impl KiaState {
                 }
             }
             KiaEvent::Obd2Event(Obd2Event::OnBoardChargerPid(obc_pid)) => {
-                if obc_pid.ac_input_current > 0.0 {
+                if obc_pid.ac_input_current > 0.5 && obc_pid.ac_input_voltage_rms > 20.0  {
                     Transition(State::check_charging(None, Instant::now()))
                 } else {
                     Handled

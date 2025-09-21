@@ -221,6 +221,7 @@ impl LcdState {
     async fn charging(&mut self, charging_state: &mut LcdChargingState, event: &LcdEvent) -> Response<State> {
         let lock = crate::locks::SPI_BUS.lock().await;
         let ret = match event {
+            LcdEvent::Main => Transition(State::main(LcdMainState::new())),
             LcdEvent::Obd2Event(obd2_event) => {
                 charging_state.handle_obd2_event(obd2_event);
                 charging_state.draw(&mut self.display1, &mut self.display2).await;
