@@ -62,16 +62,25 @@ async fn main(spawner: Spawner) {
 
     info!("init");
     hal.led.set_low();
-    spawner.spawn(tasks::temperature::run(hal.temperature)).ok();
-    spawner.spawn(tasks::lcd::run(hal.display1, hal.display2, panic)).ok();
-    spawner.spawn(tasks::led::run(hal.led)).ok();
-    spawner.spawn(tasks::buttons::run(hal.buttons)).ok();
-    spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
-    spawner.spawn(tasks::can_listen::run(hal.can_listen)).ok();
-    spawner.spawn(tasks::power::run(hal.power)).ok();
-    #[cfg(feature = "defmt-brtt")]
-    spawner.spawn(tasks::usb::run(hal.usb_serial, logger)).ok();
-    spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner)).ok();
+
+    #[cfg(not(feature = "xiao"))]
+    {
+        spawner.spawn(tasks::temperature::run(hal.temperature)).ok();
+        spawner.spawn(tasks::lcd::run(hal.display1, hal.display2, panic)).ok();
+        spawner.spawn(tasks::led::run(hal.led)).ok();
+        spawner.spawn(tasks::buttons::run(hal.buttons)).ok();
+        spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
+        spawner.spawn(tasks::can_listen::run(hal.can_listen)).ok();
+        spawner.spawn(tasks::power::run(hal.power)).ok();
+        #[cfg(feature = "defmt-brtt")]
+        spawner.spawn(tasks::usb::run(hal.usb_serial, logger)).ok();
+        spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner)).ok();
+    }
+
+    #[cfg(feature = "xiao")]
+    {
+        spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
+    }
 
     tasks::state::run(hal.rtc).await;
 }
