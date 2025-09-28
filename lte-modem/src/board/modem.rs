@@ -99,7 +99,7 @@ impl Modem {
     pub async fn imei(&self) -> Result<String<15>, nrf_modem::Error> {
         let imei = nrf_modem::send_at::<64>("AT+CGSN=1").await.unwrap();
         if imei.ends_with("OK\r\n") && imei.len() >= 23 {
-            Ok(unwrap!(String::try_from(&imei[8..23])))
+            Ok(unwrap!(String::try_from(&imei[8..23]).ok()))
         } else {
             Err(nrf_modem::Error::NrfError(0))
         }
@@ -127,7 +127,7 @@ impl Modem {
     pub async fn hw(&self) -> Result<String<32>, nrf_modem::Error> {
         let hwversion = nrf_modem::send_at::<64>("AT%HWVERSION").await.unwrap();
         if hwversion.ends_with("OK\r\n") && hwversion.len() >= 14 {
-            Ok(unwrap!(String::try_from(&hwversion[8..14])))
+            Ok(unwrap!(String::try_from(&hwversion[8..14]).ok()))
         } else {
             Err(nrf_modem::Error::NrfError(0))
         }
@@ -136,7 +136,7 @@ impl Modem {
     pub async fn fw(&self) -> Result<String<32>, nrf_modem::Error> {
         let version = nrf_modem::send_at::<64>("AT+CGMR").await.unwrap();
         if version.ends_with("OK\r\n") && version.len() >= 17 {
-            Ok(unwrap!(String::try_from(&version[12..17])))
+            Ok(unwrap!(String::try_from(&version[12..17]).ok()))
         } else {
             Err(nrf_modem::Error::NrfError(0))
         }

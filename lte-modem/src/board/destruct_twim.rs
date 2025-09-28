@@ -9,6 +9,7 @@ use embassy_nrf::{
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 use embassy_time::{with_timeout, Duration, Instant, Timer};
 use embedded_hal::i2c::{Operation, SevenBitAddress};
+use heapless::index_map::FnvIndexMap;
 use static_cell::StaticCell;
 
 use crate::tasks::reset::request_reset;
@@ -28,7 +29,7 @@ pub static mut I2C_BUF: [u8; 256] = [0; 256];
 
 pub struct DestructTwim {
     i2c_bus: Option<I2cBus>,
-    errors: heapless::FnvIndexMap<u8, u8, 64>,
+    errors: FnvIndexMap<u8, u8, 64>,
     lifetime: Instant,
 }
 
@@ -37,7 +38,7 @@ impl DestructTwim {
         unsafe {
             let twi2 = Self::get_bus();
 
-            Self { i2c_bus: Some(twi2), errors: heapless::FnvIndexMap::new(), lifetime: Instant::now() }
+            Self { i2c_bus: Some(twi2), errors: FnvIndexMap::new(), lifetime: Instant::now() }
         }
     }
 

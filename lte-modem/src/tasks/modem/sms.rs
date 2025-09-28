@@ -10,7 +10,7 @@ use derivative::Derivative;
 use embassy_futures::select::{select, Either::*};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 use embassy_time::{Duration, Timer};
-use heapless::{String, Vec};
+use heapless::{index_set::FnvIndexSet, String, Vec};
 
 use crate::{board::Modem, tasks};
 
@@ -157,7 +157,7 @@ impl SmsEvent {
 #[embassy_executor::task]
 pub async fn task(modem: Modem) {
     let sms_channel_sub = SMS_STATE_CHANNEL.receiver();
-    let mut events = heapless::FnvIndexSet::<SmsEvent, 8>::new();
+    let mut events = FnvIndexSet::<SmsEvent, 8>::new();
     let mut default_sms_data = SmsData::default();
     let mut has_parked = false;
     let mut has_driving = false;
@@ -221,7 +221,7 @@ pub async fn task(modem: Modem) {
 
 pub async fn send_state(
     modem: &Modem,
-    events: &heapless::FnvIndexSet<SmsEvent, 8>,
+    events: &FnvIndexSet<SmsEvent, 8>,
     force_new_fix: bool,
     new_fix_if_missing: bool,
     restarts: u32,
