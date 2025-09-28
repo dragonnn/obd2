@@ -1,18 +1,18 @@
 use defmt::*;
-use embassy_futures::select::{select, Either::*};
+use embassy_futures::select::{Either::*, select};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
-use embassy_time::{with_timeout, Duration, Instant};
+use embassy_time::{Duration, Instant, with_timeout};
 use esp_hal_procmacros::ram;
 use statig::prelude::*;
 use types::OnBoardChargerPid;
 
 use super::{
-    ieee802154::{extra_txframes_pub, TxFramePub},
-    obd2::{set_obd2_sets, Obd2Debug, Obd2PidSets},
-    power::{get_power_events_pub, PowerEvent, PowerEventPublisher},
+    ieee802154::{TxFramePub, extra_txframes_pub},
+    obd2::{Obd2Debug, Obd2PidSets, set_obd2_sets},
+    power::{PowerEvent, PowerEventPublisher, get_power_events_pub},
 };
 use crate::{
-    event::{LcdEvent, Obd2Event, LCD_EVENTS},
+    event::{LCD_EVENTS, LcdEvent, Obd2Event},
     tasks::{
         buttons::{Action, Button},
         ieee802154,
@@ -35,7 +35,7 @@ pub enum KiaEvent {
 }
 
 #[ram(rtc_fast, persistent)]
-static mut LAST_IGNITION_ON: i64 = 0;
+static mut LAST_IGNITION_ON: u64 = 0;
 
 #[derive()]
 pub struct KiaState {
@@ -68,7 +68,7 @@ impl KiaState {
     #[action]
     async fn enter_ignition_on(&mut self) {
         unsafe {
-            LAST_IGNITION_ON = self.rtc.lock().await.current_time().and_utc().timestamp();
+            LAST_IGNITION_ON = self.rtc.lock().await.current_time_us();
             info!("last ignition on: {}", LAST_IGNITION_ON);
         }
 
@@ -144,7 +144,7 @@ impl KiaState {
             }
             KiaEvent::Obd2LoopEnd(set, _all) => {
                 if let Some(obc_pid) = obc_pid {
-                    if obc_pid.ac_input_current > 0.5 && obc_pid.ac_input_voltage_rms > 20.0  {
+                    if obc_pid.ac_input_current > 0.5 && obc_pid.ac_input_voltage_rms > 20.0 {
                         Transition(State::charging(None, 0))
                     } else {
                         if timeout.elapsed().as_secs() > 5 * 60 {
@@ -223,7 +223,7 @@ impl KiaState {
         set_obd2_sets(Obd2PidSets::IgnitionOff).await;
         self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::IgnitionOff));
 
-        let now = self.rtc.lock().await.current_time().and_utc().timestamp();
+        let now = self.rtc.lock().await.current_time_us();
         let last_ignition_on = unsafe { LAST_IGNITION_ON };
         *shutdown_duration = if last_ignition_on != 0 && now - last_ignition_on > 60 * 60 {
             Duration::from_secs(60 * 60)
@@ -266,7 +266,7 @@ impl KiaState {
                 }
             }
             KiaEvent::Obd2Event(Obd2Event::OnBoardChargerPid(obc_pid)) => {
-                if obc_pid.ac_input_current > 0.5 && obc_pid.ac_input_voltage_rms > 20.0  {
+                if obc_pid.ac_input_current > 0.5 && obc_pid.ac_input_voltage_rms > 20.0 {
                     Transition(State::check_charging(None, Instant::now()))
                 } else {
                     Handled

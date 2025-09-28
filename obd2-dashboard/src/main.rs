@@ -33,17 +33,10 @@ mod tasks;
 mod types;
 
 fn init_heap() {
-    const HEAP_SIZE: usize = 8 * 1024;
-    static mut HEAP: MaybeUninit<[u8; HEAP_SIZE]> = MaybeUninit::uninit();
-
-    unsafe {
-        esp_alloc::HEAP.add_region(esp_alloc::HeapRegion::new(
-            HEAP.as_mut_ptr() as *mut u8,
-            HEAP_SIZE,
-            esp_alloc::MemoryCapability::Internal.into(),
-        ));
-    }
+    esp_alloc::heap_allocator!(size: 8 * 1024);
 }
+
+esp_bootloader_esp_idf::esp_app_desc!();
 
 #[main]
 async fn main(spawner: Spawner) {
@@ -91,13 +84,13 @@ fn panic(info: &PanicInfo) -> ! {
     panic_persist::report_panic_info(info);
     unsafe { riscv::interrupt::machine::enable() };
 
-    esp_hal::reset::software_reset();
+    esp_hal::system::software_reset();
     loop {}
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "Rust" fn custom_halt() -> ! {
-    esp_hal::reset::software_reset();
+    esp_hal::system::software_reset();
 
     riscv::interrupt::machine::disable();
     loop {}

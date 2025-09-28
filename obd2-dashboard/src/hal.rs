@@ -6,26 +6,25 @@ use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 use embassy_time::Instant;
 use esp_backtrace as _;
 use esp_hal::{
+    Async,
     aes::dma::AesDma,
     clock::{Clocks, CpuClock},
     delay::Delay,
-    dma::{DmaChannel0, DmaPriority, DmaRxBuf, DmaTxBuf},
+    dma::{DmaPriority, DmaRxBuf, DmaTxBuf},
     dma_buffers, dma_descriptors,
-    gpio::{Input, Io, Output, Pull},
+    gpio::{Input, InputConfig, Io, Output, OutputConfig, Pull},
     peripherals::Peripherals,
     rtc_cntl::{Rtc, Rwdt, RwdtStage},
     spi::{
-        master::{Spi, SpiDmaBus},
         Mode as SpiMode,
+        master::{Spi, SpiDmaBus},
     },
-    time::RateExtU32,
-    timer::{timg::TimerGroup, OneShotTimer},
+    timer::{OneShotTimer, timg::TimerGroup},
     usb_serial_jtag::UsbSerialJtag,
-    Async,
 };
 use esp_ieee802154::{Config, Frame, Ieee802154};
-use fugit::{ExtU32, HertzU32};
-use sh1122::{display::DisplayRotation, AsyncDisplay, PixelCoord};
+use fugit::{ExtU32, HertzU32, RateExtU32 as _};
+use sh1122::{AsyncDisplay, PixelCoord, display::DisplayRotation};
 use static_cell::StaticCell;
 
 use crate::{cap1188::Cap1188, mcp2515::Mcp2515, obd2, power, types};
@@ -58,7 +57,7 @@ macro_rules! mk_static {
 
 pub struct SpiBus {
     spi: SpiDmaBus<'static, Async>,
-    speed: Option<HertzU32>,
+    speed: Option<u32>,
     elapsed: Instant,
 }
 
@@ -102,30 +101,23 @@ impl embassy_embedded_hal::SetConfig for SpiBus {
 
     type ConfigError = ();
 
-    fn set_config(&mut self, config: &Self::Config) -> Result<(), Self::ConfigError> {
-        let khz = config.kHz();
-        /*let mut elapsed_secs = self.elapsed.elapsed().as_secs();
-        if elapsed_secs < SPI_RAMP_UP_SECS {
-            if elapsed_secs < 1 {
-                elapsed_secs = 1;
-            }
-            khz = (khz * elapsed_secs as u32) / SPI_RAMP_UP_SECS as u32;
-        }*/
-
-        if self.speed == Some(khz) {
+    fn set_config(&mut self, speed: &Self::Config) -> Result<(), Self::ConfigError> {
+        let speed = *speed;
+        if self.speed == Some(speed) {
             return Ok(());
         }
 
-        let config = esp_hal::spi::master::Config::default().with_frequency(config.MHz()).with_mode(SpiMode::_0);
+        let config = esp_hal::spi::master::Config::default()
+            .with_frequency(esp_hal::time::Rate::from_hz(speed))
+            .with_mode(SpiMode::_0);
         self.spi.apply_config(&config).ok();
-        self.speed = Some(khz);
+        self.speed = Some(speed);
         Ok(())
     }
 }
 
 pub fn init() -> Hal {
-    let mut config = esp_hal::Config::default();
-    config.cpu_clock = CpuClock::max();
+    let mut config = esp_hal::Config::default().with_cpu_clock(CpuClock::_160MHz);
     let peripherals = esp_hal::init(config);
 
     //let system = SystemControl::new(peripherals.SYSTEM);
@@ -164,25 +156,29 @@ pub fn init() -> Hal {
     let dma_tx_buf = unwrap!(DmaTxBuf::new(tx_descriptors, tx_buffer).ok());
 
     let dma_channel = peripherals.DMA_CH0;
-    let spi = Spi::new(peripherals.SPI2, esp_hal::spi::master::Config::default().with_frequency(1.MHz()))
-        .unwrap()
-        .with_sck(sclk)
-        .with_mosi(mosi)
-        .with_miso(miso)
-        .with_dma(dma_channel)
-        .with_buffers(dma_rx_buf, dma_tx_buf)
-        .into_async();
-
-    let mut dc = Output::new(peripherals.GPIO23, false.into());
+    let spi = Spi::new(
+        peripherals.SPI2,
+        esp_hal::spi::master::Config::default().with_frequency(esp_hal::time::Rate::from_mhz(1)),
+    )
+    .unwrap()
+    .with_sck(sclk)
+    .with_mosi(mosi)
+    .with_miso(miso)
+    .with_dma(dma_channel)
+    .with_buffers(dma_rx_buf, dma_tx_buf)
+    .into_async();
+    let output_config = OutputConfig::default();
+    let input_config = InputConfig::default();
+    let mut dc = Output::new(peripherals.GPIO23, false.into(), output_config);
     let mut cs_display1;
     let mut cs_display2;
     let mut cs_cap1188;
 
     #[cfg(not(feature = "xiao"))]
     {
-        cs_display1 = Output::new(peripherals.GPIO18, false.into());
-        cs_display2 = Output::new(peripherals.GPIO19, false.into());
-        cs_cap1188 = Output::new(peripherals.GPIO20, false.into());
+        cs_display1 = Output::new(peripherals.GPIO18, false.into(), output_config);
+        cs_display2 = Output::new(peripherals.GPIO19, false.into(), output_config);
+        cs_cap1188 = Output::new(peripherals.GPIO20, false.into(), output_config);
     }
 
     #[cfg(feature = "xiao")]
@@ -192,14 +188,14 @@ pub fn init() -> Hal {
         cs_cap1188 = Output::new(peripherals.GPIO9, false.into());
     }
 
-    let mut cs_mcp2515 = Output::new(peripherals.GPIO17, false.into());
-    let mut cs_mcp2515_2 = Output::new(peripherals.GPIO16, false.into());
-    let int_mcp2515 = Input::new(peripherals.GPIO4, Pull::Up);
-    let int_mcp2515_2 = Input::new(peripherals.GPIO1, Pull::Up);
-    let mut rs = Output::new(peripherals.GPIO22, true.into());
-    let ing = Input::new(peripherals.GPIO5, Pull::Up);
-    let int_cap1188 = Input::new(peripherals.GPIO3, Pull::Up);
-    let led = Output::new(peripherals.GPIO0, false.into());
+    let mut cs_mcp2515 = Output::new(peripherals.GPIO17, false.into(), output_config);
+    let mut cs_mcp2515_2 = Output::new(peripherals.GPIO16, false.into(), output_config);
+    let int_mcp2515 = Input::new(peripherals.GPIO4, input_config.with_pull(Pull::Up));
+    let int_mcp2515_2 = Input::new(peripherals.GPIO1, input_config.with_pull(Pull::Up));
+    let mut rs = Output::new(peripherals.GPIO22, true.into(), output_config);
+    let ing = Input::new(peripherals.GPIO5, input_config.with_pull(Pull::Up));
+    let int_cap1188 = Input::new(peripherals.GPIO3, input_config.with_pull(Pull::Up));
+    let led = Output::new(peripherals.GPIO0, false.into(), output_config);
 
     dc.set_high();
     rs.set_low();
@@ -246,13 +242,13 @@ pub fn init() -> Hal {
 
     info!("HAL initialized");
 
-    let ieee802154 = Ieee802154::new(peripherals.IEEE802154, peripherals.RADIO_CLK);
+    let ieee802154 = Ieee802154::new(peripherals.IEEE802154);
 
     //let mut rtc = Rtc::new(peripherals.LPWR);
     //rtc.set_interrupt_handler(interrupt_handler);
 
     rtc.rwdt.enable();
-    rtc.rwdt.set_timeout(RwdtStage::Stage0, (5 * 60u32).secs().into());
+    rtc.rwdt.set_timeout(RwdtStage::Stage0, esp_hal::time::Duration::from_secs(5 * 60));
     rtc.rwdt.listen();
     static RTC: StaticCell<Mutex<CriticalSectionRawMutex, Rtc<'static>>> = StaticCell::new();
     let rtc = RTC.init(Mutex::new(rtc));
@@ -276,5 +272,5 @@ pub fn init() -> Hal {
 }
 
 pub fn reset() {
-    esp_hal::reset::software_reset();
+    esp_hal::system::software_reset();
 }

@@ -5,15 +5,15 @@ use display_interface::DisplayError;
 use embassy_time::Instant;
 use embedded_graphics::{
     mono_font::{
-        ascii::{FONT_10X20, FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD},
         MonoTextStyle,
+        ascii::{FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD, FONT_10X20},
     },
     pixelcolor::Gray4,
     prelude::*,
     primitives::*,
     text::{Alignment, LineHeight, Text, TextStyleBuilder},
 };
-use heapless::String;
+use heapless::{String, index_map::FnvIndexMap};
 use num_traits::float::FloatCore;
 use profont::*;
 
@@ -24,7 +24,7 @@ use crate::{
 
 #[derive(Default)]
 pub struct Obd2DebugSelector {
-    pids: heapless::FnvIndexMap<&'static str, Obd2Debug, 16>,
+    pids: FnvIndexMap<&'static str, Obd2Debug, 16>,
     redraw: bool,
 }
 

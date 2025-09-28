@@ -1,7 +1,7 @@
 use defmt::{info, unwrap};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex, signal::Signal};
 use embassy_time::Instant;
-use heapless::FnvIndexMap;
+use heapless::index_map::FnvIndexMap;
 
 use crate::{
     display::widgets::DebugScroll,

@@ -2,17 +2,19 @@
 name = "kia_obd2_esp32c3_v2"
 version = "0.1.0"
 authors = ["dragonn <dragonn@op.pl>"]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-esp-hal = { version = "0.23.1", features = [
+esp-hal = { version = "=1.0.0-rc.0", features = [
     "esp32c6",
     "defmt",
+    "unstable",
 ] } # Base ESP deps
-esp-hal-embassy = { version = "0.6.0", features = ["esp32c6"] }
-esp-hal-procmacros = { version = "0.16.0", features = ["embassy"] }
-esp-backtrace = { version = "0.15.0", features = [
+esp-bootloader-esp-idf = { version = "0.2.0", features = ["esp32c6"] }
+esp-hal-embassy = { version = "0.9.0", features = ["esp32c6"] }
+esp-hal-procmacros = { version = "0.19.0", features = ["embassy"] }
+esp-backtrace = { version = "0.17.0", features = [
     "esp32c6",
     "exception-handler",
     "defmt",
@@ -27,26 +29,26 @@ esp-backtrace = { version = "0.15.0", features = [
 #    "wifi-default",
 #    "phy-enable-usb",
 #], default-features = false }
-riscv = "0.12.1"
-defmt = "0.3.10"
+riscv = "0.15.0"
+defmt = "1.0.1"
 #defmt-serial = "0.8.0"
-defmt-rtt = "0.4.0"
-defmt-brtt = { version = "0.1.1", features = ["async-await"], optional = true }
+defmt-rtt = "1.0.0"
+#defmt-brtt = { version = "0.1.1", features = ["async-await"], optional = true }
 panic-persist = { version = "0.3.0", features = [
     "custom-panic-handler",
     "utf8",
 ] }
 
-esp-println = { version = "0.13.0", features = ["esp32c6"] }
-esp-alloc = { version = "0.6.0" }
-esp-ieee802154 = { version = "0.5.0", features = ["esp32c6"] }
+esp-println = { version = "0.15.0", features = ["esp32c6"] }
+esp-alloc = { version = "0.8.0" }
+esp-ieee802154 = { version = "0.8.0", features = ["esp32c6"] }
 ieee802154 = "0.6.1"
 serde-encrypt = { version = "0.7.0", default-features = false }
-serde = { version = "1.0", default-features = false, features = [
+serde = { version = "1.0.228", default-features = false, features = [
     "derive",
     "alloc",
 ] }
-chrono = { version = "0.4.38", default-features = false }
+chrono = { version = "0.4.42", default-features = false }
 fugit = "0.3.7"
 #esp-wifi  = { git = "https://github.com/esp-rs/esp-wifi/", rev = "7632e74", features = ["esp32c3", "wifi"] }
 
@@ -55,20 +57,20 @@ embedded-hal = "1.0.0"
 embedded-hal-async = "1.0.0"
 embedded-io = "0.6.1"
 embedded-io-async = "0.6.1"
-embedded-hal-bus = { version = "0.2.0", features = ["async"] }
-embassy-futures = "0.1.1"
+embedded-hal-bus = { version = "0.3.0", features = ["async"] }
+embassy-futures = "0.1.2"
 
-static_cell = { version = "2.0.0", features = ["nightly"] }
-once_cell = { version = "1.20.2", default-features = false, features = [
+static_cell = { version = "2.1.1", features = ["nightly"] }
+once_cell = { version = "1.21.3", default-features = false, features = [
     "critical-section",
 ] }
 # portable-atomic = { version = "1.5", features = ["unsafe-assume-single-core"] }
 
 # Embassy deps
 embassy-executor = { version = "0.7.0", features = ["nightly", "arch-riscv32"] }
-embassy-time = { version = "0.4.0", features = ["defmt"] }
-embassy-embedded-hal = { version = "0.3.0", features = ["defmt"] }
-embassy-sync = "0.6.2"
+embassy-time = { version = "0.5.0", features = ["defmt"] }
+embassy-embedded-hal = { version = "0.5.0", features = ["defmt"] }
+embassy-sync = { version = "0.7.2", features = ["defmt"] }
 critical-section = "1.2.0"
 
 
@@ -88,14 +90,15 @@ display-interface-spi = "0.5.0"
 inverted-pin = "1.0.0"
 profont = "0.7.0"
 
-heapless = { version = "0.8.0", features = ["defmt-03"] }
+heapless = { version = "0.9.1", features = ["defmt"] }
+heapless08 = { package = "heapless", version = "0.8.0", features = ["defmt-03"] }
 
 # OBD2 deps
-modular-bitfield = "0.11.2"
+modular-bitfield = "0.12.0"
 embedded-can = "0.4.1"
 bitvec = { version = "1.0", default-features = false }
 
-strum = { version = "0.26", features = ["derive"], default-features = false }
+strum = { version = "0.27.2", features = ["derive"], default-features = false }
 enum_dispatch = "0.3.13"
 statig = { version = "0.4.1", features = ["async"] }
 
@@ -122,7 +125,7 @@ opt-level = "s"
 #esp-hal-embassy = { git = "https://github.com/esp-rs/esp-hal/", rev = "f95ab0def50130a9d7da0ba0101c921e239ecdb5" }
 
 [features]
-defmt-brtt = ["dep:defmt-brtt"]
+#defmt-brtt = ["dep:defmt-brtt"]
 xiao = []
 
 [profile.dev.package.esp-wifi]

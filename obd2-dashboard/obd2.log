@@ -1,2 +1,0 @@
-8.329424 ERROR unknown frame: 0 [0x04, 0x41, 0x5e, 0x00, 0x00, 0xaa, 0xaa, 0xaa]
-└─ kia_obd2_esp32c3_v2::obd2::{impl#1}::request_pid::{async_fn#0} @ src/obd2.rs:149 

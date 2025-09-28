@@ -2,17 +2,17 @@ use core::{any::TypeId, convert::Infallible};
 
 use defmt::{error, info, unwrap, warn};
 use embassy_embedded_hal::shared_bus::SpiDeviceError;
-use embassy_time::{with_timeout, Duration, Instant};
+use embassy_time::{Duration, Instant, with_timeout};
 use embedded_can::{Frame as _, StandardId};
-use heapless::Entry;
+use heapless::index_map::{Entry, FnvIndexMap};
 use static_cell::make_static;
 use types::Obd2Frame;
 
 use crate::{
     debug::internal_debug,
-    event::{Event, EventBusPub, KiaEvent, Obd2Event, KIA_EVENTS},
+    event::{Event, EventBusPub, KIA_EVENTS, KiaEvent, Obd2Event},
     mcp2515::{
-        clock_16mhz, clock_8mhz, CanFrame, OperationMode, RxBuffer, TxBuffer, CANINTE, CLKPRE, RXB0CTRL, RXB1CTRL, RXM,
+        CANINTE, CLKPRE, CanFrame, OperationMode, RXB0CTRL, RXB1CTRL, RXM, RxBuffer, TxBuffer, clock_8mhz, clock_16mhz,
     },
     prelude::*,
     tasks::{
@@ -39,9 +39,9 @@ impl From<SpiDeviceError<esp_hal::spi::Error, Infallible>> for Obd2Error {
 pub struct Obd2 {
     mcp2515: Mcp2515,
     obd2_message_buffer: &'static mut heapless::Vec<u8, 4095>,
-    obd2_pid_errors: heapless::FnvIndexMap<TypeId, usize, 32>,
-    obd2_pid_errors_periods: heapless::FnvIndexMap<TypeId, Instant, 32>,
-    obd2_pid_periods: heapless::FnvIndexMap<TypeId, Instant, 32>,
+    obd2_pid_errors: FnvIndexMap<TypeId, usize, 32>,
+    obd2_pid_errors_periods: FnvIndexMap<TypeId, Instant, 32>,
+    obd2_pid_periods: FnvIndexMap<TypeId, Instant, 32>,
     obd2_pid_periods_disable: bool,
 }
 
@@ -51,9 +51,9 @@ impl Obd2 {
             static_cell::StaticCell::new();
 
         let obd2_message_buffer = OBD2_MESSAGE_BUFFER_STATIC.init_with(|| heapless::Vec::new());
-        let obd2_pid_errors = heapless::FnvIndexMap::new();
-        let obd2_pid_errors_periods = heapless::FnvIndexMap::new();
-        let obd2_pid_periods = heapless::FnvIndexMap::new();
+        let obd2_pid_errors = FnvIndexMap::new();
+        let obd2_pid_errors_periods = FnvIndexMap::new();
+        let obd2_pid_periods = FnvIndexMap::new();
 
         Self {
             mcp2515,
@@ -137,7 +137,7 @@ impl Obd2 {
                         self.mcp2515.load_tx_buffer(TxBuffer::TXB0, &flow_control).await?;
                         self.mcp2515.request_to_send(TxBuffer::TXB0).await?;
 
-                        unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data[2..]));
+                        unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data[2..]).ok());
 
                         obd2_message_id = 0;
                     }
@@ -149,7 +149,7 @@ impl Obd2 {
                         if let Some(obd2_message_length) = obd2_message_length {
                             let new_obd2_message_id = can_frame.data[0] & 0x0F;
                             if new_obd2_message_id == obd2_message_id + 1 {
-                                unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data[1..]));
+                                unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data[1..]).ok());
                                 //unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data));
                                 if self.obd2_message_buffer.len() >= obd2_message_length {
                                     //self.obd2_message_buffer.truncate(obd2_message_length);

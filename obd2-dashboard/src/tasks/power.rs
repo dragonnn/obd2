@@ -1,14 +1,12 @@
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use defmt::*;
-use embassy_futures::select::{select3, Either3::*};
+use embassy_futures::select::{Either3::*, select3};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, pubsub::PubSubChannel, signal::Signal};
 use embassy_time::{Duration, Timer};
 use esp_hal::{
     debugger::debugger_connected,
-    reset::SleepSource,
     //rtc_cntl::{get_reset_reason, get_wakeup_cause, SocResetReason},
-    Cpu,
 };
 
 #[derive(Debug, Clone)]
@@ -110,7 +108,7 @@ pub async fn run(mut power: Power) {
                     Timer::after(delay_duration).await;
                     if power.is_ignition_on() {
                         warn!("ignition is on, not deep sleeping");
-                        esp_hal::reset::software_reset();
+                        esp_hal::system::software_reset();
                     } else {
                         info!("deep sleeping for {:?}", duration);
                         power.deep_sleep(duration);

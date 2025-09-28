@@ -1,6 +1,6 @@
-use defmt::{error, info, unwrap, warn, Format};
+use defmt::{Format, error, info, unwrap, warn};
 use embassy_executor::Spawner;
-use embassy_futures::select::{select, select4, Either4::*};
+use embassy_futures::select::{Either4::*, select, select4};
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex,
     channel::Channel,
@@ -8,9 +8,10 @@ use embassy_sync::{
     pubsub::{DynPublisher, PubSubChannel},
     signal::Signal,
 };
-use embassy_time::{with_timeout, Duration, Instant, Ticker, Timer};
-use esp_hal::aes::{dma::AesDma, Aes, Mode};
+use embassy_time::{Duration, Instant, Ticker, Timer, with_timeout};
+use esp_hal::aes::{Aes, Mode, dma::AesDma};
 use esp_ieee802154::{Config, Frame, Ieee802154, ReceivedFrame};
+use heapless::{index_map::FnvIndexMap, index_set::FnvIndexSet};
 use ieee802154::mac::{Address, FrameContent, FrameType, FrameVersion, Header, PanId, ShortAddress};
 use serde::{Deserialize, Serialize};
 use serde_encrypt::{serialize::impls::PostcardSerializer, shared_key::SharedKey, traits::SerdeEncryptSharedKey};
@@ -19,16 +20,15 @@ use types::{MessageId, Pid, RxFrame, RxMessage, TxFrame, TxMessage};
 
 use super::power::ShutdownGuard;
 use crate::{
-    event::{event_bus_sub, Event, KiaEvent},
+    event::{Event, KiaEvent, event_bus_sub},
     tasks::{obd2, power::get_shutdown_signal},
 };
 
 static SEND_NOW_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 static EXTRA_SEND: PubSubChannel<CriticalSectionRawMutex, types::TxFrame, 64, 1, 32> = PubSubChannel::new();
-static PIDS_SEND: Mutex<CriticalSectionRawMutex, heapless::FnvIndexSet<Pid, 64>> =
-    Mutex::new(heapless::FnvIndexSet::new());
-static PID_ERRORS_SEND: Mutex<CriticalSectionRawMutex, heapless::FnvIndexSet<types::PidError, 64>> =
-    Mutex::new(heapless::FnvIndexSet::new());
+static PIDS_SEND: Mutex<CriticalSectionRawMutex, FnvIndexSet<Pid, 64>> = Mutex::new(FnvIndexSet::new());
+static PID_ERRORS_SEND: Mutex<CriticalSectionRawMutex, FnvIndexSet<types::PidError, 64>> =
+    Mutex::new(FnvIndexSet::new());
 
 static LAST_SEND: Mutex<CriticalSectionRawMutex, Instant> = Mutex::new(Instant::from_ticks(0));
 static LAST_RECEIVE: Mutex<CriticalSectionRawMutex, Instant> = Mutex::new(Instant::from_ticks(0));
@@ -175,7 +175,7 @@ static IEEE802154_RECEIVE: Channel<CriticalSectionRawMutex, RxMessage, 64> = Cha
 
 #[embassy_executor::task]
 async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
-    use embassy_futures::select::{select3, Either3::*};
+    use embassy_futures::select::{Either3::*, select3};
     ieee802154.set_config(Config {
         channel: 15,
         promiscuous: true,
@@ -338,7 +338,7 @@ impl AsyncIeee802154 {
                         auxiliary_security_header: None,
                     },
                     content: FrameContent::Data,
-                    payload: unwrap!(heapless::Vec::from_slice(chunk)),
+                    payload: unwrap!(heapless08::Vec::from_slice(chunk).ok()),
                     footer: [0, 0],
                 };
                 if self.transmit_raw(&frame, Duration::from_millis(100)).await.is_err() {
