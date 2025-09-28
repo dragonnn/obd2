@@ -1,5 +1,8 @@
 use bitfield_struct::bitfield;
-use embassy_nrf::gpio::{AnyPin, Input, Pull};
+use embassy_nrf::{
+    gpio::{AnyPin, Input, Pull},
+    Peri,
+};
 use embassy_time::{with_timeout, Duration, Timer};
 use embedded_hal_async::i2c::I2c;
 
@@ -85,7 +88,7 @@ impl<I2C> Bh1749nuc<I2C>
 where
     I2C: I2c + I2cBusReset,
 {
-    pub async fn new(i2c: I2C, irq: AnyPin) -> Self {
+    pub async fn new(i2c: I2C, irq: Peri<'static, AnyPin>) -> Self {
         defmt::info!("init");
         let irq = Input::new(irq, Pull::Up);
 

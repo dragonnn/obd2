@@ -1,9 +1,12 @@
-use embassy_nrf::gpio::{AnyPin, Input, Pull};
+use embassy_nrf::{
+    gpio::{AnyPin, Input, Pull},
+    Peri,
+};
 
 pub struct Button(Input<'static>);
 
 impl Button {
-    pub async fn new(pin: AnyPin) -> Self {
+    pub async fn new(pin: Peri<'static, AnyPin>) -> Self {
         let pin = Input::new(pin, Pull::Up);
         Self(pin)
     }

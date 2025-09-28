@@ -1,6 +1,9 @@
 use bitbybit::bitenum;
 use defmt::*;
-use embassy_nrf::gpio::{AnyPin, Input, Level, Output, OutputDrive, Pull};
+use embassy_nrf::{
+    gpio::{AnyPin, Input, Level, Output, OutputDrive, Pull},
+    Peri,
+};
 use embassy_time::{with_timeout, Duration, Instant};
 use embedded_hal_async::i2c::I2c;
 use modular_bitfield::prelude::*;
@@ -188,7 +191,7 @@ impl<I2C> Adp5360<I2C>
 where
     I2C: I2c + I2cBusReset,
 {
-    pub async fn new(i2c: I2C, irq: AnyPin) -> Self {
+    pub async fn new(i2c: I2C, irq: Peri<'static, AnyPin>) -> Self {
         let irq = Input::new(irq, Pull::Up);
         defmt::info!("adp5360 reset done");
         let mut adp5360 = Self {

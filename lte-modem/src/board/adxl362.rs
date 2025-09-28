@@ -1,6 +1,9 @@
 use bitfield_struct::bitfield;
 use defmt::error;
-use embassy_nrf::gpio::{AnyPin, Input, Pull};
+use embassy_nrf::{
+    gpio::{AnyPin, Input, Pull},
+    Peri,
+};
 use embedded_hal::spi::Operation;
 use embedded_hal_async::spi::{SpiBus, SpiDevice};
 
@@ -104,7 +107,7 @@ impl<S> Adxl362<S>
 where
     S: SpiDevice,
 {
-    pub async fn new(spi_device: S, irq: AnyPin) -> Self {
+    pub async fn new(spi_device: S, irq: Peri<'static, AnyPin>) -> Self {
         let irq = Input::new(irq, Pull::Up);
         let mut new = Self { spi_device, irq };
         new.reset().await;

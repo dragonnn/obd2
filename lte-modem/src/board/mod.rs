@@ -193,12 +193,12 @@ impl Board {
 
         let twim2_dev1 = I2cDevice::new(twim2);
 
-        let battery = Adp5360::new(twim2_dev1, p.P0_17.degrade()).await;
+        let battery = Adp5360::new(twim2_dev1, p.P0_17.into()).await;
 
         let modem = Modem::new(ipc_start).await;
 
         defmt::info!("lightwell initializing");
-        let mut lightwell = Rgb::new(p.PWM1, p.P0_29, p.P0_30, p.P0_31, true);
+        let mut lightwell = Rgb::new(p.PWM1, p.P0_29.into(), p.P0_30.into(), p.P0_31.into(), true);
         lightwell.r(64);
         lightwell.g(64);
         lightwell.b(64);
@@ -207,16 +207,16 @@ impl Board {
         let wdg = Wdg::new(p.WDT).await;
 
         defmt::info!("buzzer initializing");
-        let buzzer = Buzzer::new(p.PWM0, p.P0_28);
+        let buzzer = Buzzer::new(p.PWM0, p.P0_28.into());
 
         defmt::info!("sense initializing");
-        let sense = Rgb::new(p.PWM2, p.P0_00, p.P0_01, p.P0_02, true);
+        let sense = Rgb::new(p.PWM2, p.P0_00.into(), p.P0_01.into(), p.P0_02.into(), true);
 
         info!("twim2 initializing");
 
         let twim2_dev2 = I2cDevice::new(twim2);
 
-        let light_sensor = LightSensor::new(twim2_dev2, p.P0_27.degrade()).await;
+        let light_sensor = LightSensor::new(twim2_dev2, p.P0_27.into()).await;
 
         let mut spim3_config = spim::Config::default();
         spim3_config.frequency = spim::Frequency::M8;
@@ -230,12 +230,12 @@ impl Board {
         let spim3_dev2_cs = Output::new(p.P0_07, Level::High, OutputDrive::Standard);
         let spim3_dev2 = SpiDevice::new(spim3, spim3_dev2_cs);
         defmt::info!("low power accelerometer initializing");
-        let low_power_accelerometer = Adxl362::new(spim3_dev1, p.P0_09.degrade()).await;
+        let low_power_accelerometer = Adxl362::new(spim3_dev1, p.P0_09.into()).await;
         defmt::info!("hi g accelerometer initializing");
-        let hi_g_accelerometer = Adxl372::new(spim3_dev2, p.P0_06.degrade()).await;
+        let hi_g_accelerometer = Adxl372::new(spim3_dev2, p.P0_06.into()).await;
         defmt::info!("button initializing");
 
-        let button = Button::new(p.P0_26.degrade()).await;
+        let button = Button::new(p.P0_26.into()).await;
         //rxd - p0.25 -> MCU_IF7
         //txd - p0.24 -> MCU_IF6
         info!("uarte initializing");
@@ -244,9 +244,9 @@ impl Board {
         uart_config.parity = uarte::Parity::INCLUDED;
         let uarte = Uarte::new(
             p.SERIAL1,
-            UartIrqs,
             p.P0_24, //rxd
             p.P0_25, //txd
+            UartIrqs,
             uart_config.clone(),
         )
         .split_with_idle(p.TIMER0, p.PPI_CH0, p.PPI_CH1);
@@ -259,7 +259,7 @@ impl Board {
         uart_config.baudrate = uarte::Baudrate::BAUD9600;
         uart_config.parity = uarte::Parity::EXCLUDED;
 
-        let uarte_tx_gnss = Uarte::new(p.SERIAL0, UartIrqs, p.P0_13, p.P0_16, uart_config)
+        let uarte_tx_gnss = Uarte::new(p.SERIAL0, p.P0_13, p.P0_16, UartIrqs, uart_config)
             .split_with_idle(p.TIMER1, p.PPI_CH2, p.PPI_CH3);
 
         info!("uarte initialized");

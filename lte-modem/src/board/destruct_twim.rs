@@ -24,6 +24,8 @@ pub type Scl = embassy_nrf::peripherals::P0_12;
 
 pub type I2cBus = Twim<'static, SERIAL2>;
 
+pub static mut I2C_BUF: [u8; 256] = [0; 256];
+
 pub struct DestructTwim {
     i2c_bus: Option<I2cBus>,
     errors: heapless::FnvIndexMap<u8, u8, 64>,
@@ -49,7 +51,8 @@ impl DestructTwim {
         twi2_config.sda_pullup = true;
         twi2_config.frequency = twim::Frequency::K100;
         let serial = SERIAL2::steal();
-        let twi2 = Twim::new(serial, TwiIrqs, sda, scl, twi2_config);
+        let buf = &mut I2C_BUF;
+        let twi2 = Twim::new(serial, TwiIrqs, sda, scl, twi2_config, buf);
 
         /*let pac = nrf9160_pac::Peripherals::steal();
         pac.TWIM2_S.frequency.write(|w| w.frequency().bits(267386));

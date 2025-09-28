@@ -1,6 +1,9 @@
 use bitfield_struct::bitfield;
 use defmt::{error, info};
-use embassy_nrf::gpio::{AnyPin, Input, Pull};
+use embassy_nrf::{
+    gpio::{AnyPin, Input, Pull},
+    Peri,
+};
 use embedded_hal_async::spi::{Operation, SpiBus, SpiDevice};
 
 const RNW: u8 = 1;
@@ -102,7 +105,7 @@ impl<S> Adxl372<S>
 where
     S: SpiDevice,
 {
-    pub async fn new(mut spi_device: S, irq: AnyPin) -> Self {
+    pub async fn new(mut spi_device: S, irq: Peri<'static, AnyPin>) -> Self {
         let irq = Input::new(irq, Pull::Up);
         let mut new = Self { spi_device, irq };
         info!("init");

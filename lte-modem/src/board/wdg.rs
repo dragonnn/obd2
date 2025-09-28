@@ -1,7 +1,8 @@
 use defmt::warn;
 use embassy_nrf::{
     peripherals,
-    wdt::{Config, SleepConfig, Watchdog, WatchdogHandle},
+    wdt::{Config, Instance, SleepConfig, Watchdog, WatchdogHandle},
+    Peri,
 };
 use embassy_time::{Duration, Timer};
 
@@ -9,7 +10,7 @@ pub struct Wdg(WatchdogHandle);
 //pub struct Wdg;
 
 impl Wdg {
-    pub async fn new(wdt: peripherals::WDT) -> Self {
+    pub async fn new<T: Instance>(wdt: Peri<'static, T>) -> Self {
         let mut config = Config::default();
 
         config.timeout_ticks = 32768 * 300;

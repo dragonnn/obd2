@@ -1,7 +1,7 @@
 use embassy_nrf::{
-    gpio::Pin,
+    gpio::{AnyPin, Pin},
     pwm::{Instance, Prescaler, SimplePwm},
-    Peripheral,
+    Peri,
 };
 pub struct Rgb<'d, T: Instance>(SimplePwm<'d, T>, bool);
 
@@ -20,10 +20,10 @@ const PWM_LINEAR: [u8; 256] = [
 
 impl<'d, T: Instance> Rgb<'d, T> {
     pub fn new(
-        pwm: impl Peripheral<P = T> + 'd,
-        r: impl Peripheral<P = impl Pin> + 'd,
-        g: impl Peripheral<P = impl Pin> + 'd,
-        b: impl Peripheral<P = impl Pin> + 'd,
+        pwm: Peri<'d, T>,
+        r: Peri<'d, AnyPin>,
+        g: Peri<'d, AnyPin>,
+        b: Peri<'d, AnyPin>,
         inverted: bool,
     ) -> Self {
         let mut pwm = SimplePwm::new_3ch(pwm, r, g, b);
