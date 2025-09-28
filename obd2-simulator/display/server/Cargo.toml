@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 embedded-graphics = "0.8.0"
-heapless = "0.8.0"
+heapless = "0.9.1"
 embedded-iconoir = { version = "0.2.3", features = [
     "24px",
     "144px",
