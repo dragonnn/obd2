@@ -79,6 +79,7 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
     let mut distance = persistent_manager.get_distance();
     let mut secs = persistent_manager.get_secs();
     let mut last_button_press = Instant::now();
+    let mut obd2_state_sent = false;
 
     loop {
         match select4(
@@ -135,9 +136,10 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
                     if persistent_manager.get_state() != Some(state.clone()) {
                         persistent_manager.update_state(Some(state.clone()));
                         if state == types::State::IgnitionOn || state == types::State::CheckCharging {
-                            embassy_time::Timer::after(Duration::from_secs(5)).await;
+                            embassy_time::Timer::after(Duration::from_secs(1)).await;
                             warn!("sending obd2 state");
                             send_obd2_state(persistent_manager.get_restarts(), &state, &old_state).await.ok();
+                            obd2_state_sent = true;
                         }
                     }
                 }
@@ -162,6 +164,11 @@ pub async fn task(mut modem: Modem, spawner: &Spawner) {
 
                             if old_icu2_pid.engine_hood_open != icu2_pid.engine_hood_open {
                                 should_send_icu2_pid_state = true;
+                            }
+
+                            if obd2_state_sent {
+                                should_send_icu2_pid_state = true;
+                                obd2_state_sent = false;
                             }
 
                             if should_send_icu2_pid_state {
