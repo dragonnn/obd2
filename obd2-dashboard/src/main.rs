@@ -40,8 +40,6 @@ esp_bootloader_esp_idf::esp_app_desc!();
 
 #[main]
 async fn main(spawner: Spawner) {
-    #[cfg(feature = "defmt-brtt")]
-    let logger = unwrap!(defmt_brtt::init());
     info!("heap init");
     init_heap();
     info!("hal init");
@@ -65,8 +63,6 @@ async fn main(spawner: Spawner) {
         spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
         spawner.spawn(tasks::can_listen::run(hal.can_listen)).ok();
         spawner.spawn(tasks::power::run(hal.power)).ok();
-        #[cfg(feature = "defmt-brtt")]
-        spawner.spawn(tasks::usb::run(hal.usb_serial, logger)).ok();
         spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner)).ok();
     }
 

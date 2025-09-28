@@ -183,9 +183,9 @@ pub fn init() -> Hal {
 
     #[cfg(feature = "xiao")]
     {
-        cs_display1 = Output::new(peripherals.GPIO7, false.into());
-        cs_display2 = Output::new(peripherals.GPIO8, false.into());
-        cs_cap1188 = Output::new(peripherals.GPIO9, false.into());
+        cs_display1 = Output::new(peripherals.GPIO7, false.into(), output_config);
+        cs_display2 = Output::new(peripherals.GPIO8, false.into(), output_config);
+        cs_cap1188 = Output::new(peripherals.GPIO9, false.into(), output_config);
     }
 
     let mut cs_mcp2515 = Output::new(peripherals.GPIO17, false.into(), output_config);
