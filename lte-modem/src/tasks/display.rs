@@ -31,6 +31,8 @@ pub async fn task(mut display: BoardDisplay) {
 
     let mut display_off_timeout = None;
 
+    let mut blink = false;
+
     loop {
         if let Err(err) = display.init().await {
             error!("Display init error: {:?}", err);
@@ -109,6 +111,18 @@ pub async fn task(mut display: BoardDisplay) {
                 } else {
                     write!(&mut line_buffer, "No GNSS fix").unwrap();
                 }
+
+                let blink_rectangle = Rectangle::new(Point::new(127, 31), Size::new(1, 1));
+                if blink {
+                    blink_rectangle.into_styled(PrimitiveStyle::with_fill(BinaryColor::On)).draw(&mut display).unwrap();
+                } else {
+                    blink_rectangle
+                        .into_styled(PrimitiveStyle::with_fill(BinaryColor::Off))
+                        .draw(&mut display)
+                        .unwrap();
+                }
+
+                blink = !blink;
 
                 Text::with_baseline(&line_buffer, Point::new(0, 16), text_style, Baseline::Top)
                     .draw(&mut display)
