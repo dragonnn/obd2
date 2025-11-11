@@ -9,14 +9,12 @@ static DBM_CHANNEL: PubSubChannel<CriticalSectionRawMutex, Option<i16>, 16, 1, 1
 #[embassy_executor::task]
 pub async fn task(mut modem: Modem) {
     let mut dbm_pub = DBM_CHANNEL.publisher().unwrap();
+
     loop {
         if super::link::connected() {
-            info!("refreshing dbm state");
             if let Some(dbm) = modem.dbm().await.unwrap() {
-                defmt::info!("dbm: {}", dbm);
                 dbm_pub.publish(Some(dbm)).await;
             } else {
-                defmt::info!("dbm: --");
                 dbm_pub.publish(None).await;
             }
         } else {

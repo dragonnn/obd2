@@ -58,6 +58,7 @@ pub async fn task(mut display: BoardDisplay) {
                                 if Instant::now() > timeout + Duration::from_secs(10) {
                                     display.set_display_on(false).await.ok();
                                     info!("Device is not charging");
+                                    gnss_fix = None;
                                     battery_state = battery_state_sub.next_message_pure().await;
                                 }
                             } else {

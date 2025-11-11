@@ -34,6 +34,7 @@ use crate::{
 pub async fn task(mut modem: Modem, spawner: &Spawner) {
     unwrap!(spawner.spawn(link::send_task(*spawner)));
     unwrap!(spawner.spawn(sms::task(modem)));
+    unwrap!(spawner.spawn(stats::task(modem)));
 
     let mut persistent_manager = PeristentManager::new();
 
