@@ -5,6 +5,7 @@ pub mod button;
 pub mod external_gnss;
 pub mod gnss;
 //pub mod logger;
+pub mod display;
 pub mod modem;
 pub mod montion_detection;
 pub mod reset;

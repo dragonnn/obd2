@@ -19,6 +19,7 @@ use esp_hal::{
         Mode as SpiMode,
         master::{Spi, SpiDmaBus},
     },
+    time::Rate,
     timer::{OneShotTimer, timg::TimerGroup},
     usb_serial_jtag::UsbSerialJtag,
 };
@@ -57,7 +58,7 @@ macro_rules! mk_static {
 
 pub struct SpiBus {
     spi: SpiDmaBus<'static, Async>,
-    speed: Option<u32>,
+    speed: Option<Rate>,
     elapsed: Instant,
 }
 
@@ -97,7 +98,7 @@ impl embedded_hal_async::spi::SpiBus for SpiBus {
 //const SPI_RAMP_UP_SECS: u64 = 200;
 
 impl embassy_embedded_hal::SetConfig for SpiBus {
-    type Config = u32;
+    type Config = Rate;
 
     type ConfigError = ();
 
@@ -106,10 +107,7 @@ impl embassy_embedded_hal::SetConfig for SpiBus {
         if self.speed == Some(speed) {
             return Ok(());
         }
-        //info!("SPI set speed to {} Hz", speed);
-        let config = esp_hal::spi::master::Config::default()
-            .with_frequency(esp_hal::time::Rate::from_hz(speed))
-            .with_mode(SpiMode::_0);
+        let config = esp_hal::spi::master::Config::default().with_frequency(speed).with_mode(SpiMode::_0);
         self.spi.apply_config(&config).ok();
         self.speed = Some(speed);
         Ok(())
@@ -219,11 +217,11 @@ pub fn init() -> Hal {
     static SPI_BUS: StaticCell<Mutex<CriticalSectionRawMutex, SpiBus>> = StaticCell::new();
     let spi_bus = SPI_BUS.init(Mutex::new(SpiBus::new(spi)));
 
-    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, 20);
-    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, 20);
-    let cap1188_spi = SpiDeviceWithConfig::new(spi_bus, cs_cap1188, 5);
-    let mcp2515_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515, 10);
-    let mcp2515_2_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515_2, 10);
+    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, Rate::from_mhz(20));
+    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, Rate::from_mhz(20));
+    let cap1188_spi = SpiDeviceWithConfig::new(spi_bus, cs_cap1188, Rate::from_mhz(5));
+    let mcp2515_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515, Rate::from_mhz(10));
+    let mcp2515_2_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515_2, Rate::from_mhz(10));
     let interface1 = SPIInterface::new(display1_spi, dc);
     let interface2 = SPIInterface::new(display2_spi, dc2);
 

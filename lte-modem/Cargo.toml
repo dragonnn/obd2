@@ -96,6 +96,10 @@ statig = { version = "0.4.1", features = ["async"] }
 nmea0183 = "0.5.0"
 derivative = { version = "2.2.0", features = ["use_core"] }
 
+ssd1306 = { version = "0.10.0", features = ["async"] }
+embedded-graphics = "0.8.1"
+display-interface = { version = "0.5.0", features = ["defmt-03"] }
+
 [build-dependencies]
 dotenv-build = "0.1"
 

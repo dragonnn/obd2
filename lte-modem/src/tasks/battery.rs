@@ -93,6 +93,7 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
     let mut timeout = Duration::from_secs(60);
     let mut low_voltage = false;
     let mut state = State::new(&mut battery, low_voltage).await;
+    let mut first_state_send = true;
     let tx_channel_pub = tx_channel_pub();
 
     let mut last_modem_battery_send: Option<Instant> = None;
@@ -101,7 +102,7 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
 
     loop {
         let new_state = State::new(&mut battery, low_voltage).await;
-        if new_state.charging != state.charging {
+        if new_state.charging != state.charging || first_state_send {
             charging_pub.publish_immediate(new_state.clone());
             state = new_state.clone();
             if new_state.charging {
@@ -109,6 +110,7 @@ pub async fn task(mut battery: Battery, mut charging_control: Output<'static>) {
             } else {
                 timeout = Duration::from_secs(60);
             }
+            first_state_send = false;
         }
 
         if new_state.capacity < 15 {

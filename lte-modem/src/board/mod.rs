@@ -32,6 +32,7 @@ use embassy_time::{Duration, Timer};
 pub use gnss::Gnss;
 pub use modem::Modem;
 pub use rgb::Rgb;
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306Async};
 use static_cell::StaticCell;
 pub use wdg::Wdg;
 
@@ -72,6 +73,11 @@ pub type BoardUarteRx = UarteRxWithIdle<'static, SERIAL1, TIMER0>;
 pub type BoardDebugUarteTx = UarteTx<'static, SERIAL0>;
 pub type BoardGnssUarteRx = UarteRxWithIdle<'static, SERIAL0, TIMER1>;
 pub type BoardGnssUarteTx = UarteTx<'static, SERIAL0>;
+pub type BoardDisplay = Ssd1306Async<
+    I2CInterface<I2cDevice<'static, CriticalSectionRawMutex, destruct_twim::DestructTwim>>,
+    DisplaySize128x32,
+    ssd1306::mode::BufferedGraphicsModeAsync<DisplaySize128x32>,
+>;
 
 pub struct Board {
     pub buzzer: Buzzer,
@@ -95,6 +101,8 @@ pub struct Board {
     pub uarte_tx_gnss: Option<(BoardGnssUarteTx, BoardGnssUarteRx)>,
     pub gnss_pss: Option<Input<'static>>,
     pub gnss_force_on: Option<Output<'static>>,
+
+    pub display: Option<BoardDisplay>,
 }
 
 extern "C" {
@@ -269,6 +277,14 @@ impl Board {
         let gnss_pss = Input::new(p.P0_21, Pull::Down);
         let gnss_force_on = Output::new(p.P0_15, Level::High, OutputDrive::Standard);
         warn!("board initialized");
+        let twim2_dev3 = I2cDevice::new(twim2);
+        let interface = I2CDisplayInterface::new(twim2_dev3);
+        let display: Ssd1306Async<
+            I2CInterface<I2cDevice<'_, CriticalSectionRawMutex, destruct_twim::DestructTwim>>,
+            DisplaySize128x32,
+            ssd1306::mode::BufferedGraphicsModeAsync<DisplaySize128x32>,
+        > = Ssd1306Async::new(interface, DisplaySize128x32, DisplayRotation::Rotate180).into_buffered_graphics_mode();
+
         Self {
             modem,
             buzzer,
@@ -288,6 +304,8 @@ impl Board {
             uarte_tx_gnss: Some(uarte_tx_gnss),
             gnss_pss: Some(gnss_pss),
             gnss_force_on: Some(gnss_force_on),
+
+            display: Some(display),
         }
     }
 }
