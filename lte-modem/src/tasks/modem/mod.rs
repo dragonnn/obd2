@@ -15,6 +15,7 @@ mod persistent;
 mod sms;
 
 use persistent::PeristentManager;
+pub use sms::dbm_channel_sub;
 use sms::{send_state_delayed as send_state, SmsEvent};
 use types::{TxFrame, TxMessage};
 

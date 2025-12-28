@@ -133,6 +133,7 @@ async fn main(spawner: Spawner) {
     let uarte_gnss = unwrap!(board.uarte_tx_gnss.take());
     let gnss_pss = unwrap!(board.gnss_pss.take());
     let gnss_force_on = unwrap!(board.gnss_force_on.take());
+    let display = unwrap!(board.display.take());
 
     //unwrap!(spawner.spawn(tasks::logger::task(logger, uarte_tx_debug, panic_message)));
     if let Some(panic) = panic_message {
@@ -166,6 +167,7 @@ async fn main(spawner: Spawner) {
     unwrap!(spawner.spawn(tasks::montion_detection::task(low_power_accelerometer)));
     unwrap!(spawner.spawn(tasks::button::task(button)));
     unwrap!(spawner.spawn(tasks::reset::task()));
+    unwrap!(spawner.spawn(tasks::display::task(display)));
     tasks::uarte::run(&spawner, uarte, uarte_send, uarte_receive, uarte_reset).await;
 
     defmt::info!("entering main loop");
