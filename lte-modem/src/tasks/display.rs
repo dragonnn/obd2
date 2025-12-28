@@ -50,11 +50,12 @@ pub async fn task(mut display: BoardDisplay) {
                     First(_) => {
                         if battery_state.charging {
                             display_off_timeout = None;
+                            battery_state = BatteryState::get().await;
                         } else if !battery_state.charging && display_off_timeout.is_none() {
                             display_off_timeout = Some(Instant::now());
                         } else if !battery_state.charging && display_off_timeout.is_some() {
                             if let Some(timeout) = display_off_timeout {
-                                if Instant::now() + Duration::from_secs(30) > timeout {
+                                if Instant::now() > timeout + Duration::from_secs(10) {
                                     display.set_display_on(false).await.ok();
                                     info!("Device is not charging");
                                     battery_state = battery_state_sub.next_message_pure().await;
@@ -100,7 +101,7 @@ pub async fn task(mut display: BoardDisplay) {
                 if let Some(gnss_fix) = &gnss_fix {
                     write!(
                         &mut line_buffer,
-                        "{}:{}:{} {} {}",
+                        "{:02}:{:02}:{:02} {:.1} {:.1}",
                         gnss_fix.hour, gnss_fix.minute, gnss_fix.seconds, gnss_fix.latitude, gnss_fix.longitude
                     )
                     .unwrap();
