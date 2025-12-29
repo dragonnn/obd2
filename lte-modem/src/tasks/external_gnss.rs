@@ -232,10 +232,10 @@ impl GnssState {
                     if fix_send {
                         self.rx_channel_pub
                             .publish_immediate(types::RxFrame::Modem(types::Modem::GnssFix(fix.0)).into());
-                        self.fix_pub.publish_immediate(fix.0);
                         context.fix = Some(fix.0);
                         last_fix_send.replace(Instant::now());
                     }
+                    self.fix_pub.publish_immediate(fix.0);
                     super::gnss::STATE.lock().await.fix = Some(fix.0);
                 }
                 Handled
