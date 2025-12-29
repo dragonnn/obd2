@@ -37,7 +37,7 @@ use static_cell::StaticCell;
 pub use wdg::Wdg;
 
 static TWIM2: StaticCell<Mutex<CriticalSectionRawMutex, destruct_twim::DestructTwim>> = StaticCell::new();
-static SPIM3: StaticCell<Mutex<CriticalSectionRawMutex, Spim<SERIAL3>>> = StaticCell::new();
+static SPIM3: StaticCell<Mutex<CriticalSectionRawMutex, Spim>> = StaticCell::new();
 
 //pub type I2cBus = destruct_twim::DestructTwim;
 pub type I2cBus = embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice<
@@ -45,14 +45,12 @@ pub type I2cBus = embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice<
     CriticalSectionRawMutex,
     destruct_twim::DestructTwim,
 >;
-pub type Buzzer = buzzer::Buzzer<'static, PWM0>;
-pub type Lightwell = Rgb<'static, PWM1>;
-pub type Sense = Rgb<'static, PWM2>;
+pub type Buzzer = buzzer::Buzzer<'static>;
+pub type Lightwell = Rgb<'static>;
+pub type Sense = Rgb<'static>;
 pub type Battery = Adp5360<I2cBus>;
-pub type LowPowerAccelerometer =
-    Adxl362<SpiDevice<'static, CriticalSectionRawMutex, Spim<'static, SERIAL3>, Output<'static>>>;
-pub type HiGAccelerometer =
-    Adxl372<SpiDevice<'static, CriticalSectionRawMutex, Spim<'static, SERIAL3>, Output<'static>>>;
+pub type LowPowerAccelerometer = Adxl362<SpiDevice<'static, CriticalSectionRawMutex, Spim<'static>, Output<'static>>>;
+pub type HiGAccelerometer = Adxl372<SpiDevice<'static, CriticalSectionRawMutex, Spim<'static>, Output<'static>>>;
 pub type LightSensor = Bh1749nuc<I2cBus>;
 
 /*bind_interrupts!(struct TwiIrqs {
@@ -68,11 +66,11 @@ bind_interrupts!(struct UartIrqs {
     SERIAL0 => uarte::InterruptHandler<SERIAL0>;
 });
 
-pub type BoardUarteTx = UarteTx<'static, SERIAL1>;
-pub type BoardUarteRx = UarteRxWithIdle<'static, SERIAL1, TIMER0>;
-pub type BoardDebugUarteTx = UarteTx<'static, SERIAL0>;
-pub type BoardGnssUarteRx = UarteRxWithIdle<'static, SERIAL0, TIMER1>;
-pub type BoardGnssUarteTx = UarteTx<'static, SERIAL0>;
+pub type BoardUarteTx = UarteTx<'static>;
+pub type BoardUarteRx = UarteRxWithIdle<'static>;
+pub type BoardDebugUarteTx = UarteTx<'static>;
+pub type BoardGnssUarteRx = UarteRxWithIdle<'static>;
+pub type BoardGnssUarteTx = UarteTx<'static>;
 pub type BoardDisplay = Ssd1306Async<
     I2CInterface<I2cDevice<'static, CriticalSectionRawMutex, destruct_twim::DestructTwim>>,
     DisplaySize128x32,
@@ -93,7 +91,7 @@ pub struct Board {
     pub light_sensor: Option<LightSensor>,
 
     pub wdg: Option<Wdg>,
-    pub uarte: Option<(BoardUarteTx, UarteRxWithIdle<'static, SERIAL1, TIMER0>)>,
+    pub uarte: Option<(BoardUarteTx, UarteRxWithIdle<'static>)>,
     pub uarte_send: Option<Output<'static>>,
     pub uarte_receive: Option<Input<'static>>,
     pub uarte_reset: Option<Output<'static>>,

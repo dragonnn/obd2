@@ -1,9 +1,9 @@
 use embassy_nrf::{
     gpio::{AnyPin, Pin},
-    pwm::{Instance, Prescaler, SimplePwm},
+    pwm::{DutyCycle, Instance, Prescaler, SimpleConfig, SimplePwm},
     Peri,
 };
-pub struct Rgb<'d, T: Instance>(SimplePwm<'d, T>, bool);
+pub struct Rgb<'d>(SimplePwm<'d>, bool);
 
 const PWM_LINEAR: [u8; 256] = [
     0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4,
@@ -18,20 +18,20 @@ const PWM_LINEAR: [u8; 256] = [
     254, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 ];
 
-impl<'d, T: Instance> Rgb<'d, T> {
-    pub fn new(
+impl<'d> Rgb<'d> {
+    pub fn new<T: Instance>(
         pwm: Peri<'d, T>,
         r: Peri<'d, AnyPin>,
         g: Peri<'d, AnyPin>,
         b: Peri<'d, AnyPin>,
         inverted: bool,
     ) -> Self {
-        let mut pwm = SimplePwm::new_3ch(pwm, r, g, b);
+        let mut pwm = SimplePwm::new_3ch(pwm, r, g, b, &SimpleConfig::default());
         pwm.set_prescaler(Prescaler::Div1);
         pwm.set_max_duty(u8::MAX as u16);
-        pwm.set_duty(0, u8::MAX as u16);
-        pwm.set_duty(1, u8::MAX as u16);
-        pwm.set_duty(2, u8::MAX as u16);
+        pwm.set_duty(0, DutyCycle::normal(u8::MAX as u16));
+        pwm.set_duty(1, DutyCycle::normal(u8::MAX as u16));
+        pwm.set_duty(2, DutyCycle::normal(u8::MAX as u16));
         Self(pwm, inverted)
     }
 
@@ -41,13 +41,13 @@ impl<'d, T: Instance> Rgb<'d, T> {
         self.0.set_duty(2, self.get_duty(0));
     }
 
-    fn get_duty(&self, p: u8) -> u16 {
+    fn get_duty(&self, p: u8) -> DutyCycle {
         let p = PWM_LINEAR[p as usize];
 
         if self.1 {
-            (u8::MAX - p) as u16
+            DutyCycle::normal((u8::MAX - p) as u16)
         } else {
-            p as u16
+            DutyCycle::normal(p as u16)
         }
     }
 

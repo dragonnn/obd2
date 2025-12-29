@@ -23,7 +23,7 @@ bind_interrupts!(struct TwiIrqs {
 pub type Sda = embassy_nrf::peripherals::P0_11;
 pub type Scl = embassy_nrf::peripherals::P0_12;
 
-pub type I2cBus = Twim<'static, SERIAL2>;
+pub type I2cBus = Twim<'static>;
 
 pub static mut I2C_BUF: [u8; 256] = [0; 256];
 
