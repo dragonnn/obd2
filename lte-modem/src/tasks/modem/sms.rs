@@ -7,7 +7,7 @@ use core::{
 
 use defmt::*;
 use derivative::Derivative;
-use embassy_futures::select::{select3, Either3::*};
+use embassy_futures::select::{select, Either::*};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, pubsub::PubSubChannel};
 use embassy_time::{Duration, Timer};
 use heapless::{index_set::FnvIndexSet, String, Vec};
@@ -15,7 +15,6 @@ use heapless::{index_set::FnvIndexSet, String, Vec};
 use crate::{board::Modem, tasks};
 
 static SMS_STATE_CHANNEL: Channel<CriticalSectionRawMutex, SmsData, 16> = Channel::new();
-static DBM_CHANNEL: PubSubChannel<CriticalSectionRawMutex, Option<i16>, 16, 1, 16> = PubSubChannel::new();
 
 pub async fn send_state_delayed(
     event: SmsEvent,
@@ -157,7 +156,6 @@ impl SmsEvent {
 
 #[embassy_executor::task]
 pub async fn task(modem: Modem) {
-    let mut dbm_pub = DBM_CHANNEL.publisher().unwrap();
     let sms_channel_sub = SMS_STATE_CHANNEL.receiver();
     let mut events = FnvIndexSet::<SmsEvent, 8>::new();
     let mut default_sms_data = SmsData::default();
@@ -165,28 +163,16 @@ pub async fn task(modem: Modem) {
     let mut has_driving = false;
     let mut has_closed = false;
 
-    let mut has_dbm = false;
-
     loop {
-        match select3(
-            sms_channel_sub.receive(),
-            async {
-                if events.is_empty() {
-                    core::future::pending::<()>().await;
-                } else if events.len() == events.capacity() || (has_closed && (has_driving || has_parked)) {
-                    ()
-                } else {
-                    Timer::after_secs(10 * 60).await;
-                }
-            },
-            async {
-                if has_dbm {
-                    Timer::after_secs(1 * 60).await;
-                } else {
-                    Timer::after_secs(5).await;
-                }
-            },
-        )
+        match select(sms_channel_sub.receive(), async {
+            if events.is_empty() {
+                core::future::pending::<()>().await;
+            } else if events.len() == events.capacity() || (has_closed && (has_driving || has_parked)) {
+                ()
+            } else {
+                Timer::after_secs(10 * 60).await;
+            }
+        })
         .await
         {
             First(msg) => {
@@ -228,23 +214,6 @@ pub async fn task(modem: Modem) {
                     has_driving = false;
                     has_closed = false;
                 }
-            }
-            Third(_) => {
-                if super::link::connected() {
-                    info!("refreshing dbm state");
-                    if let Some(dbm) = modem.dbm().await.unwrap() {
-                        defmt::info!("dbm: {}", dbm);
-                        dbm_pub.publish(Some(dbm)).await;
-                        has_dbm = true;
-                    } else {
-                        defmt::info!("dbm: --");
-                        dbm_pub.publish(None).await;
-                        has_dbm = false;
-                    }
-                } else {
-                    dbm_pub.publish(None).await;
-                    has_dbm = false;
-                };
             }
         }
     }
@@ -337,8 +306,4 @@ pub async fn send_state(
     defmt::info!("sms send ok");
     link.deactivate().await?;
     Ok(())
-}
-
-pub fn dbm_channel_sub() -> embassy_sync::pubsub::Subscriber<'static, CriticalSectionRawMutex, Option<i16>, 16, 1, 16> {
-    DBM_CHANNEL.subscriber().unwrap()
 }

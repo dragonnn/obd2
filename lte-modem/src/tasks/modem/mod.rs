@@ -13,10 +13,11 @@ use serde::{Deserialize, Serialize};
 pub mod link;
 mod persistent;
 mod sms;
+mod stats;
 
 use persistent::PeristentManager;
-pub use sms::dbm_channel_sub;
 use sms::{send_state_delayed as send_state, SmsEvent};
+pub use stats::dbm_channel_sub;
 use types::{TxFrame, TxMessage};
 
 use crate::{
