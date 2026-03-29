@@ -316,7 +316,15 @@ impl KiaState {
         ieee802154::send_now();
         self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::Shutdown((*duration).into())));
         embassy_time::Timer::after_millis(200).await;
-        self.power_events_pub.publish_immediate(PowerEvent::Shutdown(*duration));
+        if with_timeout(Duration::from_secs(5), self.power_events_pub.publish(PowerEvent::Shutdown(*duration)))
+            .await
+            .is_err()
+        {
+            warn!("failed to publish shutdown event, maybe no subscriber?");
+            embassy_time::Timer::after_millis(200).await;
+            esp_hal::system::software_reset();
+        }
+        self.power_events_pub.publish(PowerEvent::Shutdown(*duration)).await;
         ieee802154::send_now();
     }
 
@@ -333,7 +341,9 @@ impl KiaState {
     }
 
     async fn before_dispatch(&mut self, state: StateOrSuperstate<'_, State, Superstate>, event: &KiaEvent) {
-        self.power_events_pub.publish_immediate(PowerEvent::RwdtFeed);
+        if !matches!(state, StateOrSuperstate::State(State::Shutdown { .. })) {
+            self.power_events_pub.publish_immediate(PowerEvent::RwdtFeed);
+        }
         if let KiaEvent::Obd2Event(_) = event {
             trace!("kia dispatching `{}` to `{}`", event, defmt::Debug2Format(&state));
         } else if let &KiaEvent::Obd2Init(obd2_init) = event {

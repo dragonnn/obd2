@@ -19,7 +19,7 @@ static SHUTDOWN: PubSubChannel<CriticalSectionRawMutex, (), 1, 16, 1> = PubSubCh
 static SHUTDOWN_GUARD_DROP_SIGNAL: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 static SHUTDOWN_GUARDS: AtomicUsize = AtomicUsize::new(0);
 static SHUTDOWN_REQUESTED: AtomicBool = AtomicBool::new(false);
-static POWER_EVENTS: PubSubChannel<CriticalSectionRawMutex, PowerEvent, 1, 1, 16> = PubSubChannel::new();
+static POWER_EVENTS: PubSubChannel<CriticalSectionRawMutex, PowerEvent, 16, 1, 16> = PubSubChannel::new();
 
 use crate::{
     debug::internal_debug,
