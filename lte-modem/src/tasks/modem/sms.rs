@@ -267,6 +267,7 @@ pub async fn send_state(
     } else {
         writeln!(&mut sms, "fix: none").ok();
     }
+
     defmt::info!("starting sms send");
     let mut link = Err(nrf_modem::Error::NrfError(0));
     for _ in 0..5 {
@@ -287,8 +288,6 @@ pub async fn send_state(
         writeln!(&mut sms, "dbm: --").ok();
     }
 
-    //write!(&mut sms, "twi2_resets: {}", crate::board::TWI2_RESETS.load(Ordering::SeqCst))
-    //    .map_err(|_| nrf_modem::Error::OutOfMemory)?;
     if sms.capacity() == sms.len() {
         sms.pop();
         sms.pop();
@@ -298,12 +297,8 @@ pub async fn send_state(
         sms.push('.').ok();
     }
 
-    if all_numbers {
-        modem.send_sms(crate::config::SMS_NUMBERS, &sms).await?;
-    } else {
-        modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &sms).await?;
-    }
-    defmt::info!("sms send ok");
-    link.deactivate().await?;
+    crate::tasks::modem::link::send_message(&sms);
+    link.deactivate().await.ok();
+    defmt::info!("message send ok");
     Ok(())
 }

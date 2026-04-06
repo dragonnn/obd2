@@ -353,6 +353,12 @@ pub fn tx_channel_pub() -> TxChannelPub {
     unwrap!(TX_CHANNEL.dyn_publisher())
 }
 
+pub fn send_message(msg: &str) {
+    tx_channel_pub().publish_immediate(
+        TxFrame::Modem(Modem::Message(alloc::string::String::from(msg))).into(),
+    );
+}
+
 pub fn rx_channel_sub() -> RxChannelSub {
     unwrap!(RX_CHANNEL.dyn_subscriber())
 }

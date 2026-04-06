@@ -138,7 +138,7 @@ async fn main(spawner: Spawner) {
     //unwrap!(spawner.spawn(tasks::logger::task(logger, uarte_tx_debug, panic_message)));
     if let Some(panic) = panic_message {
         //if !panic.contains("twi reset") {
-        board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, panic).await.ok();
+        tasks::modem::link::send_message(panic);
         //}
     } else {
         if reset_reasons.len() > 0 {
@@ -152,8 +152,8 @@ async fn main(spawner: Spawner) {
                 info!("{}", reset_reasons_str);
                 reset_reasons_str.pop();
                 let reset_reasons_str = reset_reasons_str.trim_start_matches("[");
-                warn!("trying to send sms panic");
-                board.modem.send_sms(crate::config::PANIC_SMS_NUMBERS, &reset_reasons_str).await.ok();
+                warn!("trying to send reset reasons message");
+                tasks::modem::link::send_message(reset_reasons_str);
             }
         }
     }
