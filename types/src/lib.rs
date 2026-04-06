@@ -1,7 +1,9 @@
 #![no_std]
+#![feature(trivial_bounds)]
 
 extern crate alloc;
 
+use alloc::string::String;
 use core::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 use crc::{Crc, CRC_32_ISCSI};
 use defmt::Format;
@@ -447,6 +449,7 @@ pub enum Modem {
     Boot,
     Ping,
     Pong,
+    Message(String),
 }
 
 #[derive(Debug, Format, Clone, Deserialize, Serialize)]

@@ -64,7 +64,7 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
                         break;
                     }
                     rxmessage => {
-                        info!("no modem bootup message received, got: {:?}", rxmessage);
+                        info!("no modem bootup message received");
                     }
                 },
                 Err(_err) => {
@@ -160,6 +160,7 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
                     types::Modem::Boot => info!("modem boot"),
                     types::Modem::Ping => info!("modem ping"),
                     types::Modem::Pong => info!("modem pong"),
+                    types::Modem::Message(message) => info!("modem message: {:?}", message.as_str()),
                 },
                 RxFrame::Obd2Frame(obd2_frame) => {
                     obd2::send_custom_frame(obd2_frame).await;
@@ -447,7 +448,7 @@ impl AsyncIeee802154 {
                     self.rxmessage_buffer.push(rxmessage).ok();
                 }
             } else {
-                warn!("no ack received_frame: {:?}", rxmessage);
+                warn!("no ack received_frame");
                 self.rxmessage_buffer.push(rxmessage).ok();
             }
         }
@@ -472,7 +473,7 @@ impl AsyncIeee802154 {
     pub async fn receive(&mut self) -> RxMessage {
         loop {
             if let Some(rxmessage) = self.rxmessage_buffer.pop() {
-                warn!("message from buffer: {:?}", rxmessage);
+                warn!("message from buffer");
                 return rxmessage;
             }
             return self.internal_receive().await;
