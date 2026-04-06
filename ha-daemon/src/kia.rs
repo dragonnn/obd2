@@ -223,6 +223,13 @@ impl KiaHandler {
                     .update((*voltage).into())
                     .await;
             }
+            TxFrame::Modem(types::Modem::Message(message)) => {
+                self.ha_sensors
+                    .get("modem_message")
+                    .unwrap()
+                    .update(message.clone().into())
+                    .await;
+            }
             _ => {}
         }
     }
