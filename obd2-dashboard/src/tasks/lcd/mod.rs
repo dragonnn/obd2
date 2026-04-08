@@ -397,7 +397,7 @@ pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&
     let mut state =
         LcdState::new(display1, display2).uninitialized_state_machine().init_with_context(&mut context).await;
     info!("lcd state machine initialized");
-    let mut render_ticker = embassy_time::Ticker::every(Duration::from_millis(1000 / 12));
+    let mut render_ticker = embassy_time::Ticker::every(Duration::from_millis(1000 / 14));
     loop {
         match state.state() {
             State::Debug { debug: _ } => match select(EVENTS.receive(), crate::debug::receive()).await {

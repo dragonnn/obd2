@@ -109,6 +109,8 @@ impl Obd2 {
         let obd2_data: Option<&[u8]>;
         let mut obd2_message_length = None;
         let mut obd2_message_id = 0;
+        let request_id_raw = request.id_header.get_i32();
+        let expected_response_id = request_id_raw + 8;
         'outer: loop {
             let rx_status = self.mcp2515.rx_status().await?;
             if rx_status.rx0if() {
@@ -122,6 +124,20 @@ impl Obd2 {
                 can_frames[1] = Some(frame);
             }
             for can_frame in can_frames.iter().flatten() {
+                let frame_id_raw = can_frame.id_header.get_i32();
+                let is_expected = if request_id_raw == 0x7DF {
+                    (0x7E8..=0x7EF).contains(&frame_id_raw)
+                } else {
+                    frame_id_raw == expected_response_id
+                };
+                if !is_expected {
+                    warn!(
+                        "unexpected CAN ID: {=i32:#06x}, expected {=i32:#06x}, data: {=[u8]:#04x}",
+                        frame_id_raw, expected_response_id, can_frame.data
+                    );
+                    continue;
+                }
+
                 let obd2_frame_type = can_frame.data[0] & 0xF0;
 
                 match obd2_frame_type {
@@ -182,7 +198,7 @@ impl Obd2 {
                     }
                 }
             }
-            while embassy_time::with_timeout(embassy_time::Duration::from_millis(20), self.mcp2515.interrupt())
+            while embassy_time::with_timeout(embassy_time::Duration::from_millis(25), self.mcp2515.interrupt())
                 .await
                 .is_err()
             {
