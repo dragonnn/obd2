@@ -1,8 +1,8 @@
 use ac::LcdAcState;
 use defmt::*;
-use embassy_futures::select::{select, Either::*};
+use embassy_futures::select::{Either::*, select};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, signal::Signal};
-use embassy_time::{with_timeout, Duration, Timer};
+use embassy_time::{Duration, Timer, with_timeout};
 use embedded_graphics::geometry::{Point, Size};
 use heapless::String;
 use statig::prelude::*;
@@ -11,7 +11,7 @@ use types::Pid as Obd2Event;
 use crate::{
     debug::DEBUG_STRING_LEN,
     display::widgets::{Battery, BatteryOrientation, DebugScroll},
-    tasks::obd2::{obd2_init_wait, Obd2Debug},
+    tasks::obd2::{Obd2Debug, obd2_init_wait},
     types::{Display1, Display2},
 };
 
@@ -98,6 +98,7 @@ impl LcdState {
         crate::tasks::buttons::init();
         self.display_on = true;
         Timer::after(Duration::from_millis(100)).await;
+        info!("display on done");
     }
 
     async fn display_off(&mut self) {
@@ -154,16 +155,18 @@ impl LcdState {
     #[action]
     async fn enter_main(&mut self, main: &mut LcdMainState) {
         self.display_on().await;
-        let lock = crate::locks::SPI_BUS.lock().await;
-        self.display1.clear();
-        self.display2.clear();
-        warn!("enter_main");
+        {
+            let lock = crate::locks::SPI_BUS.lock().await;
+            self.display1.clear();
+            self.display2.clear();
+            warn!("enter_main");
+        }
         main.draw(&mut self.display1, &mut self.display2).await;
+        info!("enter_main done");
     }
 
     #[state(entry_action = "enter_main", superstate = "state_dispatch")]
     async fn main(&mut self, main: &mut LcdMainState, event: &LcdEvent) -> Response<State> {
-        let lock = crate::locks::SPI_BUS.lock().await;
         let ret = match event {
             LcdEvent::Obd2Event(obd2_event) => {
                 main.handle_obd2_event(obd2_event);
@@ -175,7 +178,6 @@ impl LcdState {
             }
             _ => Super,
         };
-
         ret
     }
 

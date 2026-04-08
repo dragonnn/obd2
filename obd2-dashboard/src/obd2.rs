@@ -96,12 +96,15 @@ impl Obd2 {
     }
 
     async fn request<'a>(&'a mut self, request: &CanFrame) -> Result<&'a [u8], Obd2Error> {
-        let mut _lock = Some(crate::locks::SPI_BUS.lock().await);
+        let mut _lock = embassy_time::with_timeout(Duration::from_millis(300), crate::locks::SPI_BUS.lock()).await.ok();
+        if _lock.is_none() {
+            error!("timeout waiting for SPI lock");
+        }
         self.mcp2515.clear_interrupts().await?;
         let flow_control = unwrap!(CanFrame::new(request.id(), &[0x30, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
         self.mcp2515.load_tx_buffer(TxBuffer::TXB0, &request).await?;
         self.mcp2515.request_to_send(TxBuffer::TXB0).await?;
-
+        //info!("obd2 request sent");
         let mut can_frames = [None, None];
         let obd2_data: Option<&[u8]>;
         let mut obd2_message_length = None;
@@ -179,18 +182,19 @@ impl Obd2 {
                     }
                 }
             }
-            while embassy_time::with_timeout(embassy_time::Duration::from_millis(50), self.mcp2515.interrupt())
+            while embassy_time::with_timeout(embassy_time::Duration::from_millis(20), self.mcp2515.interrupt())
                 .await
                 .is_err()
             {
                 if _lock.is_some() {
-                    //error!("timeout waiting for interrupt, drooping SPI lock");
+                    error!("timeout waiting for interrupt, drooping SPI lock");
                     _lock = None;
                 }
             }
         }
 
         if let Some(obd2_data) = obd2_data {
+            //info!("obd2 request done");
             Ok(obd2_data)
         } else {
             error!("no obd2_data found");
@@ -233,7 +237,7 @@ impl Obd2 {
         let obd2_debug_pids_enabled = obd2_debug_pids_enabled();
         let mut ret = false;
         if errors < 10 {
-            match with_timeout(Duration::from_millis(350), self.request_pid::<PID>()).await {
+            match with_timeout(Duration::from_millis(650), self.request_pid::<PID>()).await {
                 Ok(Ok((pid_result, buffer))) => {
                     let pid_result = pid_result.into_event();
                     insert_send_pid(&pid_result).await;

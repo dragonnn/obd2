@@ -1,4 +1,5 @@
 use defmt::{info, unwrap, warn};
+use embassy_futures::yield_now;
 use embedded_graphics::geometry::{Point, Size};
 use types::{BmsPid, IceTemperaturePid, Pid as Obd2Event};
 
@@ -143,6 +144,7 @@ impl LcdMainState {
     }
 
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
+        //let now = embassy_time::Instant::now();
         if let Some(last_send) = last_send() {
             self.connection.update_last_send(last_send.elapsed().as_millis() < 250);
         }
@@ -161,23 +163,41 @@ impl LcdMainState {
         } else {
             self.hv_battery_current > 0.0
         });
-
+        yield_now().await;
         self.hv_battery.draw(display1).ok();
+        yield_now().await;
         self.aux_battery.draw(display2).ok();
+        yield_now().await;
         self.ice_temperature.draw(display2).ok();
+        yield_now().await;
         self.motor_electric.draw(display1).ok();
+        yield_now().await;
         self.motor_ice.draw(display2).ok();
+        yield_now().await;
         self.electric_power.draw(display1).ok();
+        yield_now().await;
         self.electric_power_arrow.draw(display1).ok();
+        yield_now().await;
         self.gearbox_gear.draw(display2).ok();
+        yield_now().await;
         self.ice_fuel_rate.draw(display2).ok();
+        yield_now().await;
         self.vehicle_speed.draw(display2).ok();
+        yield_now().await;
         self.motor_electric_rpm.draw(display1).ok();
+        yield_now().await;
         self.connection.draw(display2).ok();
+        yield_now().await;
         self.humidity.draw(display2).ok();
+        yield_now().await;
         self.position.draw(display2).ok();
 
+        //info!("lcd draw start took {} ms", now.elapsed().as_millis());
+        let lock = crate::locks::SPI_BUS.lock().await;
+        //info!("lcd draw lock wait: {} ms", now.elapsed().as_millis());
         unwrap!(display1.flush().await);
+        //info!("lcd draw flush1: {} ms", now.elapsed().as_millis());
         unwrap!(display2.flush().await);
+        //info!("lcd draw flush2: {} ms", now.elapsed().as_millis());
     }
 }

@@ -1,10 +1,10 @@
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use defmt::*;
-use embassy_futures::select::{select, Either};
+use embassy_futures::select::{Either, select};
 pub use embassy_sync::watch::Watch;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, mutex::Mutex, signal::Signal};
-use embassy_time::{with_timeout, Duration};
+use embassy_time::{Duration, with_timeout};
 use serde::{Deserialize, Serialize};
 pub use types::{Pid as Obd2Event, PidError as Obd2Error};
 
@@ -15,7 +15,7 @@ static OBD2_CUSTOM_FRAMES: Channel<CriticalSectionRawMutex, types::Obd2Frame, 8>
 
 use crate::{
     debug::internal_debug,
-    event::{KiaEvent, KIA_EVENTS},
+    event::{KIA_EVENTS, KiaEvent},
     obd2::{Obd2, Pid},
     pid,
     tasks::{ieee802154::extra_txframes_pub, power::get_shutdown_signal},
@@ -155,7 +155,7 @@ impl Obd2PidSets {
         let delay = match self {
             Self::Charging => embassy_time::Duration::from_secs(1),
             Self::IgnitionOff => embassy_time::Duration::from_secs(1),
-            Self::IgnitionOn | Self::None => embassy_time::Duration::from_millis(100),
+            Self::IgnitionOn | Self::None => embassy_time::Duration::from_millis(150),
         };
         embassy_time::Timer::after(delay).await;
     }
@@ -167,11 +167,12 @@ pub async fn run(mut obd2: Obd2) {
     info!("obd2 task started");
 
     let ieee802154_extra_txframes_pub = extra_txframes_pub();
-    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
+    embassy_time::Timer::after(embassy_time::Duration::from_secs(2)).await;
     {
         with_timeout(Duration::from_secs(60), async {
             loop {
                 if obd2.init().await.is_ok() {
+                    info!("obd2 init success");
                     break;
                 }
                 warn!("obd2 init failed, retrying");

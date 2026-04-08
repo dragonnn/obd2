@@ -59,6 +59,6 @@ impl Pid for Icu1Smk {
     }
 
     fn period() -> Option<embassy_time::Duration> {
-        Some(embassy_time::Duration::from_secs(1))
+        Some(embassy_time::Duration::from_secs(5))
     }
 }
