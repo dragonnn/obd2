@@ -256,6 +256,7 @@ impl Obd2 {
                     errors += 1;
                 }
                 Err(_) => {
+                    error!("timeout requesting pid");
                     insert_send_pid_error(&PID::into_error()).await;
                     internal_debug!("timeout requesting pid");
                     if obd2_debug_pids_enabled {

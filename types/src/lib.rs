@@ -424,6 +424,7 @@ impl TxMessage {
                 TxFrame::Modem(Modem::Connected) => true,
                 TxFrame::Modem(Modem::Ping) => false,
                 TxFrame::Modem(Modem::Pong) => false,
+                TxFrame::Modem(Modem::Message(_)) => true,
                 _ => false,
             }
     }
