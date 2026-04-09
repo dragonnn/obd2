@@ -5,8 +5,8 @@ use display_interface::DisplayError;
 use embedded_graphics::{
     draw_target::Clipped,
     mono_font::{
-        ascii::{FONT_10X20, FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD},
         MonoTextStyle,
+        ascii::{FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD, FONT_10X20},
     },
     pixelcolor::Gray4,
     prelude::*,
@@ -82,57 +82,71 @@ impl Arrow {
     }
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
-        if self.offset >= self.arrow_width as f64 {
-            self.offset = self.speed;
+        // Fast path: no animation and no forced redraw.
+        if !self.force_update && self.speed == 0.0 {
+            return Ok(());
         }
 
-        let new_offest = self.offset.ceil() as i32;
+        let aw_f = self.arrow_width as f64;
+        if self.offset >= aw_f {
+            // Keep phase continuous (cheaper and visually smoother than resetting to self.speed).
+            self.offset -= aw_f;
+        }
+
+        // Floor instead of ceil: redraw only after full-pixel movement.
+        let new_offest = self.offset as i32;
         if new_offest != self.old_offest || self.force_update {
             let mut size = self.size;
             size.height += 1;
+
             let style_black = PrimitiveStyleBuilder::new()
                 .stroke_width(2)
                 .stroke_color(Gray4::BLACK)
                 .fill_color(Gray4::BLACK)
                 .build();
-            let area = Rectangle::new(self.position, size);
-            area.draw_styled(&style_black, target)?;
-            let mut area = target.clipped(&area);
 
-            let style = PrimitiveStyleBuilder::new()
-                .stroke_width(2)
-                .stroke_color(Gray4::new(self.color))
-                .fill_color(Gray4::new(self.color))
-                .build();
+            let area_rect = Rectangle::new(self.position, size);
+            area_rect.draw_styled(&style_black, target)?;
+            let mut area = target.clipped(&area_rect);
+
+            let color = Gray4::new(self.color);
+            let style = PrimitiveStyleBuilder::new().stroke_width(2).stroke_color(color).fill_color(color).build();
 
             let triangle_offset = match self.direction {
                 ArrowDirection::Forward => -1,
                 ArrowDirection::Reverse => 1,
             };
 
+            let aw_i = self.arrow_width as i32;
+            let width_count = (self.size.width / self.arrow_width) as i32;
+
             let triangle = Triangle::new(
                 Point::new(self.position.x, self.position.y),
                 Point::new(
-                    self.position.x - (self.arrow_width as i32 - 6) * triangle_offset,
+                    self.position.x - (aw_i - 6) * triangle_offset,
                     self.position.y + self.size.height as i32 / 2,
                 ),
                 Point::new(self.position.x, self.position.y + self.size.height as i32),
             )
             .translate(Point::new(-(triangle_offset * new_offest), 0));
+
             if self.direction == ArrowDirection::Forward {
-                for a in (-1..(self.size.width / self.arrow_width) as i32 + 2).rev() {
+                for a in (-1..width_count + 2).rev() {
                     self.draw_triangle(&mut area, &style, &style_black, triangle, triangle_offset, a)?;
                 }
             } else {
-                for a in 0..(self.size.width / self.arrow_width) as i32 + 4 {
+                for a in 0..width_count + 4 {
                     self.draw_triangle(&mut area, &style, &style_black, triangle, triangle_offset, a)?;
                 }
             }
+
             self.old_offest = new_offest;
             self.force_update = false;
+        } else {
+            info!("Arrow: no redraw needed");
         }
-        self.offset += self.speed;
 
+        self.offset += self.speed;
         Ok(())
     }
 
