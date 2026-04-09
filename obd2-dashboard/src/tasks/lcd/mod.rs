@@ -184,9 +184,11 @@ impl LcdState {
     #[action]
     async fn enter_ac(&mut self, ac_state: &mut LcdAcState) {
         self.display_on().await;
-        let lock = crate::locks::SPI_BUS.lock().await;
-        self.display1.clear();
-        self.display2.clear();
+        {
+            let lock = crate::locks::SPI_BUS.lock().await;
+            self.display1.clear();
+            self.display2.clear();
+        }
         warn!("enter_ac");
         ac_state.draw(&mut self.display1, &mut self.display2).await;
     }
@@ -212,9 +214,11 @@ impl LcdState {
     #[action]
     async fn enter_charging(&mut self, charging_state: &mut LcdChargingState) {
         self.display_on().await;
-        let lock = crate::locks::SPI_BUS.lock().await;
-        self.display1.clear();
-        self.display2.clear();
+        {
+            let lock = crate::locks::SPI_BUS.lock().await;
+            self.display1.clear();
+            self.display2.clear();
+        }
         warn!("enter_charging");
         charging_state.draw(&mut self.display1, &mut self.display2).await;
     }
@@ -242,11 +246,13 @@ impl LcdState {
 
     #[action]
     async fn enter_debug(&mut self, debug: &mut LcdDebugState) {
-        let lock = crate::locks::SPI_BUS.lock().await;
         warn!("enter_debug");
         self.display_on().await;
-        self.display1.clear();
-        self.display2.clear();
+        {
+            let lock = crate::locks::SPI_BUS.lock().await;
+            self.display1.clear();
+            self.display2.clear();
+        }
         debug.draw(&mut self.display1, &mut self.display2).await;
     }
 
@@ -270,11 +276,13 @@ impl LcdState {
 
     #[action]
     async fn enter_menu(&mut self, menu: &mut LcdMenuState) {
-        let lock = crate::locks::SPI_BUS.lock().await;
         warn!("enter_menu");
         self.display_on().await;
-        self.display1.clear();
-        self.display2.clear();
+        {
+            let lock = crate::locks::SPI_BUS.lock().await;
+            self.display1.clear();
+            self.display2.clear();
+        }
         menu.draw(&mut self.display1, &mut self.display2).await;
     }
 
@@ -295,11 +303,13 @@ impl LcdState {
 
     #[action]
     async fn enter_obd2_pids(&mut self, obd2_pids: &mut LcdObd2Pids) {
-        let lock = crate::locks::SPI_BUS.lock().await;
         warn!("enter_obd2_pids");
         self.display_on().await;
-        self.display1.clear();
-        self.display2.clear();
+        {
+            let lock = crate::locks::SPI_BUS.lock().await;
+            self.display1.clear();
+            self.display2.clear();
+        }
         obd2_pids.draw(&mut self.display1, &mut self.display2).await;
     }
 
@@ -323,11 +333,13 @@ impl LcdState {
 
     #[action]
     async fn enter_settings(&mut self, settings: &mut LcdSettingsState) {
-        let lock = crate::locks::SPI_BUS.lock().await;
         warn!("enter_debug");
         self.display_on().await;
-        self.display1.clear();
-        self.display2.clear();
+        {
+            let lock = crate::locks::SPI_BUS.lock().await;
+            self.display1.clear();
+            self.display2.clear();
+        }
         settings.draw(&mut self.display1, &mut self.display2).await;
     }
 
