@@ -225,12 +225,10 @@ impl LcdState {
 
     #[state(entry_action = "enter_charging", superstate = "state_dispatch")]
     async fn charging(&mut self, charging_state: &mut LcdChargingState, event: &LcdEvent) -> Response<State> {
-        let lock = crate::locks::SPI_BUS.lock().await;
         let ret = match event {
             LcdEvent::Main => Transition(State::main(LcdMainState::new())),
             LcdEvent::Obd2Event(obd2_event) => {
                 charging_state.handle_obd2_event(obd2_event);
-                charging_state.draw(&mut self.display1, &mut self.display2).await;
                 Handled
             }
             LcdEvent::Render => {
@@ -409,7 +407,8 @@ pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&
     let mut state =
         LcdState::new(display1, display2).uninitialized_state_machine().init_with_context(&mut context).await;
     info!("lcd state machine initialized");
-    let mut render_ticker = embassy_time::Ticker::every(Duration::from_millis(1000 / 14));
+    let mut render_ticker = embassy_time::Ticker::every(Duration::from_millis(1000 / 12));
+    let mut had_event = false;
     loop {
         match state.state() {
             State::Debug { debug: _ } => match select(EVENTS.receive(), crate::debug::receive()).await {
@@ -419,12 +418,18 @@ pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&
             _ => {
                 let event = match select(EVENTS.receive(), render_ticker.next()).await {
                     First(event) => {
-                        //render_ticker.reset();
-                        event
+                        state.handle_with_context(&event, &mut context).await;
+                        had_event = true;
                     }
-                    Second(_) => LcdEvent::Render,
+                    Second(_) => {
+                        if had_event {
+                            let now = embassy_time::Instant::now();
+                            state.handle_with_context(&LcdEvent::Render, &mut context).await;
+                            info!("render took {} ms", now.elapsed().as_millis());
+                            had_event = false;
+                        }
+                    }
                 };
-                state.handle_with_context(&event, &mut context).await;
             }
         }
     }

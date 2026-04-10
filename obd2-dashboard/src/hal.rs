@@ -217,8 +217,8 @@ pub fn init() -> Hal {
     static SPI_BUS: StaticCell<Mutex<CriticalSectionRawMutex, SpiBus>> = StaticCell::new();
     let spi_bus = SPI_BUS.init(Mutex::new(SpiBus::new(spi)));
 
-    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, Rate::from_mhz(20));
-    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, Rate::from_mhz(20));
+    let display1_spi = SpiDeviceWithConfig::new(spi_bus, cs_display1, Rate::from_mhz(50));
+    let display2_spi = SpiDeviceWithConfig::new(spi_bus, cs_display2, Rate::from_mhz(50));
     let cap1188_spi = SpiDeviceWithConfig::new(spi_bus, cs_cap1188, Rate::from_mhz(5));
     let mcp2515_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515, Rate::from_mhz(10));
     let mcp2515_2_spi = SpiDeviceWithConfig::new(spi_bus, cs_mcp2515_2, Rate::from_mhz(10));

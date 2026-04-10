@@ -135,7 +135,7 @@ impl Obd2 {
                         "unexpected CAN ID: {=i32:#06x}, expected {=i32:#06x}, data: {=[u8]:#04x}",
                         frame_id_raw, expected_response_id, can_frame.data
                     );
-                    continue;
+                    //continue;
                 }
 
                 let obd2_frame_type = can_frame.data[0] & 0xF0;
@@ -198,7 +198,7 @@ impl Obd2 {
                     }
                 }
             }
-            while embassy_time::with_timeout(embassy_time::Duration::from_millis(25), self.mcp2515.interrupt())
+            while embassy_time::with_timeout(embassy_time::Duration::from_millis(60), self.mcp2515.interrupt())
                 .await
                 .is_err()
             {
@@ -253,7 +253,7 @@ impl Obd2 {
         let obd2_debug_pids_enabled = obd2_debug_pids_enabled();
         let mut ret = false;
         if errors < 10 {
-            match with_timeout(Duration::from_millis(650), self.request_pid::<PID>()).await {
+            match with_timeout(Duration::from_millis(1650), self.request_pid::<PID>()).await {
                 Ok(Ok((pid_result, buffer))) => {
                     let pid_result = pid_result.into_event();
                     insert_send_pid(&pid_result).await;

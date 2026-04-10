@@ -128,6 +128,8 @@ impl LcdChargingState {
         self.ac_voltage.draw(display2).ok();
         self.ac_current.draw(display2).ok();
 
+        let _lock = crate::locks::SPI_BUS.lock().await;
+
         unwrap!(display1.flush().await);
         unwrap!(display2.flush().await);
     }
