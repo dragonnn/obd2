@@ -111,6 +111,7 @@ impl LcdChargingState {
     }
 
     pub async fn draw(&mut self, display1: &mut Display1, display2: &mut Display2) {
+        let now = embassy_time::Instant::now();
         if let Some(last_send) = last_send() {
             self.connection.update_last_send(last_send.elapsed().as_millis() < 250);
         }
@@ -127,10 +128,14 @@ impl LcdChargingState {
         self.dc_current.draw(display1).ok();
         self.ac_voltage.draw(display2).ok();
         self.ac_current.draw(display2).ok();
+        info!("charging draw widgets: {} ms", now.elapsed().as_millis());
 
         let _lock = crate::locks::SPI_BUS.lock().await;
+        info!("charging draw lock wait: {} ms", now.elapsed().as_millis());
 
         unwrap!(display1.flush().await);
+        info!("charging draw flush1: {} ms", now.elapsed().as_millis());
         unwrap!(display2.flush().await);
+        info!("charging draw flush2: {} ms", now.elapsed().as_millis());
     }
 }

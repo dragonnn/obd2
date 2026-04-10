@@ -408,7 +408,7 @@ pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&
         LcdState::new(display1, display2).uninitialized_state_machine().init_with_context(&mut context).await;
     info!("lcd state machine initialized");
     let mut render_ticker = embassy_time::Ticker::every(Duration::from_millis(1000 / 12));
-    let mut had_event = false;
+    //let mut had_event = false;
     loop {
         match state.state() {
             State::Debug { debug: _ } => match select(EVENTS.receive(), crate::debug::receive()).await {
@@ -419,15 +419,15 @@ pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&
                 let event = match select(EVENTS.receive(), render_ticker.next()).await {
                     First(event) => {
                         state.handle_with_context(&event, &mut context).await;
-                        had_event = true;
+                        //had_event = true;
                     }
                     Second(_) => {
-                        if had_event {
-                            let now = embassy_time::Instant::now();
-                            state.handle_with_context(&LcdEvent::Render, &mut context).await;
-                            info!("render took {} ms", now.elapsed().as_millis());
-                            had_event = false;
-                        }
+                        //if had_event {
+                        let now = embassy_time::Instant::now();
+                        state.handle_with_context(&LcdEvent::Render, &mut context).await;
+                        info!("render took {} ms", now.elapsed().as_millis());
+                        //had_event = false;
+                        //}
                     }
                 };
             }

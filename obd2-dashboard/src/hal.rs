@@ -103,13 +103,12 @@ impl embassy_embedded_hal::SetConfig for SpiBus {
     type ConfigError = ();
 
     fn set_config(&mut self, speed: &Self::Config) -> Result<(), Self::ConfigError> {
-        let speed = *speed * 1000 * 1000;
-        if self.speed == Some(speed) {
+        if self.speed == Some(*speed) {
             return Ok(());
         }
-        let config = esp_hal::spi::master::Config::default().with_frequency(speed).with_mode(SpiMode::_0);
+        let config = esp_hal::spi::master::Config::default().with_frequency(*speed).with_mode(SpiMode::_0);
         self.spi.apply_config(&config).ok();
-        self.speed = Some(speed);
+        self.speed = Some(*speed);
         Ok(())
     }
 }
