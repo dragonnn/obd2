@@ -422,12 +422,7 @@ pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&
                         //had_event = true;
                     }
                     Second(_) => {
-                        //if had_event {
-                        let now = embassy_time::Instant::now();
                         state.handle_with_context(&LcdEvent::Render, &mut context).await;
-                        info!("render took {} ms", now.elapsed().as_millis());
-                        //had_event = false;
-                        //}
                     }
                 };
             }
