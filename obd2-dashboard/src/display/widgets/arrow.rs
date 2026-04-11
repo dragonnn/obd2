@@ -107,6 +107,11 @@ impl Arrow {
             let a_start = if is_forward { -1 } else { 0 };
             let a_end = if is_forward { width_count + 2 } else { width_count + 4 };
 
+            trace!(
+                "Arrow params: h={=i32} half_h={=i32} tip={=i32} gap={=i32} spacing={=i32}",
+                h, half_h, tip, gap, spacing
+            );
+
             // Draw chevrons scanline-by-scanline using horizontal rectangles
             // instead of triangle rasterization + stroke, which is very expensive.
             for y_rel in 0..h {
@@ -119,6 +124,15 @@ impl Arrow {
                 }
 
                 let y = self.position.y + y_rel;
+
+                // Log first chevron only
+                let base_x_0 = self.position.x + spacing * a_start + scroll;
+                let (vx0, vw0) = if is_forward {
+                    if dx > gap { (base_x_0 + dx - gap, gap) } else { (base_x_0, dx) }
+                } else {
+                    if dx > gap { (base_x_0 - dx, gap) } else { (base_x_0 - dx, dx) }
+                };
+                trace!("y={=i32} dist={=i32} dx={=i32} vx={=i32} vw={=i32}", y_rel, dist, dx, vx0, vw0);
 
                 for a in a_start..a_end {
                     let base_x = self.position.x + spacing * a + scroll;
