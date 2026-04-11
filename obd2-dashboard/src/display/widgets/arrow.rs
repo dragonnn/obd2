@@ -107,11 +107,6 @@ impl Arrow {
             let a_start = if is_forward { -1 } else { 0 };
             let a_end = if is_forward { width_count + 2 } else { width_count + 4 };
 
-            trace!(
-                "Arrow params: h={=i32} half_h={=i32} tip={=i32} gap={=i32} spacing={=i32}",
-                h, half_h, tip, gap, spacing
-            );
-
             // Draw chevrons scanline-by-scanline using horizontal rectangles
             // instead of triangle rasterization + stroke, which is very expensive.
             for y_rel in 0..h {
@@ -129,8 +124,7 @@ impl Arrow {
                     // Compute the visible colored strip after the gap triangle carves
                     // into the colored triangle.
                     let (mut vx, vw) = if is_forward { (base_x + dx - gap, gap) } else { (base_x - dx, gap) };
-                    trace!("  a={=i32} base_x={=i32} vx={=i32} vw={=i32} y={=i32}", a, base_x, vx, vw, y);
-                    if y > 38 || y < 24 {
+                    if dx <= gap {
                         vx += 1;
                     }
 
