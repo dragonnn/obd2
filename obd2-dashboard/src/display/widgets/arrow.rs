@@ -50,7 +50,7 @@ impl Arrow {
     pub fn update_speed(&mut self, speed: f64) {
         let old_speed = self.speed;
         self.speed = speed.abs() / 100.0;
-        self.color = (speed / 100.0 * 16.0).round() as u8;
+        self.color = (speed.abs() / 100.0 * 16.0).round() as u8;
         if self.color <= 5 {
             self.color = 5;
         }
