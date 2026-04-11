@@ -117,25 +117,41 @@ impl Arrow {
             for y_rel in 0..h {
                 // Distance from nearest horizontal edge (top or bottom).
                 let dist = if y_rel <= half_h { y_rel } else { h - 1 - y_rel };
-                // Outer edge (tip of chevron) and inner edge (gap cutout)
-                // both computed with same divisor to ensure smooth stepping.
-                let dx = if half_h > 0 { tip * dist / half_h } else { 0 };
-                let gx = if half_h > 0 { gap * dist / half_h } else { 0 };
-                let vw = dx - gx;
-                if vw <= 0 {
+                // How far the arrow tip extends at this scanline.
+                let dx = if half_h > 0 { (tip * 2 * dist + half_h) / h } else { 0 };
+                if dx == 0 {
                     continue;
                 }
 
                 let y = self.position.y + y_rel;
 
+                // Log first chevron only
+                let base_x_0 = self.position.x + spacing * a_start + scroll;
+                let (vx0, vw0) = if is_forward {
+                    if dx > gap { (base_x_0 + dx - gap, gap) } else { (base_x_0, dx) }
+                } else {
+                    if dx > gap { (base_x_0 - dx, gap) } else { (base_x_0 - dx, dx) }
+                };
+                trace!("y={=i32} dist={=i32} dx={=i32} vx={=i32} vw={=i32}", y_rel, dist, dx, vx0, vw0);
+
                 for a in a_start..a_end {
                     let base_x = self.position.x + spacing * a + scroll;
 
-                    let vx = if is_forward { base_x + gx } else { base_x - dx };
+                    // Compute the visible colored strip after the gap triangle carves
+                    // into the colored triangle.
+                    let (vx, vw) = if is_forward {
+                        // Chevron points right: colored [base, base+dx], black [base-gap, base-gap+dx]
+                        if dx > gap { (base_x + dx - gap, gap) } else { (base_x, dx) }
+                    } else {
+                        // Chevron points left: colored [base-dx, base], black [base-dx+gap, base+gap]
+                        if dx > gap { (base_x - dx, gap) } else { (base_x - dx, dx) }
+                    };
+                    trace!("  a={=i32} base_x={=i32} vx={=i32} vw={=i32}", a, base_x, vx, vw);
 
-                    trace!("vx={=i32} vw={=i32} y={=i32}", vx, vw, y);
-
-                    Rectangle::new(Point::new(vx, y), Size::new(vw as u32, 1)).draw_styled(&fill_color, &mut area)?;
+                    if vw > 0 {
+                        Rectangle::new(Point::new(vx, y), Size::new(vw as u32, 1))
+                            .draw_styled(&fill_color, &mut area)?;
+                    }
                 }
             }
 
