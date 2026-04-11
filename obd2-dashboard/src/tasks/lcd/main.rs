@@ -65,7 +65,7 @@ impl LcdMainState {
             electric_power_arrow: Arrow::new(
                 Point { x: 9 + 128, y: 64 / 2 - 10 },
                 Size { width: 54, height: 18 },
-                14,
+                11,
                 ArrowDirection::Reverse,
             ),
 
