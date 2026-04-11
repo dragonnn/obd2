@@ -128,8 +128,11 @@ impl Arrow {
 
                     // Compute the visible colored strip after the gap triangle carves
                     // into the colored triangle.
-                    let (vx, vw) = if is_forward { (base_x + dx - gap, gap) } else { (base_x - dx, gap) };
-                    trace!("  a={=i32} base_x={=i32} vx={=i32} vw={=i32}", a, base_x, vx, vw);
+                    let (mut vx, vw) = if is_forward { (base_x + dx - gap, gap) } else { (base_x - dx, gap) };
+                    trace!("  a={=i32} base_x={=i32} vx={=i32} vw={=i32} y={=i32}", a, base_x, vx, vw, y);
+                    if y > 38 || y < 24 {
+                        vx += 1;
+                    }
 
                     Rectangle::new(Point::new(vx, y), Size::new(vw as u32, 1)).draw_styled(&fill_color, &mut area)?;
                 }
