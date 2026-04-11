@@ -21,6 +21,7 @@ pub struct Arrow {
     color: u8,
     speed: f64,
     direction: ArrowDirection,
+    last_tick_us: Option<u64>,
 }
 
 impl Arrow {
@@ -35,6 +36,7 @@ impl Arrow {
             offset: 0.0,
             speed: 0.0,
             direction,
+            last_tick_us: None,
         }
     }
 
@@ -47,23 +49,22 @@ impl Arrow {
 
     pub fn update_speed(&mut self, speed: f64) {
         let old_speed = self.speed;
-        if speed > 0.0 {
-            self.speed = speed / 100.0 * 1.0 + 1.0;
-        } else {
-            self.speed = 0.0;
-        }
+        self.speed = speed.abs() / 100.0;
         self.color = (speed / 100.0 * 16.0).round() as u8;
-        if speed != 0.0 && self.color == 0 {
-            self.color = 1;
+        if self.color <= 5 {
+            self.color = 5;
         }
-        if speed != old_speed {
+        if self.speed != old_speed {
             self.force_update = true;
         }
         if self.color > 15 {
             self.color = 15;
         }
-        if self.speed > 4.5 {
-            self.speed = 4.5;
+        if self.speed > 0.6 {
+            self.speed = 0.6;
+        }
+        if self.speed < 0.2 {
+            self.speed = 0.2;
         }
     }
 
@@ -91,7 +92,7 @@ impl Arrow {
             let spacing = (aw_f / 1.2).ceil() as i32;
             let tip = aw_i;
             let gap = aw_i / 3;
-
+            trace!("Arrow redraw: offset={=f64} new_offset={=i32} color={=u8}", self.offset, new_offest, self.color);
             let color = Gray4::new(self.color);
             let fill_color = PrimitiveStyleBuilder::new().fill_color(color).build();
             let fill_black = PrimitiveStyleBuilder::new().fill_color(Gray4::BLACK).build();
@@ -118,14 +119,18 @@ impl Arrow {
 
                 let y = self.position.y + y_rel;
 
-                for a in a_start..a_end {
+                for a in a_start..(a_end + 1) {
                     let base_x = self.position.x + spacing * a + scroll;
 
                     // Compute the visible colored strip after the gap triangle carves
                     // into the colored triangle.
                     let (mut vx, vw) = if is_forward { (base_x + dx - gap, gap) } else { (base_x - dx, gap) };
                     if dx <= gap {
-                        vx += 1;
+                        if is_forward {
+                            vx += 1;
+                        } else {
+                            vx -= 1;
+                        }
                     }
 
                     Rectangle::new(Point::new(vx, y), Size::new(vw as u32, 1)).draw_styled(&fill_color, &mut area)?;
@@ -139,7 +144,14 @@ impl Arrow {
             trace!("Arrow draw: {=u32},{=u32:03}ms", elapsed_us / 1000, elapsed_us % 1000);
         }
 
-        self.offset += self.speed;
+        let now_us = Instant::now().as_ticks() / (embassy_time::TICK_HZ / 1_000_000);
+        if let Some(last) = self.last_tick_us {
+            let dt_us = (now_us - last) as u32;
+            let delta = self.speed * dt_us as f64 / 1_000_000.0 * 60.0;
+            trace!("Arrow dt={=u32}us delta={=i32}mpx speed={=f64}", dt_us, (delta * 1000.0) as i32, self.speed);
+            self.offset += delta;
+        }
+        self.last_tick_us = Some(now_us);
         Ok(())
     }
 }
