@@ -1,22 +1,7 @@
-use core::fmt::Write;
-
 use defmt::trace;
-use display_interface::DisplayError;
 use embassy_time::Instant;
-use embedded_graphics::{
-    draw_target::Clipped,
-    mono_font::{
-        MonoTextStyle,
-        ascii::{FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD, FONT_10X20},
-    },
-    pixelcolor::Gray4,
-    prelude::*,
-    primitives::*,
-    text::{Alignment, LineHeight, Text, TextStyleBuilder},
-};
-use heapless::String;
-use num_traits::float::FloatCore;
-use profont::*;
+use embedded_graphics::{pixelcolor::Gray4, prelude::*, primitives::*};
+use num_traits::float::Float;
 
 #[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 pub enum ArrowDirection {
@@ -98,47 +83,61 @@ impl Arrow {
         // Floor instead of ceil: redraw only after full-pixel movement.
         let new_offest = self.offset as i32;
         if new_offest != self.old_offest || self.force_update {
-            let mut size = self.size;
-            size.height += 1;
-
-            let style_black = PrimitiveStyleBuilder::new()
-                .stroke_width(2)
-                .stroke_color(Gray4::BLACK)
-                .fill_color(Gray4::BLACK)
-                .build();
-
-            let area_rect = Rectangle::new(self.position, size);
-            area_rect.draw_styled(&style_black, target)?;
-            let mut area = target.clipped(&area_rect);
+            let mut draw_size = self.size;
+            draw_size.height += 1;
+            let h = draw_size.height as i32;
+            let half_h = h / 2;
+            let aw_i = self.arrow_width as i32;
+            let spacing = (aw_f / 1.2).ceil() as i32;
+            // Tip extension from the base line. +2 approximates the old stroke_width(2).
+            let tip = aw_i - 6 + 2;
+            let gap = aw_i / 3;
 
             let color = Gray4::new(self.color);
-            let style = PrimitiveStyleBuilder::new().stroke_width(2).stroke_color(color).fill_color(color).build();
+            let fill_color = PrimitiveStyleBuilder::new().fill_color(color).build();
+            let fill_black = PrimitiveStyleBuilder::new().fill_color(Gray4::BLACK).build();
 
-            let triangle_offset = match self.direction {
-                ArrowDirection::Forward => -1,
-                ArrowDirection::Reverse => 1,
-            };
+            // Clear entire area.
+            let area_rect = Rectangle::new(self.position, draw_size);
+            area_rect.draw_styled(&fill_black, target)?;
+            let mut area = target.clipped(&area_rect);
 
-            let aw_i = self.arrow_width as i32;
-            let width_count = (self.size.width / self.arrow_width) as i32;
+            let is_forward = self.direction == ArrowDirection::Forward;
+            let scroll = if is_forward { new_offest } else { -new_offest };
+            let width_count = self.size.width as i32 / aw_i;
+            let a_start = if is_forward { -1 } else { 0 };
+            let a_end = if is_forward { width_count + 2 } else { width_count + 4 };
 
-            let triangle = Triangle::new(
-                Point::new(self.position.x, self.position.y),
-                Point::new(
-                    self.position.x - (aw_i - 6) * triangle_offset,
-                    self.position.y + self.size.height as i32 / 2,
-                ),
-                Point::new(self.position.x, self.position.y + self.size.height as i32),
-            )
-            .translate(Point::new(-(triangle_offset * new_offest), 0));
-
-            if self.direction == ArrowDirection::Forward {
-                for a in (-1..width_count + 2).rev() {
-                    self.draw_triangle(&mut area, &style, &style_black, triangle, triangle_offset, a)?;
+            // Draw chevrons scanline-by-scanline using horizontal rectangles
+            // instead of triangle rasterization + stroke, which is very expensive.
+            for y_rel in 0..h {
+                // Distance from nearest horizontal edge (top or bottom).
+                let dist = if y_rel <= half_h { y_rel } else { h - 1 - y_rel };
+                // How far the arrow tip extends at this scanline.
+                let dx = if half_h > 0 { (tip * 2 * dist + half_h) / h } else { 0 };
+                if dx == 0 {
+                    continue;
                 }
-            } else {
-                for a in 0..width_count + 4 {
-                    self.draw_triangle(&mut area, &style, &style_black, triangle, triangle_offset, a)?;
+
+                let y = self.position.y + y_rel;
+
+                for a in a_start..a_end {
+                    let base_x = self.position.x + spacing * a + scroll;
+
+                    // Compute the visible colored strip after the gap triangle carves
+                    // into the colored triangle.
+                    let (vx, vw) = if is_forward {
+                        // Chevron points right: colored [base, base+dx], black [base-gap, base-gap+dx]
+                        if dx > gap { (base_x + dx - gap, gap) } else { (base_x, dx) }
+                    } else {
+                        // Chevron points left: colored [base-dx, base], black [base-dx+gap, base+gap]
+                        if dx > gap { (base_x - dx, gap) } else { (base_x - dx, dx) }
+                    };
+
+                    if vw > 0 {
+                        Rectangle::new(Point::new(vx, y), Size::new(vw as u32, 1))
+                            .draw_styled(&fill_color, &mut area)?;
+                    }
                 }
             }
 
@@ -150,23 +149,6 @@ impl Arrow {
         }
 
         self.offset += self.speed;
-        Ok(())
-    }
-
-    fn draw_triangle<D: DrawTarget<Color = Gray4>>(
-        &mut self,
-        area: &mut Clipped<D>,
-        style: &PrimitiveStyle<Gray4>,
-        style_black: &PrimitiveStyle<Gray4>,
-        triangle: Triangle,
-        triangle_offset: i32,
-        a: i32,
-    ) -> Result<(), D::Error> {
-        let triangle_a = triangle.translate(Point::new((self.arrow_width as f64 / 1.2).ceil() as i32 * a, 0));
-        triangle_a.draw_styled(style, area)?;
-        triangle_a
-            .translate(Point::new(triangle_offset * (self.arrow_width as i32 / 3), 0))
-            .draw_styled(style_black, area)?;
         Ok(())
     }
 }
