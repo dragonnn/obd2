@@ -198,7 +198,7 @@ impl Obd2 {
                     }
                 }
             }
-            while embassy_time::with_timeout(embassy_time::Duration::from_millis(60), self.mcp2515.interrupt())
+            while embassy_time::with_timeout(embassy_time::Duration::from_millis(100), self.mcp2515.interrupt())
                 .await
                 .is_err()
             {

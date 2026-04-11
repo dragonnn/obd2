@@ -48,7 +48,7 @@ impl Arrow {
     pub fn update_speed(&mut self, speed: f64) {
         let old_speed = self.speed;
         if speed > 0.0 {
-            self.speed = speed / 100.0 * 3.5 + 1.0;
+            self.speed = speed / 100.0 * 1.0 + 1.0;
         } else {
             self.speed = 0.0;
         }
