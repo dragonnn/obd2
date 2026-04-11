@@ -89,8 +89,7 @@ impl Arrow {
             let half_h = h / 2;
             let aw_i = self.arrow_width as i32;
             let spacing = (aw_f / 1.2).ceil() as i32;
-            // Tip extension from the base line. +2 approximates the old stroke_width(2).
-            let tip = aw_i - 6 + 2;
+            let tip = aw_i;
             let gap = aw_i / 3;
 
             let color = Gray4::new(self.color);
@@ -112,7 +111,7 @@ impl Arrow {
             // instead of triangle rasterization + stroke, which is very expensive.
             for y_rel in 0..h {
                 // Distance from nearest horizontal edge (top or bottom).
-                let dist = if y_rel <= half_h { y_rel } else { h - 1 - y_rel };
+                let dist = if y_rel <= half_h { y_rel } else { h - y_rel };
                 // How far the arrow tip extends at this scanline.
                 let dx = if half_h > 0 { (tip * 2 * dist + half_h) / h } else { 0 };
                 if dx == 0 {
