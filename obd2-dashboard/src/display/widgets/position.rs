@@ -1,7 +1,9 @@
 use alloc::{borrow::Cow, string::ToString as _};
 use core::fmt::Write;
 
+use defmt::trace;
 use display_interface::DisplayError;
+use embassy_time::Instant;
 use embedded_graphics::{
     image::Image,
     pixelcolor::Gray4,
@@ -41,11 +43,14 @@ impl Position {
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
+            let now = Instant::now();
             let color = if self.last_position { GrayColor::WHITE } else { Gray4::new(0x04) };
             let icon = embedded_iconoir::icons::size18px::maps::Position::new(color);
             let image = Image::new(&icon, self.position);
             image.draw(target)?;
 
+            let elapsed_us = now.elapsed().as_micros() as u32;
+            trace!("Position draw: {=u32},{=u32:03}ms", elapsed_us / 1000, elapsed_us % 1000);
             self.redraw = false;
         }
 

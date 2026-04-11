@@ -1,7 +1,9 @@
 use alloc::{borrow::Cow, string::ToString as _};
 use core::fmt::Write;
 
+use defmt::trace;
 use display_interface::DisplayError;
+use embassy_time::Instant;
 use embedded_graphics::{
     image::Image,
     pixelcolor::Gray4,
@@ -44,6 +46,7 @@ impl<I: embedded_iconoir::prelude::IconoirIcon> Icon<I> {
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
+            let now = Instant::now();
             let color = if self.last_enabled { GrayColor::WHITE } else { Gray4::new(0x04) };
 
             let icon = I::new(color);
@@ -68,6 +71,8 @@ impl<I: embedded_iconoir::prelude::IconoirIcon> Icon<I> {
                 }
             }*/
 
+            let elapsed_us = now.elapsed().as_micros() as u32;
+            trace!("Icon draw: {=u32},{=u32:03}ms", elapsed_us / 1000, elapsed_us % 1000);
             self.redraw = false;
         }
 

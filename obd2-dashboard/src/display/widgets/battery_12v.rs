@@ -1,10 +1,12 @@
 use core::fmt::Write;
 
+use defmt::trace;
 use display_interface::DisplayError;
+use embassy_time::Instant;
 use embedded_graphics::{
     mono_font::{
-        ascii::{FONT_10X20, FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD},
         MonoTextStyle,
+        ascii::{FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD, FONT_10X20},
     },
     pixelcolor::Gray4,
     prelude::*,
@@ -93,6 +95,7 @@ impl Battery12V {
         }
 
         if self.redraw {
+            let now = Instant::now();
             let style = PrimitiveStyleBuilder::new().fill_color(Gray4::BLACK).build();
 
             let main_width = 32;
@@ -121,6 +124,8 @@ impl Battery12V {
             rectangle.draw_styled(&style, target)?;
 
             text.draw(target)?;
+            let elapsed_us = now.elapsed().as_micros() as u32;
+            trace!("Battery12V draw: {=u32},{=u32:03}ms", elapsed_us / 1000, elapsed_us % 1000);
             self.redraw = false;
         }
 

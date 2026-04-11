@@ -1,5 +1,5 @@
 [env]
-DEFMT_LOG = "info"
+DEFMT_LOG = "trace"
 CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER = "/usr/bin/x86_64-linux-gnu-gcc"
 
 [build]

@@ -1,6 +1,8 @@
 use core::fmt::Write;
 
+use defmt::trace;
 use display_interface::DisplayError;
+use embassy_time::Instant;
 use embedded_graphics::{
     mono_font::{
         ascii::{FONT_10X20, FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD},
@@ -37,6 +39,7 @@ impl Slider {
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
+            let now = Instant::now();
             let style = PrimitiveStyleBuilder::new()
                 .stroke_width(1)
                 .stroke_color(Gray4::WHITE)
@@ -61,6 +64,8 @@ impl Slider {
                 Rectangle::new(bar_position, bar_size).draw_styled(&bar_style, target)?;
             }
 
+            let elapsed_us = now.elapsed().as_micros() as u32;
+            trace!("Slider draw: {=u32},{=u32:03}ms", elapsed_us / 1000, elapsed_us % 1000);
             self.redraw = false;
         }
 

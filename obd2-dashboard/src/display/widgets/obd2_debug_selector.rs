@@ -1,6 +1,6 @@
 use core::{fmt::Write, str::FromStr as _};
 
-use defmt::info;
+use defmt::trace;
 use display_interface::DisplayError;
 use embassy_time::Instant;
 use embedded_graphics::{
@@ -48,6 +48,7 @@ impl Obd2DebugSelector {
         target2: &mut D2,
     ) -> Result<(), ()> {
         if self.redraw {
+            let now = Instant::now();
             target.clear(Gray4::BLACK).map_err(|_| ())?;
             target2.clear(Gray4::BLACK).map_err(|_| ())?;
             let character_style = MonoTextStyle::new(&PROFONT_7_POINT, Gray4::WHITE);
@@ -67,6 +68,8 @@ impl Obd2DebugSelector {
                 position += Point::new(0, 8);
             }
 
+            let elapsed_us = now.elapsed().as_micros() as u32;
+            trace!("Obd2DebugSelector draw: {=u32},{=u32:03}ms", elapsed_us / 1000, elapsed_us % 1000);
             self.redraw = false;
         }
         Ok(())

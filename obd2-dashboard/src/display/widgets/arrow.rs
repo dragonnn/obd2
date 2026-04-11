@@ -1,7 +1,8 @@
 use core::fmt::Write;
 
-use defmt::info;
+use defmt::trace;
 use display_interface::DisplayError;
+use embassy_time::Instant;
 use embedded_graphics::{
     draw_target::Clipped,
     mono_font::{
@@ -86,6 +87,7 @@ impl Arrow {
         if !self.force_update && self.speed == 0.0 {
             return Ok(());
         }
+        let now = Instant::now();
 
         let aw_f = self.arrow_width as f64;
         if self.offset >= aw_f {
@@ -142,8 +144,9 @@ impl Arrow {
 
             self.old_offest = new_offest;
             self.force_update = false;
-        } else {
-            info!("Arrow: no redraw needed");
+
+            let elapsed_us = now.elapsed().as_micros() as u32;
+            trace!("Arrow draw: {=u32},{=u32:03}ms", elapsed_us / 1000, elapsed_us % 1000);
         }
 
         self.offset += self.speed;

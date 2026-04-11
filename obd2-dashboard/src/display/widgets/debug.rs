@@ -1,6 +1,6 @@
 use core::{fmt::Write, str::FromStr as _};
 
-use defmt::{info, unwrap};
+use defmt::{trace, unwrap};
 use display_interface::DisplayError;
 use embassy_time::Instant;
 use embedded_graphics::{
@@ -44,7 +44,7 @@ impl DebugScroll {
         target2: &mut D2,
     ) -> Result<(), ()> {
         if self.redraw {
-            //let now = Instant::now();
+            let now = Instant::now();
             target.clear(Gray4::BLACK).map_err(|_| ())?;
             target2.clear(Gray4::BLACK).map_err(|_| ())?;
             let character_style = MonoTextStyle::new(&PROFONT_7_POINT, Gray4::WHITE);
@@ -66,7 +66,8 @@ impl DebugScroll {
                 position += Point::new(0, 8);
             }
 
-            //info!("draw took: {:?}ms", now.elapsed().as_millis());
+            let elapsed_us = now.elapsed().as_micros() as u32;
+            trace!("DebugScroll draw: {=u32},{=u32:03}ms", elapsed_us / 1000, elapsed_us % 1000);
 
             self.redraw = false;
         }

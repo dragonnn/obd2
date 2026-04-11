@@ -1,10 +1,12 @@
 use core::fmt::Write;
 
+use defmt::trace;
 use display_interface::DisplayError;
+use embassy_time::Instant;
 use embedded_graphics::{
     mono_font::{
-        ascii::{FONT_10X20, FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD},
         MonoTextStyle,
+        ascii::{FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD, FONT_10X20},
     },
     pixelcolor::Gray4,
     prelude::*,
@@ -67,6 +69,7 @@ where
 
     pub fn draw(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
+            let now = Instant::now();
             let color = Gray4::new(4);
 
             let mut style = PrimitiveStyleBuilder::new()
@@ -162,6 +165,8 @@ where
             rotate_target.fill_solid(&text_box, Gray4::BLACK)?;
             text.draw(&mut rotate_target)?;
 
+            let elapsed_us = now.elapsed().as_micros() as u32;
+            trace!("Fuel draw: {=u32},{=u32:03}ms", elapsed_us / 1000, elapsed_us % 1000);
             self.redraw = false;
         }
 

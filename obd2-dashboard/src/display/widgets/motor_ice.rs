@@ -1,4 +1,6 @@
+use defmt::trace;
 use display_interface::DisplayError;
+use embassy_time::Instant;
 use embedded_graphics::{
     image::Image,
     pixelcolor::{Gray4, Rgb565},
@@ -63,12 +65,15 @@ impl MotorIce {
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.needs_update {
+            let now = Instant::now();
             self.motor_im.draw(&mut target.color_converted())?;
             if self.on {
                 self.motor_on_im.draw(&mut target.color_converted())?;
             } else {
                 self.motor_off_im.draw(&mut target.color_converted())?;
             }
+            let elapsed_us = now.elapsed().as_micros() as u32;
+            trace!("MotorIce draw: {=u32},{=u32:03}ms", elapsed_us / 1000, elapsed_us % 1000);
             self.needs_update = false;
         }
 

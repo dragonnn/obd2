@@ -1,10 +1,12 @@
 use core::fmt::Write;
 
+use defmt::trace;
 use display_interface::DisplayError;
+use embassy_time::Instant;
 use embedded_graphics::{
     mono_font::{
-        ascii::{FONT_10X20, FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD},
         MonoTextStyle,
+        ascii::{FONT_6X10, FONT_6X13_BOLD, FONT_9X15_BOLD, FONT_10X20},
     },
     pixelcolor::Gray4,
     prelude::*,
@@ -62,6 +64,7 @@ impl GearboxGear {
 
     pub fn draw<D: DrawTarget<Color = Gray4>>(&mut self, target: &mut D) -> Result<(), D::Error> {
         if self.redraw {
+            let now = Instant::now();
             let mut text: String<16> = String::new();
             core::write!(text, "{}", self.gear).ok();
 
@@ -107,6 +110,8 @@ impl GearboxGear {
             text.draw(target)?;
             text2.draw(target)?;
 
+            let elapsed_us = now.elapsed().as_micros() as u32;
+            trace!("GearboxGear draw: {=u32},{=u32:03}ms", elapsed_us / 1000, elapsed_us % 1000);
             self.redraw = false;
         }
 
