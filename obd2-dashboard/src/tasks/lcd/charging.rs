@@ -54,8 +54,8 @@ impl LcdChargingState {
 
             electric_power: Power::new(Point::new(128 + 32, 14)),
             electric_power_arrow: Arrow::new(
-                Point { x: 9 + 128, y: 64 / 2 - 9 },
-                Size { width: 54, height: 16 },
+                Point { x: 9 + 128, y: 64 / 2 - 13 },
+                Size { width: 54, height: 24 },
                 14,
                 ArrowDirection::Reverse,
             ),
