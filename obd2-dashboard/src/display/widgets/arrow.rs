@@ -131,16 +131,11 @@ impl Arrow {
                 for a in a_start..a_end {
                     let base_x = self.position.x + spacing * a + scroll;
 
-                    let vx = if is_forward {
-                        base_x + gx
-                    } else {
-                        base_x - dx
-                    };
+                    let vx = if is_forward { base_x + gx } else { base_x - dx };
 
                     trace!("vx={=i32} vw={=i32} y={=i32}", vx, vw, y);
 
-                    Rectangle::new(Point::new(vx, y), Size::new(vw as u32, 1))
-                        .draw_styled(&fill_color, &mut area)?;
+                    Rectangle::new(Point::new(vx, y), Size::new(vw as u32, 1)).draw_styled(&fill_color, &mut area)?;
                 }
             }
 
