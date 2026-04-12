@@ -53,8 +53,8 @@ fugit = "0.3.9"
 # Embeded hal
 embedded-hal = "1.0.0"
 embedded-hal-async = "1.0.0"
-embedded-io = "0.6.1"
-embedded-io-async = "0.6.1"
+embedded-io = "0.7.1"
+embedded-io-async = "0.7.0"
 embedded-hal-bus = { version = "0.3.0", features = ["async"] }
 embassy-futures = "0.1.2"
 
@@ -89,14 +89,13 @@ inverted-pin = "1.0.0"
 profont = "0.7.0"
 
 heapless = { version = "0.9.2", features = ["defmt"] }
-heapless08 = { package = "heapless", version = "0.8.0", features = ["defmt-03"] }
 
 # OBD2 deps
 modular-bitfield = "0.13.1"
 embedded-can = "0.4.1"
 bitvec = { version = "1.0", default-features = false }
 
-strum = { version = "0.27.2", features = ["derive"], default-features = false }
+strum = { version = "0.28.0", features = ["derive"], default-features = false }
 enum_dispatch = "0.3.13"
 statig = { version = "0.4.1", features = ["async"] }
 
