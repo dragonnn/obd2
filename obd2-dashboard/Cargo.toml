@@ -39,7 +39,12 @@ panic-persist = { version = "0.3.0", features = [
 
 esp-println = { version = "0.16.1", features = ["esp32c6"] }
 esp-alloc = { version = "0.9.0" }
-esp-radio = { version = "0.17.0", features = ["esp32c6", "ieee802154", "defmt", "unstable"] }
+esp-radio = { version = "0.17.0", features = [
+    "esp32c6",
+    "ieee802154",
+    "defmt",
+    "unstable",
+] }
 ieee802154 = "0.6.1"
 serde-encrypt = { version = "0.7.0", default-features = false }
 serde = { version = "1.0.228", default-features = false, features = [
@@ -98,6 +103,7 @@ bitvec = { version = "1.0", default-features = false }
 strum = { version = "0.28.0", features = ["derive"], default-features = false }
 enum_dispatch = "0.3.13"
 statig = { version = "0.4.1", features = ["async"] }
+async-debounce = "0.3.0"
 
 types = { path = "../types", features = ["id_obd2dashboard"] }
 
@@ -126,20 +132,20 @@ embassy-time = { git = "https://github.com/embassy-rs/embassy.git", branch = "ma
 embassy-time-driver = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
 embassy-time-queue-utils = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
 
-esp-hal = { package = "esp-hal", git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-rtos = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-rom-sys = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-sync = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-alloc = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-radio = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-radio-rtos-driver = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-phy = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-backtrace = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-println = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-bootloader-esp-idf = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-hal-procmacros = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-metadata-generated = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
-esp-config = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-hal = { package = "esp-hal", git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-rtos = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-rom-sys = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-sync = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-alloc = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-radio = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-radio-rtos-driver = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-phy = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-backtrace = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-println = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-bootloader-esp-idf = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-hal-procmacros = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-metadata-generated = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
+esp-config = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main" }
 
 [features]
 #defmt-brtt = ["dep:defmt-brtt"]

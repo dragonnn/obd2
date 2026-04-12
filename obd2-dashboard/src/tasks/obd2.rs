@@ -155,7 +155,7 @@ impl Obd2PidSets {
         let delay = match self {
             Self::Charging => embassy_time::Duration::from_secs(1),
             Self::IgnitionOff => embassy_time::Duration::from_secs(1),
-            Self::IgnitionOn | Self::None => embassy_time::Duration::from_millis(150),
+            Self::IgnitionOn | Self::None => embassy_time::Duration::from_millis(110),
         };
         embassy_time::Timer::after(delay).await;
     }
