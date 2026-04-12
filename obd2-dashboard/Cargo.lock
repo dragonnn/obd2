@@ -145,7 +145,7 @@ dependencies = [
  "embedded-io 0.7.1",
  "embedded-io-async 0.7.0",
  "futures-intrusive",
- "heapless 0.9.1",
+ "heapless 0.8.0",
 ]
 
 [[package]]
@@ -741,7 +741,7 @@ dependencies = [
  "embedded-io-async 0.7.0",
  "futures-core",
  "futures-sink",
- "heapless 0.9.1",
+ "heapless 0.9.2",
 ]
 
 [[package]]
@@ -790,7 +790,7 @@ version = "0.3.0"
 source = "git+https://github.com/embassy-rs/embassy.git?branch=main#b038fb99a94729cb4857009d6031da27af77d17f"
 dependencies = [
  "embassy-executor-timer-queue",
- "heapless 0.9.1",
+ "heapless 0.9.2",
 ]
 
 [[package]]
@@ -1009,7 +1009,7 @@ dependencies = [
  "esp-config",
  "esp-metadata-generated",
  "esp-println",
- "heapless 0.9.1",
+ "heapless 0.9.2",
  "riscv 0.15.0",
  "xtensa-lx",
 ]
@@ -1179,7 +1179,7 @@ dependencies = [
  "esp-wifi-sys-esp32s2",
  "esp-wifi-sys-esp32s3",
  "esp32c6",
- "heapless 0.9.1",
+ "heapless 0.9.2",
  "ieee802154",
  "instability",
  "num-derive",
@@ -1581,9 +1581,9 @@ dependencies = [
 
 [[package]]
 name = "heapless"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1edcd5a338e64688fbdcb7531a846cfd3476a54784dcb918a0844682bc7ada5"
+checksum = "2af2455f757db2b292a9b1768c4b70186d443bcb3b316252d6b540aec1cd89ed"
 dependencies = [
  "defmt 1.0.1",
  "hash32 0.3.1",
@@ -1735,10 +1735,10 @@ dependencies = [
  "esp-rtos",
  "fugit",
  "heapless 0.8.0",
- "heapless 0.9.1",
+ "heapless 0.9.2",
  "ieee802154",
  "inverted-pin",
- "modular-bitfield 0.12.0",
+ "modular-bitfield 0.13.1",
  "num-traits",
  "once_cell",
  "panic-persist",
@@ -1852,11 +1852,11 @@ dependencies = [
 
 [[package]]
 name = "modular-bitfield"
-version = "0.12.0"
+version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be0d5274763b5572c8f29dadb5cd0bc59de64c805de433c1b556075f733b0a1a"
+checksum = "2956e537fc68236d2aa048f55704f231cc93f1c4de42fe1ecb5bd7938061fc4a"
 dependencies = [
- "modular-bitfield-impl 0.12.0",
+ "modular-bitfield-impl 0.13.1",
  "static_assertions",
 ]
 
@@ -1873,9 +1873,9 @@ dependencies = [
 
 [[package]]
 name = "modular-bitfield-impl"
-version = "0.12.0"
+version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8eec4327f127d4d18c54c8bfbf7b05d74cc9a1befdcc6283a241238ffbc84c6"
+checksum = "59b43b4fd69e3437618106f7754f34021b831a514f9e1a98ae863cabcd8d8dad"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2700,9 +2700,9 @@ dependencies = [
 
 [[package]]
 name = "tinybmp"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df43af2cb7b369009aa14144959bb4f2720ab62034c9073242f2d3a186c2edb6"
+checksum = "acb540c3e6f049f914d9c3eaf86ca415e264cf42d2b25bb5c24241af1a1e3aea"
 dependencies = [
  "embedded-graphics",
 ]
