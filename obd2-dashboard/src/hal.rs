@@ -7,7 +7,6 @@ use embassy_time::Instant;
 use esp_backtrace as _;
 use esp_hal::{
     Async,
-    aes::dma::AesDma,
     clock::{Clocks, CpuClock},
     delay::Delay,
     dma::{DmaPriority, DmaRxBuf, DmaTxBuf},
@@ -23,7 +22,7 @@ use esp_hal::{
     timer::{OneShotTimer, timg::TimerGroup},
     usb_serial_jtag::UsbSerialJtag,
 };
-use esp_ieee802154::{Config, Frame, Ieee802154};
+use esp_radio::ieee802154::{Config, Frame, Ieee802154};
 use fugit::{ExtU32, HertzU32, RateExtU32 as _};
 use sh1122::{AsyncDisplay, PixelCoord, display::DisplayRotation};
 use static_cell::StaticCell;
@@ -126,7 +125,9 @@ pub fn init() -> Hal {
 
     let timg0 = TimerGroup::new(peripherals.TIMG0);
 
-    esp_hal_embassy::init(timg0.timer0);
+    use esp_hal::interrupt::software::SoftwareInterruptControl;
+    let software_interrupt = SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
+    esp_rtos::start(timg0.timer0, software_interrupt.software_interrupt0);
 
     let mut rtc = Rtc::new(peripherals.LPWR);
 

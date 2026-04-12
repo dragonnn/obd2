@@ -9,8 +9,7 @@ use embassy_sync::{
     signal::Signal,
 };
 use embassy_time::{Duration, Instant, Ticker, Timer, with_timeout};
-use esp_hal::aes::{Aes, Mode, dma::AesDma};
-use esp_ieee802154::{Config, Frame, Ieee802154, ReceivedFrame};
+use esp_radio::ieee802154::{Config, Frame, Ieee802154, ReceivedFrame};
 use heapless::{index_map::FnvIndexMap, index_set::FnvIndexSet};
 use ieee802154::mac::{Address, FrameContent, FrameType, FrameVersion, Header, PanId, ShortAddress};
 use serde::{Deserialize, Serialize};
@@ -36,7 +35,7 @@ static LAST_POSITION: Mutex<CriticalSectionRawMutex, Instant> = Mutex::new(Insta
 
 #[embassy_executor::task]
 pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
-    spawner.must_spawn(ieee802154_run(ieee802154));
+    spawner.spawn(ieee802154_run(ieee802154).unwrap());
 
     let send_ticker_duration = Duration::from_secs(15);
     let mut send_ticker = Ticker::every(send_ticker_duration);
@@ -182,7 +181,7 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
         promiscuous: true,
         pan_id: Some(0x4242),
         short_addr: Some(0x2222),
-        cca_mode: esp_ieee802154::CcaMode::Carrier,
+        cca_mode: esp_radio::ieee802154::CcaMode::Carrier,
         txpower: 20,
         rx_when_idle: true,
         auto_ack_tx: false,
@@ -242,7 +241,7 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
 #[derive(Debug)]
 pub enum AsyncIeee802154Error {
     Timeout,
-    Ieee802154(esp_ieee802154::Error),
+    Ieee802154(esp_radio::ieee802154::Error),
     SerdeEncrypt,
 }
 
@@ -256,8 +255,8 @@ impl defmt::Format for AsyncIeee802154Error {
     }
 }
 
-impl From<esp_ieee802154::Error> for AsyncIeee802154Error {
-    fn from(err: esp_ieee802154::Error) -> Self {
+impl From<esp_radio::ieee802154::Error> for AsyncIeee802154Error {
+    fn from(err: esp_radio::ieee802154::Error) -> Self {
         Self::Ieee802154(err)
     }
 }
@@ -339,7 +338,7 @@ impl AsyncIeee802154 {
                         auxiliary_security_header: None,
                     },
                     content: FrameContent::Data,
-                    payload: unwrap!(heapless08::Vec::from_slice(chunk).ok()),
+                    payload: chunk.to_vec(),
                     footer: [0, 0],
                 };
                 if self.transmit_raw(&frame, Duration::from_millis(100)).await.is_err() {
@@ -380,7 +379,7 @@ impl AsyncIeee802154 {
         *LAST_SEND.lock().await = Instant::now();
         self.tx_done_signal.reset();
         //self.rx_available_signal.reset();
-        self.ieee802154.transmit(frame)?;
+        self.ieee802154.transmit(frame, false)?;
         if with_timeout(timeout, self.tx_done_signal.wait()).await.is_err() {
             warn!("timeout waiting for tx_done_signal, timeout was: {}ms", timeout.as_millis());
         }

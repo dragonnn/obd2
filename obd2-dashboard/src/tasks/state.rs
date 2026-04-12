@@ -2,7 +2,7 @@ use defmt::*;
 use embassy_futures::select::{Either::*, select};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 use embassy_time::{Duration, Instant, with_timeout};
-use esp_hal_procmacros::ram;
+use esp_hal::ram;
 use statig::prelude::*;
 use types::OnBoardChargerPid;
 
@@ -34,7 +34,7 @@ pub enum KiaEvent {
     Ticker,
 }
 
-#[ram(rtc_fast, persistent)]
+#[ram(unstable(rtc_fast, persistent))]
 static mut LAST_IGNITION_ON: u64 = 0;
 
 #[derive()]

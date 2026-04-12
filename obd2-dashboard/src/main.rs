@@ -15,7 +15,7 @@ use defmt_brtt as _;
 #[cfg(not(feature = "defmt-brtt"))]
 use defmt_rtt as _;
 use embassy_executor::Spawner;
-use esp_hal_embassy::main;
+use esp_rtos::main;
 use panic_persist::{self as _, get_panic_message_utf8};
 
 mod cap1188;
@@ -58,20 +58,20 @@ async fn main(spawner: Spawner) {
     #[cfg(not(feature = "xiao"))]
     {
         info!("running default config");
-        spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
-        spawner.spawn(tasks::temperature::run(hal.temperature)).ok();
-        spawner.spawn(tasks::lcd::run(hal.display1, hal.display2, panic)).ok();
-        spawner.spawn(tasks::led::run(hal.led)).ok();
-        spawner.spawn(tasks::buttons::run(hal.buttons)).ok();
-        spawner.spawn(tasks::can_listen::run(hal.can_listen)).ok();
-        spawner.spawn(tasks::power::run(hal.power)).ok();
-        spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner)).ok();
+        spawner.spawn(tasks::obd2::run(hal.obd2).unwrap());
+        spawner.spawn(tasks::temperature::run(hal.temperature).unwrap());
+        spawner.spawn(tasks::lcd::run(hal.display1, hal.display2, panic).unwrap());
+        spawner.spawn(tasks::led::run(hal.led).unwrap());
+        spawner.spawn(tasks::buttons::run(hal.buttons).unwrap());
+        spawner.spawn(tasks::can_listen::run(hal.can_listen).unwrap());
+        spawner.spawn(tasks::power::run(hal.power).unwrap());
+        spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner).unwrap());
     }
 
     #[cfg(feature = "xiao")]
     {
         warn!("running xia config");
-        spawner.spawn(tasks::obd2::run(hal.obd2)).ok();
+        spawner.spawn(tasks::obd2::run(hal.obd2).unwrap());
     }
 
     tasks::state::run(hal.rtc).await;

@@ -6,17 +6,15 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-esp-hal = { version = "=1.0.0-rc.0", features = [
+esp-hal = { version = "~1.0", features = [
     "esp32c6",
     "defmt",
     "unstable",
 ] } # Base ESP deps
-esp-bootloader-esp-idf = { version = "0.2.0", features = ["esp32c6"] }
-esp-hal-embassy = { version = "0.9.0", features = ["esp32c6"] }
-esp-hal-procmacros = { version = "0.19.0", features = ["embassy"] }
-esp-backtrace = { version = "0.17.0", features = [
+esp-bootloader-esp-idf = { version = "0.4.0", features = ["esp32c6"] }
+esp-rtos = { version = "0.2.0", features = ["esp32c6", "embassy"] }
+esp-backtrace = { version = "0.18.1", features = [
     "esp32c6",
-    "exception-handler",
     "defmt",
     "custom-halt",
 ] }
@@ -39,9 +37,9 @@ panic-persist = { version = "0.3.0", features = [
     "utf8",
 ] }
 
-esp-println = { version = "0.15.0", features = ["esp32c6"] }
-esp-alloc = { version = "0.8.0" }
-esp-ieee802154 = { version = "0.8.0", features = ["esp32c6"] }
+esp-println = { version = "0.16.1", features = ["esp32c6"] }
+esp-alloc = { version = "0.9.0" }
+esp-radio = { version = "0.17.0", features = ["esp32c6", "ieee802154", "defmt", "unstable"] }
 ieee802154 = "0.6.1"
 serde-encrypt = { version = "0.7.0", default-features = false }
 serde = { version = "1.0.228", default-features = false, features = [
@@ -67,10 +65,10 @@ once_cell = { version = "1.21.3", default-features = false, features = [
 # portable-atomic = { version = "1.5", features = ["unsafe-assume-single-core"] }
 
 # Embassy deps
-embassy-executor = { version = "0.7.0", features = ["nightly", "arch-riscv32"] }
-embassy-time = { version = "0.5.0", features = ["defmt"] }
-embassy-embedded-hal = { version = "0.5.0", features = ["defmt"] }
-embassy-sync = { version = "0.7.2", features = ["defmt"] }
+embassy-executor = { version = "0.10.0", features = ["nightly"] }
+embassy-time = { version = "0.5.1", features = ["defmt"] }
+embassy-embedded-hal = { version = "0.6.0", features = ["defmt"] }
+embassy-sync = { version = "0.8.0", features = ["defmt"] }
 critical-section = "1.2.0"
 
 
@@ -120,9 +118,31 @@ debug = 2
 [profile.dev]
 opt-level = "s"
 
+
 [patch.crates-io]
-#esp-hal = { git = "https://github.com/esp-rs/esp-hal/", rev = "f95ab0def50130a9d7da0ba0101c921e239ecdb5" }
-#esp-hal-embassy = { git = "https://github.com/esp-rs/esp-hal/", rev = "f95ab0def50130a9d7da0ba0101c921e239ecdb5" }
+embassy-sync = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
+embassy-embedded-hal = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
+embassy-net = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
+embassy-net-ppp = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
+embassy-executor = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
+embassy-time = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
+embassy-time-driver = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
+embassy-time-queue-utils = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
+
+esp-hal = { package = "esp-hal", git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-rtos = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-rom-sys = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-sync = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-alloc = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-radio = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-radio-rtos-driver = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-phy = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-backtrace = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-println = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-bootloader-esp-idf = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-hal-procmacros = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-metadata-generated = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
+esp-config = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
 
 [features]
 #defmt-brtt = ["dep:defmt-brtt"]
