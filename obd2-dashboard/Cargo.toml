@@ -27,10 +27,10 @@ esp-backtrace = { version = "0.18.1", features = [
 #    "wifi-default",
 #    "phy-enable-usb",
 #], default-features = false }
-riscv = "0.15.0"
+riscv = "0.16.0"
 defmt = "1.0.1"
 #defmt-serial = "0.8.0"
-defmt-rtt = "1.0.0"
+defmt-rtt = "1.1.0"
 #defmt-brtt = { version = "0.1.1", features = ["async-await"], optional = true }
 panic-persist = { version = "0.3.0", features = [
     "custom-panic-handler",
@@ -46,8 +46,8 @@ serde = { version = "1.0.228", default-features = false, features = [
     "derive",
     "alloc",
 ] }
-chrono = { version = "0.4.42", default-features = false }
-fugit = "0.3.7"
+chrono = { version = "0.4.44", default-features = false }
+fugit = "0.3.9"
 #esp-wifi  = { git = "https://github.com/esp-rs/esp-wifi/", rev = "7632e74", features = ["esp32c3", "wifi"] }
 
 # Embeded hal
@@ -59,7 +59,7 @@ embedded-hal-bus = { version = "0.3.0", features = ["async"] }
 embassy-futures = "0.1.2"
 
 static_cell = { version = "2.1.1", features = ["nightly"] }
-once_cell = { version = "1.21.3", default-features = false, features = [
+once_cell = { version = "1.21.4", default-features = false, features = [
     "critical-section",
 ] }
 # portable-atomic = { version = "1.5", features = ["unsafe-assume-single-core"] }
@@ -74,9 +74,9 @@ critical-section = "1.2.0"
 
 # OLED SSD1306 deps
 sh1122 = { path = "./crates/sh1122" }
-embedded-graphics = "0.8.0"
+embedded-graphics = "0.8.2"
 tinybmp = "0.6.0"
-embedded-text = "0.7.0"
+embedded-text = "0.7.3"
 embedded-iconoir = { version = "0.2.3", features = [
     "24px",
     "144px",
@@ -122,8 +122,6 @@ opt-level = "s"
 [patch.crates-io]
 embassy-sync = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
 embassy-embedded-hal = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
-embassy-net = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
-embassy-net-ppp = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
 embassy-executor = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
 embassy-time = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
 embassy-time-driver = { git = "https://github.com/embassy-rs/embassy.git", branch = "main" }
