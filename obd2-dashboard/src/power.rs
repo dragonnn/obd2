@@ -1,21 +1,15 @@
-use async_debounce::Debouncer;
 use defmt::*;
 use embassy_time::Duration;
-use embedded_hal::{delay::DelayNs, digital::InputPin as _};
-use embedded_hal_async::digital::Wait as _;
 use esp_hal::{
     delay::Delay,
-    gpio::{self, InputPin, Pin, RtcPin, RtcPinWithResistors},
+    gpio::RtcPinWithResistors,
     rtc_cntl::sleep::{Ext1WakeupSource, TimerWakeupSource, WakeupLevel},
 };
 
-use crate::{
-    debug::internal_debug,
-    types::{IngGpio, Rs, Rtc},
-};
+use crate::types::{IngGpio, Rs, Rtc};
 
 pub struct Power {
-    ing_gpio: Debouncer<IngGpio>,
+    ing_gpio: IngGpio,
     rs_gpio: Rs,
     delay: Delay,
     rtc: Rtc,
@@ -28,7 +22,7 @@ pub enum Ignition {
 
 impl Power {
     pub fn new(ing_gpio: IngGpio, delay: Delay, rtc: Rtc, rs_gpio: Rs) -> Self {
-        Self { ing_gpio: Debouncer::new(ing_gpio, Duration::from_millis(50)), delay, rtc, rs_gpio }
+        Self { ing_gpio, delay, rtc, rs_gpio }
     }
 
     pub fn deep_sleep(&mut self, duration: Duration) -> ! {
@@ -46,23 +40,23 @@ impl Power {
     }
 
     pub fn is_ignition_on(&mut self) -> bool {
-        self.ing_gpio.is_high().unwrap()
+        self.ing_gpio.is_high()
     }
 
     pub fn is_ignition_off(&mut self) -> bool {
-        self.ing_gpio.is_low().unwrap()
+        self.ing_gpio.is_low()
     }
 
     pub async fn wait_for_ignition_off(&mut self) {
-        self.ing_gpio.wait_for_falling_edge().await.unwrap();
+        self.ing_gpio.wait_for_falling_edge().await;
     }
 
     pub async fn wait_for_ignition_on(&mut self) {
-        self.ing_gpio.wait_for_rising_edge().await.unwrap();
+        self.ing_gpio.wait_for_rising_edge().await;
     }
 
     pub async fn wait_for_ignition_change(&mut self) -> Ignition {
-        self.ing_gpio.wait_for_any_edge().await.unwrap();
+        self.ing_gpio.wait_for_any_edge().await;
         if self.is_ignition_on() {
             warn!("ignition on");
             Ignition::On
