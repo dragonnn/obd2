@@ -74,6 +74,7 @@ async fn main(spawner: Spawner) {
     #[cfg(feature = "xiao")]
     {
         warn!("running xia config");
+        spawner.spawn(tasks::lcd::run(hal.display1, hal.display2, None).unwrap());
         spawner.spawn(tasks::obd2::run(hal.obd2).unwrap());
         spawner.spawn(tasks::power::run(hal.power).unwrap());
     }

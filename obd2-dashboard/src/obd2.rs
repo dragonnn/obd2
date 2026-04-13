@@ -111,6 +111,9 @@ impl Obd2 {
         let mut obd2_message_id = 0;
         let request_id_raw = request.id_header.get_i32();
         let expected_response_id = request_id_raw + 8;
+
+        let mut got_any_valid_frame = false;
+
         'outer: loop {
             let rx_status = self.mcp2515.rx_status().await?;
             if rx_status.rx0if() {
@@ -146,6 +149,7 @@ impl Obd2 {
                         self.obd2_message_buffer.clear();
                         self.obd2_message_buffer.extend_from_slice(&can_frame.data);
                         obd2_data = Some(self.obd2_message_buffer.as_slice());
+                        got_any_valid_frame = true;
                         break 'outer;
                     }
                     0x10 => {
@@ -158,10 +162,13 @@ impl Obd2 {
 
                         unwrap!(self.obd2_message_buffer.extend_from_slice(&can_frame.data[2..]).ok());
 
+                        got_any_valid_frame = true;
+
                         obd2_message_id = 0;
                     }
                     0x30 => {
                         let timeout_ms = can_frame.data[2];
+                        got_any_valid_frame = true;
                     }
                     0x20 => {
                         //internal_debug!("consecutive frame {:x?}", can_frame.data);
@@ -176,6 +183,7 @@ impl Obd2 {
                                     //info!("got last consecutive frame: {}", new_obd2_message_id);
                                     break 'outer;
                                 }
+                                got_any_valid_frame = true;
                                 obd2_message_id = new_obd2_message_id;
                             } else {
                                 error!("consecutive frame id mismatch: {} != {}", new_obd2_message_id, obd2_message_id);
@@ -198,9 +206,12 @@ impl Obd2 {
                     }
                 }
             }
-            while embassy_time::with_timeout(embassy_time::Duration::from_millis(100), self.mcp2515.interrupt())
-                .await
-                .is_err()
+            while embassy_time::with_timeout(
+                if got_any_valid_frame { Duration::from_millis(100) } else { Duration::from_millis(50) },
+                self.mcp2515.interrupt(),
+            )
+            .await
+            .is_err()
             {
                 if _lock.is_some() {
                     error!("timeout waiting for interrupt, drooping SPI lock");
@@ -253,7 +264,7 @@ impl Obd2 {
         let obd2_debug_pids_enabled = obd2_debug_pids_enabled();
         let mut ret = false;
         if errors < 10 {
-            match with_timeout(Duration::from_millis(1650), self.request_pid::<PID>()).await {
+            match with_timeout(Duration::from_millis(350), self.request_pid::<PID>()).await {
                 Ok(Ok((pid_result, buffer))) => {
                     let pid_result = pid_result.into_event();
                     insert_send_pid(&pid_result).await;
