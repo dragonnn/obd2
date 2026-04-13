@@ -1,16 +1,12 @@
 use defmt::*;
 use embassy_time::Duration;
-use embedded_hal::delay::DelayNs;
 use esp_hal::{
     delay::Delay,
-    gpio::{self, InputPin, Pin, RtcPin, RtcPinWithResistors},
+    gpio::RtcPinWithResistors,
     rtc_cntl::sleep::{Ext1WakeupSource, TimerWakeupSource, WakeupLevel},
 };
 
-use crate::{
-    debug::internal_debug,
-    types::{IngGpio, Rs, Rtc},
-};
+use crate::types::{IngGpio, Rs, Rtc};
 
 pub struct Power {
     ing_gpio: IngGpio,
@@ -43,11 +39,11 @@ impl Power {
         rtc.sleep_deep(&[&timer, &rtcio]);
     }
 
-    pub fn is_ignition_on(&self) -> bool {
+    pub fn is_ignition_on(&mut self) -> bool {
         self.ing_gpio.is_high()
     }
 
-    pub fn is_ignition_off(&self) -> bool {
+    pub fn is_ignition_off(&mut self) -> bool {
         self.ing_gpio.is_low()
     }
 

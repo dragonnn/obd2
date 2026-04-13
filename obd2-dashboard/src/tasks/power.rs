@@ -1,7 +1,7 @@
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use defmt::*;
-use embassy_futures::select::{Either3::*, select3};
+use embassy_futures::select::{Either4::*, select4};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, pubsub::PubSubChannel, signal::Signal};
 use embassy_time::{Duration, Timer};
 use esp_hal::{
@@ -73,8 +73,13 @@ pub async fn run(mut power: Power) {
 
     warn!("power task select");
     loop {
-        match select3(power.wait_for_ignition_change(), power_events_sub.next_message_pure(), Timer::after_secs(5))
-            .await
+        match select4(
+            power.wait_for_ignition_change(),
+            power_events_sub.next_message_pure(),
+            Timer::after_secs(5),
+            Timer::after_secs(10),
+        )
+        .await
         {
             First(ignition) => match ignition {
                 Ignition::On => {
@@ -119,6 +124,13 @@ pub async fn run(mut power: Power) {
                 }
             },
             Third(_) => {
+                if power.is_ignition_on() {
+                    KIA_EVENTS.send(KiaEvent::IgnitionOn).await;
+                } else {
+                    KIA_EVENTS.send(KiaEvent::IgnitionOff).await;
+                }
+            }
+            Fourth(_) => {
                 if power.is_ignition_on() {
                     KIA_EVENTS.send(KiaEvent::IgnitionOn).await;
                 } else {
