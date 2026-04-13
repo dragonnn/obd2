@@ -2,7 +2,7 @@ use defmt::*;
 use embassy_time::Duration;
 use esp_hal::{
     delay::Delay,
-    gpio::RtcPinWithResistors,
+    gpio::{Input, InputConfig, Pull, RtcPinWithResistors},
     rtc_cntl::sleep::{Ext1WakeupSource, TimerWakeupSource, WakeupLevel},
 };
 
@@ -30,6 +30,8 @@ impl Power {
         info!("going to deep sleep with timer wakeup: {:?}", defmt::Debug2Format(&timer));
 
         let mut ing_pin = unsafe { esp_hal::gpio::AnyPin::steal(5) };
+        let input = Input::new(ing_pin.reborrow(), InputConfig::default().with_pull(Pull::Up));
+        core::mem::drop(input);
 
         let wakeup_pins: &mut [(&mut dyn RtcPinWithResistors, WakeupLevel)] = &mut [(&mut ing_pin, WakeupLevel::High)];
 

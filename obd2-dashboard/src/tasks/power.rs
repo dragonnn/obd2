@@ -90,7 +90,7 @@ pub async fn run(mut power: Power) {
                 }
             }
             Second(power_event) => match power_event {
-                PowerEvent::Shutdown(duration) => {
+                PowerEvent::Shutdown(mut duration) => {
                     warn!("shutdown event received for {:?}s", duration.as_secs());
                     unwrap!(SHUTDOWN.publisher()).publish_immediate(());
                     let delay_duration = if debugger_connected() {
@@ -116,6 +116,10 @@ pub async fn run(mut power: Power) {
                         esp_hal::system::software_reset();
                     } else {
                         info!("deep sleeping for {:?}", duration);
+                        #[cfg(feature = "xiao")]
+                        {
+                            duration = Duration::from_secs(5 * 60);
+                        }
                         power.deep_sleep(duration);
                     }
                 }

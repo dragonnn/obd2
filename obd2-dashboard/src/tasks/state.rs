@@ -294,6 +294,11 @@ impl KiaState {
                     set_obd2_sets(Obd2PidSets::IgnitionOff).await;
                 }
 
+                #[cfg(feature = "xiao")]
+                {
+                    timeout_duration = Duration::from_secs(10);
+                }
+
                 if timeout.elapsed() > timeout_duration {
                     Transition(State::shutdown(*shutdown_duration))
                 } else {
