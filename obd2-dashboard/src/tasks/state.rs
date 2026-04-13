@@ -143,18 +143,23 @@ impl KiaState {
                 Handled
             }
             KiaEvent::Obd2LoopEnd(set, _all) => {
+                let mut elapsed = 5 * 60;
+                #[cfg(feature = "xiao")]
+                {
+                    elapsed = 10;
+                }
                 if let Some(obc_pid) = obc_pid {
                     if obc_pid.ac_input_current > 0.5 && obc_pid.ac_input_voltage_rms > 20.0 {
                         Transition(State::charging(None, 0))
                     } else {
-                        if timeout.elapsed().as_secs() > 5 * 60 {
+                        if timeout.elapsed().as_secs() > elapsed {
                             Transition(State::ignition_off(Instant::now(), Duration::from_secs(60), false, false))
                         } else {
                             Handled
                         }
                     }
                 } else {
-                    if timeout.elapsed().as_secs() > 5 * 60 {
+                    if timeout.elapsed().as_secs() > elapsed {
                         Transition(State::ignition_off(Instant::now(), Duration::from_secs(60), false, false))
                     } else {
                         Handled
