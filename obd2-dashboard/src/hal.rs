@@ -196,7 +196,10 @@ pub fn init() -> Hal {
     #[cfg(feature = "xiao")]
     let ing = Input::new(peripherals.GPIO21, input_config.with_pull(Pull::Up));
     let int_cap1188 = Input::new(peripherals.GPIO3, input_config.with_pull(Pull::Up));
+    #[cfg(not(feature = "xiao"))]
     let led = Output::new(peripherals.GPIO0, false.into(), output_config);
+    #[cfg(feature = "xiao")]
+    let led = Output::new(peripherals.GPIO15, false.into(), output_config);
 
     dc.set_high();
     rs.set_low();

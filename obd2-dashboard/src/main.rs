@@ -77,6 +77,7 @@ async fn main(spawner: Spawner) {
         spawner.spawn(tasks::lcd::run(hal.display1, hal.display2, None).unwrap());
         spawner.spawn(tasks::obd2::run(hal.obd2).unwrap());
         spawner.spawn(tasks::power::run(hal.power).unwrap());
+        spawner.spawn(tasks::led::run(hal.led).unwrap());
     }
 
     tasks::state::run(hal.rtc).await;
