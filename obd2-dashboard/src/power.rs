@@ -31,8 +31,8 @@ impl Power {
         #[cfg(not(feature = "xiao"))]
         let mut ing_pin = unsafe { esp_hal::gpio::AnyPin::steal(5) };
         #[cfg(feature = "xiao")]
-        let mut ing_pin = unsafe { esp_hal::gpio::AnyPin::steal(21) };
-        let input = Input::new(ing_pin.reborrow(), InputConfig::default().with_pull(Pull::Down));
+        let mut ing_pin = unsafe { esp_hal::gpio::AnyPin::steal(0) };
+        let input = Input::new(ing_pin.reborrow(), InputConfig::default().with_pull(Pull::Up));
         core::mem::drop(input);
 
         let wakeup_pins: &mut [(&mut dyn RtcPinWithResistors, WakeupLevel)] = &mut [(&mut ing_pin, WakeupLevel::High)];
