@@ -11,7 +11,7 @@ esp-hal = { version = "~1.0", features = [
     "defmt",
     "unstable",
 ] } # Base ESP deps
-esp-bootloader-esp-idf = { version = "0.4.0", features = ["esp32c6"] }
+esp-bootloader-esp-idf = { version = "0.4.0", features = ["defmt", "esp32c6"] }
 esp-rtos = { version = "0.2.0", features = ["esp32c6", "embassy"] }
 esp-backtrace = { version = "0.18.1", features = [
     "esp32c6",
@@ -30,14 +30,16 @@ esp-backtrace = { version = "0.18.1", features = [
 riscv = "0.16.0"
 defmt = "1.0.1"
 #defmt-serial = "0.8.0"
-defmt-rtt = "1.1.0"
+#defmt-rtt = "1.1.0"
 #defmt-brtt = { version = "0.1.1", features = ["async-await"], optional = true }
-panic-persist = { version = "0.3.0", features = [
-    "custom-panic-handler",
-    "utf8",
-] }
+#panic-persist = { version = "0.3.0", features = [
+#    "custom-panic-handler",
+#    "utf8",
+#] }
+panic-rtt-target = { version = "0.2.0", features = ["defmt"] }
+rtt-target       = { version = "0.6.2", features = ["defmt"] }
 
-esp-println = { version = "0.16.1", features = ["esp32c6"] }
+#esp-println = { version = "0.16.1", features = ["esp32c6"] }
 esp-alloc = { version = "0.9.0" }
 esp-radio = { version = "0.17.0", features = ["esp32c6", "ieee802154", "defmt", "unstable"] }
 ieee802154 = "0.6.1"
@@ -144,6 +146,7 @@ esp-config = { git = "https://github.com/esp-rs/esp-hal.git", branch = "main"}
 [features]
 #defmt-brtt = ["dep:defmt-brtt"]
 xiao = []
+#default = ["xiao"]
 
 [profile.dev.package.esp-wifi]
 opt-level = 3
