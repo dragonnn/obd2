@@ -248,7 +248,7 @@ impl KiaState {
         };
         info!("last ignition on: {} seconds ago", (now - last_ignition_on));
 
-        *shutdown_duration = if last_ignition_on != 0 && now - last_ignition_on > 60 * 60 {
+        *shutdown_duration = if last_ignition_on != 0 && now > last_ignition_on && now - last_ignition_on > 60 * 60 {
             Duration::from_secs(60 * 60)
         } else {
             Duration::from_secs(5 * 60)
