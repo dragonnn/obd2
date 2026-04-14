@@ -19,7 +19,7 @@ pub use frame::*;
 pub use idheader::*;
 pub use registers::*;
 
-use crate::event::{KiaEvent, KIA_EVENTS};
+use crate::event::{KIA_EVENTS, KiaEvent};
 
 pub struct Mcp2515<SPI, INT> {
     spi: SPI,
@@ -155,8 +155,14 @@ where
         config.canctrl.set_reqop(OperationMode::Sleep);
         info!("Shutting down MCP2515");
         info!("config.canctrl.clken: {:?}", config.canctrl.clken());
+        let mut shutdown_attempts = 0;
         while !self.apply_canctrl(config.canctrl, true).await {
             self.reset().await;
+            shutdown_attempts += 1;
+            if shutdown_attempts > 10 {
+                error!("Failed to shutdown MCP2515 after {} attempts, giving up", shutdown_attempts);
+                return;
+            }
             Timer::after(Duration::from_secs(1)).await;
         }
     }
