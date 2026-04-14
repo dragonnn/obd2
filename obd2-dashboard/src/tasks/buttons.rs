@@ -1,11 +1,11 @@
-use defmt::{error, info, unwrap, warn, Format};
-use embassy_futures::select::{select, Either};
+use defmt::{Format, error, info, unwrap, warn};
+use embassy_futures::select::{Either, select};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use embassy_time::Timer;
 
 use crate::{
     cap1188::Cap1188Inputs,
-    event::{KiaEvent, LcdEvent, KIA_EVENTS, LCD_EVENTS},
+    event::{KIA_EVENTS, KiaEvent, LCD_EVENTS, LcdEvent},
     tasks::power::get_shutdown_signal,
     types::Cap1188,
 };
@@ -38,7 +38,7 @@ pub async fn run(mut cap1188: Cap1188) {
     }*/
     embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     cap1188.reset().await.ok();
-
+    let mut init_attempts = 0;
     loop {
         match cap1188.init().await {
             Ok(true) => {
@@ -47,12 +47,18 @@ pub async fn run(mut cap1188: Cap1188) {
             }
             Ok(false) => {
                 info!("cap1188 init failed");
+                init_attempts += 1;
                 Timer::after(embassy_time::Duration::from_secs(1)).await;
             }
             Err(e) => {
                 info!("cap1188 init error: {:?}", e);
+                init_attempts += 1;
                 Timer::after(embassy_time::Duration::from_secs(1)).await;
             }
+        }
+        if init_attempts > 5 {
+            error!("cap1188 failed to init after {} attempts, giving up", init_attempts);
+            return;
         }
     }
     info!("cap1188 task started");

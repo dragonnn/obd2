@@ -63,13 +63,15 @@ pub async fn run(mut power: Power) {
     //    return;
     //}
 
-    if power.is_ignition_on() {
+    /*if power.is_ignition_on() {
         warn!("ignition is on, not deep sleeping");
         KIA_EVENTS.send(KiaEvent::IgnitionOn).await;
     } else {
         warn!("ignition is off, deep sleeping");
         KIA_EVENTS.send(KiaEvent::IgnitionOff).await;
-    }
+    }*/
+
+    KIA_EVENTS.send(KiaEvent::IgnitionOff).await;
 
     let mut power_events_sub = unwrap!(POWER_EVENTS.subscriber());
 
