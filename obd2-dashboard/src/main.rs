@@ -19,7 +19,7 @@ use defmt_brtt as _;
 use embassy_executor::Spawner;
 use esp_rtos::main;
 //use panic_persist::{self as _, get_panic_message_utf8};
-use panic_rtt_target as _;
+//use panic_rtt_target as _;
 
 mod cap1188;
 //mod defmt_serial;
@@ -83,15 +83,15 @@ async fn main(spawner: Spawner) {
     tasks::state::run(hal.rtc).await;
 }
 
-/*#[panic_handler]
+#[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     riscv::interrupt::machine::disable();
-    panic_persist::report_panic_info(info);
+    error!("panic: {:?}", info);
     unsafe { riscv::interrupt::machine::enable() };
 
     esp_hal::system::software_reset();
     loop {}
-}*/
+}
 
 #[unsafe(no_mangle)]
 pub extern "Rust" fn custom_halt() -> ! {
