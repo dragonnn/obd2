@@ -229,7 +229,17 @@ impl KiaState {
         self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::IgnitionOff));
 
         let now = self.rtc.lock().await.current_time_us();
-        let last_ignition_on = unsafe { LAST_IGNITION_ON };
+        let last_ignition_on = unsafe {
+            if LAST_IGNITION_ON == 0 {
+                warn!("last ignition on is zero, setting to now");
+                LAST_IGNITION_ON = now;
+                now
+            } else {
+                LAST_IGNITION_ON
+            }
+        };
+        info!("last ignition on: {} seconds ago", (now - last_ignition_on) / 1_000_000);
+
         *shutdown_duration = if last_ignition_on != 0 && now - last_ignition_on > 60 * 60 {
             Duration::from_secs(60 * 60)
         } else {
