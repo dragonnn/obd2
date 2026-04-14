@@ -37,7 +37,7 @@ mod tasks;
 mod types;
 
 fn init_heap() {
-    esp_alloc::heap_allocator!(size: 8 * 1024);
+    esp_alloc::heap_allocator!(#[unsafe(link_section = ".dram2_uninit")] size: 64 * 1024);
 }
 
 #[main]
