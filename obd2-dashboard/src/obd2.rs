@@ -264,7 +264,7 @@ impl Obd2 {
         let obd2_debug_pids_enabled = obd2_debug_pids_enabled();
         let mut ret = false;
         if errors < 10 {
-            match with_timeout(Duration::from_millis(350), self.request_pid::<PID>()).await {
+            match with_timeout(PID::timeout(), self.request_pid::<PID>()).await {
                 Ok(Ok((pid_result, buffer))) => {
                     let pid_result = pid_result.into_event();
                     insert_send_pid(&pid_result).await;
@@ -304,7 +304,7 @@ impl Obd2 {
             }
             let last_time =
                 self.obd2_pid_errors_periods.get(&type_id).map(|time| *time).unwrap_or(Instant::from_millis(0));
-            if last_time.elapsed() > Duration::from_secs(5 * 60) {
+            if last_time.elapsed() > PID::errors_timeout() {
                 error!("last error was more then 5*60s ago, clearing errors");
                 errors = 0;
             }
@@ -319,6 +319,11 @@ impl Obd2 {
         self.obd2_pid_errors.clear();
         self.obd2_pid_errors_periods.clear();
         self.obd2_pid_periods.clear();
+    }
+
+    pub fn clear_pid_errors(&mut self) {
+        self.obd2_pid_errors.clear();
+        self.obd2_pid_errors_periods.clear();
     }
 
     pub async fn send_custom_frame(&mut self, frame: Obd2Frame) -> Result<Obd2Frame, Obd2Error> {
@@ -339,5 +344,11 @@ pub trait Pid {
     fn into_error() -> types::PidError;
     fn period() -> Option<Duration> {
         None
+    }
+    fn timeout() -> Duration {
+        Duration::from_millis(350)
+    }
+    fn errors_timeout() -> Duration {
+        Duration::from_secs(5 * 60)
     }
 }

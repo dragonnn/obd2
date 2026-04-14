@@ -127,6 +127,7 @@ impl Obd2PidSets {
     async fn handle_charging(obd2: &mut Obd2) -> bool {
         let mut ret = true;
         obd2.disable_obd2_pid_periods();
+        obd2.clear_pid_errors();
 
         ret = obd2.handle_pid::<pid::BmsPid>().await && ret;
         ret = obd2.handle_pid::<pid::IceTemperaturePid>().await && ret;
@@ -142,6 +143,7 @@ impl Obd2PidSets {
     async fn handle_ignition_off(obd2: &mut Obd2) -> bool {
         let mut ret = true;
         obd2.disable_obd2_pid_periods();
+        obd2.clear_pid_errors();
         ret = obd2.handle_pid::<pid::IcuPid>().await && ret;
         ret = obd2.handle_pid::<pid::Icu2Pid>().await && ret;
         ret = obd2.handle_pid::<pid::Icu3Pid>().await && ret;

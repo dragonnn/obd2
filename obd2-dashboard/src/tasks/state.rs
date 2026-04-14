@@ -68,7 +68,7 @@ impl KiaState {
     #[action]
     async fn enter_ignition_on(&mut self) {
         unsafe {
-            LAST_IGNITION_ON = self.rtc.lock().await.current_time_us();
+            LAST_IGNITION_ON = self.rtc.lock().await.current_time_us() / 1_000_000;
             info!("last ignition on: {}", LAST_IGNITION_ON);
         }
 
@@ -78,7 +78,15 @@ impl KiaState {
         self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::IgnitionOn));
     }
 
-    #[state(entry_action = "enter_ignition_on")]
+    #[action]
+    async fn exit_ignition_on(&mut self) {
+        unsafe {
+            LAST_IGNITION_ON = self.rtc.lock().await.current_time_us() / 1_000_000;
+            info!("last ignition on: {}", LAST_IGNITION_ON);
+        }
+    }
+
+    #[state(entry_action = "enter_ignition_on", exit_action = "exit_ignition_on")]
     async fn ignition_on(&mut self, event: &KiaEvent) -> Response<State> {
         match event {
             KiaEvent::IgnitionOff => {
@@ -228,12 +236,12 @@ impl KiaState {
         set_obd2_sets(Obd2PidSets::IgnitionOff).await;
         self.tx_frame_pub.publish_immediate(types::TxFrame::State(types::State::IgnitionOff));
 
-        let now = self.rtc.lock().await.current_time_us();
+        let now = self.rtc.lock().await.current_time_us() / 1_000_000;
         let last_ignition_on = unsafe { LAST_IGNITION_ON };
         *shutdown_duration = if last_ignition_on != 0 && now - last_ignition_on > 60 * 60 {
             Duration::from_secs(60 * 60)
         } else {
-            Duration::from_secs(15 * 60)
+            Duration::from_secs(5 * 60)
         };
 
         warn!(
@@ -303,6 +311,7 @@ impl KiaState {
                 {
                     timeout_duration = Duration::from_secs(10);
                 }
+                timeout_duration = Duration::from_secs(60);
 
                 if timeout.elapsed() > timeout_duration {
                     Transition(State::shutdown(*shutdown_duration))
