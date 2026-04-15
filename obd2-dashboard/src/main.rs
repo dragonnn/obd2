@@ -74,10 +74,14 @@ async fn main(spawner: Spawner) {
     #[cfg(feature = "xiao")]
     {
         warn!("running xia config");
-        spawner.spawn(tasks::lcd::run(hal.display1, hal.display2, None).unwrap());
         spawner.spawn(tasks::obd2::run(hal.obd2).unwrap());
-        spawner.spawn(tasks::power::run(hal.power).unwrap());
+        spawner.spawn(tasks::temperature::run(hal.temperature).unwrap());
+        spawner.spawn(tasks::lcd::run(hal.display1, hal.display2, None).unwrap());
         spawner.spawn(tasks::led::run(hal.led).unwrap());
+        spawner.spawn(tasks::buttons::run(hal.buttons).unwrap());
+        spawner.spawn(tasks::can_listen::run(hal.can_listen).unwrap());
+        spawner.spawn(tasks::power::run(hal.power).unwrap());
+        spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner).unwrap());
     }
 
     tasks::state::run(hal.rtc).await;

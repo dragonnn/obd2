@@ -40,7 +40,7 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
     let send_ticker_duration = Duration::from_secs(15);
     let mut send_ticker = Ticker::every(send_ticker_duration);
 
-    let _shutdown_guard = ShutdownGuard::new();
+    let _shutdown_guard = ShutdownGuard::new("ieee802154 1");
     let mut shutdown_signal = get_shutdown_signal();
     let mut extra_send_sub = unwrap!(EXTRA_SEND.subscriber());
 
@@ -52,6 +52,7 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
         loop {
             txmessage_pub.send(TxFrame::Modem(types::Modem::Ping).into()).await;
             info!("ping sent");
+            #[cfg(not(feature = "xiao"))]
             match with_timeout(Duration::from_secs(10), rxmessage_sub.receive()).await {
                 Ok(rxmessage) => match rxmessage.frame {
                     RxFrame::Modem(types::Modem::Boot) => {
@@ -193,7 +194,7 @@ async fn ieee802154_run(mut ieee802154: Ieee802154<'static>) {
     let remote_timeout = Duration::from_secs(4);
 
     let mut ieee802154 = AsyncIeee802154::new(ieee802154);
-    let _shutdown_guard = ShutdownGuard::new();
+    let _shutdown_guard = ShutdownGuard::new("ieee802154 2");
     let mut shutdown_signal = get_shutdown_signal();
 
     let ieee802154_send_sub = IEEE802154_SEND.receiver();

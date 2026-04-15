@@ -103,25 +103,40 @@ pub async fn run(mut power: Power) {
                         Duration::from_millis(200)
                     };
 
-                    embassy_time::with_timeout(Duration::from_secs(120), async {
+                    #[cfg(not(feature = "xiao"))]
+                    let shutdown_timeout = Duration::from_secs(120);
+
+                    #[cfg(feature = "xiao")]
+                    let shutdown_timeout = Duration::from_secs(10);
+
+                    let ret = embassy_time::with_timeout(shutdown_timeout, async {
                         SHUTDOWN_REQUESTED.store(true, Ordering::Relaxed);
                         while SHUTDOWN_GUARDS.load(Ordering::Relaxed) != 0 {
                             SHUTDOWN_GUARD_DROP_SIGNAL.wait().await;
                         }
                     })
-                    .await
-                    .ok();
+                    .await;
+                    if ret.is_err() {
+                        let remaining = SHUTDOWN_GUARDS.load(Ordering::Relaxed);
+                        warn!(
+                            "shutdown timeout elapsed, deep sleeping anyway: {} shutdown guards still active",
+                            remaining
+                        );
+                    } else {
+                        info!("all shutdown guards dropped, proceeding to deep sleep");
+                    }
 
                     Timer::after(delay_duration).await;
-                    if power.is_ignition_on() {
+                    if !power.is_ignition_on() {
                         warn!("ignition is on, not deep sleeping");
                         esp_hal::system::software_reset();
                     } else {
                         info!("deep sleeping for {:?}", duration);
                         #[cfg(feature = "xiao")]
                         {
-                            duration = Duration::from_secs(5 * 60);
+                            duration = Duration::from_secs(5);
                         }
+                        duration = Duration::from_secs(5);
                         power.deep_sleep(duration);
                     }
                 }
@@ -150,17 +165,18 @@ pub fn get_power_events_pub() -> PowerEventPublisher {
     unwrap!(POWER_EVENTS.dyn_publisher())
 }
 
-pub struct ShutdownGuard;
+pub struct ShutdownGuard(&'static str);
 
 impl ShutdownGuard {
-    pub fn new() -> Self {
+    pub fn new(name: &'static str) -> Self {
         SHUTDOWN_GUARDS.fetch_add(1, Ordering::Relaxed);
-        Self
+        Self(name)
     }
 }
 
 impl Drop for ShutdownGuard {
     fn drop(&mut self) {
+        info!("dropping shutdown guard '{}'", self.0);
         SHUTDOWN_GUARDS.fetch_sub(1, Ordering::Relaxed);
         let requested = SHUTDOWN_REQUESTED.load(Ordering::Relaxed);
         if requested {

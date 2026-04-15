@@ -319,9 +319,8 @@ impl KiaState {
 
                 #[cfg(feature = "xiao")]
                 {
-                    timeout_duration = Duration::from_secs(10);
+                    timeout_duration = Duration::from_secs(2);
                 }
-                timeout_duration = Duration::from_secs(60);
 
                 if timeout.elapsed() > timeout_duration {
                     Transition(State::shutdown(*shutdown_duration))

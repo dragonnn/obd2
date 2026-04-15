@@ -1,14 +1,14 @@
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-use defmt::{error, info, Format};
+use defmt::{Format, error, info};
 use embassy_futures::select::select;
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex, signal::Signal};
-use embassy_time::{with_timeout, Duration};
+use embassy_time::{Duration, with_timeout};
 use serde::{Deserialize, Serialize};
 pub use types::{Pid as Obd2Event, PidError as Obd2Error};
 
 use crate::{
-    mcp2515::{clock_16mhz, OperationMode, CANINTE, CLKPRE, RXB0CTRL, RXB1CTRL, RXM},
+    mcp2515::{CANINTE, CLKPRE, OperationMode, RXB0CTRL, RXB1CTRL, RXM, clock_16mhz},
     tasks::power::ShutdownGuard,
     types::Mcp2515,
 };
@@ -16,7 +16,7 @@ use crate::{
 pub async fn run(mut can_listen: Mcp2515) {
     return;
     embassy_time::Timer::after(Duration::from_secs(10)).await;
-    let _shutdown_guard = ShutdownGuard::new();
+    let _shutdown_guard = ShutdownGuard::new("can_listen");
     let config = crate::mcp2515::Config::default()
         .mode(OperationMode::NormalOperation)
         .bitrate(clock_16mhz::CNF_500K_BPS)
