@@ -6,14 +6,14 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-esp-hal = { version = "~1.0", features = [
+esp-hal = { version = "~1.1.0-rc.0", features = [
     "esp32c6",
     "defmt",
     "unstable",
 ] } # Base ESP deps
-esp-bootloader-esp-idf = { version = "0.4.0", features = ["defmt", "esp32c6"] }
-esp-rtos = { version = "0.2.0", features = ["esp32c6", "embassy"] }
-esp-backtrace = { version = "0.18.1", features = [
+esp-bootloader-esp-idf = { version = "0.5.0", features = ["defmt", "esp32c6"] }
+esp-rtos = { version = "0.3.0", features = ["esp32c6", "embassy"] }
+esp-backtrace = { version = "0.19.0", features = [
     "esp32c6",
     "defmt",
     "custom-halt",
@@ -40,8 +40,8 @@ panic-rtt-target = { version = "0.2.0", features = ["defmt"] }
 rtt-target = { version = "0.6.2", features = ["defmt"] }
 
 #esp-println = { version = "0.16.1", features = ["esp32c6"] }
-esp-alloc = { version = "0.9.0" }
-esp-radio = { version = "0.17.0", features = [
+esp-alloc = { version = "0.10.0" }
+esp-radio = { version = "0.18.0", features = [
     "esp32c6",
     "ieee802154",
     "defmt",

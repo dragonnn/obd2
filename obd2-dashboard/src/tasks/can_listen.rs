@@ -14,7 +14,6 @@ use crate::{
 };
 #[embassy_executor::task]
 pub async fn run(mut can_listen: Mcp2515) {
-    return;
     embassy_time::Timer::after(Duration::from_secs(10)).await;
     let _shutdown_guard = ShutdownGuard::new("can_listen");
     let config = crate::mcp2515::Config::default()
@@ -28,5 +27,5 @@ pub async fn run(mut can_listen: Mcp2515) {
 
     let interputs_config = CANINTE::default().with_rx0ie(true).with_rx1ie(true);
     can_listen.apply_interrupts_config(interputs_config).await.ok();
-    with_timeout(Duration::from_secs(120), can_listen.shutdown()).await.ok();
+    with_timeout(Duration::from_secs(240), can_listen.shutdown()).await.ok();
 }

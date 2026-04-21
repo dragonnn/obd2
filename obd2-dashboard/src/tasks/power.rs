@@ -136,7 +136,6 @@ pub async fn run(mut power: Power) {
                         {
                             duration = Duration::from_secs(5);
                         }
-                        duration = Duration::from_secs(5);
                         power.deep_sleep(duration);
                     }
                 }
@@ -176,7 +175,7 @@ impl ShutdownGuard {
 
 impl Drop for ShutdownGuard {
     fn drop(&mut self) {
-        info!("dropping shutdown guard '{}'", self.0);
+        warn!("dropping shutdown guard '{}'", self.0);
         SHUTDOWN_GUARDS.fetch_sub(1, Ordering::Relaxed);
         let requested = SHUTDOWN_REQUESTED.load(Ordering::Relaxed);
         if requested {

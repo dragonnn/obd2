@@ -196,7 +196,9 @@ impl Obd2 {
                         if can_frame.data[0] == 0x03 {
                             //internal_debug!("single frame in 0x03 {:x?}", can_frame.data);
                             self.obd2_message_buffer.clear();
-                            self.obd2_message_buffer.extend_from_slice(&can_frame.data);
+                            if self.obd2_message_buffer.extend_from_slice(&can_frame.data).is_err() {
+                                error!("frame too long for buffer");
+                            }
                             obd2_data = Some(self.obd2_message_buffer.as_slice());
                             break 'outer;
                         } else {
@@ -214,7 +216,7 @@ impl Obd2 {
             .is_err()
             {
                 if _lock.is_some() {
-                    error!("timeout waiting for interrupt, drooping SPI lock");
+                    warn!("timeout waiting for interrupt, drooping SPI lock");
                     _lock = None;
                 }
             }

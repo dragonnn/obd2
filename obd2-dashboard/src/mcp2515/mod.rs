@@ -59,6 +59,7 @@ where
     }
 
     pub async fn apply_config(&mut self, config: &Config<'_>, obd2: bool) -> Result<(), SPI::Error> {
+        let mut failed_inits = 0u8;
         let mut ok_inits = 0u8;
         let mut previous_canctrl = 0;
         let mut last_init_state_event = embassy_time::Instant::now();
@@ -93,6 +94,11 @@ where
                     break;
                 }
             } else {
+                failed_inits += 1;
+                if failed_inits >= 50 && !obd2 {
+                    error!("Failed to initialize MCP2515 after {} attempts, giving up", failed_inits);
+                    break;
+                }
                 if obd2 && last_init_state_event.elapsed().as_secs() > 10 {
                     KIA_EVENTS.send(KiaEvent::Obd2Init(false)).await;
                     last_init_state_event = embassy_time::Instant::now();
