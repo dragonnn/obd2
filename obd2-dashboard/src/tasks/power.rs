@@ -125,7 +125,7 @@ pub async fn run(mut power: Power) {
                     }
 
                     Timer::after(delay_duration).await;
-                    if !power.is_ignition_on() {
+                    if power.is_ignition_on() {
                         warn!("ignition is on, not deep sleeping");
                         esp_hal::system::software_reset();
                     } else {

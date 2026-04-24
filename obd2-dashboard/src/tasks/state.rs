@@ -298,7 +298,7 @@ impl KiaState {
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             KiaEvent::Obd2LoopEnd(set, all) => {
                 let mut timeout_duration =
-                    if *car_is_open { Duration::from_secs(30 * 60) } else { Duration::from_secs(2 * 60) };
+                    if *car_is_open { Duration::from_secs(10 * 60) } else { Duration::from_secs(1 * 60) };
 
                 if *got_any_timeout_reset {
                     timeout_duration = Duration::from_secs(30 * 60);
@@ -320,6 +320,16 @@ impl KiaState {
                 if timeout.elapsed() > timeout_duration {
                     Transition(State::shutdown(*shutdown_duration))
                 } else {
+                    info!(
+                        "ignition off loop end, not timing out yet: elapsed: {}sec, timeout_duration: {}sec, got_any_timeout_reset: {}, car_is_open: {}, obd2_init: {}, set: {:?} shutdown_duration: {:?}min",
+                        timeout.elapsed().as_secs(),
+                        timeout_duration.as_secs(),
+                        got_any_timeout_reset,
+                        car_is_open,
+                        self.obd2_init,
+                        set,
+                        shutdown_duration.as_secs() / 60
+                    );
                     Handled
                 }
             }
