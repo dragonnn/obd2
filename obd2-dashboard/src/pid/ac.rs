@@ -75,7 +75,7 @@ impl Pid for AcPid {
     }
 
     fn timeout() -> Duration {
-        Duration::from_millis(2 * 350)
+        Duration::from_millis(1500)
     }
 
     fn errors_timeout() -> Duration {
