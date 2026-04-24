@@ -71,7 +71,7 @@ impl Pid for AcPid {
     }
 
     fn period() -> Option<Duration> {
-        Some(Duration::from_secs(5))
+        Some(Duration::from_secs(20))
     }
 
     fn timeout() -> Duration {
