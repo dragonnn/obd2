@@ -40,6 +40,7 @@ impl Power {
         let rtcio = Ext1WakeupSource::new(wakeup_pins);
         self.rs_gpio.set_low();
         let mut rtc = unwrap!(self.rtc.try_lock());
+        warn!("deep sleep");
         rtc.sleep_deep(&[&timer, &rtcio]);
     }
 

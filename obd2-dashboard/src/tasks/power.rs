@@ -63,15 +63,13 @@ pub async fn run(mut power: Power) {
     //    return;
     //}
 
-    /*if power.is_ignition_on() {
+    if power.is_ignition_on() {
         warn!("ignition is on, not deep sleeping");
         KIA_EVENTS.send(KiaEvent::IgnitionOn).await;
     } else {
         warn!("ignition is off, deep sleeping");
         KIA_EVENTS.send(KiaEvent::IgnitionOff).await;
-    }*/
-
-    KIA_EVENTS.send(KiaEvent::IgnitionOff).await;
+    }
 
     let mut power_events_sub = unwrap!(POWER_EVENTS.subscriber());
 
@@ -92,7 +90,7 @@ pub async fn run(mut power: Power) {
                 }
             }
             Second(power_event) => match power_event {
-                PowerEvent::Shutdown(mut duration) => {
+                PowerEvent::Shutdown(duration) => {
                     warn!("shutdown event received for {:?}s", duration.as_secs());
                     unwrap!(SHUTDOWN.publisher()).publish_immediate(());
                     let delay_duration = if debugger_connected() {
@@ -131,11 +129,6 @@ pub async fn run(mut power: Power) {
                         warn!("ignition is on, not deep sleeping");
                         esp_hal::system::software_reset();
                     } else {
-                        info!("deep sleeping for {:?}", duration);
-                        #[cfg(feature = "xiao")]
-                        {
-                            duration = Duration::from_secs(5);
-                        }
                         power.deep_sleep(duration);
                     }
                 }
