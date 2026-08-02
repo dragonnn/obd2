@@ -10,6 +10,57 @@ use crate::{
     types::Cap1188,
 };
 
+const BUTTON_DEBOUNCE_TIME: embassy_time::Duration = embassy_time::Duration::from_millis(30);
+const BUTTON_DEBOUNCE_POLL_TIME: embassy_time::Duration = embassy_time::Duration::from_millis(5);
+
+struct ButtonDebouncer {
+    stable: u8,
+    candidates: u8,
+    candidate_since: [embassy_time::Instant; 8],
+}
+
+impl ButtonDebouncer {
+    fn new(initial: Cap1188Inputs) -> Self {
+        let initial = initial.into_bytes()[0];
+        Self { stable: initial, candidates: initial, candidate_since: [embassy_time::Instant::now(); 8] }
+    }
+
+    fn has_pending(&self) -> bool {
+        self.stable != self.candidates
+    }
+
+    async fn next_state(&mut self, cap1188: &mut Cap1188) -> Cap1188Inputs {
+        loop {
+            let sample = unwrap!(cap1188.touched().await).into_bytes()[0];
+            let now = embassy_time::Instant::now();
+
+            for index in 0..8 {
+                let mask = 1 << index;
+                if sample & mask != self.candidates & mask {
+                    self.candidates ^= mask;
+                    self.candidate_since[index] = now;
+                }
+            }
+
+            let previous_stable = self.stable;
+            for index in 0..8 {
+                let mask = 1 << index;
+                if self.stable & mask != self.candidates & mask
+                    && self.candidate_since[index].elapsed() >= BUTTON_DEBOUNCE_TIME
+                {
+                    self.stable ^= mask;
+                }
+            }
+
+            if self.stable != previous_stable || !self.has_pending() {
+                return Cap1188Inputs::from_bytes([self.stable]);
+            }
+
+            Timer::after(BUTTON_DEBOUNCE_POLL_TIME).await;
+        }
+    }
+}
+
 #[derive(Format, PartialEq, Eq, Clone, Copy)]
 pub enum Button {
     B0,
@@ -65,13 +116,14 @@ pub async fn run(mut cap1188: Cap1188) {
     cap1188.calibrate().await.ok();
     let mut old_touched = unwrap!(cap1188.touched().await);
     let mut old_touched_bytes = old_touched.into_bytes()[0];
-    let mut last_touched = embassy_time::Instant::now();
-    let mut fast_loops = 0;
+    let mut debouncer = ButtonDebouncer::new(old_touched);
     info!("cap1188 task running");
     select(
         async {
             loop {
-                if old_touched_bytes > 0 {
+                if debouncer.has_pending() {
+                    // Continue polling until each changing button has independently stabilized.
+                } else if old_touched_bytes > 0 {
                     embassy_time::with_timeout(embassy_time::Duration::from_secs(250), cap1188.wait_for_touched())
                         .await
                         .ok();
@@ -82,7 +134,7 @@ pub async fn run(mut cap1188: Cap1188) {
                 } else {
                     cap1188.wait_for_touched().await;
                 }
-                let new_touched = unwrap!(cap1188.touched().await);
+                let new_touched = debouncer.next_state(&mut cap1188).await;
                 let new_touched_bytes = new_touched.into_bytes()[0];
                 if new_touched_bytes != old_touched_bytes {
                     if new_touched.b0() != old_touched.b0() {
@@ -176,17 +228,6 @@ pub async fn run(mut cap1188: Cap1188) {
                 }
                 old_touched = new_touched;
                 old_touched_bytes = new_touched_bytes;
-                if last_touched.elapsed() < embassy_time::Duration::from_millis(50) {
-                    embassy_time::Timer::after(embassy_time::Duration::from_millis(200)).await;
-                    fast_loops += 1;
-                    if fast_loops > 10 {
-                        embassy_time::with_timeout(embassy_time::Duration::from_secs(1), cap1188.wait_for_released())
-                            .await
-                            .ok();
-                        fast_loops = 0;
-                    }
-                }
-                last_touched = embassy_time::Instant::now();
             }
         },
         async {
