@@ -69,7 +69,8 @@ impl KiaState {
     async fn enter_ignition_on(&mut self) {
         unsafe {
             LAST_IGNITION_ON = self.rtc.lock().await.current_time_us() / 1_000_000;
-            info!("last ignition on: {}", LAST_IGNITION_ON);
+            let last_ignition_on = LAST_IGNITION_ON;
+            info!("last ignition on: {}", last_ignition_on);
         }
 
         ieee802154::send_now();
@@ -82,7 +83,8 @@ impl KiaState {
     async fn exit_ignition_on(&mut self) {
         unsafe {
             LAST_IGNITION_ON = self.rtc.lock().await.current_time_us() / 1_000_000;
-            info!("last ignition on: {}", LAST_IGNITION_ON);
+            let last_ignition_on = LAST_IGNITION_ON;
+            info!("last ignition on: {}", last_ignition_on);
         }
     }
 

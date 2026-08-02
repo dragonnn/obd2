@@ -1,4 +1,4 @@
 [toolchain]
 channel = "nightly-2025-03-24"
-components = ["rustfmt", "clippy", "rust-src", "llvm-tools"]
+components = ["rustfmt", "clippy", "rust-src", "llvm-tools", "rust-analyzer"]
 targets = ["thumbv8m.main-none-eabihf"]

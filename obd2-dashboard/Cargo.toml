@@ -6,7 +6,7 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-esp-hal = { version = "~1.1.0-rc.0", features = [
+esp-hal = { version = "1.1.0", features = [
     "esp32c6",
     "defmt",
     "unstable",
@@ -27,8 +27,8 @@ esp-backtrace = { version = "0.19.0", features = [
 #    "wifi-default",
 #    "phy-enable-usb",
 #], default-features = false }
-riscv = "0.16.0"
-defmt = "1.0.1"
+riscv = "0.16.1"
+defmt = "1.1.1"
 #defmt-serial = "0.8.0"
 #defmt-rtt = "1.1.0"
 #defmt-brtt = { version = "0.1.1", features = ["async-await"], optional = true }
@@ -41,7 +41,7 @@ rtt-target = { version = "0.6.2", features = ["defmt"] }
 
 #esp-println = { version = "0.16.1", features = ["esp32c6"] }
 esp-alloc = { version = "0.10.0" }
-esp-radio = { version = "0.18.0", features = [
+esp-radio = { version = "1.0.0-beta.0", features = [
     "esp32c6",
     "ieee802154",
     "defmt",
@@ -54,7 +54,7 @@ serde = { version = "1.0.228", default-features = false, features = [
     "alloc",
 ] }
 chrono = { version = "0.4.44", default-features = false }
-fugit = "0.3.9"
+fugit = "0.4.0"
 #esp-wifi  = { git = "https://github.com/esp-rs/esp-wifi/", rev = "7632e74", features = ["esp32c3", "wifi"] }
 
 # Embeded hal
@@ -95,7 +95,7 @@ display-interface-spi = "0.5.0"
 inverted-pin = "1.0.0"
 profont = "0.7.0"
 
-heapless = { version = "0.9.2", features = ["defmt"] }
+heapless = { version = "0.9.3", features = ["defmt"] }
 
 # OBD2 deps
 modular-bitfield = "0.13.1"

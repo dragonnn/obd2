@@ -7,20 +7,20 @@ use embassy_time::Instant;
 use esp_backtrace as _;
 use esp_hal::{
     Async,
-    clock::{Clocks, CpuClock},
+    clock::CpuClock,
     delay::Delay,
-    dma::{DmaPriority, DmaRxBuf, DmaTxBuf},
-    dma_buffers, dma_descriptors,
+    dma::DmaPriority,
+    dma_rx_buffer, dma_tx_buffer,
     gpio::{Input, InputConfig, Io, Output, OutputConfig, Pull},
     peripherals::Peripherals,
-    rtc_cntl::{Rtc, Rwdt, RwdtStage},
+    rtc_cntl::{Rtc, Rwdt, RwdtStage, sleep::LowPower},
     spi::{
         Mode as SpiMode,
-        master::{Spi, SpiDmaBus},
+        master::{Spi, SpiDma},
     },
     time::Rate,
     timer::{OneShotTimer, timg::TimerGroup},
-    usb_serial_jtag::UsbSerialJtag,
+    usb::usb_serial_jtag::UsbSerialJtag,
 };
 use esp_radio::ieee802154::{Config, Frame, Ieee802154};
 use fugit::{ExtU32, HertzU32, RateExtU32 as _};
@@ -56,13 +56,13 @@ macro_rules! mk_static {
 }
 
 pub struct SpiBus {
-    spi: SpiDmaBus<'static, Async>,
+    spi: SpiDma<'static, Async>,
     speed: Option<Rate>,
     elapsed: Instant,
 }
 
 impl SpiBus {
-    pub fn new(spi: SpiDmaBus<'static, Async>) -> Self {
+    pub fn new(spi: SpiDma<'static, Async>) -> Self {
         Self { spi, speed: None, elapsed: Instant::now() }
     }
 }
@@ -113,7 +113,7 @@ impl embassy_embedded_hal::SetConfig for SpiBus {
 }
 
 pub fn init() -> Hal {
-    let mut config = esp_hal::Config::default().with_cpu_clock(CpuClock::_160MHz);
+    let config = esp_hal::Config::default().with_cpu_clock(CpuClock::_160MHz);
     let peripherals = esp_hal::init(config);
 
     //let system = SystemControl::new(peripherals.SYSTEM);
@@ -129,7 +129,8 @@ pub fn init() -> Hal {
     let software_interrupt = SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
     esp_rtos::start(timg0.timer0, software_interrupt.software_interrupt0);
 
-    let mut rtc = Rtc::new(peripherals.LPWR);
+    let mut rtc = Rtc::new(peripherals.RTC_TIMER);
+    let low_power = LowPower::new(peripherals.LPWR);
 
     let sclk;
     let mosi;
@@ -149,9 +150,8 @@ pub fn init() -> Hal {
         miso = peripherals.GPIO20;
     }
 
-    let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(32000);
-    let dma_rx_buf = unwrap!(DmaRxBuf::new(rx_descriptors, rx_buffer).ok());
-    let dma_tx_buf = unwrap!(DmaTxBuf::new(tx_descriptors, tx_buffer).ok());
+    let dma_rx_buf = unwrap!(dma_rx_buffer!(32000).ok());
+    let dma_tx_buf = unwrap!(dma_tx_buffer!(32000).ok());
 
     let dma_channel = peripherals.DMA_CH0;
     let spi = Spi::new(
@@ -256,6 +256,8 @@ pub fn init() -> Hal {
     rtc.rwdt.listen();
     static RTC: StaticCell<Mutex<CriticalSectionRawMutex, Rtc<'static>>> = StaticCell::new();
     let rtc = RTC.init(Mutex::new(rtc));
+    static LOW_POWER: StaticCell<Mutex<CriticalSectionRawMutex, LowPower<'static>>> = StaticCell::new();
+    let low_power = LOW_POWER.init(Mutex::new(low_power));
 
     let temperature = unwrap!(esp_hal::tsens::TemperatureSensor::new(peripherals.TSENS, Default::default()).ok());
 
@@ -267,7 +269,7 @@ pub fn init() -> Hal {
         can_listen: mcp2515_2,
         #[cfg(feature = "defmt-brtt")]
         usb_serial,
-        power: power::Power::new(ing, delay, rtc, rs),
+        power: power::Power::new(ing, delay, rtc, low_power, rs),
         led,
         ieee802154,
         rtc,

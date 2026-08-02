@@ -2,17 +2,18 @@ use defmt::*;
 use embassy_time::Duration;
 use esp_hal::{
     delay::Delay,
-    gpio::{Input, InputConfig, Pull, RtcPinWithResistors},
-    rtc_cntl::sleep::{Ext1WakeupSource, TimerWakeupSource, WakeupLevel},
+    gpio::{Input, InputConfig, Level, Pull, RtcPinWithResistors},
+    rtc_cntl::sleep::{Ext1WakeupSource, TimerWakeupSource},
 };
 
-use crate::types::{IngGpio, Rs, Rtc};
+use crate::types::{IngGpio, LowPower, Rs, Rtc};
 
 pub struct Power {
     ing_gpio: IngGpio,
     rs_gpio: Rs,
     delay: Delay,
     rtc: Rtc,
+    low_power: LowPower,
 }
 
 pub enum Ignition {
@@ -21,12 +22,12 @@ pub enum Ignition {
 }
 
 impl Power {
-    pub fn new(ing_gpio: IngGpio, delay: Delay, rtc: Rtc, rs_gpio: Rs) -> Self {
-        Self { ing_gpio, delay, rtc, rs_gpio }
+    pub fn new(ing_gpio: IngGpio, delay: Delay, rtc: Rtc, low_power: LowPower, rs_gpio: Rs) -> Self {
+        Self { ing_gpio, delay, rtc, low_power, rs_gpio }
     }
 
     pub fn deep_sleep(&mut self, duration: Duration) -> ! {
-        let timer = TimerWakeupSource::new(duration.into());
+        let timer = TimerWakeupSource::new(esp_hal::time::Duration::from_micros(duration.as_micros()));
         info!("going to deep sleep with timer wakeup: {:?}", defmt::Debug2Format(&timer));
         #[cfg(not(feature = "xiao"))]
         let mut ing_pin = unsafe { esp_hal::gpio::AnyPin::steal(5) };
@@ -35,12 +36,12 @@ impl Power {
         let input = Input::new(ing_pin.reborrow(), InputConfig::default().with_pull(Pull::Up));
         core::mem::drop(input);
 
-        let wakeup_pins: &mut [(&mut dyn RtcPinWithResistors, WakeupLevel)] = &mut [(&mut ing_pin, WakeupLevel::High)];
+        let wakeup_pins: &mut [(&mut dyn RtcPinWithResistors, Level)] = &mut [(&mut ing_pin, Level::High)];
 
         let rtcio = Ext1WakeupSource::new(wakeup_pins);
         self.rs_gpio.set_low();
-        let mut rtc = unwrap!(self.rtc.try_lock());
-        rtc.sleep_deep(&[&timer, &rtcio]);
+        let mut low_power = unwrap!(self.low_power.try_lock());
+        low_power.sleep_deep(&[&timer, &rtcio]);
     }
 
     pub fn is_ignition_on(&mut self) -> bool {

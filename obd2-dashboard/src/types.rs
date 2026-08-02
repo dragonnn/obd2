@@ -24,7 +24,7 @@ pub type Cap1188 = crate::cap1188::Cap1188<
     Input<'static>,
 >;
 
-pub type UsbSerial = esp_hal::usb_serial_jtag::UsbSerialJtag<'static, esp_hal::Async>;
+pub type UsbSerial = esp_hal::usb::usb_serial_jtag::UsbSerialJtag<'static, esp_hal::Async>;
 
 pub type IngGpio = Input<'static>;
 
@@ -34,4 +34,5 @@ pub type Display1 = Sh1122;
 pub type Led = Output<'static>;
 pub type Rs = Output<'static>;
 pub type Rtc = &'static Mutex<CriticalSectionRawMutex, esp_hal::rtc_cntl::Rtc<'static>>;
+pub type LowPower = &'static Mutex<CriticalSectionRawMutex, esp_hal::rtc_cntl::sleep::LowPower<'static>>;
 pub type TemperatureSensor = esp_hal::tsens::TemperatureSensor<'static>;
