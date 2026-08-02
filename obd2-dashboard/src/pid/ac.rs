@@ -71,11 +71,11 @@ impl Pid for AcPid {
     }
 
     fn period() -> Option<Duration> {
-        Some(Duration::from_secs(5))
+        Some(Duration::from_secs(20))
     }
 
     fn timeout() -> Duration {
-        Duration::from_millis(2 * 350)
+        Duration::from_millis(1500)
     }
 
     fn errors_timeout() -> Duration {

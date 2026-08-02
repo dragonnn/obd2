@@ -93,7 +93,7 @@ impl KiaState {
         match event {
             KiaEvent::IgnitionOff => {
                 LCD_EVENTS.send(LcdEvent::PowerOff).await;
-                Transition(State::check_charging(Default::default(), Instant::now()))
+                Transition(State::check_charging(Default::default(), Instant::now(), true))
             }
             KiaEvent::Obd2Event(obd2_event) => {
                 LCD_EVENTS.send(LcdEvent::Obd2Event(obd2_event.clone())).await;
@@ -144,6 +144,7 @@ impl KiaState {
         event: &KiaEvent,
         obc_pid: &mut Option<OnBoardChargerPid>,
         timeout: &Instant,
+        car_is_open: &mut bool,
     ) -> Response<State> {
         info!("check_charging got event: {:?}", event);
         match event {
@@ -152,11 +153,18 @@ impl KiaState {
                 *obc_pid = Some(new_obc_pid.clone());
                 Handled
             }
+            KiaEvent::Obd2Event(Obd2Event::Icu2Pid(icu2_pid)) => {
+                *car_is_open = icu2_pid.is_open();
+                Handled
+            }
             KiaEvent::Obd2LoopEnd(set, _all) => {
                 let mut elapsed = 5 * 60;
                 #[cfg(feature = "xiao")]
                 {
                     elapsed = 10;
+                }
+                if !*car_is_open {
+                    elapsed = 15;
                 }
                 if let Some(obc_pid) = obc_pid {
                     if obc_pid.ac_input_current > 0.5 && obc_pid.ac_input_voltage_rms > 20.0 {
@@ -200,7 +208,7 @@ impl KiaState {
                 LCD_EVENTS.send(LcdEvent::Obd2Event(Obd2Event::OnBoardChargerPid(new_obc_pid.clone()))).await;
                 let ret = if new_obc_pid.ac_input_current == 0.0 {
                     warn!("ac input current is zero");
-                    Transition(State::check_charging(None, Instant::now()))
+                    Transition(State::check_charging(None, Instant::now(), false))
                 } else {
                     Handled
                 };
@@ -216,7 +224,7 @@ impl KiaState {
                 LCD_EVENTS.send(LcdEvent::Render).await;
                 if obc_pid.is_none() {
                     if *obc_pid_wait > 50 {
-                        Transition(State::check_charging(None, Instant::now()))
+                        Transition(State::check_charging(None, Instant::now(), false))
                     } else {
                         *obc_pid_wait += 1;
                         Handled
@@ -248,13 +256,17 @@ impl KiaState {
                 LAST_IGNITION_ON
             }
         };
-        info!("last ignition on: {} seconds ago", (now - last_ignition_on));
-
-        *shutdown_duration = if last_ignition_on != 0 && now > last_ignition_on && now - last_ignition_on > 60 * 60 {
-            Duration::from_secs(60 * 60)
-        } else {
-            Duration::from_secs(5 * 60)
-        };
+        let last_ignition_on = (now as i64 - last_ignition_on as i64) / 60;
+        info!("last ignition on: {}min ago", last_ignition_on);
+        *shutdown_duration = Duration::from_secs(
+            match last_ignition_on {
+                s if s < 0 => 60,
+                s if s <= 20 => 5,
+                s if s <= 40 => 15,
+                s if s <= 70 => 30,
+                _ => 60,
+            } * 60,
+        );
 
         warn!(
             "shutdown duration: {}min: last_ignition_on:{}sec now: {}sec",
@@ -285,14 +297,14 @@ impl KiaState {
             }
             KiaEvent::Obd2Event(Obd2Event::Icu3Pid(icu3_pid)) => {
                 if icu3_pid.on_board_charger_wakeup_output {
-                    Transition(State::check_charging(None, Instant::now()))
+                    Transition(State::check_charging(None, Instant::now(), *car_is_open))
                 } else {
                     Handled
                 }
             }
             KiaEvent::Obd2Event(Obd2Event::OnBoardChargerPid(obc_pid)) => {
                 if obc_pid.ac_input_current > 0.5 && obc_pid.ac_input_voltage_rms > 20.0 {
-                    Transition(State::check_charging(None, Instant::now()))
+                    Transition(State::check_charging(None, Instant::now(), *car_is_open))
                 } else {
                     Handled
                 }
@@ -300,7 +312,7 @@ impl KiaState {
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             KiaEvent::Obd2LoopEnd(set, all) => {
                 let mut timeout_duration =
-                    if *car_is_open { Duration::from_secs(30 * 60) } else { Duration::from_secs(2 * 60) };
+                    if *car_is_open { Duration::from_secs(10 * 60) } else { Duration::from_secs(1 * 60) };
 
                 if *got_any_timeout_reset {
                     timeout_duration = Duration::from_secs(30 * 60);
@@ -319,14 +331,19 @@ impl KiaState {
                     set_obd2_sets(Obd2PidSets::IgnitionOff).await;
                 }
 
-                #[cfg(feature = "xiao")]
-                {
-                    timeout_duration = Duration::from_secs(2);
-                }
-
                 if timeout.elapsed() > timeout_duration {
                     Transition(State::shutdown(*shutdown_duration))
                 } else {
+                    info!(
+                        "ignition off loop end, not timing out yet: elapsed: {}sec, timeout_duration: {}sec, got_any_timeout_reset: {}, car_is_open: {}, obd2_init: {}, set: {:?} shutdown_duration: {:?}min",
+                        timeout.elapsed().as_secs(),
+                        timeout_duration.as_secs(),
+                        got_any_timeout_reset,
+                        car_is_open,
+                        self.obd2_init,
+                        set,
+                        shutdown_duration.as_secs() / 60
+                    );
                     Handled
                 }
             }

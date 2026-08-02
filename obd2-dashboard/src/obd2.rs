@@ -101,7 +101,7 @@ impl Obd2 {
             error!("timeout waiting for SPI lock");
         }
         self.mcp2515.clear_interrupts().await?;
-        let flow_control = unwrap!(CanFrame::new(request.id(), &[0x30, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
+        let flow_control = unwrap!(CanFrame::new(request.id(), &[0x30, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00]));
         self.mcp2515.load_tx_buffer(TxBuffer::TXB0, &request).await?;
         self.mcp2515.request_to_send(TxBuffer::TXB0).await?;
         //info!("obd2 request sent");
@@ -115,6 +115,7 @@ impl Obd2 {
         let mut got_any_valid_frame = false;
 
         'outer: loop {
+            can_frames = [None, None];
             let rx_status = self.mcp2515.rx_status().await?;
             if rx_status.rx0if() {
                 let frame = self.mcp2515.read_rx_buffer(RxBuffer::RXB0).await?;
@@ -138,7 +139,7 @@ impl Obd2 {
                         "unexpected CAN ID: {=i32:#06x}, expected {=i32:#06x}, data: {=[u8]:#04x}",
                         frame_id_raw, expected_response_id, can_frame.data
                     );
-                    //continue;
+                    continue;
                 }
 
                 let obd2_frame_type = can_frame.data[0] & 0xF0;
