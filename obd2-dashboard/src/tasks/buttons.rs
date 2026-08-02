@@ -107,7 +107,7 @@ pub async fn run(mut cap1188: Cap1188) {
                 Timer::after(embassy_time::Duration::from_secs(1)).await;
             }
         }
-        if init_attempts > 5 {
+        if init_attempts > 50 {
             error!("cap1188 failed to init after {} attempts, giving up", init_attempts);
             return;
         }

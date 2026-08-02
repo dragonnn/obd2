@@ -113,7 +113,6 @@ pub async fn run(temperature: crate::types::TemperatureSensor) {
         };
 
         TEMPERATURE.store((temp * 1000.0) as i32, Ordering::Relaxed);
-        info!("temp: {:?}", temp);
         embassy_time::Timer::after(Duration::from_secs(1)).await;
     }
 }

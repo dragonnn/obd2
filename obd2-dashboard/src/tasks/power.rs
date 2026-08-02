@@ -57,12 +57,6 @@ pub async fn run(mut power: Power) {
     //    write!(buffer, "{:?}", wake_reason);
     //    LAST_WAKEUP_CAUSE_STR[0..buffer.len()].clone_from_slice(buffer.as_bytes());
     //}
-
-    if debugger_connected() {
-        KIA_EVENTS.send(KiaEvent::IgnitionOn).await;
-        return;
-    }
-
     if power.is_ignition_on() {
         warn!("ignition is on, not deep sleeping");
         KIA_EVENTS.send(KiaEvent::IgnitionOn).await;

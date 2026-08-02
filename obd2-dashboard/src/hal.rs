@@ -191,8 +191,10 @@ pub fn init() -> Hal {
     let int_mcp2515 = Input::new(peripherals.GPIO4, input_config.with_pull(Pull::Up));
     let int_mcp2515_2 = Input::new(peripherals.GPIO1, input_config.with_pull(Pull::Up));
     let mut rs = Output::new(peripherals.GPIO22, true.into(), output_config);
+    //#[cfg(not(feature = "xiao"))]
+    //let ing = Input::new(peripherals.GPIO5, input_config.with_pull(Pull::Up));
     #[cfg(not(feature = "xiao"))]
-    let ing = Input::new(peripherals.GPIO5, input_config.with_pull(Pull::Up));
+    let ing = unsafe { core::ptr::read(&int_mcp2515_2) };
     #[cfg(feature = "xiao")]
     let ing = Input::new(peripherals.GPIO0, input_config.with_pull(Pull::Up));
     let int_cap1188 = Input::new(peripherals.GPIO3, input_config.with_pull(Pull::Up));

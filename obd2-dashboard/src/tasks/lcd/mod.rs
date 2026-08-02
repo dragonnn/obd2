@@ -380,8 +380,8 @@ impl LcdState {
 
 #[embassy_executor::task]
 pub async fn run(mut display1: Display1, mut display2: Display2, panic: Option<&'static str>) {
-    info!("lcd init start");
-    with_timeout(Duration::from_secs(5 * 60), obd2_init_wait()).await.ok();
+    warn!("lcd init start");
+    with_timeout(Duration::from_secs(5), obd2_init_wait()).await.ok();
     {
         let _lock = crate::locks::SPI_BUS.lock().await;
         error!("display init");
