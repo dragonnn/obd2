@@ -8,7 +8,10 @@ use std::{
 };
 use tokio::{
     io::{AsyncReadExt as _, AsyncWriteExt as _},
-    sync::mpsc::{UnboundedReceiver, UnboundedSender},
+    sync::{
+        Mutex,
+        mpsc::{UnboundedReceiver, UnboundedSender},
+    },
     time::timeout,
 };
 use tokio_openssl::SslStream;
@@ -20,6 +23,12 @@ pub struct KiaHandler {
     config: Arc<Config>,
     ha_sensors: Arc<HashMap<String, Arc<sensor::HaSensorHandler>>>,
     event_sender: Arc<UnboundedSender<HaStateEvent>>,
+    panic_assembly: Arc<Mutex<Option<PanicAssembly>>>,
+}
+
+#[derive(Debug)]
+struct PanicAssembly {
+    chunks: Vec<Option<String>>,
 }
 
 impl KiaHandler {
@@ -32,6 +41,7 @@ impl KiaHandler {
             config,
             ha_sensors,
             event_sender,
+            panic_assembly: Arc::new(Mutex::new(None)),
         })
     }
 
@@ -66,6 +76,63 @@ impl KiaHandler {
                 .await;
         }
         match txframe {
+            TxFrame::Wakeup(reason) => {
+                let wakeup_reason = match reason {
+                    types::WakeupReason::Normal => Some("Normal".to_string()),
+                    types::WakeupReason::IngPin => Some("IngPin".to_string()),
+                    types::WakeupReason::Timer => Some("Timer".to_string()),
+                    types::WakeupReason::Panic(chunk_number, chunks_count, chunk) => {
+                        if *chunks_count == 0 || *chunk_number >= *chunks_count {
+                            error!("Invalid panic chunk {}/{}", chunk_number, chunks_count);
+                            None
+                        } else {
+                            let mut assembly = self.panic_assembly.lock().await;
+                            let starts_new_panic = *chunk_number == 0;
+                            let incompatible_count = assembly
+                                .as_ref()
+                                .is_some_and(|current| current.chunks.len() != *chunks_count as usize);
+                            if (starts_new_panic || incompatible_count) && assembly.is_some() {
+                                let discarded = assembly.as_ref().unwrap();
+                                let received = discarded.chunks.iter().filter(|chunk| chunk.is_some()).count();
+                                warn!(
+                                    "Discarding incomplete panic: received {}/{} chunks; next chunk is {}/{}",
+                                    received,
+                                    discarded.chunks.len(),
+                                    chunk_number,
+                                    chunks_count
+                                );
+                            }
+                            if starts_new_panic || incompatible_count || assembly.is_none() {
+                                *assembly = Some(PanicAssembly {
+                                    chunks: vec![None; *chunks_count as usize],
+                                });
+                            }
+
+                            let current = assembly.as_mut().unwrap();
+                            current.chunks[*chunk_number as usize] = Some(chunk.clone());
+                            if current.chunks.iter().all(Option::is_some) {
+                                let panic = current
+                                    .chunks
+                                    .iter()
+                                    .filter_map(Option::as_deref)
+                                    .collect::<String>();
+                                *assembly = None;
+                                Some(format!("Panic: {panic}"))
+                            } else {
+                                None
+                            }
+                        }
+                    }
+                };
+
+                if let Some(wakeup_reason) = wakeup_reason {
+                    self.ha_sensors
+                        .get("wakeup_reason")
+                        .unwrap()
+                        .update(wakeup_reason.into())
+                        .await;
+                }
+            }
             TxFrame::State(state) => {
                 let state = match state {
                     types::State::IgnitionOff => "IgnitionOff",
