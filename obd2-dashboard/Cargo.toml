@@ -32,10 +32,10 @@ defmt = "1.1.1"
 #defmt-serial = "0.8.0"
 #defmt-rtt = "1.1.0"
 #defmt-brtt = { version = "0.1.1", features = ["async-await"], optional = true }
-#panic-persist = { version = "0.3.0", features = [
-#    "custom-panic-handler",
-#    "utf8",
-#] }
+panic-persist = { version = "0.3.0", features = [
+    "custom-panic-handler",
+    "utf8",
+] }
 panic-rtt-target = { version = "0.2.0", features = ["defmt"] }
 rtt-target = { version = "0.6.2", features = ["defmt"] }
 

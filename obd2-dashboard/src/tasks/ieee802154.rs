@@ -9,6 +9,7 @@ use embassy_sync::{
     signal::Signal,
 };
 use embassy_time::{Duration, Instant, Ticker, Timer, with_timeout};
+use esp_hal::rtc_cntl::{WakeupSource, wakeup_cause};
 use esp_radio::ieee802154::{Config, Frame, Ieee802154, ReceivedFrame};
 use heapless::{index_map::FnvIndexMap, index_set::FnvIndexSet};
 use ieee802154::mac::{Address, FrameContent, FrameType, FrameVersion, Header, PanId, ShortAddress};
@@ -33,8 +34,19 @@ static LAST_SEND: Mutex<CriticalSectionRawMutex, Instant> = Mutex::new(Instant::
 static LAST_RECEIVE: Mutex<CriticalSectionRawMutex, Instant> = Mutex::new(Instant::from_ticks(0));
 static LAST_POSITION: Mutex<CriticalSectionRawMutex, Instant> = Mutex::new(Instant::from_ticks(0));
 
+// Leave room within the bridge's 512-byte buffer for TxMessage, postcard, and encryption overhead.
+const PANIC_CHUNK_MAX_LEN: usize = 400;
+
+fn panic_chunk_end(message: &str, start: usize) -> usize {
+    let mut end = core::cmp::min(start + PANIC_CHUNK_MAX_LEN, message.len());
+    while !message.is_char_boundary(end) {
+        end -= 1;
+    }
+    end
+}
+
 #[embassy_executor::task]
-pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
+pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner, panic_message: Option<&'static str>) {
     spawner.spawn(ieee802154_run(ieee802154).unwrap());
 
     let send_ticker_duration = Duration::from_secs(15);
@@ -76,6 +88,41 @@ pub async fn run(ieee802154: Ieee802154<'static>, spawner: Spawner) {
                 break;
             }
         }
+    }
+
+    if let Some(message) = panic_message {
+        let mut chunks_count = 0u8;
+        let mut start = 0;
+        while start < message.len() {
+            chunks_count += 1;
+            start = panic_chunk_end(message, start);
+        }
+
+        let mut chunk_number = 0u8;
+        let mut start = 0;
+        while start < message.len() {
+            let end = panic_chunk_end(message, start);
+            info!("sending panic wakeup chunk: {}/{}", chunk_number, chunks_count);
+            txmessage_pub
+                .send(
+                    TxFrame::Wakeup(types::WakeupReason::Panic(chunk_number, chunks_count, message[start..end].into()))
+                        .into(),
+                )
+                .await;
+            chunk_number += 1;
+            start = end;
+        }
+    } else {
+        let wakeup_cause = wakeup_cause();
+        let wakeup_reason = if wakeup_cause.contains(WakeupSource::Timer) {
+            types::WakeupReason::Timer
+        } else if wakeup_cause.contains(WakeupSource::Ext1) || wakeup_cause.contains(WakeupSource::Gpio) {
+            types::WakeupReason::IngPin
+        } else {
+            types::WakeupReason::Normal
+        };
+        info!("sending wakeup reason: {:?}", wakeup_reason);
+        txmessage_pub.send(TxFrame::Wakeup(wakeup_reason).into()).await;
     }
 
     let mut state: Option<types::State> = None;

@@ -18,7 +18,7 @@ use defmt_brtt as _;
 //use defmt_rtt as _;
 use embassy_executor::Spawner;
 use esp_rtos::main;
-//use panic_persist::{self as _, get_panic_message_utf8};
+use panic_persist::get_panic_message_utf8;
 //use panic_rtt_target as _;
 
 mod cap1188;
@@ -44,16 +44,15 @@ fn init_heap() {
 async fn main(spawner: Spawner) {
     rtt_target::rtt_init_defmt!();
 
+    let panic_message = get_panic_message_utf8();
+    if let Some(message) = panic_message {
+        error!("previous panic: {}", message);
+    }
+
     info!("heap init");
     init_heap();
     info!("hal init");
     let mut hal = hal::init();
-    //let panic = get_panic_message_utf8();
-    //if let Some(msg) = panic {
-    //    error!("Panic: {:?}", msg);
-    //    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
-    //}
-    //embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
 
     info!("init");
     hal.led.set_low();
@@ -68,7 +67,7 @@ async fn main(spawner: Spawner) {
         spawner.spawn(tasks::buttons::run(hal.buttons).unwrap());
         spawner.spawn(tasks::can_listen::run(hal.can_listen).unwrap());
         spawner.spawn(tasks::power::run(hal.power).unwrap());
-        spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner).unwrap());
+        spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner, panic_message).unwrap());
     }
 
     #[cfg(feature = "xiao")]
@@ -81,7 +80,7 @@ async fn main(spawner: Spawner) {
         spawner.spawn(tasks::buttons::run(hal.buttons).unwrap());
         spawner.spawn(tasks::can_listen::run(hal.can_listen).unwrap());
         spawner.spawn(tasks::power::run(hal.power).unwrap());
-        spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner).unwrap());
+        spawner.spawn(tasks::ieee802154::run(hal.ieee802154, spawner, panic_message).unwrap());
     }
 
     tasks::state::run(hal.rtc).await;
@@ -91,6 +90,7 @@ async fn main(spawner: Spawner) {
 fn panic(info: &PanicInfo) -> ! {
     riscv::interrupt::machine::disable();
     error!("panic: {:?}", info);
+    panic_persist::report_panic_info(info);
     unsafe { riscv::interrupt::machine::enable() };
 
     esp_hal::system::software_reset();

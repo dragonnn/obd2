@@ -298,9 +298,10 @@ pub enum TxFrame {
 
 #[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
 pub enum WakeupReason {
+    Normal,
     IngPin,
     Timer,
-    Panic(String),
+    Panic(u8, u8, String),
 }
 
 impl Into<TxMessage> for TxFrame {
@@ -428,6 +429,7 @@ impl TxMessage {
             || match self.frame {
                 TxFrame::Shutdown => true,
                 TxFrame::State(_) => true,
+                TxFrame::Wakeup(_) => true,
                 TxFrame::Modem(Modem::Disconnected) => true,
                 TxFrame::Modem(Modem::Connected) => true,
                 TxFrame::Modem(Modem::Ping) => false,
