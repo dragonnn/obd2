@@ -30,7 +30,8 @@ impl Power {
         let timer = TimerWakeupSource::new(esp_hal::time::Duration::from_micros(duration.as_micros()));
         info!("going to deep sleep with timer wakeup: {:?}", defmt::Debug2Format(&timer));
         #[cfg(not(feature = "xiao"))]
-        let mut ing_pin = unsafe { esp_hal::gpio::AnyPin::steal(5) };
+        //let mut ing_pin = unsafe { esp_hal::gpio::AnyPin::steal(5) };
+        let mut ing_pin = unsafe { esp_hal::gpio::AnyPin::steal(1) };
         #[cfg(feature = "xiao")]
         let mut ing_pin = unsafe { esp_hal::gpio::AnyPin::steal(0) };
         let input = Input::new(ing_pin.reborrow(), InputConfig::default().with_pull(Pull::Up));
