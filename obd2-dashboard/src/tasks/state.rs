@@ -7,6 +7,7 @@ use statig::prelude::*;
 use types::OnBoardChargerPid;
 
 use super::{
+    deep_sleep_timeouts,
     ieee802154::{TxFramePub, extra_txframes_pub},
     obd2::{Obd2Debug, Obd2PidSets, set_obd2_sets},
     power::{PowerEvent, PowerEventPublisher, get_power_events_pub},
@@ -312,19 +313,19 @@ impl KiaState {
             KiaEvent::IgnitionOn => Transition(State::ignition_on()),
             KiaEvent::Obd2LoopEnd(set, all) => {
                 let mut timeout_duration =
-                    if *car_is_open { Duration::from_secs(10 * 60) } else { Duration::from_secs(1 * 60) };
+                    if *car_is_open { deep_sleep_timeouts::CAR_OPEN } else { deep_sleep_timeouts::CAR_CLOSED };
 
                 if *got_any_timeout_reset {
-                    timeout_duration = Duration::from_secs(30 * 60);
+                    timeout_duration = deep_sleep_timeouts::AFTER_TIMEOUT_RESET;
                 }
 
                 if !all {
-                    timeout_duration = Duration::from_secs(10 * 60);
+                    timeout_duration = deep_sleep_timeouts::INCOMPLETE_OBD2_LOOP;
                 }
 
                 if !self.obd2_init {
                     error!("obd2 not inited");
-                    timeout_duration = Duration::from_secs(30 * 60);
+                    timeout_duration = deep_sleep_timeouts::OBD2_NOT_INITIALIZED;
                 }
 
                 if set != &Obd2PidSets::IgnitionOff {
@@ -348,7 +349,7 @@ impl KiaState {
                 }
             }
             _ => {
-                if timeout.elapsed().as_secs() > 20 * 60 {
+                if timeout.elapsed().as_secs() > deep_sleep_timeouts::FALLBACK.as_secs() {
                     Transition(State::shutdown(*shutdown_duration))
                 } else {
                     Handled

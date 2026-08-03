@@ -1,5 +1,6 @@
 pub mod buttons;
 pub mod can_listen;
+pub mod deep_sleep_timeouts;
 pub mod ieee802154;
 pub mod lcd;
 pub mod led;
