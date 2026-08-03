@@ -293,6 +293,14 @@ pub enum TxFrame {
     State(State),
     Error(Error),
     Temperature(f32),
+    Wakeup(WakeupReason),
+}
+
+#[derive(Debug, Format, PartialEq, Clone, Deserialize, Serialize)]
+pub enum WakeupReason {
+    IngPin,
+    Timer,
+    Panic(String),
 }
 
 impl Into<TxMessage> for TxFrame {

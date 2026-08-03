@@ -2,7 +2,6 @@
 #![no_main]
 #![feature(type_alias_impl_trait)]
 #![feature(iter_array_chunks)]
-#![feature(array_chunks)]
 #![feature(stdarch_arm_hints)]
 #![feature(stdarch_arm_neon_intrinsics)]
 #![feature(async_closure)]
