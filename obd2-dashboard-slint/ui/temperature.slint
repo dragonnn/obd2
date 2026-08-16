@@ -68,15 +68,6 @@ export component TemperatureWidget inherits Rectangle {
             fill: #111713;
         }
 
-        Rectangle {
-            x: 18.5px;
-            y: parent.height - 29px;
-            width: 5px;
-            height: 6px;
-            background: root.liquid-color;
-            opacity: root.stem-fill-ratio > 0 ? 1 : 0;
-        }
-
         // Paint the circular liquid after the rectangular junction pieces.
         // Its curved edge trims their lower ends to the bulb geometry.
         Rectangle {
@@ -94,6 +85,17 @@ export component TemperatureWidget inherits Rectangle {
                 height: parent.height * root.bulb-fill-ratio;
                 background: root.liquid-color;
             }
+        }
+
+        // Extend the stem liquid one pixel over the circular fill so the join
+        // is solid rather than exposing the circle's antialiased top pixels.
+        Rectangle {
+            x: 18.5px;
+            y: parent.height - 29px;
+            width: 5px;
+            height: 7px;
+            background: root.liquid-color;
+            opacity: root.stem-fill-ratio > 0 ? 1 : 0;
         }
 
         Path {
