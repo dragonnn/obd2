@@ -35,67 +35,84 @@ export component BatteryWidget inherits Rectangle {
         ? #b42318
         : root.clamped-state-of-charge <= 20 ? #b7791f : #26734d;
 
-    background: #111713;
-    border-color: #718078;
-    border-width: 2px;
-    border-radius: 12px;
-    clip: true;
-
-    // SOC is represented by the background of the entire widget, just as in
-    // the original embedded dashboard. All values remain visible above it.
+    // Battery terminal. It sits behind the body so its left border is hidden
+    // and it reads as a single outline protruding from the right side.
     Rectangle {
-        x: 0;
-        y: 0;
-        width: parent.width * root.clamped-state-of-charge / 100;
-        height: parent.height;
-        background: root.fill-color;
+        x: root.width - 24px;
+        y: (root.height - self.height) / 2;
+        width: 24px;
+        height: 47px;
+        background: #111713;
+        border-color: #718078;
+        border-width: 2px;
+        border-radius: 8px;
     }
 
-    HorizontalLayout {
-        padding: 7px;
-        spacing: 7px;
+    Rectangle {
+        width: root.width - 21px;
+        height: root.height;
+        background: #111713;
+        border-color: #718078;
+        border-width: 2px;
+        border-radius: 12px;
+        clip: true;
 
-        Text {
-            width: 70px;
-            text: "\{round(root.state-of-charge)}%";
-            color: white;
-            font-size: 30px;
-            font-weight: 700;
-            horizontal-alignment: center;
-            vertical-alignment: center;
-        }
-
+        // SOC is represented by the background of the entire widget, just as in
+        // the original embedded dashboard. All values remain visible above it.
         Rectangle {
-            width: 1px;
-            background: #ffffff50;
+            x: 0;
+            y: 0;
+            width: parent.width * root.clamped-state-of-charge / 100;
+            height: parent.height;
+            background: root.fill-color;
         }
 
-        VerticalLayout {
-            spacing: 3px;
+        HorizontalLayout {
+            padding: 7px;
+            spacing: 7px;
 
-            HorizontalLayout {
-                spacing: 8px;
-
-                Metric {
-                    value: "\{round(root.pack-voltage * 10) / 10} V";
-                    label: "PACK";
-                }
-                Metric {
-                    value: "\{round(root.average-cell-voltage * 100) / 100} V";
-                    label: "AVG CELL";
-                }
+            Text {
+                width: 70px;
+                text: "\{round(root.state-of-charge)}%";
+                color: white;
+                font-size: 30px;
+                font-weight: 700;
+                horizontal-alignment: center;
+                vertical-alignment: center;
             }
 
-            HorizontalLayout {
-                spacing: 8px;
+            Rectangle {
+                width: 1px;
+                background: #ffffff50;
+            }
 
-                Metric {
-                    value: "\{round(root.minimum-temperature)}–\{round(root.maximum-temperature)} °C";
-                    label: "TEMP RANGE";
+            VerticalLayout {
+                spacing: 3px;
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    Metric {
+                        value: "\{round(root.pack-voltage * 10) / 10} V";
+                        label: "PACK";
+                    }
+                    Metric {
+                        value: "\{round(root.average-cell-voltage * 100) / 100} V";
+                        label: "AVG CELL";
+                    }
                 }
-                Metric {
-                    value: "Δ \{round(root.cell-voltage-deviation)} mV";
-                    label: "CELL SPREAD";
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    Metric {
+                        value: "\{round(root.minimum-temperature)}–\{round(root.maximum-temperature)} °C";
+                        label: "TEMP RANGE";
+                    }
+                    Metric {
+                        value: "Δ \{round(root.cell-voltage-deviation)} mV";
+                        label: "CELL SPREAD";
+                    }
                 }
             }
         }
