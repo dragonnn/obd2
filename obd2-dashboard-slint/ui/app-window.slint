@@ -1,6 +1,10 @@
 import { Button, VerticalBox } from "std-widgets.slint";
 
 export component AppWindow inherits Window {
+    height: 272px;
+    width: 928px;
+
+    title: "OBD2 Dashboard";
     in-out property <int> counter: 42;
     callback request-increase-value();
     VerticalBox {
