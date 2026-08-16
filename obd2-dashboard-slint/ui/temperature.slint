@@ -30,7 +30,7 @@ export component TemperatureWidget inherits Rectangle {
             x: 16px;
             y: 8px;
             width: 10px;
-            height: parent.height - 32px;
+            height: parent.height - 35px;
             background: #111713;
             clip: true;
 
@@ -59,12 +59,13 @@ export component TemperatureWidget inherits Rectangle {
 
         // Remove only the bulb's top arc inside the tube opening. The stem is
         // drawn afterwards so its two sides meet the circular outline cleanly.
-        Rectangle {
-            x: 17px;
-            y: parent.height - 29px;
-            width: 8px;
-            height: 6px;
-            background: #111713;
+        Path {
+            width: parent.width;
+            height: parent.height;
+            commands: "M 17 71 L 25 71 L 25 75 Q 25 77 23 77 L 19 77 Q 17 77 17 75 Z";
+            viewbox-width: 42;
+            viewbox-height: 100;
+            fill: #111713;
         }
 
         Rectangle {
