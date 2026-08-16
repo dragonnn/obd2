@@ -1,0 +1,138 @@
+export component TemperatureWidget inherits Rectangle {
+    in property <float> temperature: 82;
+    in property <float> minimum-temperature: 0;
+    in property <float> maximum-temperature: 130;
+    in property <string> label: "COOLANT";
+
+    private property <float> temperature-range:
+        max(1, root.maximum-temperature - root.minimum-temperature);
+    private property <float> fill-ratio:
+        max(0, min(1, (root.temperature - root.minimum-temperature) / root.temperature-range));
+    // The bulb represents the lowest quarter of the thermometer's capacity;
+    // after it fills, the remaining range climbs through the stem.
+    private property <float> bulb-fill-ratio: min(1, root.fill-ratio * 4);
+    private property <float> stem-fill-ratio: max(0, (root.fill-ratio - 0.25) / 0.75);
+    private property <color> liquid-color: root.temperature >= 115
+        ? #e34b4b
+        : root.temperature >= 100 ? #ffb454 : #65d99b;
+
+    background: transparent;
+
+    Rectangle {
+        x: 8px;
+        y: 2px;
+        width: 42px;
+        height: parent.height - 4px;
+        background: transparent;
+
+        // Liquid inside the narrow stem. It grows upward from the bulb.
+        Rectangle {
+            x: 16px;
+            y: 8px;
+            width: 10px;
+            height: parent.height - 32px;
+            background: #111713;
+            clip: true;
+
+            Rectangle {
+                x: 2.5px;
+                y: parent.height * (1 - root.stem-fill-ratio);
+                width: parent.width - 5px;
+                height: parent.height * root.stem-fill-ratio;
+                background: root.liquid-color;
+            }
+        }
+
+        // The reservoir remains full whenever the reading is above minimum,
+        // matching the original bottom-up thermometer rendering.
+        Rectangle {
+            x: 9px;
+            y: parent.height - 28px;
+            width: 24px;
+            height: 24px;
+            border-radius: 12px;
+            background: #111713;
+            border-color: #dbe7df;
+            border-width: 2px;
+            clip: true;
+        }
+
+        // Remove only the bulb's top arc inside the tube opening. The stem is
+        // drawn afterwards so its two sides meet the circular outline cleanly.
+        Rectangle {
+            x: 17px;
+            y: parent.height - 29px;
+            width: 8px;
+            height: 6px;
+            background: #111713;
+        }
+
+        Rectangle {
+            x: 18.5px;
+            y: parent.height - 29px;
+            width: 5px;
+            height: 6px;
+            background: root.liquid-color;
+            opacity: root.stem-fill-ratio > 0 ? 1 : 0;
+        }
+
+        // Paint the circular liquid after the rectangular junction pieces.
+        // Its curved edge trims their lower ends to the bulb geometry.
+        Rectangle {
+            x: 12px;
+            y: parent.height - 25px;
+            width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            background: #111713;
+            clip: true;
+
+            Rectangle {
+                y: parent.height * (1 - root.bulb-fill-ratio);
+                width: parent.width;
+                height: parent.height * root.bulb-fill-ratio;
+                background: root.liquid-color;
+            }
+        }
+
+        Path {
+            width: parent.width;
+            height: parent.height;
+            commands: "M 16 73 L 16 10 Q 16 3 21 3 Q 26 3 26 10 L 26 73";
+            viewbox-width: 42;
+            viewbox-height: 100;
+            stroke: #dbe7df;
+            stroke-width: 2px;
+            stroke-line-cap: square;
+            stroke-line-join: round;
+            fill: transparent;
+        }
+    }
+
+    VerticalLayout {
+        x: 51px;
+        y: 10px;
+        width: parent.width - 51px;
+        height: parent.height - 20px;
+        spacing: 0px;
+
+        Text {
+            text: "\{round(root.temperature)}°C";
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            horizontal-alignment: left;
+            vertical-alignment: bottom;
+        }
+
+        Text {
+            text: root.label;
+            color: #9caaa2;
+            font-size: 8px;
+            font-weight: 600;
+            letter-spacing: 0.7px;
+            horizontal-alignment: left;
+            vertical-alignment: top;
+        }
+    }
+}
