@@ -23,11 +23,16 @@ component IceMotor inherits Rectangle {
         y: parent.height * 24 / 64;
         width: parent.width * 22 / 52;
         height: parent.height * 25 / 64;
-        commands: "M20 141 l0 -99 -6 -16 -6 -16 69 0 68 0 -3 45 -4 45 10 0 11 0 3 -37 3 -38 23 -3 22 -3 0 65 0 66 -10 0 -10 0 -2 -57 -1 -58 -4 39 -4 38 -19 5 -19 5 -3 57 -3 56 -57 3 -58 3 0 -100z m100 54 l0 -25 -45 0 -45 0 0 25 0 25 45 0 45 0 0 -25z M184 227 l6 -19 0 -19 0 -19 10 0 10 0 0 18 0 18 -16 20 -16 19 6 -18z";
-        viewbox-width: 220;
-        viewbox-height: 250;
-        fill: root.active ? white : #27302b;
-        transform-scale-y: -100%;
+        // The source is a one-pixel outlined fuel pump. Keep the body hollow;
+        // using its complete 25px viewbox also preserves the bitmap's height.
+        commands: "M 2 24 L 2 1 L 13 1 L 13 24 M 1 24 L 14 24 M 2 8 L 13 8 M 13 13 L 17 13 L 17 23 L 20 23 L 20 5 L 17 2";
+        viewbox-width: 22;
+        viewbox-height: 25;
+        stroke: root.active ? white : #27302b;
+        stroke-width: 1.75px;
+        stroke-line-cap: square;
+        stroke-line-join: round;
+        fill: transparent;
         opacity: root.active ? 1 : 0.8;
         animate opacity { duration: 180ms; }
     }
