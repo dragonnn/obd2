@@ -1,4 +1,5 @@
 import { BatteryWidget } from "battery.slint";
+import { EnergyFlow } from "energy-flow.slint";
 
 export component AppWindow inherits Window {
     height: 272px;
@@ -22,5 +23,14 @@ export component AppWindow inherits Window {
         cell-voltage-deviation: 20;
         minimum-temperature: 18;
         maximum-temperature: 24;
+    }
+
+    EnergyFlow {
+        x: 280px;
+        y: 16px;
+        width: 210px;
+        height: parent.height / 2 - 32px;
+        power-kw: 18.6;
+        maximum-power-kw: 40;
     }
 }
