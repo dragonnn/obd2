@@ -1,5 +1,6 @@
 import { BatteryWidget } from "battery.slint";
 import { EnergyFlow } from "energy-flow.slint";
+import { MotorsWidget } from "motors.slint";
 
 export component AppWindow inherits Window {
     height: 272px;
@@ -32,5 +33,14 @@ export component AppWindow inherits Window {
         height: parent.height / 2 - 32px;
         power-kw: -2;
         maximum-power-kw: 40;
+    }
+
+    MotorsWidget {
+        x: 505px;
+        y: 16px;
+        width: 190px;
+        height: parent.height / 2 - 32px;
+        ice-on: false;
+        electric-on: true;
     }
 }
