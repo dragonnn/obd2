@@ -92,7 +92,6 @@ impl Arrow {
             let spacing = (aw_f / 1.2).ceil() as i32;
             let tip = aw_i;
             let gap = aw_i / 3;
-            trace!("Arrow redraw: offset={=f64} new_offset={=i32} color={=u8}", self.offset, new_offest, self.color);
             let color = Gray4::new(self.color);
             let fill_color = PrimitiveStyleBuilder::new().fill_color(color).build();
             let fill_black = PrimitiveStyleBuilder::new().fill_color(Gray4::BLACK).build();
@@ -141,14 +140,12 @@ impl Arrow {
             self.force_update = false;
 
             let elapsed_us = now.elapsed().as_micros() as u32;
-            trace!("Arrow draw: {=u32},{=u32:03}ms", elapsed_us / 1000, elapsed_us % 1000);
         }
 
         let now_us = Instant::now().as_ticks() / (embassy_time::TICK_HZ / 1_000_000);
         if let Some(last) = self.last_tick_us {
             let dt_us = (now_us - last) as u32;
             let delta = self.speed * dt_us as f64 / 1_000_000.0 * 60.0;
-            trace!("Arrow dt={=u32}us delta={=i32}mpx speed={=f64}", dt_us, (delta * 1000.0) as i32, self.speed);
             self.offset += delta;
         }
         self.last_tick_us = Some(now_us);

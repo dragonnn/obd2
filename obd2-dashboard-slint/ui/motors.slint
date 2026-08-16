@@ -1,99 +1,62 @@
 component IceMotor inherits Rectangle {
     in property <bool> active;
-    private property <color> active-color: #ffb454;
-    private property <color> inactive-color: #435048;
-
     background: transparent;
 
+    // Vector trace of motor_ice_body.bmp (52 × 64).
     Path {
-        x: (parent.width - self.width) / 2;
-        y: 4px;
-        width: 62px;
-        height: 62px;
-        commands: "M 5 10 L 12 10 L 12 4 L 27 4 L 34 11 L 47 11 L 47 21 L 53 21 L 53 16 L 59 16 L 59 49 L 53 49 L 53 43 L 47 43 L 47 53 L 35 53 L 28 60 L 13 60 L 13 55 L 5 55 Z";
-        viewbox-width: 64;
-        viewbox-height: 64;
-        stroke: root.active ? root.active-color : root.inactive-color;
-        stroke-width: 2.5px;
-        stroke-line-join: round;
-        fill: transparent;
-    }
-
-    // Vector recreation of the original fuel-pump status symbol.
-    Path {
-        x: (parent.width - self.width) / 2;
-        y: 25px;
-        width: 24px;
-        height: 28px;
-        commands: "M 3 25 L 3 7 Q 3 3 7 3 L 14 3 Q 17 3 17 7 L 17 25 Z M 6 7 L 14 7 L 14 13 L 6 13 Z M 17 8 C 22 8 22 12 22 15 L 22 22 Q 22 25 19 25 Q 17 25 17 22";
-        viewbox-width: 25;
-        viewbox-height: 28;
-        stroke: root.active ? white : #29322d;
-        stroke-width: 2px;
-        stroke-line-cap: round;
-        stroke-line-join: round;
-        fill: transparent;
-        opacity: root.active ? 1 : 0.72;
-        animate opacity { duration: 180ms; }
-    }
-
-    Text {
-        y: parent.height - 17px;
         width: parent.width;
-        text: "ICE";
-        color: root.active ? root.active-color : root.inactive-color;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        horizontal-alignment: center;
+        height: parent.height;
+        commands: "M40 630 l0 -10 80 0 80 0 0 -20 0 -20 -65 0 -65 0 0 -30 0 -30 65 0 65 0 32 -50 33 -50 53 0 52 0 0 -155 0 -155 -48 0 -48 0 -44 -45 -44 -45 -73 0 -73 0 0 -10 0 -10 72 0 71 0 53 50 53 50 50 0 51 0 0 66 0 65 18 -3 17 -3 3 -63 3 -62 29 0 30 0 0 80 0 80 15 0 15 0 0 90 0 90 -45 0 -44 0 -3 -67 -3 -68 -17 -3 -17 -3 -3 68 -3 68 -57 3 -57 3 -28 44 -28 44 -65 3 -65 3 0 15 0 15 62 3 63 3 0 34 0 35 -85 0 -85 0 0 -10z m460 -285 l0 -75 -15 0 -15 0 0 -81 0 -81 -12 4 -13 5 -3 151 -3 152 31 0 30 0 0 -75z m-72 -82 l-3 -18 -18 -3 -17 -3 0 20 0 21 21 0 20 0 -3 -17z M3 575 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M3 475 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M3 375 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M3 265 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M3 165 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M3 65 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z";
+        viewbox-width: 520;
+        viewbox-height: 640;
+        fill: root.active ? #ffb454 : #435048;
+        transform-scale-y: -100%;
+    }
+
+    // Original fuel-pump layer position: (5, 24), size 22 × 25.
+    Path {
+        x: parent.width * 5 / 52;
+        y: parent.height * 24 / 64;
+        width: parent.width * 22 / 52;
+        height: parent.height * 25 / 64;
+        commands: "M20 141 l0 -99 -6 -16 -6 -16 69 0 68 0 -3 45 -4 45 10 0 11 0 3 -37 3 -38 23 -3 22 -3 0 65 0 66 -10 0 -10 0 -2 -57 -1 -58 -4 39 -4 38 -19 5 -19 5 -3 57 -3 56 -57 3 -58 3 0 -100z m100 54 l0 -25 -45 0 -45 0 0 25 0 25 45 0 45 0 0 -25z M184 227 l6 -19 0 -19 0 -19 10 0 10 0 0 18 0 18 -16 20 -16 19 6 -18z";
+        viewbox-width: 220;
+        viewbox-height: 250;
+        fill: root.active ? white : #27302b;
+        transform-scale-y: -100%;
+        opacity: root.active ? 1 : 0.8;
+        animate opacity { duration: 180ms; }
     }
 }
 
 component ElectricMotor inherits Rectangle {
     in property <bool> active;
-    private property <color> active-color: #5bc8ff;
-    private property <color> inactive-color: #435048;
-
     background: transparent;
 
+    // Vector trace of motor_electric_body.bmp (59 × 64).
     Path {
-        x: (parent.width - self.width) / 2;
-        y: 4px;
-        width: 62px;
-        height: 62px;
-        commands: "M 57 4 L 57 11 L 44 11 L 37 18 L 20 18 L 20 23 L 15 18 L 7 18 Q 3 18 3 23 L 3 51 Q 3 56 7 56 L 15 56 L 20 51 L 20 56 L 37 56 L 44 49 L 57 49 L 57 56";
-        viewbox-width: 64;
-        viewbox-height: 64;
-        stroke: root.active ? root.active-color : root.inactive-color;
-        stroke-width: 2.5px;
-        stroke-line-cap: round;
-        stroke-line-join: round;
-        fill: transparent;
-    }
-
-    // Scalable lightning symbol replacing the on/off bitmap layers.
-    Path {
-        x: (parent.width - self.width) / 2;
-        y: 23px;
-        width: 23px;
-        height: 31px;
-        commands: "M 13 1 L 3 17 L 10 17 L 7 30 L 21 11 L 14 11 L 18 1 Z";
-        viewbox-width: 24;
-        viewbox-height: 31;
-        fill: root.active ? white : #29322d;
-        opacity: root.active ? 1 : 0.72;
-        animate opacity { duration: 180ms; }
-    }
-
-    Text {
-        y: parent.height - 17px;
         width: parent.width;
-        text: "EV";
-        color: root.active ? root.active-color : root.inactive-color;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        horizontal-alignment: center;
+        height: parent.height;
+        commands: "M380 605 l0 -34 63 -3 62 -3 0 -15 0 -15 -66 -3 -66 -3 -33 -34 -34 -35 -63 0 -63 0 0 -30 0 -30 -20 0 -20 0 0 20 0 20 -53 0 -54 0 -16 -18 -17 -19 0 -155 0 -155 18 -16 19 -17 56 0 57 0 0 25 0 25 16 0 17 0 62 -55 63 -55 86 0 86 0 0 10 0 10 -84 0 -85 0 -55 47 -55 48 -1 163 0 162 58 0 58 0 39 40 39 40 63 0 63 0 0 30 0 29 -62 3 -63 3 -3 18 -3 17 80 0 81 0 0 10 0 10 -85 0 -85 0 0 -35z m-248 -317 l2 -143 3 118 4 117 19 0 20 0 0 -130 0 -130 -25 0 -25 0 0 -21 0 -20 -52 3 -53 3 -3 159 -3 158 12 14 11 14 44 0 44 0 2 -142z M583 575 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M583 475 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M583 375 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M583 265 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M583 165 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M583 65 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M500 40 l0 -40 25 0 25 0 0 10 0 10 -15 0 -15 0 0 30 0 30 -10 0 -10 0 0 -40z";
+        viewbox-width: 590;
+        viewbox-height: 640;
+        fill: root.active ? #5bc8ff : #435048;
+        transform-scale-y: -100%;
+    }
+
+    // Original lightning layer position: (34, 24), size 18 × 25.
+    Path {
+        x: parent.width * 34 / 59;
+        y: parent.height * 24 / 64;
+        width: parent.width * 18 / 59;
+        height: parent.height * 25 / 64;
+        commands: "M28 170 l-26 -70 33 0 33 0 -14 -45 -13 -45 20 0 19 0 45 70 45 70 0 5 0 5 -30 0 -30 0 0 5 0 6 14 34 15 35 -42 0 -42 0 -27 -70z";
+        viewbox-width: 180;
+        viewbox-height: 250;
+        fill: root.active ? white : #27302b;
+        transform-scale-y: -100%;
+        opacity: root.active ? 1 : 0.8;
+        animate opacity { duration: 180ms; }
     }
 }
 
@@ -101,27 +64,57 @@ export component MotorsWidget inherits Rectangle {
     in property <bool> ice-on: false;
     in property <bool> electric-on: true;
 
-    background: #111713;
-    border-color: #718078;
-    border-width: 2px;
-    border-radius: 12px;
-    clip: true;
+    private property <length> label-height: 13px;
+    private property <length> drawing-height: min(root.height - root.label-height, root.width * 64 / 111);
+    private property <length> electric-width: root.drawing-height * 59 / 64;
+    private property <length> ice-width: root.drawing-height * 52 / 64;
+    private property <length> drawing-width: root.electric-width + root.ice-width;
+    private property <length> drawing-x: (root.width - root.drawing-width) / 2;
+    private property <length> drawing-y: (root.height - root.label-height - root.drawing-height) / 2;
 
-    HorizontalLayout {
-        padding: 5px;
-        spacing: 5px;
+    background: transparent;
 
-        IceMotor {
-            active: root.ice-on;
-        }
+    ElectricMotor {
+        x: root.drawing-x;
+        y: root.drawing-y;
+        width: root.electric-width;
+        height: root.drawing-height;
+        active: root.electric-on;
+    }
 
-        Rectangle {
-            width: 1px;
-            background: #71807880;
-        }
+    IceMotor {
+        x: root.drawing-x + root.electric-width;
+        y: root.drawing-y;
+        width: root.ice-width;
+        height: root.drawing-height;
+        active: root.ice-on;
+    }
 
-        ElectricMotor {
-            active: root.electric-on;
-        }
+    Text {
+        x: root.drawing-x;
+        y: root.drawing-y + root.drawing-height;
+        width: root.electric-width;
+        height: root.label-height;
+        text: "EV";
+        color: root.electric-on ? #5bc8ff : #435048;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    Text {
+        x: root.drawing-x + root.electric-width;
+        y: root.drawing-y + root.drawing-height;
+        width: root.ice-width;
+        height: root.label-height;
+        text: "ICE";
+        color: root.ice-on ? #ffb454 : #435048;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        horizontal-alignment: center;
+        vertical-alignment: center;
     }
 }
