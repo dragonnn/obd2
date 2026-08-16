@@ -12,9 +12,24 @@ export component TemperatureWidget inherits Rectangle {
     // after it fills, the remaining range climbs through the stem.
     private property <float> bulb-fill-ratio: min(1, root.fill-ratio * 4);
     private property <float> stem-fill-ratio: max(0, (root.fill-ratio - 0.25) / 0.75);
-    private property <color> liquid-color: root.temperature >= 115
-        ? #e34b4b
-        : root.temperature >= 100 ? #ffb454 : #65d99b;
+    private property <color> liquid-color: root.fill-ratio < 0.25
+        ? #5bc8ff
+        : root.fill-ratio < 0.30
+            ? #5bc8ff.mix(#65d99b, (root.fill-ratio - 0.25) / 0.05)
+        : root.fill-ratio < 0.60
+            ? #65d99b
+        : root.fill-ratio < 0.65
+            ? #65d99b.mix(#ffb454, (root.fill-ratio - 0.60) / 0.05)
+        : root.fill-ratio < 0.70
+            ? #ffb454
+        : root.fill-ratio < 0.75
+            ? #ffb454.mix(#e34b4b, (root.fill-ratio - 0.70) / 0.05)
+        : #e34b4b;
+
+    animate liquid-color {
+        duration: 350ms;
+        easing: ease-in-out;
+    }
 
     background: transparent;
 
