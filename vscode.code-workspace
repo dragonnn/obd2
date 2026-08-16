@@ -16,6 +16,10 @@
 			"name": "obd2-dashboard",
 			"path": "obd2-dashboard"
 		},
+                {
+                        "name": "obd2-dashboard-slint",
+                        "path": "obd2-dashboard-slint"
+                },
 		{
 			"name": "obd2-simulator/host",
 			"path": "obd2-simulator/host"
