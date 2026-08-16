@@ -1,19 +1,23 @@
 component IceMotor inherits Rectangle {
     in property <bool> active;
     background: transparent;
+    clip: true;
 
-    // Vector trace of motor_ice_body.bmp (52 × 64).
+    // Centerlines measured from the committed 52 × 64 trace. Segments are
+    // snapped to horizontal, vertical, and the source's technical diagonals.
     Path {
         width: parent.width;
         height: parent.height;
-        commands: "M40 630 l0 -10 80 0 80 0 0 -20 0 -20 -65 0 -65 0 0 -30 0 -30 65 0 65 0 32 -50 33 -50 53 0 52 0 0 -155 0 -155 -48 0 -48 0 -44 -45 -44 -45 -73 0 -73 0 0 -10 0 -10 72 0 71 0 53 50 53 50 50 0 51 0 0 66 0 65 18 -3 17 -3 3 -63 3 -62 29 0 30 0 0 80 0 80 15 0 15 0 0 90 0 90 -45 0 -44 0 -3 -67 -3 -68 -17 -3 -17 -3 -3 68 -3 68 -57 3 -57 3 -28 44 -28 44 -65 3 -65 3 0 15 0 15 62 3 63 3 0 34 0 35 -85 0 -85 0 0 -10z m460 -285 l0 -75 -15 0 -15 0 0 -81 0 -81 -12 4 -13 5 -3 151 -3 152 31 0 30 0 0 -75z m-72 -82 l-3 -18 -18 -3 -17 -3 0 20 0 21 21 0 20 0 -3 -17z M3 575 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M3 475 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M3 375 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M3 265 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M3 165 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M3 65 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z";
-        viewbox-width: 520;
-        viewbox-height: 640;
-        fill: root.active ? #ffb454 : #435048;
-        transform-scale-y: -100%;
+        commands: "M 5 0 L 20 0 L 20 6 L 7 6 L 7 11 L 20 11 L 25 20 L 37 20 L 37 53 L 28 53 L 19 62 L 5 62 M 44 20 L 50 20 L 50 37 L 47 38 L 47 53 L 43 53 L 43 21 M 43 34 L 47 34 M 43 40 L 47 40";
+        viewbox-width: 52;
+        viewbox-height: 64;
+        stroke: root.active ? #ffb454 : #435048;
+        stroke-width: 1.75px;
+        stroke-line-cap: square;
+        stroke-line-join: round;
+        fill: transparent;
     }
 
-    // Original fuel-pump layer position: (5, 24), size 22 × 25.
     Path {
         x: parent.width * 5 / 52;
         y: parent.height * 24 / 64;
@@ -32,19 +36,22 @@ component IceMotor inherits Rectangle {
 component ElectricMotor inherits Rectangle {
     in property <bool> active;
     background: transparent;
+    clip: true;
 
-    // Vector trace of motor_electric_body.bmp (59 × 64).
+    // Centerlines measured from the committed 59 × 64 trace.
     Path {
         width: parent.width;
         height: parent.height;
-        commands: "M380 605 l0 -34 63 -3 62 -3 0 -15 0 -15 -66 -3 -66 -3 -33 -34 -34 -35 -63 0 -63 0 0 -30 0 -30 -20 0 -20 0 0 20 0 20 -53 0 -54 0 -16 -18 -17 -19 0 -155 0 -155 18 -16 19 -17 56 0 57 0 0 25 0 25 16 0 17 0 62 -55 63 -55 86 0 86 0 0 10 0 10 -84 0 -85 0 -55 47 -55 48 -1 163 0 162 58 0 58 0 39 40 39 40 63 0 63 0 0 30 0 29 -62 3 -63 3 -3 18 -3 17 80 0 81 0 0 10 0 10 -85 0 -85 0 0 -35z m-248 -317 l2 -143 3 118 4 117 19 0 20 0 0 -130 0 -130 -25 0 -25 0 0 -21 0 -20 -52 3 -53 3 -3 159 -3 158 12 14 11 14 44 0 44 0 2 -142z M583 575 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M583 475 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M583 375 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M583 265 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M583 165 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M583 65 l0 -40 4 23 4 22 -4 18 -5 17 1 -40z M500 40 l0 -40 25 0 25 0 0 10 0 10 -15 0 -15 0 0 30 0 30 -10 0 -10 0 0 -40z";
-        viewbox-width: 590;
-        viewbox-height: 640;
-        fill: root.active ? #5bc8ff : #435048;
-        transform-scale-y: -100%;
+        commands: "M 39 0 L 54 0 M 39 0 L 39 6 L 51 6 L 51 11 L 38 11 L 31 18 L 18 18 L 18 24 L 13 24 M 13 20 L 3 20 L 0 24 L 0 53 L 3 56 L 13 56 L 13 52 L 18 52 L 30 62 L 50 62 L 50 57 M 13 20 L 13 48 M 13 24 L 18 24 M 13 52 L 18 52";
+        viewbox-width: 59;
+        viewbox-height: 64;
+        stroke: root.active ? #5bc8ff : #435048;
+        stroke-width: 1.75px;
+        stroke-line-cap: square;
+        stroke-line-join: round;
+        fill: transparent;
     }
 
-    // Original lightning layer position: (34, 24), size 18 × 25.
     Path {
         x: parent.width * 34 / 59;
         y: parent.height * 24 / 64;
@@ -73,6 +80,7 @@ export component MotorsWidget inherits Rectangle {
     private property <length> drawing-y: (root.height - root.label-height - root.drawing-height) / 2;
 
     background: transparent;
+    clip: true;
 
     ElectricMotor {
         x: root.drawing-x;
@@ -80,6 +88,21 @@ export component MotorsWidget inherits Rectangle {
         width: root.electric-width;
         height: root.drawing-height;
         active: root.electric-on;
+    }
+
+    Rectangle {
+        x: root.drawing-x + root.electric-width - 1px;
+        y: root.drawing-y;
+        width: 2px;
+        height: root.drawing-height;
+        background: transparent;
+
+        for _[index] in 6: Rectangle {
+            y: index * parent.height / 6 + 2px;
+            width: 2px;
+            height: parent.height / 12;
+            background: root.electric-on ? #5bc8ff : root.ice-on ? #ffb454 : #435048;
+        }
     }
 
     IceMotor {
