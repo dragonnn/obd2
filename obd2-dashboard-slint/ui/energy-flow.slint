@@ -1,33 +1,35 @@
-component ArrowShape inherits Rectangle {
+component ArrowShape inherits Path {
     in property <color> arrow-color;
     in property <bool> points-right;
+    in property <length> notch-width: 18px;
 
-    private property <length> tip-width: 18px;
-    private property <length> tip-overlap: 10px;
-    background: transparent;
+    fill: root.arrow-color;
 
-    Rectangle {
-        x: root.points-right ? 0 : min(parent.width, root.tip-width - root.tip-overlap);
-        y: (parent.height - self.height) / 2;
-        width: max(0px, parent.width - root.tip-width + root.tip-overlap);
-        height: 30px;
-        background: root.arrow-color;
-        border-radius: 15px;
+    MoveTo {
+        x: root.points-right ? 0 : root.width / 1px;
+        y: 0;
     }
-
-    Path {
-        x: root.points-right ? max(0px, parent.width - root.tip-width) : 0;
-        y: (parent.height - self.height) / 2;
-        width: min(parent.width, root.tip-width);
-        height: 30px;
-        commands: root.points-right
-            ? "M 0 0 L 100 50 L 0 100 Z"
-            : "M 100 0 L 0 50 L 100 100 Z";
-        viewbox-width: 100;
-        viewbox-height: 100;
-        fit: fill;
-        fill: root.arrow-color;
+    LineTo {
+        x: root.points-right ? root.notch-width / 1px : (root.width - root.notch-width) / 1px;
+        y: root.height / 2px;
     }
+    LineTo {
+        x: root.points-right ? 0 : root.width / 1px;
+        y: root.height / 1px;
+    }
+    LineTo {
+        x: root.points-right ? (root.width - root.notch-width) / 1px : root.notch-width / 1px;
+        y: root.height / 1px;
+    }
+    LineTo {
+        x: root.points-right ? root.width / 1px : 0;
+        y: root.height / 2px;
+    }
+    LineTo {
+        x: root.points-right ? (root.width - root.notch-width) / 1px : root.notch-width / 1px;
+        y: 0;
+    }
+    Close { }
 }
 
 export component EnergyFlow inherits Rectangle {
@@ -37,6 +39,8 @@ export component EnergyFlow inherits Rectangle {
     private property <float> absolute-power: abs(root.power-kw);
     private property <float> power-ratio: min(1, root.absolute-power / max(1, root.maximum-power-kw));
     private property <bool> discharging: root.power-kw >= 0;
+    private property <length> arrow-notch-width: 18px;
+    private property <length> arrow-gap: 15px;
     private property <color> flow-color: root.discharging ? #65d99b : #5bc8ff;
     private property <duration> cycle-duration: 1400ms - root.power-ratio * 800ms;
     private property <float> travel-progress: root.absolute-power < 0.05
@@ -49,7 +53,7 @@ export component EnergyFlow inherits Rectangle {
         spacing: 2px;
 
         Text {
-            height: 38px;
+            height: parent.height - 46px;
             text: "\{round(root.power-kw * 10) / 10} kW";
             color: white;
             font-size: 25px;
@@ -59,30 +63,25 @@ export component EnergyFlow inherits Rectangle {
         }
 
         Rectangle {
+            height: 44px;
             clip: true;
-            background: transparent;
+            background: root.flow-color.with-alpha(0.18);
+            border-radius: 10px;
 
-            // A quiet track shows the full travel without leaving a fixed
-            // arrowhead at the far edge.
-            Rectangle {
-                x: 5px;
-                y: (parent.height - self.height) / 2;
-                width: parent.width - 10px;
-                height: 30px;
-                background: root.flow-color.with-alpha(0.18);
-                border-radius: 8px;
-            }
-
-            // Two full arrows travel back-to-back. As one leaves the clipped
-            // viewport, the next enters behind it, avoiding a reset jump.
-            for _[index] in 2: ArrowShape {
+            // Three arrows keep an identical neighbor outside both clipped
+            // edges. The small offset exposes the dim track as a clear
+            // V-shaped separator between consecutive arrows.
+            for _[index] in 3: ArrowShape {
                 x: root.discharging
-                    ? (index - 1 + root.travel-progress) * parent.width
-                    : (1 - index - root.travel-progress) * parent.width;
+                    ? (index - 1 + root.travel-progress)
+                        * (parent.width - root.arrow-notch-width + root.arrow-gap)
+                    : (1 - index - root.travel-progress)
+                        * (parent.width - root.arrow-notch-width + root.arrow-gap);
                 width: parent.width;
                 height: parent.height;
                 arrow-color: root.flow-color;
                 points-right: root.discharging;
+                notch-width: root.arrow-notch-width;
                 opacity: root.absolute-power < 0.05 ? 0 : 1;
             }
         }
