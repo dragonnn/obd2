@@ -79,7 +79,7 @@ export component EnergyFlow inherits Rectangle {
             for _[index] in root.arrows-in-view + 2: ArrowShape {
                 x: root.discharging
                     ? (index - 1 + root.travel-progress) * root.arrow-spacing
-                    : (1 - index - root.travel-progress) * root.arrow-spacing;
+                    : (root.arrows-in-view - index - root.travel-progress) * root.arrow-spacing;
                 width: root.arrow-width;
                 height: parent.height;
                 arrow-color: root.flow-color;
