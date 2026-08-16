@@ -1,0 +1,103 @@
+component Metric inherits VerticalLayout {
+    in property <string> value;
+    in property <string> label;
+    spacing: 0px;
+    horizontal-stretch: 1;
+
+    Text {
+        text: root.value;
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        vertical-alignment: bottom;
+    }
+
+    Text {
+        text: root.label;
+        color: #dbe7df;
+        font-size: 8px;
+        letter-spacing: 0.5px;
+        vertical-alignment: top;
+    }
+}
+
+export component BatteryWidget inherits Rectangle {
+    in property <float> state-of-charge: 76;
+    in property <float> pack-voltage: 357.2;
+    in property <float> average-cell-voltage: 3.82;
+    in property <float> cell-voltage-deviation: 20;
+    in property <float> minimum-temperature: 18;
+    in property <float> maximum-temperature: 24;
+
+    private property <float> clamped-state-of-charge:
+        root.state-of-charge < 0 ? 0 : root.state-of-charge > 100 ? 100 : root.state-of-charge;
+    private property <color> fill-color: root.clamped-state-of-charge <= 10
+        ? #b42318
+        : root.clamped-state-of-charge <= 20 ? #b7791f : #26734d;
+
+    background: #111713;
+    border-color: #718078;
+    border-width: 2px;
+    border-radius: 12px;
+    clip: true;
+
+    // SOC is represented by the background of the entire widget, just as in
+    // the original embedded dashboard. All values remain visible above it.
+    Rectangle {
+        x: 0;
+        y: 0;
+        width: parent.width * root.clamped-state-of-charge / 100;
+        height: parent.height;
+        background: root.fill-color;
+    }
+
+    HorizontalLayout {
+        padding: 7px;
+        spacing: 7px;
+
+        Text {
+            width: 70px;
+            text: "\{round(root.state-of-charge)}%";
+            color: white;
+            font-size: 30px;
+            font-weight: 700;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+
+        Rectangle {
+            width: 1px;
+            background: #ffffff50;
+        }
+
+        VerticalLayout {
+            spacing: 3px;
+
+            HorizontalLayout {
+                spacing: 8px;
+
+                Metric {
+                    value: "\{round(root.pack-voltage * 10) / 10} V";
+                    label: "PACK";
+                }
+                Metric {
+                    value: "\{round(root.average-cell-voltage * 100) / 100} V";
+                    label: "AVG CELL";
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 8px;
+
+                Metric {
+                    value: "\{round(root.minimum-temperature)}–\{round(root.maximum-temperature)} °C";
+                    label: "TEMP RANGE";
+                }
+                Metric {
+                    value: "Δ \{round(root.cell-voltage-deviation)} mV";
+                    label: "CELL SPREAD";
+                }
+            }
+        }
+    }
+}

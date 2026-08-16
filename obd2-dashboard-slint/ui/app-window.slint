@@ -1,4 +1,4 @@
-import { Button, VerticalBox } from "std-widgets.slint";
+import { BatteryWidget } from "battery.slint";
 
 export component AppWindow inherits Window {
     height: 272px;
@@ -7,16 +7,20 @@ export component AppWindow inherits Window {
     title: "OBD2 Dashboard";
     in-out property <int> counter: 42;
     callback request-increase-value();
-    VerticalBox {
-        Text {
-            text: "Counter: \{root.counter}";
-        }
 
-        Button {
-            text: "Increase value";
-            clicked => {
-                root.request-increase-value();
-            }
-        }
+    background: #080b09;
+
+    BatteryWidget {
+        x: 16px;
+        y: 16px;
+        width: 240px;
+        height: parent.height/2 - 32px;
+
+        state-of-charge: 76;
+        pack-voltage: 357.2;
+        average-cell-voltage: 3.82;
+        cell-voltage-deviation: 20;
+        minimum-temperature: 18;
+        maximum-temperature: 24;
     }
 }
