@@ -10,5 +10,8 @@ rm -f \
     "$TARGET_DIR/usr/share/fish/completions/alsactl.fish" \
     "$TARGET_DIR/usr/share/fish/completions/amixer.fish" \
     "$TARGET_DIR/usr/share/fish/completions/alsamixer.fish" \
+    "$TARGET_DIR/usr/share/fish/completions/ffmpeg.fish" \
+    "$TARGET_DIR/usr/share/fish/completions/ffplay.fish" \
+    "$TARGET_DIR/usr/share/fish/completions/ffprobe.fish" \
     "$TARGET_DIR/usr/share/vim/vim91/syntax/alsaconf.vim" \
     "$TARGET_DIR/usr/share/vim/vim91/ftplugin/alsaconf.vim"
