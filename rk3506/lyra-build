@@ -30,6 +30,11 @@ case "$action" in
     image)
         exec docker compose -f "$project_dir/compose.yaml" build
         ;;
+    clean)
+        exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk \
+            bash -lc 'set -euo pipefail
+                make -C buildroot O=output/rockchip_rk3506_luckfox clean'
+        ;;
     flash)
         flash_tool="$project_dir/sdk/tools/linux/Linux_Upgrade_Tool/Linux_Upgrade_Tool/upgrade_tool"
         firmware="$project_dir/sdk/output/firmware/update.img"
@@ -142,7 +147,7 @@ case "$action" in
         exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk bash
         ;;
     *)
-        echo "Usage: $0 {image|download|download-cache|prepare|sync-sources|lunch|build|flash|rootfs|kernel|uboot|firmware|buildroot-config|shell}" >&2
+        echo "Usage: $0 {image|download|download-cache|prepare|sync-sources|lunch|build|clean|flash|rootfs|kernel|uboot|firmware|buildroot-config|shell}" >&2
         exit 2
         ;;
 esac
