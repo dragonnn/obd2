@@ -1,0 +1,6 @@
+diff --git device/rockchip/common/configs/post/Config.in.overlay device/rockchip/common/configs/post/Config.in.overlay
+--- device/rockchip/common/configs/post/Config.in.overlay
++++ device/rockchip/common/configs/post/Config.in.overlay
+@@ -47,1 +47,1 @@ config RK_ROOTFS_IRQBALANCE
+-	default y
++	default n

@@ -1,0 +1,6 @@
+diff --git device/rockchip/common/configs/post/Config.in.overlay device/rockchip/common/configs/post/Config.in.overlay
+--- device/rockchip/common/configs/post/Config.in.overlay
++++ device/rockchip/common/configs/post/Config.in.overlay
+@@ -37,1 +37,2 @@ menuconfig RK_ROOTFS_BOOTANIM
+ 	bool "bootanim (Boot-time animation)"
++	default n
