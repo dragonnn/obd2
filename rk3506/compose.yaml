@@ -11,3 +11,6 @@ services:
     tty: true
     volumes:
       - ./sdk:/sdk
+      - ./kernel:/project/kernel:ro
+      - ./buildroot:/project/buildroot:ro
+      - ./device:/project/device:ro

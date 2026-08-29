@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Luckfox Lyra CO6300 AMOLED variant.
+ *
+ * The board hardware remains defined by the generic Lyra Ultra DTSI. This
+ * file only replaces its example panel with the 272x928 CO6300 module.
+ */
+/dts-v1/;
+
+#include "rk3506-luckfox-lyra-ultra.dtsi"
+
+&dsi_panel {
+	/delete-property/ panel-init-sequence;
+
+	compatible = "boe,co6300";
+	backlight = <&backlight>;
+	dsi,format = <MIPI_DSI_FMT_RGB565>;
+	dsi,lanes = <1>;
+	width-mm = <42>;
+	height-mm = <144>;
+
+	panel-init-sequence = [
+		15 00 02 FE 20
+		15 00 02 F4 5A
+		15 00 02 F5 59
+		15 00 02 FE 80
+		15 00 02 03 00
+		15 00 02 FE 00
+		15 00 02 35 00
+		15 00 02 3A 55
+		15 00 02 36 00
+		39 00 05 2A 00 00 01 0F
+		39 00 05 2B 00 00 03 9F
+		15 00 02 53 20
+		15 00 02 51 FF
+		15 00 02 63 FF
+		05 60 01 11
+		05 00 01 29
+		15 00 02 51 FF
+		15 0A 02 58 07
+	];
+	/delete-node/ display-timings;
+
+	display-timings {
+		native-mode = <&co6300_timing>;
+		co6300_timing: timing0 {
+			clock-frequency = <16000000>;
+			hactive = <272>;
+			vactive = <928>;
+			hfront-porch = <32>;
+			hback-porch = <32>;
+			hsync-len = <4>;
+			vfront-porch = <8>;
+			vback-porch = <8>;
+			vsync-len = <4>;
+			hsync-active = <0>;
+			vsync-active = <0>;
+			de-active = <0>;
+			pixelclk-active = <0>;
+		};
+	};
+};

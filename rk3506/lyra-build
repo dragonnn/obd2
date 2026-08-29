@@ -78,22 +78,37 @@ case "$action" in
         ;;
     prepare)
         exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk \
-            bash -lc 'if [[ -x .repo/repo/repo ]]; then .repo/repo/repo sync -l; else echo "Missing .repo/repo/repo" >&2; exit 1; fi'
+            bash -lc 'set -euo pipefail
+                if [[ -x .repo/repo/repo ]]; then .repo/repo sync -l; else echo "Missing .repo/repo/repo" >&2; exit 1; fi
+                install -D /project/kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi
+                install -D /project/kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts
+                install -D /project/buildroot/configs/rockchip_rk3506_luckfox_defconfig buildroot/configs/rockchip_rk3506_luckfox_defconfig
+                install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig'
+        ;;
+    sync-sources)
+        exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk \
+            bash -lc 'set -euo pipefail
+                install -D /project/kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi
+                install -D /project/kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts
+                install -D /project/buildroot/configs/rockchip_rk3506_luckfox_defconfig buildroot/configs/rockchip_rk3506_luckfox_defconfig
+                install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig'
         ;;
     lunch)
         exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk ./build.sh lunch
         ;;
     build)
+        "$project_dir/lyra-build" sync-sources
         exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk ./build.sh "${@}"
         ;;
     rootfs|kernel|uboot|firmware|buildroot-config)
+        "$project_dir/lyra-build" sync-sources
         exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk ./build.sh "$action" "${@}"
         ;;
     shell)
         exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk bash
         ;;
     *)
-        echo "Usage: $0 {image|download|download-cache|prepare|lunch|build|flash|rootfs|kernel|uboot|firmware|buildroot-config|shell}" >&2
+        echo "Usage: $0 {image|download|download-cache|prepare|sync-sources|lunch|build|flash|rootfs|kernel|uboot|firmware|buildroot-config|shell}" >&2
         exit 2
         ;;
 esac

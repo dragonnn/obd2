@@ -28,6 +28,8 @@ Luckfox Lyra SDK. The SDK itself is not redistributed here.
    ```sh
    ./lyra-build download-cache
    ```
+   The custom CO6300 DTSI/DTS and Buildroot configuration are tracked outside
+   the disposable SDK and copied into it automatically before each build.
 3. Select the target configuration:
 
    ```sh
