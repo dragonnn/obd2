@@ -89,7 +89,10 @@ case "$action" in
                 install -D /project/buildroot/package/fish/fish.hash buildroot/package/fish/fish.hash
                 grep -q "source \"package/fish/Config.in\"" buildroot/package/Config.in || \
                     sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/fish/Config.in\"" buildroot/package/Config.in
-                install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig'
+                install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig
+                if grep -q "^[[:space:]]*sleep 8[[:space:]]*$" device/rockchip/common/overlays/rootfs/luckfox-lyra/S60netdevice; then
+                    patch -p0 < /project/patches/S60netdevice-remove-sleep-8.patch
+                fi'
         ;;
     sync-sources)
         exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk \
@@ -103,7 +106,10 @@ case "$action" in
                 install -D /project/buildroot/package/fish/fish.hash buildroot/package/fish/fish.hash
                 grep -q "source \"package/fish/Config.in\"" buildroot/package/Config.in || \
                     sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/fish/Config.in\"" buildroot/package/Config.in
-                install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig'
+                install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig
+                if grep -q "^[[:space:]]*sleep 8[[:space:]]*$" device/rockchip/common/overlays/rootfs/luckfox-lyra/S60netdevice; then
+                    patch -p0 < /project/patches/S60netdevice-remove-sleep-8.patch
+                fi'
         ;;
     lunch)
         exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk ./build.sh lunch

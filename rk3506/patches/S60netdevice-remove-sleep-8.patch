@@ -1,0 +1,11 @@
+--- device/rockchip/common/overlays/rootfs/luckfox-lyra/S60netdevice
++++ device/rockchip/common/overlays/rootfs/luckfox-lyra/S60netdevice
+@@ -62,8 +62,6 @@ start() {
+ 		 echo "[S60netdevice] eth1 not found"
+ 	fi
+ 
+-	sleep 8
+-
+ 	if [ -d "/sys/devices/platform/ff740000.usb/gadget.0/net" ]; then
+ 		for iface in "/sys/devices/platform/ff740000.usb/gadget.0/net"/*; do
+ 			usb_iface_name=$(basename "$iface")
