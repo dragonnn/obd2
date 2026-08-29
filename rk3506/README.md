@@ -81,3 +81,15 @@ fish to keep its mutable files under `/mnt/sdcard/fish`:
 
 Fish 3.6.4 is included in the Buildroot image and ADB starts it by default.
 The card must retain the `LYRA_SD` filesystem label for the boot mount hook.
+
+## Rockchip multimedia stack
+
+The image currently disables Rockchip's proprietary `RKADK`/`librockit.so`
+stack. This removes its ALSA-linked multimedia runtime, which is unnecessary
+on this board because it has no sound card. Basic Linux display support through
+DRM/KMS or framebuffer interfaces is unaffected.
+
+If the application later needs Rockchip-specific hardware video overlays,
+scaling, rotation, camera-to-display pipelines, or related vendor multimedia
+features, revisit this decision and re-enable RKADK/Rockit (and its required
+dependencies) instead of relying only on standard Linux display interfaces.
