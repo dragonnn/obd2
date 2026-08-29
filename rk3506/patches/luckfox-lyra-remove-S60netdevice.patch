@@ -1,0 +1,10 @@
+--- device/rockchip/common/overlays/rootfs/luckfox-lyra/install.sh
++++ device/rockchip/common/overlays/rootfs/luckfox-lyra/install.sh
+@@ -13,9 +13,7 @@ install_sysv_service "$OVERLAY_DIR/S35es8311" S
+ install_sysv_service "$OVERLAY_DIR/S45usbconfig" S
+-install_sysv_service "$OVERLAY_DIR/S60netdevice" S
+ install_busybox_service "$OVERLAY_DIR/S03modules_init.sh"
+ install_busybox_service "$OVERLAY_DIR/S35wifibt-poweron.sh"
+ install_busybox_service "$OVERLAY_DIR/S35es8311"
+ install_busybox_service "$OVERLAY_DIR/S45usbconfig"
+-install_busybox_service "$OVERLAY_DIR/S60netdevice"
