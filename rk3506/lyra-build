@@ -92,7 +92,14 @@ case "$action" in
                 install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig
                 for patch_file in /project/patches/*.patch; do
                     echo "Applying ${patch_file##*/}"
-                    patch -p0 < "$patch_file"
+                    if patch --dry-run --forward --batch -p0 < "$patch_file" >/dev/null 2>&1; then
+                        patch --forward --batch -p0 < "$patch_file"
+                    elif patch --dry-run --reverse --batch -p0 < "$patch_file" >/dev/null 2>&1; then
+                        echo "Already applied: ${patch_file##*/}"
+                    else
+                        echo "Failed to apply ${patch_file##*/}" >&2
+                        exit 1
+                    fi
                 done'
         ;;
     sync-sources)
@@ -110,7 +117,14 @@ case "$action" in
                 install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig
                 for patch_file in /project/patches/*.patch; do
                     echo "Applying ${patch_file##*/}"
-                    patch -p0 < "$patch_file"
+                    if patch --dry-run --forward --batch -p0 < "$patch_file" >/dev/null 2>&1; then
+                        patch --forward --batch -p0 < "$patch_file"
+                    elif patch --dry-run --reverse --batch -p0 < "$patch_file" >/dev/null 2>&1; then
+                        echo "Already applied: ${patch_file##*/}"
+                    else
+                        echo "Failed to apply ${patch_file##*/}" >&2
+                        exit 1
+                    fi
                 done'
         ;;
     lunch)
