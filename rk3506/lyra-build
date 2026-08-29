@@ -92,6 +92,9 @@ case "$action" in
                 install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig
                 if grep -q "^[[:space:]]*sleep 8[[:space:]]*$" device/rockchip/common/overlays/rootfs/luckfox-lyra/S60netdevice; then
                     patch -p0 < /project/patches/S60netdevice-remove-sleep-8.patch
+                fi
+                if grep -q "udhcpc -i eth[01]" device/rockchip/common/overlays/rootfs/luckfox-lyra/S60netdevice; then
+                    patch -p0 < /project/patches/S60netdevice-disable-dhcp.patch
                 fi'
         ;;
     sync-sources)
@@ -109,6 +112,9 @@ case "$action" in
                 install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig
                 if grep -q "^[[:space:]]*sleep 8[[:space:]]*$" device/rockchip/common/overlays/rootfs/luckfox-lyra/S60netdevice; then
                     patch -p0 < /project/patches/S60netdevice-remove-sleep-8.patch
+                fi
+                if grep -q "udhcpc -i eth[01]" device/rockchip/common/overlays/rootfs/luckfox-lyra/S60netdevice; then
+                    patch -p0 < /project/patches/S60netdevice-disable-dhcp.patch
                 fi'
         ;;
     lunch)
