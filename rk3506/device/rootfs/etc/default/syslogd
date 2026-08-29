@@ -1,0 +1,2 @@
+# Keep persistent logs bounded on the SD card.
+SYSLOGD_ARGS="-O /var/log/messages -s 128 -b 2"

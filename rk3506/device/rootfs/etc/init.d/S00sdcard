@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Mount the removable SD card before syslogd/klogd start.  If the card is
+# absent, keep the tmpfs /var/log and allow the system to continue booting.
+SD_MOUNT=/mnt/sdcard
+SD_WAIT_SECONDS=5
+
+case "$1" in
+start)
+	mkdir -p "$SD_MOUNT"
+
+	if ! mount | grep -q " on $SD_MOUNT "; then
+		attempt=0
+		while ! mount -t ext4 -o noatime,nodiratime LABEL=LYRA_SD "$SD_MOUNT" 2>/dev/null; do
+			attempt=$((attempt + 1))
+			[ "$attempt" -ge "$((SD_WAIT_SECONDS * 5))" ] && break
+			sleep 0.2
+		done
+	fi
+
+	if mount | grep -q " on $SD_MOUNT "; then
+		mkdir -p "$SD_MOUNT/fish/completions" "$SD_MOUNT/log"
+		chmod 700 "$SD_MOUNT/fish"
+
+		# Preserve messages emitted by mount-helper before this script ran.
+		cp -a /var/log/. "$SD_MOUNT/log/" 2>/dev/null || true
+		mount --bind "$SD_MOUNT/log" /var/log
+	else
+		echo "Warning: SD card unavailable; using volatile /var/log" >&2
+		mkdir -p "$SD_MOUNT/fish/completions"
+		chmod 700 "$SD_MOUNT/fish"
+	fi
+	;;
+esac
+
+exit 0

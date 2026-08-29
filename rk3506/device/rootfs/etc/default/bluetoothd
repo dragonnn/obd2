@@ -1,0 +1,2 @@
+# Keep normal Bluetooth operation, but do not enable BlueZ debug logging.
+BLUETOOTHD_ARGS="-n"
