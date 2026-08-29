@@ -16,10 +16,10 @@
 			"name": "obd2-dashboard",
 			"path": "obd2-dashboard"
 		},
-                {
-                        "name": "obd2-dashboard-slint",
-                        "path": "obd2-dashboard-slint"
-                },
+		{
+			"name": "obd2-dashboard-slint",
+			"path": "obd2-dashboard-slint"
+		},
 		{
 			"name": "obd2-simulator/host",
 			"path": "obd2-simulator/host"
@@ -29,16 +29,19 @@
 			"path": "obd2-simulator/display/server"
 		},
 		{
-                        "name": "obd2-simulator/display/ui",
-                        "path": "obd2-simulator/display/ui"
-                },
-                {
-                        "name": "obd2-simulator/display/ipc",
-                        "path": "obd2-simulator/display/ipc"
-                },
+			"name": "obd2-simulator/display/ui",
+			"path": "obd2-simulator/display/ui"
+		},
+		{
+			"name": "obd2-simulator/display/ipc",
+			"path": "obd2-simulator/display/ipc"
+		},
 		{
 			"name": "ha-daemon",
 			"path": "ha-daemon"
+		},
+		{
+			"path": "rk3506"
 		}
 	],
 	"settings": {

@@ -1,0 +1,13 @@
+services:
+  lyra-sdk:
+    build:
+      context: .
+      args:
+        HOST_UID: ${HOST_UID:-1000}
+        HOST_GID: ${HOST_GID:-1000}
+    image: luckfox-lyra-sdk:ubuntu-22.04
+    working_dir: /sdk
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./sdk:/sdk

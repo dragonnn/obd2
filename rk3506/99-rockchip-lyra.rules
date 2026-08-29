@@ -1,0 +1,2 @@
+# Luckfox Lyra Zero W / RK3506 Rockchip USB loader
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="2207", ATTR{idProduct}=="350f", MODE="0660", GROUP="plugdev", TAG+="uaccess"

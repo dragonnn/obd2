@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+export HOST_UID="$(id -u)"
+export HOST_GID="$(id -g)"
+
+action=${1:-shell}
+shift || true
+
+case "$action" in
+    image|download) ;;
+    prepare)
+        if [[ ! -x "$project_dir/sdk/.repo/repo/repo" ]]; then
+            echo "Packed SDK not found (expected sdk/.repo/repo/repo)." >&2
+            echo "Run: ./lyra-build download" >&2
+            exit 1
+        fi
+        ;;
+    *)
+        if [[ ! -x "$project_dir/sdk/build.sh" ]]; then
+            echo "Prepared SDK not found (expected sdk/build.sh)." >&2
+            echo "Run: ./lyra-build download && ./lyra-build prepare" >&2
+            exit 1
+        fi
+        ;;
+esac
+
+case "$action" in
+    image)
+        exec docker compose -f "$project_dir/compose.yaml" build
+        ;;
+    flash)
+        flash_tool="$project_dir/sdk/tools/linux/Linux_Upgrade_Tool/Linux_Upgrade_Tool/upgrade_tool"
+        firmware="$project_dir/sdk/output/firmware/update.img"
+
+        if [[ ! -x "$flash_tool" ]]; then
+            echo "Rockchip upgrade_tool not found: $flash_tool" >&2
+            exit 1
+        fi
+        if [[ ! -f "$firmware" ]]; then
+            echo "Firmware image not found: $firmware" >&2
+            echo "Run: ./lyra-build build" >&2
+            exit 1
+        fi
+
+        exec "$flash_tool" uf "$firmware"
+        ;;
+    download)
+        mkdir -p "$project_dir/sdk"
+        sdk_url=${LYRA_SDK_URL:-https://drive.google.com/uc?id=15nq-Fac9q6zmisKZgLDZyoifSkL_48rG}
+        sdk_archive=${LYRA_SDK_ARCHIVE:-Luckfox_Lyra_SDK_250815.tar.gz}
+        exec docker compose -f "$project_dir/compose.yaml" run --rm \
+            -e "SDK_URL=$sdk_url" -e "SDK_ARCHIVE=$sdk_archive" lyra-sdk \
+            bash -lc 'set -euo pipefail
+                mkdir -p /sdk/.downloads
+                archive="/sdk/.downloads/$SDK_ARCHIVE"
+                gdown --continue "$SDK_URL" --output "$archive"
+                tar -tzf "$archive" >/dev/null
+                tar -xzf "$archive" -C /sdk
+                test -x /sdk/.repo/repo/repo || {
+                    echo "Archive extracted, but /sdk/.repo/repo/repo was not found." >&2
+                    exit 1
+                }
+                echo "SDK downloaded and extracted successfully; run ./lyra-build prepare next."'
+        ;;
+    download-cache)
+        cache_url=${LYRA_DL_URL:-https://drive.google.com/uc?id=141mZGnuNIFr3BU5-163Y4OPj_aXF0puN}
+        exec docker compose -f "$project_dir/compose.yaml" run --rm \
+            -e "CACHE_URL=$cache_url" lyra-sdk \
+            bash -lc 'set -euo pipefail
+                mkdir -p /sdk/.downloads
+                archive=/sdk/.downloads/dl.tar.gz
+                gdown --continue "$CACHE_URL" --output "$archive"
+                tar -tzf "$archive" >/dev/null
+                tar -xzf "$archive" -C /sdk/buildroot
+                echo "Buildroot offline download cache installed successfully."'
+        ;;
+    prepare)
+        exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk \
+            bash -lc 'if [[ -x .repo/repo/repo ]]; then .repo/repo/repo sync -l; else echo "Missing .repo/repo/repo" >&2; exit 1; fi'
+        ;;
+    lunch)
+        exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk ./build.sh lunch
+        ;;
+    build)
+        exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk ./build.sh "${@}"
+        ;;
+    rootfs|kernel|uboot|firmware|buildroot-config)
+        exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk ./build.sh "$action" "${@}"
+        ;;
+    shell)
+        exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk bash
+        ;;
+    *)
+        echo "Usage: $0 {image|download|download-cache|prepare|lunch|build|flash|rootfs|kernel|uboot|firmware|buildroot-config|shell}" >&2
+        exit 2
+        ;;
+esac
