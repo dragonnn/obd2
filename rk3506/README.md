@@ -64,3 +64,20 @@ default is ADB + ACM; RNDIS is removed from the legacy default configuration.
 The SDK tree is bind-mounted into the container, so builds persist on the host
 and files are created with the current user's UID/GID. Expect the SDK and build
 outputs to consume substantial disk space.
+
+## SD card and fish
+
+The board's removable SD partition is formatted as ext4 with the label
+`LYRA_SD`. The firmware mounts it at `/mnt/sdcard` during boot and configures
+fish to keep its mutable files under `/mnt/sdcard/fish`:
+
+```text
+/mnt/sdcard/fish/config.fish
+/mnt/sdcard/fish/fish_history
+/mnt/sdcard/fish/completions/
+/mnt/sdcard/fish/functions/
+/mnt/sdcard/fish/conf.d/
+```
+
+Fish 3.6.4 is included in the Buildroot image and ADB starts it by default.
+The card must retain the `LYRA_SD` filesystem label for the boot mount hook.
