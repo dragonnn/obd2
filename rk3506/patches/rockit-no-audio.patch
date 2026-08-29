@@ -1,0 +1,9 @@
+--- buildroot/package/rockchip/rockit/Config.in
++++ buildroot/package/rockchip/rockit/Config.in
+@@ -1,6 +1,5 @@
+ config BR2_PACKAGE_ROCKIT
+ 	bool "rockit"
+-	select BR2_PACKAGE_ALSA_PLUGINS
+ 	default n
+ 	help
+ 		rockit
