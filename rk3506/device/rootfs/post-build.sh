@@ -5,8 +5,6 @@
 rm -f \
     "$TARGET_DIR/usr/lib/udev/rules.d/60-persistent-alsa.rules" \
     "$TARGET_DIR/usr/lib/pm-utils/power.d/intel-audio-powersave" \
-    "$TARGET_DIR/usr/lib/python3.11/lib-dynload/audioop.cpython-311-arm-linux-gnueabihf.so" \
-    "$TARGET_DIR/usr/lib/python3.11/email/mime/audio.pyc" \
     "$TARGET_DIR/usr/share/fish/completions/alsactl.fish" \
     "$TARGET_DIR/usr/share/fish/completions/amixer.fish" \
     "$TARGET_DIR/usr/share/fish/completions/alsamixer.fish" \
