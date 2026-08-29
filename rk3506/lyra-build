@@ -83,6 +83,11 @@ case "$action" in
                 install -D /project/kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi
                 install -D /project/kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts
                 install -D /project/buildroot/configs/rockchip_rk3506_luckfox_defconfig buildroot/configs/rockchip_rk3506_luckfox_defconfig
+                install -D /project/buildroot/package/fish/Config.in buildroot/package/fish/Config.in
+                install -D /project/buildroot/package/fish/fish.mk buildroot/package/fish/fish.mk
+                install -D /project/buildroot/package/fish/fish.hash buildroot/package/fish/fish.hash
+                grep -q "source \"package/fish/Config.in\"" buildroot/package/Config.in || \
+                    sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/fish/Config.in\"" buildroot/package/Config.in
                 install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig'
         ;;
     sync-sources)
@@ -91,6 +96,11 @@ case "$action" in
                 install -D /project/kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi
                 install -D /project/kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts
                 install -D /project/buildroot/configs/rockchip_rk3506_luckfox_defconfig buildroot/configs/rockchip_rk3506_luckfox_defconfig
+                install -D /project/buildroot/package/fish/Config.in buildroot/package/fish/Config.in
+                install -D /project/buildroot/package/fish/fish.mk buildroot/package/fish/fish.mk
+                install -D /project/buildroot/package/fish/fish.hash buildroot/package/fish/fish.hash
+                grep -q "source \"package/fish/Config.in\"" buildroot/package/Config.in || \
+                    sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/fish/Config.in\"" buildroot/package/Config.in
                 install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig'
         ;;
     lunch)

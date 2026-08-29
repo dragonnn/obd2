@@ -12,6 +12,7 @@ RK_UBOOT_CFG_FRAGMENTS="rk3506b_luckfox"
 RK_UBOOT_SPL=y
 RK_KERNEL_CFG="rk3506_luckfox_defconfig"
 RK_USB_ACM=y
+RK_USB_ADBD_SHELL="/usr/bin/fish"
 RK_KERNEL_CFG_FRAGMENTS="rk3506-display.config rk3506-usb-serial.config"
 RK_KERNEL_DTS_NAME="rk3506b-luckfox-lyra-zero-w-co6300"
 RK_BOOT_COMPRESSED=y
@@ -20,5 +21,4 @@ RK_EXTRA_PARTITION_NUM=0
 RK_PARAMETER="parameter-lyra-spinand.txt"
 RK_USE_FIT_IMG=y
 # RK_NETWORK_CHECK is not set
-
 

@@ -1,0 +1,17 @@
+config BR2_PACKAGE_FISH
+	bool "fish"
+	depends on BR2_USE_WCHAR
+	select BR2_PACKAGE_NCURSES
+	select BR2_PACKAGE_NCURSES_WCHAR
+	select BR2_PACKAGE_PCRE2
+	select BR2_PACKAGE_PCRE2_32
+	help
+	  Fish is a user-friendly command line shell.
+
+	  This package uses fish 3.6, the last C++-based release, so it does
+	  not require a Rust toolchain in the embedded Buildroot environment.
+
+	  https://fishshell.com/
+
+comment "fish needs a toolchain w/ wchar"
+	depends on !BR2_USE_WCHAR
