@@ -1,0 +1,6 @@
+diff --git buildroot/package/pkg-cmake.mk buildroot/package/pkg-cmake.mk
+--- buildroot/package/pkg-cmake.mk
++++ buildroot/package/pkg-cmake.mk
+@@ -134,1 +134,1 @@
+-		-e 's#@@RELOCATED_HOST_DIR@@#$(call qstrip,$(HOST_DIR)/share/buildroot/)#' \
++		-e 's#@@RELOCATED_HOST_DIR@@#$$(call qstrip,$$(HOST_DIR)/share/buildroot/)#' \
