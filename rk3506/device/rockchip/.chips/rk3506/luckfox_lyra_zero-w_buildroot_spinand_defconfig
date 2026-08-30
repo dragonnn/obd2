@@ -5,6 +5,10 @@ RK_ROOTFS_OVERLAY=y
 RK_ROOTFS_HOSTNAME_CUSTOM=y
 RK_ROOTFS_HOSTNAME="luckfox"
 RK_ROOTFS_INSTALL_MODULES=y
+# Use kernel devtmpfs directly; this image has no udev-dependent userspace.
+# BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_EUDEV is not set
+# BR2_PACKAGE_EUDEV is not set
+# RK_ROOTFS_UDEV_RULES is not set
 RK_WIFIBT_CHIP="AIC8800DC"
 # RK_ROOTFS_LOG_GUARDIAN is not set
 # RK_ROOTFS_FSTRIM is not set

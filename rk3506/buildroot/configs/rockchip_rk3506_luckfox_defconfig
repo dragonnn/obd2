@@ -2,6 +2,8 @@
 #include "fs/vfat.config"
 #include "lvgl/lvgl_rkadk.config"
 #include "fs/ubifs.config"
+BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_DEVTMPFS=y
+BR2_PACKAGE_EUDEV=n
 BR2_PACKAGE_CAN_UTILS=y
 BR2_PACKAGE_DIALOG=y
 BR2_PACKAGE_DNSMASQ=n
