@@ -56,10 +56,17 @@ image with:
 ./lyra-build flash
 ```
 
-The selected image enables the USB OTG peripheral as a CDC ACM serial gadget.
-On the host it appears as `/dev/ttyACM0` (or the next available number); the
-board exposes an interactive login on `/dev/ttyGS0` at 115200 baud. The board
-default is ADB + ACM; RNDIS is removed from the legacy default configuration.
+The selected image enables the USB OTG peripheral as an ADB gadget. The ACM
+serial function and RNDIS are disabled; ADB starts fish as its shell.
+
+The `RK_LUCKFOX_LYRA` SDK overlay is intentionally disabled. This keeps the
+Luckfox-specific module auto-loader and Wi-Fi/Bluetooth power-on service out
+of the image; the Rust application will initialize Wi-Fi/Bluetooth at runtime.
+The overlay also controls the Wi-Fi/Bluetooth power GPIO through
+`S35wifibt-poweron.sh` and installs the `iomux` GPIO/pin-multiplexer utility.
+It also prevents the overlay's board-specific USB and console setup from being
+installed. Audio initialization and the legacy network service are separately
+removed by the tracked patches.
 
 The SDK tree is bind-mounted into the container, so builds persist on the host
 and files are created with the current user's UID/GID. Expect the SDK and build
