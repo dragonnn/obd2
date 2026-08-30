@@ -6,14 +6,10 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use build_time::build_time_local;
-use futures_util::{future, pin_mut, SinkExt as _, StreamExt};
 use ha::device::{UpdateLocation, UpdateSensor};
 use ha::ws::HaWs;
-use serde::{Deserialize, Serialize};
 use statig::prelude::*;
-use tokio::net::TcpStream;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
-use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
+use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 mod config;
 mod db;
@@ -122,6 +118,7 @@ pub enum HaStateEvent {
     Step,
     UpdateSensor(UpdateSensor),
     UpdateLocation(UpdateLocation),
+    WebsocketFailure(String),
 }
 
 #[state_machine(
@@ -217,8 +214,12 @@ impl HaState {
             tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
         }
 
-        if let Ok(ws) = HaWs::new(&self.config).await.let_log() {
-            self.ws = Some(ws);
+        match HaWs::new(&self.config, (*self.event_sender).clone()).await {
+            Ok(ws) => self.ws = Some(ws),
+            Err(err) => {
+                info!("reconnecting after websocket failure: {:?}", err);
+                tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+            }
         }
 
         self.event_sender.send(HaStateEvent::Step).unwrap();
@@ -251,6 +252,13 @@ impl HaState {
 
     #[state(entry_action = "entry_connected")]
     async fn connected(&mut self, event: &HaStateEvent, ws_errors: &mut i32) -> Response<State> {
+        if let HaStateEvent::WebsocketFailure(reason) = event {
+            info!("reconnecting after websocket failure: {}", reason);
+            self.ws.take();
+            *ws_errors = 0;
+            return Transition(State::load());
+        }
+
         let location_allowed = match event {
             HaStateEvent::UpdateLocation(update_location) => {
                 self.location_should_be_sent(update_location)
@@ -261,7 +269,7 @@ impl HaState {
         if let Some(ws) = &mut self.ws {
             match event {
                 HaStateEvent::UpdateSensor(update_sensor) => {
-                    if ws
+                    if let Err(err) = ws
                         .send(ha::OutgoingMessage::DeviceWebHookHandle(
                             ha::device::WebHookHandle::update(
                                 self.webhook.as_ref().unwrap().webhook_id.to_owned(),
@@ -269,10 +277,9 @@ impl HaState {
                             ),
                         ))
                         .await
-                        .let_log()
-                        .is_err()
                     {
-                        error!("failed to send sensor update");
+                        error!("failed to send sensor update: {:?}", err);
+                        info!("reconnecting after websocket failure: {:?}", err);
                         self.event_sender.send(HaStateEvent::Step).log();
                         self.event_sender.send(event.clone()).log();
                         return Transition(State::load());
@@ -282,7 +289,7 @@ impl HaState {
                     if !location_allowed {
                         debug!("filtered location update: {:?}", update_location.gps);
                     } else {
-                        let sent = ws
+                        if let Err(err) = ws
                             .send(ha::OutgoingMessage::DeviceWebHookHandle(
                                 ha::device::WebHookHandle::update_location(
                                     self.webhook.as_ref().unwrap().webhook_id.to_owned(),
@@ -290,10 +297,9 @@ impl HaState {
                                 ),
                             ))
                             .await
-                            .let_log()
-                            .is_ok();
-                        if !sent {
-                            error!("failed to send location update");
+                        {
+                            error!("failed to send location update: {:?}", err);
+                            info!("reconnecting after websocket failure: {:?}", err);
                             self.event_sender.send(HaStateEvent::Step).log();
                             self.event_sender.send(event.clone()).log();
                             return Transition(State::load());
@@ -302,16 +308,6 @@ impl HaState {
                 }
                 _ => {}
             }
-            if let Err(err) = ws.next().await {
-                error!("websocket error: {:?}", err);
-                *ws_errors += 1;
-                if *ws_errors > 5 || err.is_ws() {
-                    error!("websocket errors exceeded");
-                    tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
-                    return Transition(State::load());
-                }
-            }
-            let _ = ws;
             if let HaStateEvent::UpdateLocation(update_location) = event {
                 if location_allowed {
                     self.record_location(update_location.gps);

@@ -1,7 +1,9 @@
 use crate::prelude::*;
-use futures_util::{future, pin_mut, SinkExt as _, StreamExt};
-use tokio::net::TcpStream;
-use tokio_tungstenite::{tungstenite::Message, MaybeTlsStream, WebSocketStream};
+use crate::HaStateEvent;
+use futures_util::{SinkExt as _, StreamExt};
+use std::time::Duration;
+use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
+use tokio_tungstenite::tungstenite::Message;
 
 use thiserror::Error;
 
@@ -19,6 +21,8 @@ pub enum HaWsError {
     Eof,
     #[error("timeout")]
     Timeout(#[from] tokio::time::error::Elapsed),
+    #[error("websocket writer is closed")]
+    Closed,
 }
 
 impl HaWsError {
@@ -35,53 +39,125 @@ pub type HaWsResult<T> = Result<T, HaWsError>;
 
 #[derive(Debug)]
 pub struct HaWs {
-    ws: WebSocketStream<MaybeTlsStream<TcpStream>>,
+    outgoing: UnboundedSender<crate::ha::OutgoingMessage>,
+    reader: tokio::task::JoinHandle<()>,
+}
+
+impl Drop for HaWs {
+    fn drop(&mut self) {
+        self.reader.abort();
+    }
 }
 
 impl HaWs {
-    pub async fn new(config: &crate::config::Config) -> HaWsResult<Self> {
-        let (ws, response) = tokio_tungstenite::connect_async(
+    pub async fn new(
+        config: &crate::config::Config,
+        event_sender: UnboundedSender<HaStateEvent>,
+    ) -> HaWsResult<Self> {
+        let (mut ws, _response) = tokio_tungstenite::connect_async(
             format!("ws://{}/api/websocket", config.ha.host).as_str(),
         )
         .await?;
 
-        let mut ret = Self { ws };
-
-        if let crate::ha::IncomingMessage::Auth(auth) = ret.next().await? {
-            info!("auth: {:?}", auth);
-            if auth.r#type != crate::ha::auth::AuthState::Required {
-                return Err(HaWsError::UnexpectedMessage);
-            }
-            let auth = crate::ha::auth::OutgoingAuth::new(config.ha.auth.clone());
-            ret.send(crate::ha::OutgoingMessage::Auth(auth)).await?;
-        }
-
-        Ok(ret)
-    }
-
-    pub async fn next(&mut self) -> HaWsResult<crate::ha::IncomingMessage> {
         loop {
-            let msg = tokio::time::timeout(std::time::Duration::from_secs(5), self.ws.next())
+            let auth_message = tokio::time::timeout(Duration::from_secs(5), ws.next())
                 .await?
                 .ok_or(HaWsError::Eof)??;
-            match msg {
+            match auth_message {
                 Message::Text(text) => {
-                    let ret = serde_json::from_str(&text)?;
-                    trace!("recv: {}", text);
-                    return Ok(ret);
+                    let crate::ha::IncomingMessage::Auth(auth) = serde_json::from_str(&text)?
+                    else {
+                        return Err(HaWsError::UnexpectedMessage);
+                    };
+                    info!("auth: {:?}", auth);
+                    if auth.r#type != crate::ha::auth::AuthState::Required {
+                        return Err(HaWsError::UnexpectedMessage);
+                    }
+                    let auth = crate::ha::auth::OutgoingAuth::new(config.ha.auth.clone());
+                    let text = serde_json::to_string(&crate::ha::OutgoingMessage::Auth(auth))?;
+                    ws.send(Message::Text(text.into())).await?;
+                    break;
                 }
                 Message::Ping(ping) => {
-                    self.ws.send(Message::Pong(ping)).await?;
+                    ws.send(Message::Pong(ping)).await?;
                 }
-                _ => return Err(HaWsError::UnknownMessage),
+                Message::Pong(_) => {}
+                _ => return Err(HaWsError::UnexpectedMessage),
             }
         }
+
+        let (mut sink, mut stream) = ws.split();
+        let (outgoing, mut outgoing_receiver) = unbounded_channel();
+        let reader = tokio::spawn(async move {
+            loop {
+                tokio::select! {
+                    outgoing = outgoing_receiver.recv() => {
+                        let Some(outgoing) = outgoing else { break };
+                        let text = match serde_json::to_string(&outgoing) {
+                            Ok(text) => text,
+                            Err(err) => {
+                                event_sender.send(HaStateEvent::WebsocketFailure(format!("serialize: {err}"))).log();
+                                break;
+                            }
+                        };
+                        trace!("send: {}", text);
+                        if let Err(err) = sink.send(Message::Text(text.into())).await {
+                            event_sender.send(HaStateEvent::WebsocketFailure(format!("send: {err}"))).log();
+                            break;
+                        }
+                    }
+                    message = stream.next() => {
+                        match message {
+                            Some(Ok(Message::Text(text))) => {
+                                trace!("recv: {}", text);
+                                match serde_json::from_str::<crate::ha::IncomingMessage>(&text) {
+                                    Ok(crate::ha::IncomingMessage::Result {
+                                        id,
+                                        r#type,
+                                        success,
+                                    }) => {
+                                        debug!("Home Assistant websocket result: id={id}, type={type}, success={success}");
+                                    }
+                                    Ok(_) => {}
+                                    Err(err) => {
+                                        event_sender
+                                            .send(HaStateEvent::WebsocketFailure(format!("decode: {err}")))
+                                            .log();
+                                        break;
+                                    }
+                                }
+                            }
+                            Some(Ok(Message::Ping(ping))) => {
+                                if let Err(err) = sink.send(Message::Pong(ping)).await {
+                                    event_sender.send(HaStateEvent::WebsocketFailure(format!("pong: {err}"))).log();
+                                    break;
+                                }
+                            }
+                            Some(Ok(Message::Pong(_))) => {}
+                            Some(Ok(Message::Close(frame))) => {
+                                event_sender.send(HaStateEvent::WebsocketFailure(format!("closed: {frame:?}"))).log();
+                                break;
+                            }
+                            Some(Ok(_)) => {}
+                            Some(Err(err)) => {
+                                event_sender.send(HaStateEvent::WebsocketFailure(format!("read: {err}"))).log();
+                                break;
+                            }
+                            None => {
+                                event_sender.send(HaStateEvent::WebsocketFailure("eof".to_owned())).log();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        Ok(Self { outgoing, reader })
     }
 
     pub async fn send(&mut self, msg: crate::ha::OutgoingMessage) -> HaWsResult<()> {
-        let text = serde_json::to_string(&msg)?;
-        trace!("send: {}", text);
-        self.ws.send(Message::Text(text.into())).await?;
+        self.outgoing.send(msg).map_err(|_| HaWsError::Closed)?;
         Ok(())
     }
 }
