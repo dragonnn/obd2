@@ -1,6 +1,7 @@
 RK_BUILDROOT_BASE_CFG="rk3506_luckfox"
 # RK_YOCTO is not set
 RK_ROOTFS_UBI=y
+RK_ROOTFS_OVERLAY=y
 RK_ROOTFS_HOSTNAME_CUSTOM=y
 RK_ROOTFS_HOSTNAME="luckfox"
 RK_ROOTFS_INSTALL_MODULES=y
@@ -13,6 +14,8 @@ RK_UBOOT_CFG_FRAGMENTS="rk3506b_luckfox"
 RK_UBOOT_SPL=y
 RK_KERNEL_CFG="rk3506_luckfox_defconfig"
 # RK_USB_ACM is not set
+RK_USB_GADGET=y
+RK_USB_ADBD=y
 RK_USB_ADBD_SHELL="/usr/bin/fish"
 RK_KERNEL_CFG_FRAGMENTS="rk3506-display.config rk3506-usb-serial.config rk3506-squashfs.config"
 RK_KERNEL_DTS_NAME="rk3506b-luckfox-lyra-zero-w-co6300"
