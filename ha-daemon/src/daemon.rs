@@ -1,8 +1,9 @@
 #[macro_use]
 extern crate log;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use build_time::build_time_local;
 use futures_util::{future, pin_mut, SinkExt as _, StreamExt};
@@ -25,6 +26,77 @@ mod sensor;
 
 use prelude::*;
 
+const EARTH_RADIUS_METERS: f64 = 6_371_000.0;
+
+fn haversine_meters(from: (f64, f64), to: (f64, f64)) -> f64 {
+    let (lat1, lon1) = (from.0.to_radians(), from.1.to_radians());
+    let (lat2, lon2) = (to.0.to_radians(), to.1.to_radians());
+    let dlat = lat2 - lat1;
+    let dlon = lon2 - lon1;
+    let a = (dlat / 2.0).sin().powi(2) + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2);
+    EARTH_RADIUS_METERS * (2.0 * a.sqrt().atan2((1.0 - a).sqrt()))
+}
+
+fn bearing_degrees(from: (f64, f64), to: (f64, f64)) -> f64 {
+    let (lat1, lat2) = (from.0.to_radians(), to.0.to_radians());
+    let dlon = (to.1 - from.1).to_radians();
+    let bearing = (dlon.sin() * lat2.cos())
+        .atan2(lat1.cos() * lat2.sin() - lat1.sin() * lat2.cos() * dlon.cos())
+        .to_degrees();
+    (bearing + 360.0) % 360.0
+}
+
+/// Returns the forward direction of the best-fit straight track through the
+/// supplied points. Coordinates are projected to a local east/north plane so
+/// this remains accurate for the short distances involved here.
+fn track_bearing(points: &[(f64, f64)]) -> Option<f64> {
+    if points.len() < 2 {
+        return None;
+    }
+
+    let origin = points[0];
+    let coordinates: Vec<(f64, f64)> = points
+        .iter()
+        .map(|point| {
+            let east = (point.1 - origin.1).to_radians()
+                * EARTH_RADIUS_METERS
+                * origin.0.to_radians().cos();
+            let north = (point.0 - origin.0).to_radians() * EARTH_RADIUS_METERS;
+            (east, north)
+        })
+        .collect();
+
+    let mean_east = coordinates.iter().map(|point| point.0).sum::<f64>() / coordinates.len() as f64;
+    let mean_north =
+        coordinates.iter().map(|point| point.1).sum::<f64>() / coordinates.len() as f64;
+    let (mut east_variance, mut north_variance, mut covariance) = (0.0, 0.0, 0.0);
+    for (east, north) in &coordinates {
+        let east = east - mean_east;
+        let north = north - mean_north;
+        east_variance += east * east;
+        north_variance += north * north;
+        covariance += east * north;
+    }
+
+    let axis_angle = 0.5 * (2.0 * covariance).atan2(east_variance - north_variance);
+    let mut east_direction = axis_angle.cos();
+    let mut north_direction = axis_angle.sin();
+
+    // A line has two directions; orient it in the direction the car travelled.
+    let (last_east, last_north) = coordinates[coordinates.len() - 1];
+    if east_direction * last_east + north_direction * last_north < 0.0 {
+        east_direction = -east_direction;
+        north_direction = -north_direction;
+    }
+
+    Some((east_direction.atan2(north_direction).to_degrees() + 360.0) % 360.0)
+}
+
+fn angle_difference(first: f64, second: f64) -> f64 {
+    let difference = (first - second).abs() % 360.0;
+    difference.min(360.0 - difference)
+}
+
 #[derive(Debug)]
 pub struct HaState {
     config: Arc<config::Config>,
@@ -39,6 +111,10 @@ pub struct HaState {
     ha_sensors: Arc<HashMap<String, Arc<sensor::HaSensorHandler>>>,
 
     sensor_register: bool,
+
+    /// Positions which were actually sent to Home Assistant.
+    location_history: VecDeque<(f64, f64)>,
+    location_updates: VecDeque<Instant>,
 }
 
 #[derive(Debug, Clone)]
@@ -137,7 +213,7 @@ impl HaState {
     async fn entry_connect(&mut self) {
         if let Some(ws) = self.ws.take() {
             warn!("closing websocket");
-            drop(ws);
+            let _ = ws;
             tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
         }
 
@@ -175,6 +251,13 @@ impl HaState {
 
     #[state(entry_action = "entry_connected")]
     async fn connected(&mut self, event: &HaStateEvent, ws_errors: &mut i32) -> Response<State> {
+        let location_allowed = match event {
+            HaStateEvent::UpdateLocation(update_location) => {
+                self.location_should_be_sent(update_location)
+            }
+            _ => true,
+        };
+
         if let Some(ws) = &mut self.ws {
             match event {
                 HaStateEvent::UpdateSensor(update_sensor) => {
@@ -196,21 +279,25 @@ impl HaState {
                     }
                 }
                 HaStateEvent::UpdateLocation(update_location) => {
-                    if ws
-                        .send(ha::OutgoingMessage::DeviceWebHookHandle(
-                            ha::device::WebHookHandle::update_location(
-                                self.webhook.as_ref().unwrap().webhook_id.to_owned(),
-                                update_location.clone(),
-                            ),
-                        ))
-                        .await
-                        .let_log()
-                        .is_err()
-                    {
-                        error!("failed to send location update");
-                        self.event_sender.send(HaStateEvent::Step).log();
-                        self.event_sender.send(event.clone()).log();
-                        return Transition(State::load());
+                    if !location_allowed {
+                        debug!("filtered location update: {:?}", update_location.gps);
+                    } else {
+                        let sent = ws
+                            .send(ha::OutgoingMessage::DeviceWebHookHandle(
+                                ha::device::WebHookHandle::update_location(
+                                    self.webhook.as_ref().unwrap().webhook_id.to_owned(),
+                                    update_location.clone(),
+                                ),
+                            ))
+                            .await
+                            .let_log()
+                            .is_ok();
+                        if !sent {
+                            error!("failed to send location update");
+                            self.event_sender.send(HaStateEvent::Step).log();
+                            self.event_sender.send(event.clone()).log();
+                            return Transition(State::load());
+                        }
                     }
                 }
                 _ => {}
@@ -222,6 +309,12 @@ impl HaState {
                     error!("websocket errors exceeded");
                     tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
                     return Transition(State::load());
+                }
+            }
+            let _ = ws;
+            if let HaStateEvent::UpdateLocation(update_location) = event {
+                if location_allowed {
+                    self.record_location(update_location.gps);
                 }
             }
             Handled
@@ -257,6 +350,53 @@ impl HaState {
 }
 
 impl HaState {
+    fn location_should_be_sent(&mut self, update: &UpdateLocation) -> bool {
+        let now = Instant::now();
+        while self
+            .location_updates
+            .front()
+            .is_some_and(|sent| now.duration_since(*sent) >= Duration::from_secs(60))
+        {
+            self.location_updates.pop_front();
+        }
+
+        if self.location_updates.len() >= 10 {
+            return false;
+        }
+
+        let Some(previous) = self.location_history.back().copied() else {
+            return true;
+        };
+
+        let distance = haversine_meters(previous, update.gps);
+        if distance >= 100.0 {
+            return true;
+        }
+
+        if distance < 10.0 || self.location_history.len() < 5 {
+            return false;
+        }
+
+        let new_bearing = bearing_degrees(previous, update.gps);
+        let mut recent: Vec<_> = self
+            .location_history
+            .iter()
+            .rev()
+            .take(5)
+            .copied()
+            .collect();
+        recent.reverse();
+        track_bearing(&recent).is_some_and(|track| angle_difference(track, new_bearing) >= 15.0)
+    }
+
+    fn record_location(&mut self, position: (f64, f64)) {
+        self.location_history.push_back(position);
+        while self.location_history.len() > 5 {
+            self.location_history.pop_front();
+        }
+        self.location_updates.push_back(Instant::now());
+    }
+
     async fn after_transition(&mut self, source: &State, target: &State) {
         trace!("transitioned from `{:?}` to `{:?}`", source, target);
     }
@@ -312,6 +452,8 @@ async fn main() {
         event_sender: event_sender.clone(),
         ha_sensors: ha_sensors.clone(),
         sensor_register: true,
+        location_history: VecDeque::new(),
+        location_updates: VecDeque::new(),
     }
     .state_machine();
     info!("initial state: {:?}", ha_state_machine.state());

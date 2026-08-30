@@ -9,8 +9,8 @@ use std::{
 use tokio::{
     io::{AsyncReadExt as _, AsyncWriteExt as _},
     sync::{
-        Mutex,
         mpsc::{UnboundedReceiver, UnboundedSender},
+        Mutex,
     },
     time::timeout,
 };
@@ -88,12 +88,16 @@ impl KiaHandler {
                         } else {
                             let mut assembly = self.panic_assembly.lock().await;
                             let starts_new_panic = *chunk_number == 0;
-                            let incompatible_count = assembly
-                                .as_ref()
-                                .is_some_and(|current| current.chunks.len() != *chunks_count as usize);
+                            let incompatible_count = assembly.as_ref().is_some_and(|current| {
+                                current.chunks.len() != *chunks_count as usize
+                            });
                             if (starts_new_panic || incompatible_count) && assembly.is_some() {
                                 let discarded = assembly.as_ref().unwrap();
-                                let received = discarded.chunks.iter().filter(|chunk| chunk.is_some()).count();
+                                let received = discarded
+                                    .chunks
+                                    .iter()
+                                    .filter(|chunk| chunk.is_some())
+                                    .count();
                                 warn!(
                                     "Discarding incomplete panic: received {}/{} chunks; next chunk is {}/{}",
                                     received,
