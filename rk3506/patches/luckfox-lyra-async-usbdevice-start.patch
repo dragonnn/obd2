@@ -1,0 +1,19 @@
+diff --git external/rkscript/S50usbdevice.sh external/rkscript/S50usbdevice.sh
+--- external/rkscript/S50usbdevice.sh
++++ external/rkscript/S50usbdevice.sh
+@@ -10,9 +10,15 @@
+ 
+ case "$1" in
+-	start|stop|restart)
++	start)
+ 		echo "starting usbdevice service, log saved to /var/log/usbdevice.log"
+-		/sbin/start-stop-daemon -Sbx /usr/bin/usbdevice $1
++		# Do not make the boot sequence wait for FunctionFS/ADB setup.
++		/sbin/start-stop-daemon -S -b -m -p /var/run/usbdevice.pid \
++			-x /usr/bin/usbdevice -- start
++		;;
++	stop|restart)
++		echo "${1}ing usbdevice service"
++		/sbin/start-stop-daemon -S -x /usr/bin/usbdevice -- "$1"
+ 		;;
+ 	*)

@@ -95,6 +95,7 @@ case "$action" in
                 grep -q "source \"package/fish/Config.in\"" buildroot/package/Config.in || \
                     sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/fish/Config.in\"" buildroot/package/Config.in
                 install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig
+                install -D -m 0755 /project/device/rootfs/post-rootfs-cleanup.sh device/rockchip/common/post-hooks/99-clean-generated-files.sh
                 for patch_file in /project/patches/*.patch; do
                     echo "Applying ${patch_file##*/}"
                     if patch --dry-run --forward --batch -p0 < "$patch_file" >/dev/null 2>&1; then
@@ -120,6 +121,7 @@ case "$action" in
                 grep -q "source \"package/fish/Config.in\"" buildroot/package/Config.in || \
                     sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/fish/Config.in\"" buildroot/package/Config.in
                 install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig
+                install -D -m 0755 /project/device/rootfs/post-rootfs-cleanup.sh device/rockchip/common/post-hooks/99-clean-generated-files.sh
                 for patch_file in /project/patches/*.patch; do
                     echo "Applying ${patch_file##*/}"
                     if patch --dry-run --forward --batch -p0 < "$patch_file" >/dev/null 2>&1; then

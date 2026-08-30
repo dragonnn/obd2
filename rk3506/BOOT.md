@@ -1,23 +1,35 @@
-• The main remaining boot-time recommendations were:
 
-  - Make SD-card mounting non-blocking. S00sdcard can currently wait up to 5 seconds; move the mount/log bind into the background if boot must
-    continue immediately.
+• The full log shows:
 
-  - Disable unused Wi-Fi/Bluetooth initialization if those radios are not always needed.
-  - Disable DHCP on unused eth0/eth1 interfaces.
-  - Disable unused services such as irqbalance, input-event-daemon, audio initialization, boot animation, and frecon.
-  - Reduce kernel/module scope; many unused drivers are currently built and loaded.
-  - Disable USB ACM/gadget functions if only ADB is required.
-  - Remove unnecessary Buildroot packages and debug information from release images.
-  - Keep the root filesystem as SquashFS; that change already reduces filesystem checks and improves read-only boot behavior.
-  - Keep fstrim out of boot; it has already been removed.
+          Time    Event
+  ━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        0.87 s    Kernel starts CPUs
+  ─────────────  ──────────────────────────────────────────────
+        2.09 s    Kernel launches /sbin/init
+  ─────────────  ──────────────────────────────────────────────
+   2.75–2.88 s    Unnecessary NAND mtdblock warnings/probing
+  ─────────────  ──────────────────────────────────────────────
+        3.26 s    SD card EXT4 mount completes
+  ─────────────  ──────────────────────────────────────────────
+        6.80 s    Kernel random generator becomes ready
+  ─────────────  ──────────────────────────────────────────────
+        7.83 s    USB FunctionFS registers
+  ─────────────  ──────────────────────────────────────────────
+        8.58 s    USB gadget reaches CONFIGURED; ADB is usable
 
-  The highest-impact next steps are likely making the SD mount asynchronous and disabling unused Wi-Fi/Bluetooth or network initialization.
+  So the practical boot endpoint is currently about 8.6 seconds, when ADB becomes available. There is no explicit userspace “boot complete”
+  marker, so the exact rcS completion time is not visible.
 
-  Drop ffmpeg and rest of audio stuff
-  Drop host-ntfs-3g
-  Drop nanocom
-  Drop minicom
-  Drop ppd
-  Drop python stuff
-  Drop curl
+  The largest remaining delay is likely S01seedrng. It runs immediately after the SD mount and appears to wait until the kernel CRNG
+  becomes ready. That accounts for most of the gap between 3.26 s and 6.80 s.
+
+  Recommended improvements, in order:
+     limited.
+
+  2. Remove legacy NAND partition probing from mount-helper; the mtdblock warnings for rootfs, uboot, and boot are unnecessary.
+  The EXT4 mount itself takes only about 0.01 s according to the timestamps:
+
+  3.259812  recovery complete
+  3.266386  filesystem mounted
+
+  The apparent multi-second delay is therefore caused by later early-userspace work, primarily entropy initialization/seedrng, not EXT4.

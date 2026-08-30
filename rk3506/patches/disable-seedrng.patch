@@ -1,0 +1,6 @@
+diff --git buildroot/board/rockchip/common/base/busybox.fragment buildroot/board/rockchip/common/base/busybox.fragment
+--- buildroot/board/rockchip/common/base/busybox.fragment
++++ buildroot/board/rockchip/common/base/busybox.fragment
+@@ -18,1 +18,2 @@
+ CONFIG_FEATURE_MOUNT_LABEL=y
++# CONFIG_SEEDRNG is not set
