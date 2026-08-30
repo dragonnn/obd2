@@ -9,6 +9,27 @@
 
 #include "rk3506-luckfox-lyra-ultra.dtsi"
 
+/* This board has no touchscreen, ADC keys, or Waveshare I2C backlight. */
+&adc_keys {
+	status = "disabled";
+};
+
+&gt9271 {
+	status = "disabled";
+};
+
+&gt911 {
+	status = "disabled";
+};
+
+&ft5406 {
+	status = "disabled";
+};
+
+&ws_bl {
+	status = "disabled";
+};
+
 &dsi_panel {
 	/delete-property/ panel-init-sequence;
 

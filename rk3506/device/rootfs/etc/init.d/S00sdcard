@@ -3,6 +3,7 @@
 # Mount the removable SD card before syslogd/klogd start.  If the card is
 # absent, keep the tmpfs /var/log and allow the system to continue booting.
 SD_MOUNT=/mnt/sdcard
+SD_DEVICE=/dev/mmcblk0p1
 SD_WAIT_SECONDS=5
 
 case "$1" in
@@ -11,7 +12,7 @@ start)
 
 	if ! mount | grep -q " on $SD_MOUNT "; then
 		attempt=0
-		while ! mount -t ext4 -o noatime,nodiratime LABEL=LYRA_SD "$SD_MOUNT" 2>/dev/null; do
+		while ! mount -t ext4 -o noatime,nodiratime "$SD_DEVICE" "$SD_MOUNT" 2>/dev/null; do
 			attempt=$((attempt + 1))
 			[ "$attempt" -ge "$((SD_WAIT_SECONDS * 5))" ] && break
 			sleep 0.2
