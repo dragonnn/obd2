@@ -92,6 +92,10 @@
 	status = "disabled";
 };
 
+&rng {
+	status = "okay";
+};
+
 /**********usb**********/
 &usb20_otg0 {
 	dr_mode = "peripheral";
