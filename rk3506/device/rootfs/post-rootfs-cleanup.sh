@@ -41,6 +41,12 @@ if [ -f "$INITTAB" ] && grep -q '^::sysinit:/bin/mount -a$' "$INITTAB"; then
     mv "$INITTAB.tmp" "$INITTAB"
 fi
 
+# Keep the kernel console available for boot and runtime logs, but do not
+# respawn an interactive login prompt on the console device.
+if [ -f "$INITTAB" ]; then
+    sed -i 's#^console::respawn:/sbin/getty -L console 0 vt100 #\#console::respawn:/sbin/getty -L console 0 vt100 #' "$INITTAB"
+fi
+
 # Wi-Fi/BT modules remain available for the Rust application, but no vendor
 # hardware initialization or legacy ifup/SSH service should run at boot.
 rm -f \

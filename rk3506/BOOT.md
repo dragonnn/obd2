@@ -121,3 +121,7 @@
     reached `CONFIGURED` at about 5.68 seconds. The kernel warns that
     `mtdblock` is being used on NAND; this is the expected tradeoff of the
     direct-MTD experiment and must be weighed against UBI's bad-block safety.
+  - Disabled `CONFIG_MTD_UBI` and `CONFIG_MTD_UBI_BLOCK`; direct MTD is now the
+    only rootfs storage path. After flashing, no UBI initialization appeared;
+    the root mounted at about 1.36 seconds, SD-card mount completed at about
+    2.67 seconds, and ADB reached `CONFIGURED` at about 5.30 seconds.

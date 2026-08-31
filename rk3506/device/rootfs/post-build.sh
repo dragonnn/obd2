@@ -23,3 +23,24 @@ rm -f \
     "$TARGET_DIR/usr/sbin/seedrng" \
     "$TARGET_DIR/usr/bin/seedrng" \
     "$TARGET_DIR/sbin/seedrng"
+
+# Install the direct framebuffer color diagnostic.  It writes pixels according
+# to fb0's reported bitfields, so this test is independent of fbcon/vt.color.
+FB_TEST_CC="${TARGET_CC:-}"
+if [ -z "$FB_TEST_CC" ] && [ -n "${HOST_DIR:-}" ] && \
+   [ -x "$HOST_DIR/bin/arm-buildroot-linux-gnueabihf-gcc" ]; then
+    FB_TEST_CC="$HOST_DIR/bin/arm-buildroot-linux-gnueabihf-gcc"
+fi
+if [ -z "$FB_TEST_CC" ] && \
+   [ -x /sdk/buildroot/output/rockchip_rk3506_luckfox/host/bin/arm-buildroot-linux-gnueabihf-gcc ]; then
+    FB_TEST_CC=/sdk/buildroot/output/rockchip_rk3506_luckfox/host/bin/arm-buildroot-linux-gnueabihf-gcc
+fi
+if [ -n "$FB_TEST_CC" ]; then
+    SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+    FB_TEST_SOURCE=/project/device/rootfs/fb-color-test.c
+    [ -f "$FB_TEST_SOURCE" ] || FB_TEST_SOURCE="$SCRIPT_DIR/fb-color-test.c"
+    install -d "$TARGET_DIR/usr/bin"
+    "$FB_TEST_CC" ${TARGET_CFLAGS:-} ${TARGET_LDFLAGS:-} \
+        "$FB_TEST_SOURCE" -o "$TARGET_DIR/usr/bin/fb-color-test"
+    chmod 0755 "$TARGET_DIR/usr/bin/fb-color-test"
+fi
