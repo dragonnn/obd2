@@ -12,7 +12,7 @@
 	compatible = "rockchip,rk3506g-demo-display-control", "rockchip,rk3506";
 
 	chosen {
-		bootargs = "console=tty1 fbcon=font:10x18 fbcon=rotate:1 vt.color=0x02 vt.global_cursor_default=0 root=/dev/mtdblock2 rootfstype=squashfs ro rootwait";
+		bootargs = "console=tty1 fbcon=font:10x18 fbcon=rotate:1 vt.global_cursor_default=0 root=/dev/mtdblock2 rootfstype=squashfs ro rootwait";
 	};
 
 	wireless_bluetooth: wireless-bluetooth {
