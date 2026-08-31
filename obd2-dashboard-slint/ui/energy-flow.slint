@@ -47,9 +47,21 @@ export component EnergyFlow inherits Rectangle {
         root.arrow-spacing + root.arrow-notch-width - root.arrow-gap;
     private property <color> flow-color: root.discharging ? #65d99b : #5bc8ff;
     private property <duration> cycle-duration: 1400ms - root.power-ratio * 800ms;
-    private property <float> travel-progress: root.absolute-power < 0.05
-        ? 0
-        : Math.mod(animation-tick(), root.cycle-duration) / root.cycle-duration;
+    private property <float> travel-progress: 0;
+
+    // animation-tick() requests an immediate redraw on every event-loop
+    // iteration. That makes the software renderer run uncapped. Advance the
+    // conveyor explicitly at about 25.6 Hz instead (39 ms per update).
+    Timer {
+        interval: 39ms;
+        running: root.absolute-power >= 0.05;
+        triggered => {
+            root.travel-progress = Math.mod(
+                root.travel-progress + 39 / (root.cycle-duration / 1ms),
+                1
+            );
+        }
+    }
 
     background: transparent;
 

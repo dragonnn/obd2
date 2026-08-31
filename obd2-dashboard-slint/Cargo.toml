@@ -5,12 +5,29 @@ edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["board-wayland"]
+board-wayland = [
+    "slint/backend-winit-wayland",
+    "slint/renderer-software",
+    "slint/compat-1-2",
+]
+board-kms = [
+    "slint/backend-linuxkms-noseat",
+    "slint/renderer-software",
+    "slint/compat-1-2",
+]
+
 [dependencies]
-slint = "1.16.1"
+slint = { version = "1.17.1", default-features = false }
+signal-hook = "0.3"
 
 [build-dependencies]
-slint-build = "1.16.1"
+slint-build = "1.17.1"
 
 [profile.release]
 codegen-units = 1
 lto = true
+
+[patch.crates-io]
+i-slint-renderer-software = { path = "vendor/i-slint-renderer-software" }

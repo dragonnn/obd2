@@ -14,4 +14,5 @@ services:
       - ./kernel:/project/kernel:ro
       - ./buildroot:/project/buildroot:ro
       - ./device:/project/device:ro
+      - ../obd2-dashboard-slint:/project/obd2-dashboard-slint:ro
       - ./patches:/project/patches:ro

@@ -96,6 +96,17 @@ case "$action" in
                     sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/fish/Config.in\"" buildroot/package/Config.in
                 install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig
                 install -D -m 0755 /project/device/rootfs/post-rootfs-cleanup.sh device/rockchip/common/post-hooks/99-clean-generated-files.sh
+                install -D /project/buildroot/package/obd2-dashboard/Config.in buildroot/package/obd2-dashboard/Config.in
+                install -D /project/buildroot/package/obd2-dashboard/obd2-dashboard.mk buildroot/package/obd2-dashboard/obd2-dashboard.mk
+                grep -q "source \"package/obd2-dashboard/Config.in\"" buildroot/package/Config.in || \
+                    sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/obd2-dashboard/Config.in\"" buildroot/package/Config.in
+                install -D /project/buildroot/package/fb-reset/Config.in buildroot/package/fb-reset/Config.in
+                install -D /project/buildroot/package/fb-reset/fb-reset.mk buildroot/package/fb-reset/fb-reset.mk
+                grep -q "source \"package/fb-reset/Config.in\"" buildroot/package/Config.in || \
+                    sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/fb-reset/Config.in\"" buildroot/package/Config.in
+                sed -i "s/^RUST_BIN_VERSION = .*/RUST_BIN_VERSION = 1.98.0/" buildroot/package/rust-bin/rust-bin.mk
+                sed -i -E "s/sha256  [0-9a-f]+  rust-1\\.74\\.1-x86_64-unknown-linux-gnu\\.tar\\.xz/sha256  ed8ee2df70909c88cbaf87a6cfa3920dac00b537de12a6abe6906641e0f5952f  rust-1.98.0-x86_64-unknown-linux-gnu.tar.xz/" buildroot/package/rust-bin/rust-bin.hash
+                sed -i -E "s/sha256  [0-9a-f]+  rust-std-1\\.74\\.1-armv7-unknown-linux-gnueabihf\\.tar\\.xz/sha256  94f2b00c79a288f145855f46b946b108a96d45fc8a4d1c1666ea472d4674e90d  rust-std-1.98.0-armv7-unknown-linux-gnueabihf.tar.xz/" buildroot/package/rust-bin/rust-bin.hash
                 for patch_file in /project/patches/*.patch; do
                     echo "Applying ${patch_file##*/}"
                     if patch --dry-run --forward --batch -p0 < "$patch_file" >/dev/null 2>&1; then
@@ -122,6 +133,17 @@ case "$action" in
                     sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/fish/Config.in\"" buildroot/package/Config.in
                 install -D /project/device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig device/rockchip/.chips/rk3506/luckfox_lyra_zero-w_buildroot_spinand_defconfig
                 install -D -m 0755 /project/device/rootfs/post-rootfs-cleanup.sh device/rockchip/common/post-hooks/99-clean-generated-files.sh
+                install -D /project/buildroot/package/obd2-dashboard/Config.in buildroot/package/obd2-dashboard/Config.in
+                install -D /project/buildroot/package/obd2-dashboard/obd2-dashboard.mk buildroot/package/obd2-dashboard/obd2-dashboard.mk
+                grep -q "source \"package/obd2-dashboard/Config.in\"" buildroot/package/Config.in || \
+                    sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/obd2-dashboard/Config.in\"" buildroot/package/Config.in
+                install -D /project/buildroot/package/fb-reset/Config.in buildroot/package/fb-reset/Config.in
+                install -D /project/buildroot/package/fb-reset/fb-reset.mk buildroot/package/fb-reset/fb-reset.mk
+                grep -q "source \"package/fb-reset/Config.in\"" buildroot/package/Config.in || \
+                    sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/fb-reset/Config.in\"" buildroot/package/Config.in
+                sed -i "s/^RUST_BIN_VERSION = .*/RUST_BIN_VERSION = 1.98.0/" buildroot/package/rust-bin/rust-bin.mk
+                sed -i -E "s/sha256  [0-9a-f]+  rust-1\\.74\\.1-x86_64-unknown-linux-gnu\\.tar\\.xz/sha256  ed8ee2df70909c88cbaf87a6cfa3920dac00b537de12a6abe6906641e0f5952f  rust-1.98.0-x86_64-unknown-linux-gnu.tar.xz/" buildroot/package/rust-bin/rust-bin.hash
+                sed -i -E "s/sha256  [0-9a-f]+  rust-std-1\\.74\\.1-armv7-unknown-linux-gnueabihf\\.tar\\.xz/sha256  94f2b00c79a288f145855f46b946b108a96d45fc8a4d1c1666ea472d4674e90d  rust-std-1.98.0-armv7-unknown-linux-gnueabihf.tar.xz/" buildroot/package/rust-bin/rust-bin.hash
                 for patch_file in /project/patches/*.patch; do
                     echo "Applying ${patch_file##*/}"
                     if patch --dry-run --forward --batch -p0 < "$patch_file" >/dev/null 2>&1; then
@@ -143,6 +165,13 @@ case "$action" in
         ;;
     rootfs|kernel|uboot|firmware|buildroot-config)
         "$project_dir/lyra-build" sync-sources
+        if [[ "$action" == rootfs || "$action" == firmware ]]; then
+            docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk \
+                bash -lc 'make -C buildroot O=output/rockchip_rk3506_luckfox obd2-dashboard-dirclean'
+        fi
+        if [[ "$action" == firmware ]]; then
+            docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk ./build.sh rootfs
+        fi
         exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk ./build.sh "$action" "${@}"
         ;;
     shell)

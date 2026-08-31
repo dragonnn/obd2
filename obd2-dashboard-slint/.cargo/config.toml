@@ -10,3 +10,9 @@ rustflags = [
 rustflags = [
     "-C", "link-arg=/STACK:8000000"
 ]
+
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "./vendor"

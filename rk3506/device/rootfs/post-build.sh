@@ -24,6 +24,18 @@ rm -f \
     "$TARGET_DIR/usr/bin/seedrng" \
     "$TARGET_DIR/sbin/seedrng"
 
+# Slint's software renderer needs at least one usable font. Keep the board
+# image independent of a desktop font installation by shipping Slint's bundled
+# Inter font from the vendored dependency tree.
+SLINT_FONT=/project/obd2-dashboard-slint/vendor/i-slint-common/sharedfontique/Inter-VariableFont.ttf
+if [ -f "$SLINT_FONT" ]; then
+    install -d "$TARGET_DIR/usr/share/fonts/slint"
+    install -m 0644 "$SLINT_FONT" "$TARGET_DIR/usr/share/fonts/slint/Inter-VariableFont.ttf"
+fi
+
+# Overlay copying does not preserve executable bits for this service.
+chmod 0755 "$TARGET_DIR/etc/init.d/S15obd2-dashboard"
+
 # Install the direct framebuffer color diagnostic.  It writes pixels according
 # to fb0's reported bitfields, so this test is independent of fbcon/vt.color.
 FB_TEST_CC="${TARGET_CC:-}"
@@ -43,4 +55,10 @@ if [ -n "$FB_TEST_CC" ]; then
     "$FB_TEST_CC" ${TARGET_CFLAGS:-} ${TARGET_LDFLAGS:-} \
         "$FB_TEST_SOURCE" -o "$TARGET_DIR/usr/bin/fb-color-test"
     chmod 0755 "$TARGET_DIR/usr/bin/fb-color-test"
+
+    FB_RESET_SOURCE=/project/device/rootfs/fb-reset.c
+    [ -f "$FB_RESET_SOURCE" ] || FB_RESET_SOURCE="$SCRIPT_DIR/fb-reset.c"
+    "$FB_TEST_CC" ${TARGET_CFLAGS:-} ${TARGET_LDFLAGS:-} \
+        "$FB_RESET_SOURCE" -o "$TARGET_DIR/usr/bin/fb-reset"
+    chmod 0755 "$TARGET_DIR/usr/bin/fb-reset"
 fi
