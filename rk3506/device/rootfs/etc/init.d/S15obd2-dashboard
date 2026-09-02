@@ -1,0 +1,27 @@
+#!/bin/sh
+
+DAEMON=/usr/bin/obd2
+PIDFILE=/run/obd2-dashboard.pid
+
+case "$1" in
+start)
+	[ -x "$DAEMON" ] || exit 0
+	# LinuxKMS software rendering uses the display directly. The explicit
+	# linuxfb flag keeps this board on /dev/fb0 rather than Wayland/X11.
+	SLINT_BACKEND=linuxkms-software \
+	SLINT_BACKEND_LINUXFB=1 \
+	SLINT_KMS_ROTATION=270 \
+	start-stop-daemon --start --background --make-pidfile --pidfile "$PIDFILE" \
+		--exec "$DAEMON" -- -q
+	;;
+stop)
+	[ -f "$PIDFILE" ] && start-stop-daemon --stop --retry TERM/5/KILL --pidfile "$PIDFILE"
+	rm -f "$PIDFILE"
+	;;
+restart)
+	"$0" stop
+	"$0" start
+	;;
+esac
+
+exit 0

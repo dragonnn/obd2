@@ -1,0 +1,12 @@
+diff --git external/rkscript/usbdevice external/rkscript/usbdevice
+--- external/rkscript/usbdevice
++++ external/rkscript/usbdevice
+@@ -202,7 +202,7 @@ usb_start_daemon()
+ 			# Don't spawn after stopped
+ 			[ ! -f $TAG_FILE ] ||
+ 				/sbin/start-stop-daemon -Sqx $@ || true
+-			sleep .5
++			sleep .1
+ 		done
+ 	}&
+ }

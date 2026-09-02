@@ -1,0 +1,4 @@
+config BR2_PACKAGE_FB_RESET
+	bool "fb-reset"
+	help
+	  Clear the legacy framebuffer and restore the active VT to text mode.

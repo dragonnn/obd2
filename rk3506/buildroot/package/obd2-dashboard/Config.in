@@ -1,0 +1,11 @@
+config BR2_PACKAGE_OBD2_DASHBOARD
+	bool "obd2-dashboard Slint application"
+	depends on BR2_PACKAGE_HOST_RUSTC
+	depends on BR2_PACKAGE_EUDEV
+	select BR2_PACKAGE_LIBDRM
+	select BR2_PACKAGE_LIBEVDEV
+	select BR2_PACKAGE_LIBINPUT
+	select BR2_PACKAGE_LIBXKBCOMMON
+	select BR2_PACKAGE_FONTCONFIG
+	help
+	  OBD2 dashboard built with Slint's direct LinuxKMS software backend.

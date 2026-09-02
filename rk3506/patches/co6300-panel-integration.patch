@@ -1,0 +1,32 @@
+--- kernel-6.1/drivers/gpu/drm/panel/Kconfig
++++ kernel-6.1/drivers/gpu/drm/panel/Kconfig
+@@ -8,2 +8,13 @@
+ menu "Display Panels"
+ 	depends on DRM && DRM_PANEL
++
++config DRM_PANEL_CO6300
++	tristate "CO6300 272x928 AMOLED panel"
++	depends on OF
++	depends on DRM_MIPI_DSI
++	depends on GPIOLIB
++	depends on REGULATOR
++	select VIDEOMODE_HELPERS
++	help
++	  Say Y here to enable the BOE 3.19-inch 272x928 AMOLED panel
++	  using the CO6300 display IC over two-lane MIPI DSI.
+
+--- kernel-6.1/drivers/gpu/drm/panel/Makefile
++++ kernel-6.1/drivers/gpu/drm/panel/Makefile
+@@ -1,1 +1,2 @@
+ # SPDX-License-Identifier: GPL-2.0
++obj-$(CONFIG_DRM_PANEL_CO6300) += panel-co6300.o
+
+--- kernel-6.1/arch/arm/configs/rk3506_luckfox_defconfig
++++ kernel-6.1/arch/arm/configs/rk3506_luckfox_defconfig
+@@ -260,5 +260,6 @@
+ CONFIG_ROCKCHIP_RGB=y
+ CONFIG_DRM_PANEL_SIMPLE=y
+ CONFIG_DRM_PANEL_SIMPLE_OF_ONLY=y
++CONFIG_DRM_PANEL_CO6300=y
+ CONFIG_DRM_SII902X=y
+ CONFIG_FB=y
