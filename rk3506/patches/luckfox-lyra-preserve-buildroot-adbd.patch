@@ -1,0 +1,10 @@
+--- device/rockchip/common/overlays/rootfs/usb-gadget/install.sh
++++ device/rockchip/common/overlays/rootfs/usb-gadget/install.sh
+@@ -28,7 +28,9 @@ install_adbd()
+ 		message "Found incompatible adbd, removing it..."
+ 		rm -f "$TARGET_DIR/usr/bin/adbd"
+ 	fi
+ 
++	# Preserve Buildroot's patched adbd when it is already installed.
++	[ -e "$TARGET_DIR/usr/bin/adbd" ] || \
+ 	ensure_tools "$TARGET_DIR/usr/bin/adbd"

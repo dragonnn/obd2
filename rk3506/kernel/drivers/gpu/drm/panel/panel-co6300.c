@@ -18,8 +18,6 @@
 
 #include <video/mipi_display.h>
 
-#define CO6300_DRIVER_VERSION "v0.3-no-native-backlight"
-
 struct co6300 {
 	struct drm_panel panel;
 	struct mipi_dsi_device *dsi;
@@ -129,9 +127,6 @@ static int co6300_prepare(struct drm_panel *panel)
 	struct co6300 *ctx = to_co6300(panel);
 	int ret;
 
-	pr_info("panel-co6300 %s: prepare (native backlight control disabled)\n",
-		CO6300_DRIVER_VERSION);
-
 	if (ctx->prepared)
 		return 0;
 
@@ -212,9 +207,6 @@ static int co6300_probe(struct mipi_dsi_device *dsi)
 {
 	struct co6300 *ctx;
 
-	pr_info("panel-co6300 %s: probe from tracked driver, native backlight control disabled\n",
-		CO6300_DRIVER_VERSION);
-
 	ctx = devm_kzalloc(&dsi->dev, sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
 		return -ENOMEM;
@@ -236,8 +228,6 @@ static int co6300_probe(struct mipi_dsi_device *dsi)
 	drm_panel_init(&ctx->panel, &dsi->dev, &co6300_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
 	drm_panel_of_backlight(&ctx->panel);
-	pr_info("panel-co6300 %s: registered without native backlight device\n",
-		CO6300_DRIVER_VERSION);
 	mipi_dsi_set_drvdata(dsi, ctx);
 	drm_panel_add(&ctx->panel);
 	return mipi_dsi_attach(dsi);

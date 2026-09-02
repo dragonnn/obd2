@@ -33,8 +33,10 @@ if [ -f "$SLINT_FONT" ]; then
     install -m 0644 "$SLINT_FONT" "$TARGET_DIR/usr/share/fonts/slint/Inter-VariableFont.ttf"
 fi
 
-# Overlay copying does not preserve executable bits for this service.
-chmod 0755 "$TARGET_DIR/etc/init.d/S15obd2-dashboard"
+# Overlay copying does not preserve executable bits for these services.
+chmod 0755 \
+    "$TARGET_DIR/etc/init.d/S00loopback" \
+    "$TARGET_DIR/etc/init.d/S15obd2-dashboard"
 
 # Install the direct framebuffer color diagnostic.  It writes pixels according
 # to fb0's reported bitfields, so this test is independent of fbcon/vt.color.

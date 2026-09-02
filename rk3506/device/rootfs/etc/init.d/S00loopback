@@ -1,0 +1,12 @@
+#!/bin/sh
+
+case "$1" in
+    start|restart)
+        /sbin/ip link set lo up
+        ;;
+    stop)
+        /sbin/ip link set lo down
+        ;;
+esac
+
+exit 0

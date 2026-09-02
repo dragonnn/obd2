@@ -1,0 +1,17 @@
+diff --git external/rkscript/usbdevice external/rkscript/usbdevice
+--- external/rkscript/usbdevice
++++ external/rkscript/usbdevice
+@@ -567,7 +567,12 @@ usb_prepare()
+ 	USB_STATE=$(cat /sys/class/android_usb/android*/state 2>/dev/null)
+ 	usb_msg "USB state: ${USB_STATE:-unknown}"
+ 
+-	USB_UDC=$(ls /sys/class/udc/ | head -n 1)
++	USB_UDC=
++	for i in $(seq 50); do
++		USB_UDC=$(ls /sys/class/udc/ 2>/dev/null | head -n 1)
++		[ -n "$USB_UDC" ] && break
++		sleep .1
++	done
+ 	if [ -z "$USB_UDC" ]; then
+ 		usb_msg "Failed to find a valid UDC device..."
+ 		return 1

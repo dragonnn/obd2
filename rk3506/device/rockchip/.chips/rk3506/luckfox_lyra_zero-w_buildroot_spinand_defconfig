@@ -14,7 +14,7 @@ RK_WIFIBT_CHIP="AIC8800DC"
 # RK_ROOTFS_FSTRIM is not set
 RK_DISK_HELPERS_DISABLED=y
 RK_EXTRA_FONTS_DISABLED=y
-RK_LUCKFOX_LYRA=y
+# RK_LUCKFOX_LYRA is not set
 RK_UBOOT_CFG="rk3506_luckfox"
 RK_UBOOT_CFG_FRAGMENTS="rk3506b_luckfox"
 RK_UBOOT_SPL=y
@@ -23,7 +23,7 @@ RK_KERNEL_CFG="rk3506_luckfox_defconfig"
 RK_USB_GADGET=y
 RK_USB_ADBD=y
 RK_USB_ADBD_SHELL="/usr/bin/fish"
-RK_KERNEL_CFG_FRAGMENTS="rk3506-display.config rk3506-usb-serial.config rk3506-squashfs.config"
+RK_KERNEL_CFG_FRAGMENTS="rk3506-display.config rk3506-squashfs.config"
 RK_KERNEL_DTS_NAME="rk3506b-luckfox-lyra-zero-w-co6300"
 RK_BOOT_COMPRESSED=y
 # RK_RECOVERY is not set

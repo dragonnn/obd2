@@ -1,0 +1,10 @@
+diff --git device/rockchip/common/overlays/rootfs/luckfox-lyra/install.sh device/rockchip/common/overlays/rootfs/luckfox-lyra/install.sh
+--- device/rockchip/common/overlays/rootfs/luckfox-lyra/install.sh
++++ device/rockchip/common/overlays/rootfs/luckfox-lyra/install.sh
+@@ -12,6 +12,4 @@
+ install_sysv_service "$OVERLAY_DIR/S03modules_init.sh" S
+ install_sysv_service "$OVERLAY_DIR/S35wifibt-poweron.sh" S
+-install_sysv_service "$OVERLAY_DIR/S45usbconfig" S
+ install_busybox_service "$OVERLAY_DIR/S03modules_init.sh"
+ install_busybox_service "$OVERLAY_DIR/S35wifibt-poweron.sh"
+-install_busybox_service "$OVERLAY_DIR/S45usbconfig"

@@ -52,18 +52,7 @@ fi
 rm -f \
     "$TARGET_DIR/etc/init.d/S36wifibt-init.sh" \
     "$TARGET_DIR/etc/init.d/S40network" \
-    "$TARGET_DIR/etc/init.d/S50sshd" \
-    "$TARGET_DIR/usr/bin/wifibt-init.sh" \
-    "$TARGET_DIR/usr/sbin/sshd" \
-    "$TARGET_DIR/usr/bin/ssh" \
-    "$TARGET_DIR/usr/bin/scp" \
-    "$TARGET_DIR/usr/bin/sftp" \
-    "$TARGET_DIR/usr/bin/ssh-keygen" \
-    "$TARGET_DIR/usr/bin/ssh-keyscan" \
-    "$TARGET_DIR/usr/bin/ssh-add" \
-    "$TARGET_DIR/usr/bin/ssh-agent" \
-    "$TARGET_DIR/usr/libexec/sftp-server"
-rm -rf "$TARGET_DIR/etc/ssh"
+    "$TARGET_DIR/usr/bin/wifibt-init.sh"
 
 # Only the project-managed SD-card mountpoint is used. Remove legacy storage
 # names created by the vendor directory setup while preserving /mnt/sdcard.
