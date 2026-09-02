@@ -5,6 +5,20 @@ project_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 export HOST_UID="$(id -u)"
 export HOST_GID="$(id -g)"
 
+# Buildroot's local-package rsync uses -u and is guarded by a permanent
+# .stamp_rsynced file. That is unsafe for the project bind mounts: a source
+# edit can have an older timestamp than the staged copy (for example after a
+# checkout, clock adjustment, or archive extraction), leaving stale binaries
+# in the image. Always invalidate project-local packages before a build so the
+# source tree is copied afresh and removed files cannot survive in the cache.
+refresh_project_packages() {
+
+    docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk \
+        bash -lc 'set -euo pipefail
+            make -C buildroot O=output/rockchip_rk3506_luckfox \
+                obd2-dashboard-dirclean fb-reset-dirclean'
+}
+
 action=${1:-shell}
 shift || true
 
@@ -87,6 +101,7 @@ case "$action" in
                 if [[ -x .repo/repo/repo ]]; then .repo/repo sync -l; else echo "Missing .repo/repo/repo" >&2; exit 1; fi
                 install -D /project/kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi
                 install -D /project/kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts
+                install -D /project/kernel/drivers/gpu/drm/panel/panel-co6300.c kernel/drivers/gpu/drm/panel/panel-co6300.c
                 install -D /project/kernel/arch/arm/configs/rk3506-squashfs.config kernel/arch/arm/configs/rk3506-squashfs.config
                 install -D /project/buildroot/configs/rockchip_rk3506_luckfox_defconfig buildroot/configs/rockchip_rk3506_luckfox_defconfig
                 install -D /project/buildroot/package/fish/Config.in buildroot/package/fish/Config.in
@@ -124,6 +139,7 @@ case "$action" in
             bash -lc 'set -euo pipefail
                 install -D /project/kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi
                 install -D /project/kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts
+                install -D /project/kernel/drivers/gpu/drm/panel/panel-co6300.c kernel/drivers/gpu/drm/panel/panel-co6300.c
                 install -D /project/kernel/arch/arm/configs/rk3506-squashfs.config kernel/arch/arm/configs/rk3506-squashfs.config
                 install -D /project/buildroot/configs/rockchip_rk3506_luckfox_defconfig buildroot/configs/rockchip_rk3506_luckfox_defconfig
                 install -D /project/buildroot/package/fish/Config.in buildroot/package/fish/Config.in
@@ -161,13 +177,13 @@ case "$action" in
         ;;
     build)
         "$project_dir/lyra-build" sync-sources
+        refresh_project_packages
         exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk ./build.sh "${@}"
         ;;
     rootfs|kernel|uboot|firmware|buildroot-config)
         "$project_dir/lyra-build" sync-sources
         if [[ "$action" == rootfs || "$action" == firmware ]]; then
-            docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk \
-                bash -lc 'make -C buildroot O=output/rockchip_rk3506_luckfox obd2-dashboard-dirclean'
+            refresh_project_packages
         fi
         if [[ "$action" == firmware ]]; then
             docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk ./build.sh rootfs

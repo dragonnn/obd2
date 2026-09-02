@@ -12,12 +12,12 @@ slint::include_modules!();
 #[cfg(feature = "board-kms")]
 fn configure_board_backend() {
     // Keep the board executable self-contained: the LinuxKMS backend must be
-    // directed to the legacy framebuffer and use the panel's 90-degree
+    // directed to the legacy framebuffer and use the panel's 270-degree
     // orientation before Slint creates its window/backend.
     unsafe {
         std::env::set_var("SLINT_BACKEND", "linuxkms-software");
         std::env::set_var("SLINT_BACKEND_LINUXFB", "1");
-        std::env::set_var("SLINT_KMS_ROTATION", "90");
+        std::env::set_var("SLINT_KMS_ROTATION", "270");
     }
 }
 
