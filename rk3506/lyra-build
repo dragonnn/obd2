@@ -118,7 +118,7 @@ case "$action" in
                 install -D /project/buildroot/package/fish/Config.in buildroot/package/fish/Config.in
                 install -D /project/buildroot/package/fish/fish.mk buildroot/package/fish/fish.mk
                 install -D /project/buildroot/package/fish/fish.hash buildroot/package/fish/fish.hash
-                install -D /project/buildroot/package/android-adbd/0009-adbd-use-ipv4-for-smartsocket.patch buildroot/package/android-adbd/0009-adbd-use-ipv4-for-smartsocket.patch
+                rm -f buildroot/package/android-adbd/0009-adbd-use-ipv4-for-smartsocket.patch
                 rm -rf buildroot/output/rockchip_rk3506_luckfox/build/android-adbd-*
                 grep -q "source \"package/fish/Config.in\"" buildroot/package/Config.in || \
                     sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/fish/Config.in\"" buildroot/package/Config.in
@@ -168,7 +168,7 @@ case "$action" in
                 install -D /project/buildroot/package/fish/Config.in buildroot/package/fish/Config.in
                 install -D /project/buildroot/package/fish/fish.mk buildroot/package/fish/fish.mk
                 install -D /project/buildroot/package/fish/fish.hash buildroot/package/fish/fish.hash
-                install -D /project/buildroot/package/android-adbd/0009-adbd-use-ipv4-for-smartsocket.patch buildroot/package/android-adbd/0009-adbd-use-ipv4-for-smartsocket.patch
+                rm -f buildroot/package/android-adbd/0009-adbd-use-ipv4-for-smartsocket.patch
                 rm -rf buildroot/output/rockchip_rk3506_luckfox/build/android-adbd-*
                 grep -q "source \"package/fish/Config.in\"" buildroot/package/Config.in || \
                     sed -i "/source \"package\\/sed\\/Config.in\"/i source \"package/fish/Config.in\"" buildroot/package/Config.in
