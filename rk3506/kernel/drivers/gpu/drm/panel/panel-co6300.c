@@ -57,9 +57,9 @@ static int co6300_init(struct co6300 *ctx)
 	static const u8 madctl[] = { 0x00 };
 	static const u8 col_addr[] = { 0x00, 0x00, 0x01, 0x05 };
 	static const u8 page_addr[] = { 0x00, 0x00, 0x03, 0x9f };
-	static const u8 brightness[] = { 0xff };
+	static const u8 brightness[] = { 0x80 };
 	static const u8 hbm_brightness[] = { 0xff };
-	static const u8 hbm[] = { 0xff };
+	static const u8 hbm[] = { 0x80 };
 	static const u8 normal_brightness[] = { 0x07 };
 	int ret;
 
@@ -128,12 +128,22 @@ static int co6300_backlight_update_status(struct backlight_device *backlight)
 {
 	struct co6300 *ctx = bl_get_data(backlight);
 	u8 brightness = backlight->props.brightness;
+	unsigned long old_mode_flags;
+	int ret;
 
 	if (!ctx->prepared)
 		return 0;
 
-	return co6300_write(ctx, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
-			    &brightness, sizeof(brightness));
+	pr_info("panel-co6300: brightness write begin: 0x%02x\n",
+		brightness);
+	old_mode_flags = ctx->dsi->mode_flags;
+	ctx->dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+	ret = co6300_write(ctx, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
+			   &brightness, sizeof(brightness));
+	ctx->dsi->mode_flags = old_mode_flags;
+	pr_info("panel-co6300: brightness write end: ret=%d\n", ret);
+
+	return ret;
 }
 
 static const struct backlight_ops co6300_backlight_ops = {
