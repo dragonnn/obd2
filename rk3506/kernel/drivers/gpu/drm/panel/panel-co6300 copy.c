@@ -10,6 +10,7 @@
 #include <linux/backlight.h>
 #include <linux/gpio/consumer.h>
 #include <linux/module.h>
+#include <linux/mutex.h>
 #include <linux/of_device.h>
 #include <linux/regulator/consumer.h>
 
@@ -19,12 +20,15 @@
 
 #include <video/mipi_display.h>
 
+#define CO6300_DRIVER_VERSION "v0.10-dcs-backlight-53-20"
+
 struct co6300 {
 	struct drm_panel panel;
 	struct mipi_dsi_device *dsi;
 	struct regulator *supply;
 	struct gpio_desc *reset;
 	struct backlight_device *backlight;
+	struct mutex dsi_lock;
 	bool prepared;
 };
 
@@ -98,6 +102,7 @@ static int co6300_init(struct co6300 *ctx)
 	ret = co6300_write(ctx, 0x2b, page_addr, sizeof(page_addr));
 	if (ret)
 		return ret;
+	/* Preserve the known-working panel control value: BCTRL=1, DD=0. */
 	ret = co6300_write(ctx, 0x53, (u8[]){ 0x20 }, 1);
 	if (ret)
 		return ret;
@@ -128,12 +133,19 @@ static int co6300_backlight_update_status(struct backlight_device *backlight)
 {
 	struct co6300 *ctx = bl_get_data(backlight);
 	u8 brightness = backlight->props.brightness;
+	int ret;
 
 	if (!ctx->prepared)
 		return 0;
 
-	return co6300_write(ctx, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
-			    &brightness, sizeof(brightness));
+	mutex_lock(&ctx->dsi_lock);
+	ret = co6300_write(ctx, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
+			   &brightness, sizeof(brightness));
+	mutex_unlock(&ctx->dsi_lock);
+
+	pr_info("panel-co6300 %s: DCS 0x51 brightness=0x%02x ret=%d\n",
+		CO6300_DRIVER_VERSION, brightness, ret);
+	return ret;
 }
 
 static const struct backlight_ops co6300_backlight_ops = {
@@ -147,6 +159,9 @@ static int co6300_prepare(struct drm_panel *panel)
 
 	if (ctx->prepared)
 		return 0;
+
+	pr_info("panel-co6300 %s: prepare (DCS 0x51 brightness)\n",
+		CO6300_DRIVER_VERSION);
 
 	ret = regulator_enable(ctx->supply);
 	if (ret)
@@ -166,6 +181,14 @@ static int co6300_prepare(struct drm_panel *panel)
 		return ret;
 	}
 	ctx->prepared = true;
+	ret = co6300_backlight_update_status(ctx->backlight);
+	if (ret) {
+		ctx->prepared = false;
+		mipi_dsi_dcs_set_display_off(ctx->dsi);
+		mipi_dsi_dcs_enter_sleep_mode(ctx->dsi);
+		regulator_disable(ctx->supply);
+		return ret;
+	}
 	return 0;
 }
 
@@ -225,10 +248,14 @@ static int co6300_probe(struct mipi_dsi_device *dsi)
 {
 	struct co6300 *ctx;
 
+	pr_info("panel-co6300 %s: probe (tracked CO6300 driver)\n",
+		CO6300_DRIVER_VERSION);
+
 	ctx = devm_kzalloc(&dsi->dev, sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
 		return -ENOMEM;
 	ctx->dsi = dsi;
+	mutex_init(&ctx->dsi_lock);
 	ctx->supply = devm_regulator_get(&dsi->dev, "power");
 	if (IS_ERR(ctx->supply))
 		return dev_err_probe(&dsi->dev, PTR_ERR(ctx->supply),
@@ -255,9 +282,15 @@ static int co6300_probe(struct mipi_dsi_device *dsi)
 						});
 	if (IS_ERR(ctx->backlight))
 		return dev_err_probe(&dsi->dev, PTR_ERR(ctx->backlight),
-				     "failed to register backlight\n");
+				     "failed to register DCS backlight\n");
+
+	/* Use DCS for luminance; retain the enabled DT PWM device for testing. */
+	ctx->panel.backlight = ctx->backlight;
+
 	mipi_dsi_set_drvdata(dsi, ctx);
 	drm_panel_add(&ctx->panel);
+	pr_info("panel-co6300 %s: registered (DCS 0x51 backlight; PWM diagnostic enabled)\n",
+		CO6300_DRIVER_VERSION);
 	return mipi_dsi_attach(dsi);
 }
 

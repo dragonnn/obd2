@@ -31,6 +31,11 @@
 	status = "disabled";
 };
 
+/* Use the Lyra Ultra PWM output as the panel backlight controller. */
+&backlight {
+	status = "okay";
+};
+
 &dsi_panel {
 	/delete-property/ panel-init-sequence;
 
