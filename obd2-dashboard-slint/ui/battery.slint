@@ -6,16 +6,16 @@ component Metric inherits VerticalLayout {
 
     Text {
         text: root.value;
-        color: white;
-        font-size: 14px;
+        color: #dcfbe6;
+        font-size: 17px;
         font-weight: 600;
         vertical-alignment: bottom;
     }
 
     Text {
         text: root.label;
-        color: #dbe7df;
-        font-size: 8px;
+        color: #dcfbe6;
+        font-size: 9px;
         letter-spacing: 0.5px;
         vertical-alignment: top;
     }
@@ -80,7 +80,7 @@ export component BatteryWidget inherits Rectangle {
             Text {
                 width: 55px;
                 text: "\{round(root.state-of-charge)}%";
-                color: white;
+                color: #dcfbe6;
                 font-size: 27px;
                 font-weight: 700;
                 horizontal-alignment: center;
