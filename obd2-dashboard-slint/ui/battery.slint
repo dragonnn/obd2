@@ -41,7 +41,7 @@ export component BatteryWidget inherits Rectangle {
         x: root.width - 24px;
         y: (root.height - self.height) / 2;
         width: 24px;
-        height: 47px;
+        height: 70px;
         background: #111713;
         border-color: #718078;
         border-width: 2px;
@@ -60,14 +60,16 @@ export component BatteryWidget inherits Rectangle {
         // SOC is represented by the background of the entire widget, just as in
         // the original embedded dashboard. All values remain visible above it.
         Rectangle {
-            x: 0;
-            y: 0;
-            width: parent.width * root.clamped-state-of-charge / 100;
-            height: parent.height;
+            // Leave a small empty channel between the SOC fill and the outer
+            // outline so the border remains visually separated from the fill.
+            x: 4px;
+            y: 4px;
+            width: max(0px, parent.width * root.clamped-state-of-charge / 100 - 8px);
+            height: max(0px, parent.height - 8px);
             // Keep the fill's leading corners rounded explicitly. Some
             // software-renderer paths do not apply a rounded parent's clip
             // to child rectangles.
-            border-radius: 12px;
+            border-radius: 10px;
             background: root.fill-color;
         }
 
