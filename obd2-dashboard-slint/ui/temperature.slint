@@ -98,6 +98,10 @@ export component TemperatureWidget inherits Rectangle {
                 y: parent.height * (1 - root.bulb-fill-ratio);
                 width: parent.width;
                 height: parent.height * root.bulb-fill-ratio;
+                // Clip the liquid to the bulb itself; relying on the rounded
+                // reservoir's clip produces a square fill in the software
+                // renderer used by the running application.
+                border-radius: 9px;
                 background: root.liquid-color;
             }
         }

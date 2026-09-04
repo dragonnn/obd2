@@ -63,4 +63,13 @@ if [ -n "$FB_TEST_CC" ]; then
     "$FB_TEST_CC" ${TARGET_CFLAGS:-} ${TARGET_LDFLAGS:-} \
         "$FB_RESET_SOURCE" -o "$TARGET_DIR/usr/bin/fb-reset"
     chmod 0755 "$TARGET_DIR/usr/bin/fb-reset"
+
+    # Install the PNG/JPEG framebuffer image test. It copies source pixels
+    # 1:1 in the visible (rotated) display orientation and clips only when an
+    # image is larger than the framebuffer.
+    FB_IMAGE_SOURCE=/project/device/rootfs/fb-image.c
+    [ -f "$FB_IMAGE_SOURCE" ] || FB_IMAGE_SOURCE="$SCRIPT_DIR/fb-image.c"
+    "$FB_TEST_CC" ${TARGET_CFLAGS:-} ${TARGET_LDFLAGS:-} \
+        "$FB_IMAGE_SOURCE" -o "$TARGET_DIR/usr/bin/fb-image" -lpng -ljpeg
+    chmod 0755 "$TARGET_DIR/usr/bin/fb-image"
 fi

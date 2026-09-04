@@ -32,8 +32,8 @@ export component BatteryWidget inherits Rectangle {
     private property <float> clamped-state-of-charge:
         root.state-of-charge < 0 ? 0 : root.state-of-charge > 100 ? 100 : root.state-of-charge;
     private property <color> fill-color: root.clamped-state-of-charge <= 10
-        ? #b42318
-        : root.clamped-state-of-charge <= 20 ? #b7791f : #26734d;
+        ? #dc1f11
+        : root.clamped-state-of-charge <= 20 ? #e29015 : #03c451;
 
     // Battery terminal. It sits behind the body so its left border is hidden
     // and it reads as a single outline protruding from the right side.
@@ -64,6 +64,10 @@ export component BatteryWidget inherits Rectangle {
             y: 0;
             width: parent.width * root.clamped-state-of-charge / 100;
             height: parent.height;
+            // Keep the fill's leading corners rounded explicitly. Some
+            // software-renderer paths do not apply a rounded parent's clip
+            // to child rectangles.
+            border-radius: 12px;
             background: root.fill-color;
         }
 
@@ -115,6 +119,17 @@ export component BatteryWidget inherits Rectangle {
                     }
                 }
             }
+        }
+
+        // Paint the outline last so the runtime software renderer cannot let
+        // the SOC fill cover the rounded left edge.
+        Rectangle {
+            width: parent.width;
+            height: parent.height;
+            background: transparent;
+            border-color: #718078;
+            border-width: 2px;
+            border-radius: 12px;
         }
     }
 }

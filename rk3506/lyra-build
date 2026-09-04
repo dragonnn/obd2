@@ -15,8 +15,11 @@ refresh_project_packages() {
 
     docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk \
         bash -lc 'set -euo pipefail
-            make -C buildroot O=output/rockchip_rk3506_luckfox \
-                obd2-dashboard-dirclean fb-reset-dirclean'
+            output=buildroot/output/rockchip_rk3506_luckfox
+            if [[ -d "$output/build/obd2-dashboard" || -d "$output/build/fb-reset" ]]; then
+                make -C buildroot O=output/rockchip_rk3506_luckfox \
+                    obd2-dashboard-dirclean fb-reset-dirclean
+            fi'
 }
 
 action=${1:-shell}

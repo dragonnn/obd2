@@ -114,9 +114,17 @@ network={
 #[cfg(not(feature = "board-kms"))]
 fn start_debug_wifi() {}
 
+fn start_debug_wifi_in_background() {
+    thread::spawn(|| {
+        eprintln!("debug Wi-Fi: delaying setup for 5 seconds");
+        thread::sleep(Duration::from_secs(5));
+        start_debug_wifi();
+    });
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     configure_board_backend();
-    start_debug_wifi();
+    start_debug_wifi_in_background();
     let ui = AppWindow::new()?;
 
     // SIGTERM does not unwind Rust stack frames. Ask Slint's event loop to
