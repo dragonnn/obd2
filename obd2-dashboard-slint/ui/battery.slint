@@ -8,13 +8,13 @@ component Metric inherits VerticalLayout {
     vertical-stretch: 0;
 
     HorizontalLayout {
-        spacing: 0px;
+        spacing: 1px;
         alignment: start;
 
         Text {
-            text: root.value;
+            text: root.value + root.unit;
             color: #dcfbe6;
-            font-size: 16px;
+            font-size: 24px;
             font-weight: 600;
             vertical-alignment: bottom;
         }
@@ -22,24 +22,18 @@ component Metric inherits VerticalLayout {
         if root.deviation != "": Text {
             text: root.deviation;
             color: #dcfbe6;
-            font-size: 14px;
+            font-size: 16px;
             //font-weight: 600;
             vertical-alignment: bottom;
         }
 
-        if root.unit != "": Text {
-            text: root.unit;
-            color: #dcfbe6;
-            font-size: 16px;
-            font-weight: 600;
-            vertical-alignment: bottom;
-        }
+        
     }
 
     Text {
         text: root.label;
         color: #dcfbe6;
-        font-size: 9px;
+        font-size: 14px;
         letter-spacing: 0.5px;
         vertical-alignment: top;
     }
@@ -99,7 +93,7 @@ export component BatteryWidget inherits Rectangle {
 
         VerticalLayout {
             alignment: space-between;
-            padding-left: 7px;
+            padding-left: 14px;
             padding-right: 7px;
             padding-bottom: 10px;
             padding-top: 10px;
@@ -109,14 +103,10 @@ export component BatteryWidget inherits Rectangle {
                 spacing: 8px;
 
                 Metric {
-                    value: "\{round(root.pack-voltage * 10) / 10} V";
-                    label: "PACK";
-                }
-                Metric {
                     value: "\{round(root.average-cell-voltage * 100) / 100}";
                     // Express the spread in hundredths of a volt: 20 mV → 2.
                     deviation: "±\{round(root.cell-voltage-deviation / 10)}";
-                    unit: " V";
+                    unit: "V";
                     label: "AVG CELL";
                 }
             }
@@ -128,24 +118,36 @@ export component BatteryWidget inherits Rectangle {
                 Metric {
                     value: "\{round((root.minimum-temperature + root.maximum-temperature) / 2 * 10) / 10}";
                     deviation: "±\{round(abs(root.maximum-temperature - root.minimum-temperature) / 2 * 10) / 10}";
-                    unit: " °C";
+                    unit: "°C";
                     label: "AVG TEMP";
                 }
             }
         }
 
         // SOC shares the metrics' width and sits in the gap between their rows.
-        Text {
+        soc := Text {
             x: parent.width - self.width - 7px;
-            y: (parent.height - self.height) / 2;
-            width: 70px;
+            y: (parent.height - self.height) / 2 - 2px;
+            width: 85px;
             height: 34px;
             text: "\{round(root.state-of-charge)}%";
             color: #dcfbe6;
-            font-size: 27px;
+            font-size: 40px;
             font-weight: 700;
             horizontal-alignment: right;
             vertical-alignment: center;
+        }
+
+        Text {
+            x: parent.width - self.width - 7px;
+            y: soc.y + soc.height;
+            width: 110px;
+            height: 28px;
+            text: "\{round(root.pack-voltage * 10) / 10} V";
+            color: #dcfbe6;
+            font-size: 18px;
+            horizontal-alignment: right;
+            vertical-alignment: top;
         }
 
         // Paint the outline last so the runtime software renderer cannot let
