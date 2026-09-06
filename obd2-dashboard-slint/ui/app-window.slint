@@ -4,6 +4,7 @@ import { MotorsWidget } from "motors.slint";
 import { TemperatureWidget } from "temperature.slint";
 import { DrivingDashboard } from "driving/mod.slint";
 import { BottomBar } from "bottom-bar/mod.slint";
+import { CoolantGauge } from "coolant.slint";
 
 export component AppWindow inherits Window {
     height: 262px;
@@ -18,6 +19,8 @@ export component AppWindow inherits Window {
     in-out property <int> gear: 3;
     in-out property <string> gear-mode: "D";
     in-out property <float> fuel-consumption: 4.8;
+    in-out property <float> battery-power-kw: -2;
+    in-out property <float> coolant-temperature: 88;
 
     background: #000000;
 
@@ -41,7 +44,8 @@ export component AppWindow inherits Window {
 
     BatteryWidget {
         x: 5px;
-        y: 16px;
+        // Center the terminal on the energy-flow arrows at y = 106px.
+        y: 34px;
         width: 249px;
         height: 144px;
 
@@ -53,16 +57,22 @@ export component AppWindow inherits Window {
         maximum-temperature: 24;
     }
 
-    /*EnergyFlow {
-        x: 263px;
-        y: 16px;
-        width: 210px;
-        height: parent.height / 2 - 32px;
-        power-kw: -2;
+    EnergyFlow {
+        x: 269px;
+        y: 37px;
+        width: 106px;
+        height: 106px;
+        power-kw: root.battery-power-kw;
         maximum-power-kw: 40;
     }
 
-    MotorsWidget {
+    CoolantGauge {
+        x: 608px; y: 133px;
+        width: 180px; height: 60px;
+        temperature: root.coolant-temperature;
+    }
+
+    /*MotorsWidget {
         x: 464px;
         y: 16px;
         width: 190px;

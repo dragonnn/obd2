@@ -1,104 +1,92 @@
-component ArrowShape inherits Path {
+component FlowChevron inherits Path {
     in property <color> arrow-color;
     in property <bool> points-right;
-    in property <length> notch-width: 18px;
-
+    viewbox-width: 30;
+    viewbox-height: 62;
+    commands: root.points-right
+        ? "M 0 0 H 12 L 30 31 L 12 62 H 0 L 18 31 Z"
+        : "M 18 0 H 30 L 12 31 L 30 62 H 18 L 0 31 Z";
     fill: root.arrow-color;
-
-    MoveTo {
-        x: root.points-right ? 0 : root.width / 1px;
-        y: 0;
-    }
-    LineTo {
-        x: root.points-right ? root.notch-width / 1px : (root.width - root.notch-width) / 1px;
-        y: root.height / 2px;
-    }
-    LineTo {
-        x: root.points-right ? 0 : root.width / 1px;
-        y: root.height / 1px;
-    }
-    LineTo {
-        x: root.points-right ? (root.width - root.notch-width) / 1px : root.notch-width / 1px;
-        y: root.height / 1px;
-    }
-    LineTo {
-        x: root.points-right ? root.width / 1px : 0;
-        y: root.height / 2px;
-    }
-    LineTo {
-        x: root.points-right ? (root.width - root.notch-width) / 1px : root.notch-width / 1px;
-        y: 0;
-    }
-    Close { }
 }
 
 export component EnergyFlow inherits Rectangle {
-    in property <float> power-kw: 18.6;
+    in property <float> power-kw: -2;
     in property <float> maximum-power-kw: 40;
-    in property <int> arrows-in-view: 8;
+    in property <int> arrows-in-view: 4;
 
     private property <float> absolute-power: abs(root.power-kw);
     private property <float> power-ratio: min(1, root.absolute-power / max(1, root.maximum-power-kw));
+    private property <bool> flowing: root.absolute-power >= 0.05;
     private property <bool> discharging: root.power-kw >= 0;
-    private property <length> arrow-notch-width: 18px;
-    private property <length> arrow-gap: 15px;
-    private property <length> arrow-spacing: root.width / max(1, root.arrows-in-view);
-    private property <length> arrow-width:
-        root.arrow-spacing + root.arrow-notch-width - root.arrow-gap;
-    private property <color> flow-color: root.discharging ? #65d99b : #5bc8ff;
-    private property <duration> cycle-duration: 1400ms - root.power-ratio * 800ms;
+    // Slint mix() weights the first color: factor 0 gives the second color.
+    private property <color> charging-color: #00c9ee.mix(#00536b, root.power-ratio);
+    private property <color> discharging-color: root.absolute-power <= 6.5
+        ? #20df67.mix(#087d38, root.absolute-power / 6.5)
+        : root.absolute-power <= 12
+        ? #ffad20.mix(#20df67, (root.absolute-power - 6.5) / 5.5)
+        : root.absolute-power <= 18
+        ? #ff7a18.mix(#ffad20, (root.absolute-power - 12) / 6)
+        : #ff3038.mix(#ff7a18, min(1, (root.absolute-power - 18) / 8));
+    private property <color> flow-color: !root.flowing ? #33433e
+        : root.discharging ? root.discharging-color : root.charging-color;
+    private property <float> power-tenths: round(root.absolute-power * 10);
+    private property <length> arrow-spacing: (root.width - 4px) / max(1, root.arrows-in-view);
+    // Scale actual travel speed, not the period: about 0.54 chevrons/second
+    // at 2 kW, reaching 6 chevrons/second at 40 kW in either direction.
+    private property <float> chevrons-per-second: 0.25 + 5.75 * root.power-ratio;
     private property <float> travel-progress: 0;
+    background: transparent;
 
-    // animation-tick() requests an immediate redraw on every event-loop
-    // iteration. That makes the software renderer run uncapped. Advance the
-    // conveyor explicitly at about 25.6 Hz instead (39 ms per update).
+    // Explicit 25 Hz updates let LinuxFB sleep between frames. Do not use
+    // animation-tick() or property animations: that backend has no vsync cap.
     Timer {
-        interval: 39ms;
-        running: root.absolute-power >= 0.05;
+        interval: 40ms;
+        running: root.flowing;
         triggered => {
             root.travel-progress = Math.mod(
-                root.travel-progress + 39 / (root.cycle-duration / 1ms),
-                1
+                root.travel-progress + 0.04 * root.chevrons-per-second, 1
             );
         }
     }
 
-    background: transparent;
+    Text {
+        x: 0px; y: 0px;
+        width: parent.width; height: 26px;
+        text: "\{root.power-kw <= -0.05 ? "-" : ""}\{floor(root.power-tenths / 10)}.\{Math.mod(root.power-tenths, 10)} kW";
+        color: #f2f4f3;
+        font-size: 18px;
+        font-weight: 700;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
 
-    VerticalLayout {
-        spacing: 2px;
+    Rectangle {
+        x: 2px; y: 32px;
+        width: parent.width - 4px; height: max(0px, parent.height - 32px);
+        background: transparent;
+        clip: true;
 
-        Text {
-            height: 27px;
-            text: "\{round(root.power-kw * 10) / 10} kW";
-            color: white;
-            font-size: 22px;
-            font-weight: 700;
-            horizontal-alignment: center;
-            vertical-alignment: center;
+        // Extra chevrons enter and leave the clipped edges without a jump.
+        for _[index] in max(1, root.arrows-in-view) + 2: FlowChevron {
+            x: (index - 1 + (root.flowing
+                ? (root.discharging ? root.travel-progress : -root.travel-progress)
+                : 0)) * root.arrow-spacing;
+            y: 6px;
+            width: root.arrow-spacing * 30 / 26;
+            height: max(0px, parent.height - 12px);
+            arrow-color: root.flow-color;
+            points-right: root.discharging;
         }
+    }
 
-        Rectangle {
-            height: 47px;
-            clip: true;
-            background: #111713;
-            border-color: #718078;
-            border-width: 2px;
-            border-radius: 8px;
-
-            // Keep one extra arrow outside each edge so the requested number
-            // remains visible while the conveyor loops continuously.
-            for _[index] in root.arrows-in-view + 2: ArrowShape {
-                x: root.discharging
-                    ? (index - 1 + root.travel-progress) * root.arrow-spacing
-                    : (root.arrows-in-view - index - root.travel-progress) * root.arrow-spacing;
-                width: root.arrow-width;
-                height: parent.height;
-                arrow-color: root.flow-color;
-                points-right: root.discharging;
-                notch-width: root.arrow-notch-width;
-                opacity: root.absolute-power < 0.05 ? 0 : 1;
-            }
-        }
+    Rectangle {
+        x: 0px; y: 32px;
+        width: 1px; height: max(0px, parent.height - 32px);
+        background: root.flow-color;
+    }
+    Rectangle {
+        x: parent.width - 1px; y: 32px;
+        width: 1px; height: max(0px, parent.height - 32px);
+        background: root.flow-color;
     }
 }

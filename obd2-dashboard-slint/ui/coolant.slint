@@ -1,0 +1,114 @@
+component CoolantArc inherits Path {
+    in property <angle> start-angle;
+    in property <angle> end-angle;
+    in property <color> arc-color;
+    viewbox-width: 180;
+    viewbox-height: 66;
+    fill: root.arc-color;
+    visible: root.end-angle > root.start-angle;
+
+    MoveTo { x: 88 + 94 * cos(root.start-angle); y: 95 + 94 * sin(root.start-angle); }
+    ArcTo {
+        radius-x: 94; radius-y: 94; sweep: true;
+        x: 88 + 94 * cos(root.end-angle); y: 95 + 94 * sin(root.end-angle);
+    }
+    LineTo { x: 88 + 86 * cos(root.end-angle); y: 95 + 86 * sin(root.end-angle); }
+    ArcTo {
+        radius-x: 86; radius-y: 86; sweep: false;
+        x: 88 + 86 * cos(root.start-angle); y: 95 + 86 * sin(root.start-angle);
+    }
+    Close { }
+}
+
+component CoolantBand inherits Rectangle {
+    in property <float> minimum;
+    in property <float> maximum;
+    in property <float> temperature;
+    in property <color> band-color;
+    // Map the entire 0–120°C range onto the arc, keeping narrow segment gaps.
+    private property <angle> start-angle: -124deg + 99deg * root.minimum / 120
+        + (root.minimum > 0 ? 1deg : 0deg);
+    private property <angle> end-angle: -124deg + 99deg * root.maximum / 120
+        - (root.maximum < 120 ? 1deg : 0deg);
+    private property <angle> fill-angle: max(root.start-angle,
+        min(root.end-angle, -124deg + 99deg * root.temperature / 120));
+    background: transparent;
+
+    CoolantArc {
+        x: 0px; y: 0px; width: root.width; height: root.height;
+        start-angle: root.start-angle;
+        end-angle: root.end-angle;
+        arc-color: #24302b;
+    }
+    CoolantArc {
+        x: 0px; y: 0px; width: root.width; height: root.height;
+        start-angle: root.start-angle;
+        end-angle: root.fill-angle;
+        arc-color: root.band-color;
+    }
+}
+
+// Segmented coolant arc based on the instrument-cluster reference.
+export component CoolantGauge inherits Rectangle {
+    in property <float> temperature: 88;
+    background: transparent;
+
+    CoolantBand {
+        x: 0px; y: 0px; width: root.width; height: root.height;
+        minimum: 0; maximum: 45;
+        temperature: root.temperature;
+        band-color: #00b9ed;
+    }
+    CoolantBand {
+        x: 0px; y: 0px; width: root.width; height: root.height;
+        minimum: 45; maximum: 95;
+        temperature: root.temperature;
+        band-color: #20d865;
+    }
+    CoolantBand {
+        x: 0px; y: 0px; width: root.width; height: root.height;
+        minimum: 95; maximum: 120;
+        temperature: root.temperature;
+        band-color: #ff3038;
+    }
+
+    // Thermometer and water: retain the coolant-specific symbol, not a
+    // generic temperature icon. All geometry scales with the gauge.
+    Path {
+        x: 0px; y: 0px;
+        width: root.width; height: root.height;
+        viewbox-width: 180; viewbox-height: 66;
+        commands: "M 17 28 L 17 50 M 17 32 L 23 32 M 17 38 L 23 38 M 17 44 L 23 44 M 3 56 Q 7 53 11 56 M 23 56 Q 27 53 31 56 M 4 62 Q 8 59 12 62 Q 16 65 20 62 Q 24 59 29 62";
+        stroke: #f2f4f3;
+        stroke-width: 2px;
+        stroke-line-cap: round;
+        fill: transparent;
+    }
+    Path {
+        x: 0px; y: 0px;
+        width: root.width; height: root.height;
+        viewbox-width: 180; viewbox-height: 66;
+        commands: "M 21 53 A 4 4 0 1 1 13 53 A 4 4 0 1 1 21 53 Z";
+        fill: #f2f4f3;
+    }
+    Text {
+        x: root.width * 43 / 180; y: root.height * 26 / 66;
+        width: root.width * 105 / 180; height: root.height * 14 / 66;
+        text: "COOLANT";
+        color: #c9cfcc;
+        font-size: 10px;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    Text {
+        x: root.width * 43 / 180 + 5px; 
+        y: root.height * 40 / 66 + 2px;
+        width: root.width * 105 / 180; height: root.height * 26 / 66;
+        text: "\{round(root.temperature)}°C";
+        color: #f2f4f3;
+        font-size: 26px;
+        font-weight: 700;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
