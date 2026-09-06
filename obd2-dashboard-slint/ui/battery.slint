@@ -1,16 +1,39 @@
 component Metric inherits VerticalLayout {
     in property <string> value;
     in property <string> label;
+    in property <string> deviation;
+    in property <string> unit;
     spacing: 0px;
     horizontal-stretch: 1;
     vertical-stretch: 0;
 
-    Text {
-        text: root.value;
-        color: #dcfbe6;
-        font-size: 16px;
-        font-weight: 600;
-        vertical-alignment: bottom;
+    HorizontalLayout {
+        spacing: 0px;
+        alignment: start;
+
+        Text {
+            text: root.value;
+            color: #dcfbe6;
+            font-size: 16px;
+            font-weight: 600;
+            vertical-alignment: bottom;
+        }
+
+        if root.deviation != "": Text {
+            text: root.deviation;
+            color: #dcfbe6;
+            font-size: 14px;
+            //font-weight: 600;
+            vertical-alignment: bottom;
+        }
+
+        if root.unit != "": Text {
+            text: root.unit;
+            color: #dcfbe6;
+            font-size: 16px;
+            font-weight: 600;
+            vertical-alignment: bottom;
+        }
     }
 
     Text {
@@ -74,59 +97,55 @@ export component BatteryWidget inherits Rectangle {
             background: root.fill-color;
         }
 
-        HorizontalLayout {
-            spacing: 7px;
+        VerticalLayout {
+            alignment: space-between;
             padding-left: 7px;
             padding-right: 7px;
             padding-bottom: 10px;
             padding-top: 10px;
 
-            Text {
-                width: 55px;
-                text: "\{round(root.state-of-charge)}%";
-                color: #dcfbe6;
-                font-size: 27px;
-                font-weight: 700;
-                horizontal-alignment: center;
-                vertical-alignment: center;
-            }
+            HorizontalLayout {
+                vertical-stretch: 0;
+                spacing: 8px;
 
-            Rectangle {
-                width: 1px;
-                background: #ffffff50;
-            }
-
-            VerticalLayout {
-                alignment: space-between;
-
-                HorizontalLayout {
-                    vertical-stretch: 0;
-                    spacing: 8px;
-
-                    Metric {
-                        value: "\{round(root.pack-voltage * 10) / 10} V";
-                        label: "PACK";
-                    }
-                    Metric {
-                        value: "\{round(root.average-cell-voltage * 100) / 100} V";
-                        label: "AVG CELL";
-                    }
+                Metric {
+                    value: "\{round(root.pack-voltage * 10) / 10} V";
+                    label: "PACK";
                 }
-
-                HorizontalLayout {
-                    vertical-stretch: 0;
-                    spacing: 8px;
-
-                    Metric {
-                        value: "\{round(root.minimum-temperature)}–\{round(root.maximum-temperature)} °C";
-                        label: "TEMP RANGE";
-                    }
-                    Metric {
-                        value: "Δ \{round(root.cell-voltage-deviation)} mV";
-                        label: "CELL SPREAD";
-                    }
+                Metric {
+                    value: "\{round(root.average-cell-voltage * 100) / 100}";
+                    // Express the spread in hundredths of a volt: 20 mV → 2.
+                    deviation: "±\{round(root.cell-voltage-deviation / 10)}";
+                    unit: " V";
+                    label: "AVG CELL";
                 }
             }
+
+            HorizontalLayout {
+                vertical-stretch: 0;
+                spacing: 8px;
+
+                Metric {
+                    value: "\{round((root.minimum-temperature + root.maximum-temperature) / 2 * 10) / 10}";
+                    deviation: "±\{round(abs(root.maximum-temperature - root.minimum-temperature) / 2 * 10) / 10}";
+                    unit: " °C";
+                    label: "AVG TEMP";
+                }
+            }
+        }
+
+        // SOC shares the metrics' width and sits in the gap between their rows.
+        Text {
+            x: parent.width - self.width - 7px;
+            y: (parent.height - self.height) / 2;
+            width: 70px;
+            height: 34px;
+            text: "\{round(root.state-of-charge)}%";
+            color: #dcfbe6;
+            font-size: 27px;
+            font-weight: 700;
+            horizontal-alignment: right;
+            vertical-alignment: center;
         }
 
         // Paint the outline last so the runtime software renderer cannot let

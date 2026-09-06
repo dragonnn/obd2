@@ -43,6 +43,9 @@
 		{
 			"path": "rk3506"
 		},
+                {
+                        "path": "3d"
+                },
 	],
 	"settings": {
 		"cSpell.words": [

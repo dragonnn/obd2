@@ -1,0 +1,27 @@
+{
+  "units": "mm",
+  "solids": 16,
+  "step_reimport_valid": true,
+  "bounds_mm": {
+    "x": [
+      -45.70107218029199,
+      13.250695271506169
+    ],
+    "y": [
+      -68.30711688832118,
+      41.22569527150617
+    ],
+    "z": [
+      -2.9050001000000103,
+      0.0009617611328968335
+    ]
+  },
+  "panel_outline_mm": [
+    26.5,
+    82.45
+  ],
+  "nominal_stack_mm": 1.9050000000000002,
+  "front_outer_edge_radius_mm": 0.5,
+  "flex_thickness_mm": 0.15,
+  "rear_drawing_mm_per_pixel": 0.15045620437956206
+}
