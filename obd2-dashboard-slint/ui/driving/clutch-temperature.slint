@@ -1,0 +1,23 @@
+export component ClutchTemperature inherits Rectangle {
+    in property <float> temperature: 60;
+    in property <float> temperature-deviation: 2;
+    background: transparent;
+
+    VerticalLayout {
+        spacing: 0px;
+        Text {
+            text: "\{round(root.temperature)}°C";
+            color: white;
+            font-size: 16px;
+            horizontal-alignment: left;
+            vertical-alignment: center;
+        }
+        Text {
+            text: "±\{round(abs(root.temperature-deviation))}°C";
+            color: white;
+            font-size: 14px;
+            horizontal-alignment: left;
+            vertical-alignment: center;
+        }
+    }
+}

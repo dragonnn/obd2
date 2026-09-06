@@ -1,0 +1,61 @@
+export component FuelUsage inherits Rectangle {
+    in property <float> consumption: 4.8;
+    in property <float> maximum-consumption: 14;
+    private property <float> scale-maximum: max(0.1, root.maximum-consumption);
+    private property <float> display-value: round(max(0, root.consumption) * 10) / 10;
+    private property <color> usage-color: root.consumption < 4 ? #00bfff
+        : root.consumption < 6 ? #00c849 : #ff4050;
+    background: transparent;
+
+    HorizontalLayout {
+        y: 3px;
+        height: 28px;
+        spacing: 4px;
+        alignment: start;
+        Text {
+            text: "\{floor(root.display-value)}.\{round((root.display-value - floor(root.display-value)) * 10)}";
+            color: #e5e7e6;
+            font-size: 22px;
+            vertical-alignment: center;
+        }
+        Text {
+            text: "L/100 km";
+            color: #e5e7e6;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+    }
+
+    Rectangle {
+        y: 36px;
+        width: parent.width;
+        height: 12px;
+        background: #191c1a;
+        Rectangle {
+            x: 0px;
+            y: 0px;
+            width: parent.width * max(0, min(1, root.consumption / root.scale-maximum));
+            height: parent.height;
+            background: root.usage-color;
+        }
+    }
+    for tick in [0, 4, 6, 14]: Rectangle {
+        private property <float> ratio: tick / root.scale-maximum;
+        visible: tick <= root.scale-maximum;
+        x: parent.width * self.ratio;
+        y: 36px;
+        width: 1px;
+        height: 12px;
+        background: #737b76;
+        /*Text {
+            x: tick == 0 ? 0px : tick == 14 ? -8px : -4px;
+            y: 16px;
+            width: 14px;
+            height: 14px;
+            text: "\{tick}";
+            color: #b5bab7;
+            font-size: 10px;
+            vertical-alignment: center;
+        }*/
+    }
+}

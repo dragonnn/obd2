@@ -1,0 +1,46 @@
+import { SpeedReadout } from "speed.slint";
+import { ClutchTemperature } from "clutch-temperature.slint";
+import { GearSelection } from "gear-selection.slint";
+import { FuelUsage } from "fuel-usage.slint";
+
+export component DrivingDashboard inherits Rectangle {
+    in property <float> speed-kmh: 74;
+    in property <float> clutch-temperature: 60;
+    in property <float> clutch-temperature-deviation: 2;
+    in property <int> gear: 3;
+    in property <string> gear-mode: "D";
+    in property <float> fuel-consumption: 4.8;
+    width: 208px;
+    height: 178px;
+    background: transparent;
+
+    Rectangle { x: 0px; y: 0px; width: 1px; height: parent.height; background: #555e57; }
+    Rectangle { x: parent.width - 1px; width: 1px; height: parent.height; background: #555e57; }
+
+    SpeedReadout {
+        x: 12px; y: 0px;
+        width: parent.width - 24px; height: 52px;
+        speed-kmh: root.speed-kmh;
+    }
+    Rectangle { x: 12px; y: 54px; width: parent.width - 24px; height: 1px; background: #444d46; }
+    ClutchTemperature {
+        x: 15px; y: 62px;
+        width: 33px; height: 36px;
+        temperature: root.clutch-temperature;
+        temperature-deviation: root.clutch-temperature-deviation;
+    }
+    GearSelection {
+        x: 48px;
+        y: 58px;
+        width: parent.width - 60px;
+        height: 48px;
+        gear: root.gear;
+        mode: root.gear-mode;
+    }
+    Rectangle { x: 12px; y: 110px; width: parent.width - 24px; height: 1px; background: #444d46; }
+    FuelUsage {
+        x: 12px; y: 112px;
+        width: parent.width - 24px; height: 66px;
+        consumption: root.fuel-consumption;
+    }
+}

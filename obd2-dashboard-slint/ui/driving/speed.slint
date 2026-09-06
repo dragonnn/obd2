@@ -1,0 +1,26 @@
+export component SpeedReadout inherits Rectangle {
+    in property <float> speed-kmh: 74;
+    background: transparent;
+
+    speed-value := Text {
+        x: (parent.width - self.width) / 2;
+        y: 0px;
+        height: parent.height;
+        text: "\{round(max(0, root.speed-kmh))}";
+        color: #f4f5f5;
+        font-size: 50px;
+        font-weight: 700;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    Text {
+        x: speed-value.x + speed-value.width + 6px;
+        y: parent.height / 2 + 2px;
+        width: 38px;
+        height: 18px;
+        text: "km/h";
+        color: #e5e7e6;
+        font-size: 14px;
+        vertical-alignment: center;
+    }
+}

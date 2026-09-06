@@ -2,6 +2,7 @@ import { BatteryWidget } from "battery.slint";
 import { EnergyFlow } from "energy-flow.slint";
 import { MotorsWidget } from "motors.slint";
 import { TemperatureWidget } from "temperature.slint";
+import { DrivingDashboard } from "driving/mod.slint";
 
 export component AppWindow inherits Window {
     height: 262px;
@@ -10,8 +11,27 @@ export component AppWindow inherits Window {
     title: "OBD2 Dashboard";
     in-out property <int> counter: 42;
     callback request-increase-value();
+    in-out property <float> speed-kmh: 74;
+    in-out property <float> clutch-temperature: 60;
+    in-out property <float> clutch-temperature-deviation: 2;
+    in-out property <int> gear: 3;
+    in-out property <string> gear-mode: "D";
+    in-out property <float> fuel-consumption: 4.8;
 
     background: #000000;
+
+    DrivingDashboard {
+        x: 383px;
+        y: 13px;
+        width: 208px;
+        height: 178px;
+        speed-kmh: root.speed-kmh;
+        clutch-temperature: root.clutch-temperature;
+        clutch-temperature-deviation: root.clutch-temperature-deviation;
+        gear: root.gear;
+        gear-mode: root.gear-mode;
+        fuel-consumption: root.fuel-consumption;
+    }
 
     BatteryWidget {
         x: 5px;
@@ -27,7 +47,7 @@ export component AppWindow inherits Window {
         maximum-temperature: 24;
     }
 
-    EnergyFlow {
+    /*EnergyFlow {
         x: 263px;
         y: 16px;
         width: 210px;
@@ -54,5 +74,5 @@ export component AppWindow inherits Window {
         minimum-temperature: 0;
         maximum-temperature: 130;
         label: "COOLANT";
-    }
+    }*/
 }
