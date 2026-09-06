@@ -49,6 +49,13 @@ Generated images appear in `sdk/rockdev/` (normally a symlink to
 `./lyra-build buildroot-config`; partial targets include `rootfs`, `kernel`,
 `uboot`, and `firmware`.
 
+For dashboard development, run `./lyra-build obd2` to rebuild the application
+and deploy it over ADB. Repeated runs reuse Cargo's compiled dependencies in
+`sdk/buildroot/output/rockchip_rk3506_luckfox/build/obd2-dashboard/target/`.
+Source syncing detects changed contents and removed files while preserving
+unchanged file timestamps. The first build compiles any missing dependencies;
+`./lyra-build clean` and full image/rootfs builds invalidate this package cache.
+
 After building, put the board in Rockchip loader mode and flash the generated
 image with:
 

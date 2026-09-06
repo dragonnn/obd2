@@ -4,6 +4,19 @@
 
 OBD2_DASHBOARD_SITE = /project/obd2-dashboard-slint
 OBD2_DASHBOARD_SITE_METHOD = local
+# Preserve unchanged mtimes and Cargo output during Buildroot's initial sync.
+OBD2_DASHBOARD_OVERRIDE_SRCDIR_RSYNC_EXCLUSIONS = \
+	--checksum --no-times --exclude /target --exclude '/.stamp*'
+
+# Buildroot uses rsync -u, which skips edits with older source timestamps.
+# Follow it with a checksum sync without -u, also removing deleted sources.
+# Changed files get fresh mtimes so Cargo notices them; cache/stamps survive.
+define OBD2_DASHBOARD_SYNC_SOURCES
+	rsync -a --delete --chmod=u=rwX,go=rX \
+		$(OBD2_DASHBOARD_OVERRIDE_SRCDIR_RSYNC_EXCLUSIONS) \
+		$(RSYNC_VCS_EXCLUSIONS) $(OBD2_DASHBOARD_SITE)/ $(@D)/
+endef
+OBD2_DASHBOARD_POST_RSYNC_HOOKS += OBD2_DASHBOARD_SYNC_SOURCES
 OBD2_DASHBOARD_LICENSE = MIT
 OBD2_DASHBOARD_DEPENDENCIES = eudev fontconfig libdrm libevdev libinput libxkbcommon
 OBD2_DASHBOARD_CARGO_ENV = PKG_CONFIG_PATH=$(STAGING_DIR)/usr/lib/pkgconfig:$(STAGING_DIR)/usr/share/pkgconfig

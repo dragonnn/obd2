@@ -1,10 +1,20 @@
 #!/bin/sh
 
-DAEMON=/usr/bin/obd2
+DEFAULT_DAEMON=/usr/bin/obd2
+SD_DAEMON=/mnt/sdcard/obd2
 PIDFILE=/run/obd2-dashboard.pid
 
 case "$1" in
 start)
+	DAEMON="$DEFAULT_DAEMON"
+	# Allow an app pushed to the SD card to override the immutable rootfs
+	# binary. adb push commonly creates files without execute permission, so
+	# make the override executable before starting it.
+	if [ -f "$SD_DAEMON" ]; then
+		chmod 0755 "$SD_DAEMON" 2>/dev/null || exit 0
+		DAEMON="$SD_DAEMON"
+		echo "Starting SD-card dashboard: $DAEMON"
+	fi
 	[ -x "$DAEMON" ] || exit 0
 	# LinuxKMS software rendering uses the display directly. The explicit
 	# linuxfb flag keeps this board on /dev/fb0 rather than Wayland/X11.

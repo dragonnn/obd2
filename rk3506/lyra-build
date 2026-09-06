@@ -79,6 +79,27 @@ case "$action" in
 
         exec "$flash_tool" uf "$firmware"
         ;;
+    obd2)
+        # Build only the local dashboard package, copy the resulting target
+        # binary out of the container, and deploy it over ADB. This avoids
+        # rebuilding or reflashing the complete firmware image.
+        "$project_dir/lyra-build" sync-sources
+        docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk \
+            bash -lc 'set -euo pipefail
+                make -C buildroot O=output/rockchip_rk3506_luckfox obd2-dashboard-rebuild
+                output=buildroot/output/rockchip_rk3506_luckfox
+                target_dir="$output/target"
+                # Package rebuilds install here when per-package directories
+                # are enabled; the merged firmware target may still be old.
+                if grep -q "^BR2_PER_PACKAGE_DIRECTORIES=y$" "$output/.config"; then
+                    target_dir="$output/per-package/obd2-dashboard/target"
+                fi
+                install -D -m 0755 "$target_dir/usr/bin/obd2" /sdk/obd2'
+        test -x "$project_dir/sdk/obd2"
+        adb shell /etc/init.d/S15obd2-dashboard stop
+        adb push "$project_dir/sdk/obd2" /mnt/sdcard/obd2
+        adb shell /etc/init.d/S15obd2-dashboard start
+        ;;
     download)
         mkdir -p "$project_dir/sdk"
         sdk_url=${LYRA_SDK_URL:-https://drive.google.com/uc?id=15nq-Fac9q6zmisKZgLDZyoifSkL_48rG}
@@ -232,7 +253,7 @@ case "$action" in
         exec docker compose -f "$project_dir/compose.yaml" run --rm lyra-sdk bash
         ;;
     *)
-        echo "Usage: $0 {image|download|download-cache|prepare|sync-sources|lunch|build|clean|flash|rootfs|kernel|uboot|firmware|buildroot-config|shell}" >&2
+        echo "Usage: $0 {image|download|download-cache|prepare|sync-sources|lunch|build|obd2|clean|flash|rootfs|kernel|uboot|firmware|buildroot-config|shell}" >&2
         exit 2
         ;;
 esac

@@ -3,11 +3,12 @@ component Metric inherits VerticalLayout {
     in property <string> label;
     spacing: 0px;
     horizontal-stretch: 1;
+    vertical-stretch: 0;
 
     Text {
         text: root.value;
         color: #dcfbe6;
-        font-size: 17px;
+        font-size: 16px;
         font-weight: 600;
         vertical-alignment: bottom;
     }
@@ -32,8 +33,8 @@ export component BatteryWidget inherits Rectangle {
     private property <float> clamped-state-of-charge:
         root.state-of-charge < 0 ? 0 : root.state-of-charge > 100 ? 100 : root.state-of-charge;
     private property <color> fill-color: root.clamped-state-of-charge <= 10
-        ? #dc1f11
-        : root.clamped-state-of-charge <= 20 ? #e29015 : #03c451;
+        ? #a1170d
+        : root.clamped-state-of-charge <= 20 ? #a86b11 : #087734;
 
     // Battery terminal. It sits behind the body so its left border is hidden
     // and it reads as a single outline protruding from the right side.
@@ -74,8 +75,11 @@ export component BatteryWidget inherits Rectangle {
         }
 
         HorizontalLayout {
-            padding: 7px;
             spacing: 7px;
+            padding-left: 7px;
+            padding-right: 7px;
+            padding-bottom: 10px;
+            padding-top: 10px;
 
             Text {
                 width: 55px;
@@ -93,9 +97,10 @@ export component BatteryWidget inherits Rectangle {
             }
 
             VerticalLayout {
-                spacing: 3px;
+                alignment: space-between;
 
                 HorizontalLayout {
+                    vertical-stretch: 0;
                     spacing: 8px;
 
                     Metric {
@@ -109,6 +114,7 @@ export component BatteryWidget inherits Rectangle {
                 }
 
                 HorizontalLayout {
+                    vertical-stretch: 0;
                     spacing: 8px;
 
                     Metric {
