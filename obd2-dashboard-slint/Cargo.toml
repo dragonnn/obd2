@@ -22,8 +22,10 @@ board-kms = [
 slint = { version = "1.17.1", default-features = false }
 signal-hook = "0.3"
 
+
 [build-dependencies]
 slint-build = "1.17.1"
+lucide-slint = "1.41.0"
 
 [profile.release]
 codegen-units = 1

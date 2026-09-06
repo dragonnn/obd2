@@ -1,0 +1,22 @@
+import { IconDisplay, IconSet } from "../icons.slint";
+
+export component AuxBattery inherits Rectangle {
+    in property <float> voltage: 14.2;
+    background: transparent;
+
+    IconDisplay {
+        x: 0px; y: (parent.height - self.height) / 2;
+        size: 36px;
+        icon: IconSet.CarBattery;
+        stroke: #f2f4f3;
+        stroke-width: 1.5;
+    }
+    Text {
+        x: 50px;
+        height: parent.height;
+        text: "\{round(root.voltage * 10) / 10} V";
+        font-size: 16px;
+        color: #f2f4f3;
+        vertical-alignment: center;
+    }
+}

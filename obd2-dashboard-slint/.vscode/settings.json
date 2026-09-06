@@ -1,4 +1,8 @@
 {
+    "slint.libraryPaths": {
+        "lucide": "vendor/lucide-slint-1.41.0/lucide.slint",
+        "lucide-lab": "vendor/lucide-slint-1.41.0/lucide-lab.slint"
+    },
     "[rust]": {
         "editor.defaultFormatter": "rust-lang.rust-analyzer"
     }

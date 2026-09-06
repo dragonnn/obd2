@@ -2406,6 +2406,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "lucide-slint"
+version = "1.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00f547997530456583110915b3c9916153feadf1127d222c5870868e49439983"
+
+[[package]]
 name = "lyon_algorithms"
 version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2700,6 +2706,7 @@ dependencies = [
 name = "obd2"
 version = "0.1.0"
 dependencies = [
+ "lucide-slint",
  "signal-hook",
  "slint",
  "slint-build",

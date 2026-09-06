@@ -1,0 +1,35 @@
+import { AuxBattery } from "aux-battery.slint";
+import { GpsStatus } from "gps.slint";
+import { LteStatus } from "lte.slint";
+
+export component BottomBar inherits Rectangle {
+    in property <float> auxiliary-voltage: 14.2;
+    in property <bool> gps-active: true;
+    in property <bool> gps-has-fix: true;
+    in property <bool> lte-connected: true;
+    in property <bool> lte-transferring: true;
+    background: transparent;
+
+    Rectangle {
+        x: 0px; y: 0px;
+        width: parent.width; height: 1px;
+        background: #555e57;
+    }
+    AuxBattery {
+        x: 62px; y: 9px;
+        width: 130px; height: parent.height - 9px;
+        voltage: root.auxiliary-voltage;
+    }
+    GpsStatus {
+        x: (parent.width - self.width) / 2; y: 9px;
+        width: 40px; height: parent.height - 9px;
+        active: root.gps-active;
+        has-fix: root.gps-has-fix;
+    }
+    LteStatus {
+        x: parent.width - self.width - 62px; y: 9px;
+        width: 68px; height: parent.height - 9px;
+        connected: root.lte-connected;
+        transferring: root.lte-transferring;
+    }
+}

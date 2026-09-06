@@ -1,0 +1,30 @@
+import { IconDisplay, IconSet } from "../icons.slint";
+
+export component GpsStatus inherits Rectangle {
+    in property <bool> has-fix: true;
+    in property <bool> active: true;
+    private property <float> pulse-phase: 0;
+    background: transparent;
+    opacity: !root.active ? 0.3
+        : 0.45 + 0.55 * (1 - cos(root.pulse-phase * 360deg)) / 2;
+
+    // LinuxFB has no vsync pacing: an `animate opacity` transition requests
+    // frames continuously. Sample the smooth 1.8-second pulse at 25 Hz so the
+    // event loop can sleep between updates instead of consuming a CPU core.
+    Timer {
+        interval: 40ms;
+        running: root.active;
+        triggered => {
+            root.pulse-phase = Math.mod(root.pulse-phase + 40 / 1800, 1);
+        }
+    }
+
+    IconDisplay {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        size: 34px;
+        icon: IconSet.MapPin;
+        stroke: !root.active ? #718078 : root.has-fix ? #00dc45 : #e8b834;
+        stroke-width: 1.5;
+    }
+}

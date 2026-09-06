@@ -3,6 +3,7 @@ import { EnergyFlow } from "energy-flow.slint";
 import { MotorsWidget } from "motors.slint";
 import { TemperatureWidget } from "temperature.slint";
 import { DrivingDashboard } from "driving/mod.slint";
+import { BottomBar } from "bottom-bar/mod.slint";
 
 export component AppWindow inherits Window {
     height: 262px;
@@ -19,6 +20,11 @@ export component AppWindow inherits Window {
     in-out property <float> fuel-consumption: 4.8;
 
     background: #000000;
+
+    BottomBar {
+        x: 13px; y: parent.height - 57px;
+        width: parent.width - 26px; height: 49px;
+    }
 
     DrivingDashboard {
         x: 383px;

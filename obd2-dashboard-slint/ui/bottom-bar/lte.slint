@@ -1,0 +1,22 @@
+import { IconDisplay, IconSet } from "../icons.slint";
+
+export component LteStatus inherits Rectangle {
+    in property <bool> connected: true;
+    in property <bool> transferring: true;
+    background: transparent;
+
+    IconDisplay {
+        x: 0px; y: (parent.height - self.height) / 2;
+        size: 28px;
+        icon: IconSet.Signal;
+        stroke: root.connected ? #f2f4f3 : #555e57;
+        stroke-width: 2;
+    }
+    IconDisplay {
+        x: 36px; y: (parent.height - self.height) / 2;
+        size: 32px;
+        icon: IconSet.ArrowUpDown;
+        stroke: root.connected && root.transferring ? #00c9ee : #555e57;
+        stroke-width: 2.5;
+    }
+}
