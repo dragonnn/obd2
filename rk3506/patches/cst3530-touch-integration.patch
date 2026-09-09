@@ -1,0 +1,21 @@
+--- kernel-6.1/drivers/input/touchscreen/Kconfig
++++ kernel-6.1/drivers/input/touchscreen/Kconfig
+@@ -13,2 +13,13 @@
+ if INPUT_TOUCHSCREEN
+ 
++config TOUCHSCREEN_CST3530
++	tristate "Hynitron CST3530 touchscreen"
++	depends on I2C
++	depends on OF
++	depends on GPIOLIB
++	depends on REGULATOR
++	help
++	  Say Y here for the CST3530 on the AM319M262928ZS AMOLED module.
++	  The controller uses I2C and a falling-edge interrupt.
++	  To compile as a module, choose M; the module is called cst3530.
++
+--- kernel-6.1/drivers/input/touchscreen/Makefile
++++ kernel-6.1/drivers/input/touchscreen/Makefile
+@@ -1,1 +1,2 @@
+ # SPDX-License-Identifier: GPL-2.0
++obj-$(CONFIG_TOUCHSCREEN_CST3530) += cst3530.o

@@ -56,6 +56,9 @@ Source syncing detects changed contents and removed files while preserving
 unchanged file timestamps. The first build compiles any missing dependencies;
 `./lyra-build clean` and full image/rootfs builds invalidate this package cache.
 
+The CO6300 board configuration includes an interrupt-driven CST3530 touchscreen
+driver. See [CST3530 wiring and validation](cst3530.md) before connecting it.
+
 After building, put the board in Rockchip loader mode and flash the generated
 image with:
 

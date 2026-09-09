@@ -8,9 +8,10 @@
 /dts-v1/;
 
 #include <dt-bindings/display/media-bus-format.h>
+#include <dt-bindings/interrupt-controller/irq.h>
 #include "rk3506-luckfox-lyra-ultra.dtsi"
 
-/* This board has no touchscreen, ADC keys, or Waveshare I2C backlight. */
+/* Replace the example touch controllers with the module's CST3530. */
 &adc_keys {
 	status = "disabled";
 };
@@ -29,6 +30,36 @@
 
 &ws_bl {
 	status = "disabled";
+};
+
+&i2c2 {
+	clock-frequency = <400000>;
+
+	cst3530: touchscreen@58 {
+		compatible = "hynitron,cst3530";
+		reg = <0x58>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&cst3530_int &cst3530_reset>;
+		interrupt-parent = <&gpio0>;
+		interrupts = <RK_PA3 IRQ_TYPE_EDGE_FALLING>;
+		reset-gpios = <&gpio0 RK_PA4 GPIO_ACTIVE_LOW>;
+		vdd-supply = <&vcc_3v3>;
+		touchscreen-size-x = <262>;
+		touchscreen-size-y = <928>;
+		status = "okay";
+	};
+};
+
+&pinctrl {
+	cst3530 {
+		cst3530_int: cst3530-int {
+			rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+
+		cst3530_reset: cst3530-reset {
+			rockchip,pins = <0 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
 };
 
 /* Use the Lyra Ultra PWM output as the panel backlight controller. */

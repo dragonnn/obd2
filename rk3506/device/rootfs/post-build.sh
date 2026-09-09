@@ -58,6 +58,12 @@ if [ -n "$FB_TEST_CC" ]; then
         "$FB_TEST_SOURCE" -o "$TARGET_DIR/usr/bin/fb-color-test"
     chmod 0755 "$TARGET_DIR/usr/bin/fb-color-test"
 
+    TOUCH_TEST_SOURCE=/project/device/rootfs/touch-test.c
+    [ -f "$TOUCH_TEST_SOURCE" ] || TOUCH_TEST_SOURCE="$SCRIPT_DIR/touch-test.c"
+    "$FB_TEST_CC" ${TARGET_CFLAGS:-} ${TARGET_LDFLAGS:-} \
+        "$TOUCH_TEST_SOURCE" -o "$TARGET_DIR/usr/bin/touch-test"
+    chmod 0755 "$TARGET_DIR/usr/bin/touch-test"
+
     FB_RESET_SOURCE=/project/device/rootfs/fb-reset.c
     [ -f "$FB_RESET_SOURCE" ] || FB_RESET_SOURCE="$SCRIPT_DIR/fb-reset.c"
     "$FB_TEST_CC" ${TARGET_CFLAGS:-} ${TARGET_LDFLAGS:-} \

@@ -137,6 +137,8 @@ case "$action" in
                 install -D /project/kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi
                 install -D /project/kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts
                 install -D /project/kernel/drivers/gpu/drm/panel/panel-co6300.c kernel/drivers/gpu/drm/panel/panel-co6300.c
+                install -D /project/kernel/drivers/input/touchscreen/cst3530.c kernel/drivers/input/touchscreen/cst3530.c
+                install -D /project/kernel/drivers/input/touchscreen/cst3530-report.h kernel/drivers/input/touchscreen/cst3530-report.h
                 install -D /project/kernel/arch/arm/configs/rk3506-squashfs.config kernel/arch/arm/configs/rk3506-squashfs.config
                 install -D /project/buildroot/configs/rockchip_rk3506_luckfox_defconfig buildroot/configs/rockchip_rk3506_luckfox_defconfig
                 install -D /project/buildroot/package/fish/Config.in buildroot/package/fish/Config.in
@@ -187,6 +189,8 @@ case "$action" in
                 install -D /project/kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi
                 install -D /project/kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts
                 install -D /project/kernel/drivers/gpu/drm/panel/panel-co6300.c kernel/drivers/gpu/drm/panel/panel-co6300.c
+                install -D /project/kernel/drivers/input/touchscreen/cst3530.c kernel/drivers/input/touchscreen/cst3530.c
+                install -D /project/kernel/drivers/input/touchscreen/cst3530-report.h kernel/drivers/input/touchscreen/cst3530-report.h
                 install -D /project/kernel/arch/arm/configs/rk3506-squashfs.config kernel/arch/arm/configs/rk3506-squashfs.config
                 install -D /project/buildroot/configs/rockchip_rk3506_luckfox_defconfig buildroot/configs/rockchip_rk3506_luckfox_defconfig
                 install -D /project/buildroot/package/fish/Config.in buildroot/package/fish/Config.in
