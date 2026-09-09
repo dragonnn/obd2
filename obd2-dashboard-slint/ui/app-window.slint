@@ -6,7 +6,15 @@ import { DrivingDashboard } from "driving/mod.slint";
 import { BottomBar } from "bottom-bar/mod.slint";
 import { CoolantGauge } from "coolant.slint";
 
+export struct TouchMarker {
+    active: bool,
+    x: float,
+    y: float,
+}
+
 export component AppWindow inherits Window {
+    in property <[TouchMarker]> touch-markers;
+    in-out property <bool> show-touch-indicators: true;
     height: 262px;
     width: 928px;
 
@@ -98,4 +106,25 @@ export component AppWindow inherits Window {
         maximum-temperature: 130;
         label: "COOLANT";
     }*/
+    // Visual-only overlay: no TouchArea, so controls still receive input.
+    for marker in root.touch-markers: Rectangle {
+        visible: root.show-touch-indicators && marker.active;
+        x: marker.x * root.width - self.width / 2;
+        y: marker.y * root.height - self.height / 2;
+        width: 22px;
+        height: 22px;
+        border-radius: 11px;
+        background: #ff00cc70;
+        border-width: 2px;
+        border-color: #ffffff;
+
+        Rectangle {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            width: 4px;
+            height: 4px;
+            border-radius: 2px;
+            background: #ffffff;
+        }
+    }
 }

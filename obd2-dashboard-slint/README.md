@@ -36,3 +36,28 @@ about the Slint APIs and the `.slint` markup language, check out our [online doc
 
 Don't forget to edit this readme to replace it by yours, and edit the `name =` field in `Cargo.toml` to match the name of your
 project.
+
+## Lyra CST3530 touch
+
+The `board-kms` build uses Slint's existing libinput backend for input.
+`src/touch.rs` identifies `Hynitron CST3530 Touchscreen` and applies the inverse
+of the dashboard's 270-degree rendering rotation: normalized portrait `(u, v)`
+becomes landscape `(1-v, u)`. Calibration is local to the application; the
+kernel and `touch-test` retain native portrait coordinates. If the display
+rotation changes, update this calibration along with `SLINT_KMS_ROTATION`.
+
+A visual-only overlay shows pink rings with white centers for active contacts,
+using the same calibrated libinput coordinates delivered to Slint. Complete
+frames update the indicators; touch-up, cancellation and device removal clear
+them. It does not intercept input destined for controls. Set the window's
+`show-touch-indicators` property to `false` to hide the diagnostic overlay.
+The hook records up to ten contacts; widget gesture handling remains Slint's.
+
+From `../rk3506`, `./lyra-build obd2` rebuilds the application and deploys it to
+`/mnt/sdcard/obd2`, then restarts the dashboard. No firmware reflash is needed.
+The coordinate and contact-state checks can also run on the host:
+
+```sh
+rustc --edition 2024 --test src/touch_state.rs -o /tmp/touch-state-test
+/tmp/touch-state-test
+```

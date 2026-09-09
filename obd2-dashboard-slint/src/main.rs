@@ -13,6 +13,9 @@ use signal_hook::iterator::Signals;
 slint::include_modules!();
 
 #[cfg(feature = "board-kms")]
+mod touch;
+
+#[cfg(feature = "board-kms")]
 fn configure_board_backend() {
     // Keep the board executable self-contained: the LinuxKMS backend must be
     // directed to the legacy framebuffer and use the panel's 270-degree
@@ -124,8 +127,12 @@ fn start_debug_wifi_in_background() {
 
 fn main() -> Result<(), Box<dyn Error>> {
     configure_board_backend();
+    #[cfg(feature = "board-kms")]
+    let touch_input = touch::install()?;
     start_debug_wifi_in_background();
     let ui = AppWindow::new()?;
+    #[cfg(feature = "board-kms")]
+    touch_input.attach(&ui);
 
     // SIGTERM does not unwind Rust stack frames. Ask Slint's event loop to
     // quit instead, so the KMS/framebuffer backend is dropped normally and

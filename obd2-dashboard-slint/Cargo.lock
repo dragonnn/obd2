@@ -2706,6 +2706,8 @@ dependencies = [
 name = "obd2"
 version = "0.1.0"
 dependencies = [
+ "i-slint-backend-linuxkms",
+ "input",
  "lucide-slint",
  "signal-hook",
  "slint",
