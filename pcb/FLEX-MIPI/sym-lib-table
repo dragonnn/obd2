@@ -1,0 +1,5 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "OK-14F024-04") (type "KiCad") (uri "${KIPRJMOD}/OK-14F024-04.kicad_sym") (options "") (descr ""))
+	(lib (name "OK-23GF030-04") (type "KiCad") (uri "${KIPRJMOD}/OK-23GF030-04.kicad_sym") (options "") (descr ""))
+)

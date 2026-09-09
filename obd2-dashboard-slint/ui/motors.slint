@@ -19,7 +19,7 @@ component IceMotor inherits Rectangle {
     }
 
     Path {
-        x: parent.width * 5 / 52;
+        x: parent.width * 5 / 52 + 1px;
         y: parent.height * 24 / 64;
         width: parent.width * 22 / 52;
         height: parent.height * 25 / 64;
@@ -58,15 +58,16 @@ component ElectricMotor inherits Rectangle {
     }
 
     Path {
-        x: parent.width * 34 / 59;
+        x: parent.width * 34 / 59 - 5px;
         y: parent.height * 24 / 64;
         width: parent.width * 18 / 59;
         height: parent.height * 25 / 64;
-        commands: "M28 170 l-26 -70 33 0 33 0 -14 -45 -13 -45 20 0 19 0 45 70 45 70 0 5 0 5 -30 0 -30 0 0 5 0 6 14 34 15 35 -42 0 -42 0 -27 -70z";
+        // Bake the vertical flip into the 250-unit viewbox. Negative scale
+        // transforms render differently in the preview and software backend.
+        commands: "M 28 80 L 2 150 L 35 150 L 68 150 L 54 195 L 41 240 L 61 240 L 80 240 L 125 170 L 170 100 L 170 95 L 170 90 L 140 90 L 110 90 L 110 85 L 110 79 L 124 45 L 139 10 L 97 10 L 55 10 L 28 80 Z";
         viewbox-width: 180;
         viewbox-height: 250;
         fill: root.active ? white : #27302b;
-        transform-scale-y: -100%;
         opacity: root.active ? 1 : 0.8;
         animate opacity { duration: 180ms; }
     }
@@ -116,33 +117,5 @@ export component MotorsWidget inherits Rectangle {
         width: root.ice-width;
         height: root.drawing-height;
         active: root.ice-on;
-    }
-
-    Text {
-        x: root.drawing-x;
-        y: root.drawing-y + root.drawing-height;
-        width: root.electric-width;
-        height: root.label-height;
-        text: "EV";
-        color: root.electric-on ? #5bc8ff : #435048;
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        horizontal-alignment: center;
-        vertical-alignment: center;
-    }
-
-    Text {
-        x: root.drawing-x + root.electric-width;
-        y: root.drawing-y + root.drawing-height;
-        width: root.ice-width;
-        height: root.label-height;
-        text: "ICE";
-        color: root.ice-on ? #ffb454 : #435048;
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        horizontal-alignment: center;
-        vertical-alignment: center;
     }
 }

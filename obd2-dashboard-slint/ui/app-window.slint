@@ -19,14 +19,20 @@ export component AppWindow inherits Window {
     in-out property <int> gear: 3;
     in-out property <string> gear-mode: "D";
     in-out property <float> fuel-consumption: 4.8;
-    in-out property <float> battery-power-kw: -2;
+    in-out property <float> battery-power-kw: 11;
     in-out property <float> coolant-temperature: 88;
+    in-out property <float> humidity: 64;
+    in-out property <float> ac-compressor-temperature: 7;
+    in-out property <bool> ac-compressor-running: true;
 
     background: #000000;
 
     BottomBar {
         x: 13px; y: parent.height - 57px;
         width: parent.width - 26px; height: 49px;
+        humidity: root.humidity;
+        ac-compressor-temperature: root.ac-compressor-temperature;
+        ac-compressor-running: root.ac-compressor-running;
     }
 
     DrivingDashboard {
@@ -58,7 +64,7 @@ export component AppWindow inherits Window {
     }
 
     EnergyFlow {
-        x: 269px;
+        x: 266px;
         y: 37px;
         width: 106px;
         height: 106px;
@@ -67,21 +73,22 @@ export component AppWindow inherits Window {
     }
 
     CoolantGauge {
-        x: 608px; y: 133px;
+        x: 590px; 
+        y: 133px;
         width: 180px; height: 60px;
         temperature: root.coolant-temperature;
     }
 
-    /*MotorsWidget {
-        x: 464px;
-        y: 16px;
+    MotorsWidget {
+        x: 585px;
+        y: 20px;
         width: 190px;
         height: parent.height / 2 - 32px;
         ice-on: false;
         electric-on: true;
     }
 
-    TemperatureWidget {
+    /*TemperatureWidget {
         x: 670px;
         y: 16px;
         width: 118px;

@@ -1,0 +1,69 @@
+import { IconDisplay, IconSet } from "../icons.slint";
+
+component WaterDrop inherits Path {
+    viewbox-width: 32;
+    viewbox-height: 40;
+    commands: "M 16 1 C 13 7 2 19 2 25 A 14 14 0 0 0 30 25 C 30 19 19 7 16 1 Z";
+}
+
+export component AcStatus inherits Rectangle {
+    in property <float> humidity: 64;
+    in property <float> compressor-temperature: 7;
+    in property <bool> compressor-running: true;
+    private property <float> humidity-ratio: max(0, min(100, root.humidity)) / 100;
+    background: transparent;
+
+    Rectangle {
+        x: 0px; y: (root.height - self.height) / 2;
+        width: 32px; height: 40px;
+        background: transparent;
+
+        WaterDrop {
+            x: 0px; y: 0px; width: 32px; height: 40px;
+            fill: #08232d;
+        }
+        // Clip a filled droplet from the bottom up. The curved shape itself
+        // supplies the side edges, including on the software renderer.
+        Rectangle {
+            x: 0px; y: 1px + 38px * (1 - root.humidity-ratio);
+            width: 32px; height: 38px * root.humidity-ratio;
+            background: transparent;
+            clip: true;
+            WaterDrop {
+                x: 0px; y: -parent.y;
+                width: 32px; height: 40px;
+                fill: #009bc7;
+            }
+        }
+        WaterDrop {
+            x: 0px; y: 0px; width: 32px; height: 40px;
+            fill: transparent;
+            stroke: #00c9ee;
+            stroke-width: 1.5px;
+        }
+        if root.compressor-running: IconDisplay {
+            x: 6px; y: 16px;
+            size: 20px;
+            icon: IconSet.Snowflake;
+            stroke: #f2f4f3;
+            stroke-width: 1.5;
+        }
+    }
+    Text {
+        x: 40px; 
+        y: (root.height - 40px) / 2 - 3px;
+        width: root.width - 42px; height: 21px;
+        text: "\{round(root.compressor-temperature)}°C";
+        color: #f2f4f3;
+        font-size: 20px;
+        vertical-alignment: center;
+    }
+    Text {
+        x: 40px; 
+        y: (root.height - 40px) / 2 + 20px;
+        width: root.width - 42px; height: 19px;
+        text: "\{round(root.humidity-ratio * 100)}%";
+        font-size: 18px;
+        vertical-alignment: center;
+    }
+}

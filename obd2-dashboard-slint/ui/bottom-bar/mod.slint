@@ -1,6 +1,7 @@
 import { AuxBattery } from "aux-battery.slint";
 import { GpsStatus } from "gps.slint";
 import { LteStatus } from "lte.slint";
+import { AcStatus } from "ac.slint";
 
 export component BottomBar inherits Rectangle {
     in property <float> auxiliary-voltage: 14.2;
@@ -8,6 +9,9 @@ export component BottomBar inherits Rectangle {
     in property <bool> gps-has-fix: true;
     in property <bool> lte-connected: true;
     in property <bool> lte-transferring: true;
+    in property <float> humidity: 64;
+    in property <float> ac-compressor-temperature: 7;
+    in property <bool> ac-compressor-running: true;
     background: transparent;
 
     Rectangle {
@@ -15,8 +19,15 @@ export component BottomBar inherits Rectangle {
         width: parent.width; height: 1px;
         background: #555e57;
     }
+    AcStatus {
+        x: 126px; y: 9px;
+        width: 126px; height: parent.height - 9px;
+        humidity: root.humidity;
+        compressor-temperature: root.ac-compressor-temperature;
+        compressor-running: root.ac-compressor-running;
+    }
     AuxBattery {
-        x: 62px; y: 9px;
+        x: 4px; y: 9px;
         width: 130px; height: parent.height - 9px;
         voltage: root.auxiliary-voltage;
     }
@@ -26,6 +37,7 @@ export component BottomBar inherits Rectangle {
         active: root.gps-active;
         has-fix: root.gps-has-fix;
     }
+
     LteStatus {
         x: parent.width - self.width - 62px; y: 9px;
         width: 68px; height: parent.height - 9px;
