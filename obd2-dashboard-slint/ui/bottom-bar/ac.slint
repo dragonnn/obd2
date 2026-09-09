@@ -42,8 +42,8 @@ export component AcStatus inherits Rectangle {
             stroke-width: 1.5px;
         }
         if root.compressor-running: IconDisplay {
-            x: 6px; y: 16px;
-            size: 20px;
+            x: 3px; y: 13px;
+            size: 26px;
             icon: IconSet.Snowflake;
             stroke: #f2f4f3;
             stroke-width: 1.5;
@@ -51,19 +51,22 @@ export component AcStatus inherits Rectangle {
     }
     Text {
         x: 40px; 
-        y: (root.height - 40px) / 2 - 3px;
-        width: root.width - 42px; height: 21px;
+        y: -1px;
+        width: 40px;
+        //height: 18px;
         text: "\{round(root.compressor-temperature)}°C";
         color: #f2f4f3;
-        font-size: 20px;
+        font-size: 18px;
         vertical-alignment: center;
     }
     Text {
         x: 40px; 
-        y: (root.height - 40px) / 2 + 20px;
-        width: root.width - 42px; height: 19px;
+        y: 20px;
+        width: 40px;
+        //height: 19px;
         text: "\{round(root.humidity-ratio * 100)}%";
         font-size: 18px;
+        color: #f2f4f3;
         vertical-alignment: center;
     }
 }

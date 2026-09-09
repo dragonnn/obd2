@@ -48,8 +48,10 @@ rotation changes, update this calibration along with `SLINT_KMS_ROTATION`.
 
 A visual-only overlay shows pink rings with white centers for active contacts,
 using the same calibrated libinput coordinates delivered to Slint. Complete
-frames update the indicators; touch-up, cancellation and device removal clear
-them. It does not intercept input destined for controls. Set the window's
+frames are coalesced into the latest positions and drawn at most every 40 ms
+(25 Hz). Unchanged positions do not redraw. Touch-up, cancellation and device
+removal clear the dots on the next scheduled update, even when input goes idle.
+Slint continues receiving input events at their original rate. It does not intercept input destined for controls. Set the window's
 `show-touch-indicators` property to `false` to hide the diagnostic overlay.
 The hook records up to ten contacts; widget gesture handling remains Slint's.
 
