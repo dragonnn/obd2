@@ -1,124 +1,7 @@
-import { BatteryWidget } from "battery.slint";
-import { EnergyFlow } from "energy-flow.slint";
-import { MotorsWidget } from "motors.slint";
-import { TemperatureWidget } from "temperature.slint";
-import { DrivingDashboard } from "driving/mod.slint";
-import { BottomBar } from "bottom-bar/mod.slint";
-import { CoolantGauge } from "coolant.slint";
-
-export struct TouchMarker {
-    active: bool,
-    x: float,
-    y: float,
-}
-
-component MainDashboard inherits Rectangle {
-    in property <float> speed-kmh;
-    in property <float> clutch-temperature;
-    in property <float> clutch-temperature-deviation;
-    in property <int> gear;
-    in property <string> gear-mode;
-    in property <float> fuel-consumption;
-    in property <float> battery-power-kw;
-    in property <float> coolant-temperature;
-    in property <float> humidity;
-    in property <float> ac-compressor-temperature;
-    in property <bool> ac-compressor-running;
-
-    background: #000000;
-
-    BottomBar {
-        x: 13px; y: parent.height - 57px;
-        width: parent.width - 26px; height: 49px;
-        humidity: root.humidity;
-        ac-compressor-temperature: root.ac-compressor-temperature;
-        ac-compressor-running: root.ac-compressor-running;
-    }
-
-    DrivingDashboard {
-        x: 383px;
-        y: 13px;
-        width: 208px;
-        height: 178px;
-        speed-kmh: root.speed-kmh;
-        clutch-temperature: root.clutch-temperature;
-        clutch-temperature-deviation: root.clutch-temperature-deviation;
-        gear: root.gear;
-        gear-mode: root.gear-mode;
-        fuel-consumption: root.fuel-consumption;
-    }
-
-    BatteryWidget {
-        x: 5px;
-        // Center the terminal on the energy-flow arrows at y = 106px.
-        y: 34px;
-        width: 249px;
-        height: 144px;
-
-        state-of-charge: 76;
-        pack-voltage: 357.2;
-        average-cell-voltage: 3.82;
-        cell-voltage-deviation: 20;
-        minimum-temperature: 18;
-        maximum-temperature: 24;
-    }
-
-    EnergyFlow {
-        x: 266px;
-        y: 37px;
-        width: 106px;
-        height: 106px;
-        power-kw: root.battery-power-kw;
-        maximum-power-kw: 40;
-    }
-
-    CoolantGauge {
-        x: 590px;
-        y: 133px;
-        width: 180px; height: 60px;
-        temperature: root.coolant-temperature;
-    }
-
-    MotorsWidget {
-        x: 585px;
-        y: 20px;
-        width: 190px;
-        height: parent.height / 2 - 32px;
-        ice-on: false;
-        electric-on: true;
-    }
-}
-
-component SecondPage inherits Rectangle {
-    background: #101417;
-
-    Text {
-        y: 76px;
-        width: parent.width;
-        height: 48px;
-        text: "SECOND PAGE";
-        color: #ffffff;
-        font-size: 32px;
-        font-weight: 700;
-        horizontal-alignment: center;
-        vertical-alignment: center;
-    }
-
-    Text {
-        y: 132px;
-        width: parent.width;
-        height: 30px;
-        text: "Swipe right to return to the dashboard";
-        color: #8d9ba3;
-        font-size: 16px;
-        horizontal-alignment: center;
-        vertical-alignment: center;
-    }
-}
+import { MainObd2Dashboard } from "main-obd2-dashboard/mod.slint";
+import { MenuPage } from "menu/mod.slint";
 
 export component AppWindow inherits Window {
-    in property <[TouchMarker]> touch-markers;
-    in-out property <bool> show-touch-indicators: true;
     height: 262px;
     width: 928px;
 
@@ -167,7 +50,7 @@ export component AppWindow inherits Window {
                 }
             ]
 
-            MainDashboard {
+            MainObd2Dashboard {
                 width: root.width;
                 height: root.height;
                 speed-kmh: root.speed-kmh;
@@ -183,32 +66,10 @@ export component AppWindow inherits Window {
                 ac-compressor-running: root.ac-compressor-running;
             }
 
-            SecondPage {
+            MenuPage {
                 width: root.width;
                 height: root.height;
             }
-        }
-    }
-
-    // Visual-only overlay: no TouchArea, so controls still receive input.
-    for marker in root.touch-markers: Rectangle {
-        visible: root.show-touch-indicators && marker.active;
-        x: marker.x * root.width - self.width / 2;
-        y: marker.y * root.height - self.height / 2;
-        width: 62px;
-        height: 62px;
-        border-radius: 11px;
-        background: #ff00cc70;
-        border-width: 2px;
-        border-color: #ffffff;
-
-        Rectangle {
-            x: (parent.width - self.width) / 2;
-            y: (parent.height - self.height) / 2;
-            width: 4px;
-            height: 4px;
-            border-radius: 2px;
-            background: #ffffff;
         }
     }
 }

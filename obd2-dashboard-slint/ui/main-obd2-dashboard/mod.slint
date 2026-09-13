@@ -1,0 +1,83 @@
+import { BatteryWidget } from "battery.slint";
+import { EnergyFlow } from "energy-flow.slint";
+import { MotorsWidget } from "motors.slint";
+import { DrivingDashboard } from "driving/mod.slint";
+import { BottomBar } from "bottom-bar/mod.slint";
+import { CoolantGauge } from "coolant.slint";
+
+export component MainObd2Dashboard inherits Rectangle {
+    in property <float> speed-kmh;
+    in property <float> clutch-temperature;
+    in property <float> clutch-temperature-deviation;
+    in property <int> gear;
+    in property <string> gear-mode;
+    in property <float> fuel-consumption;
+    in property <float> battery-power-kw;
+    in property <float> coolant-temperature;
+    in property <float> humidity;
+    in property <float> ac-compressor-temperature;
+    in property <bool> ac-compressor-running;
+
+    background: #000000;
+
+    BottomBar {
+        x: 13px; y: parent.height - 57px;
+        width: parent.width - 26px; height: 49px;
+        humidity: root.humidity;
+        ac-compressor-temperature: root.ac-compressor-temperature;
+        ac-compressor-running: root.ac-compressor-running;
+    }
+
+    DrivingDashboard {
+        x: 383px;
+        y: 13px;
+        width: 208px;
+        height: 178px;
+        speed-kmh: root.speed-kmh;
+        clutch-temperature: root.clutch-temperature;
+        clutch-temperature-deviation: root.clutch-temperature-deviation;
+        gear: root.gear;
+        gear-mode: root.gear-mode;
+        fuel-consumption: root.fuel-consumption;
+    }
+
+    BatteryWidget {
+        x: 5px;
+        // Center the terminal on the energy-flow arrows at y = 106px.
+        y: 34px;
+        width: 249px;
+        height: 144px;
+
+        state-of-charge: 76;
+        pack-voltage: 357.2;
+        average-cell-voltage: 3.82;
+        cell-voltage-deviation: 20;
+        minimum-temperature: 18;
+        maximum-temperature: 24;
+    }
+
+    EnergyFlow {
+        x: 266px;
+        y: 37px;
+        width: 106px;
+        height: 106px;
+        power-kw: root.battery-power-kw;
+        maximum-power-kw: 40;
+    }
+
+    CoolantGauge {
+        x: 590px;
+        y: 133px;
+        width: 180px; height: 60px;
+        temperature: root.coolant-temperature;
+    }
+
+    MotorsWidget {
+        x: 585px;
+        y: 20px;
+        width: 190px;
+        height: parent.height / 2 - 32px;
+        ice-on: false;
+        electric-on: true;
+    }
+}

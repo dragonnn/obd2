@@ -1,0 +1,161 @@
+import { IconDisplay, IconSet } from "../icons.slint";
+
+component MainMenu inherits Rectangle {
+    callback power-selected();
+
+    background: #000000;
+
+    IconDisplay {
+        x: root.width / 4 - self.width / 2;
+        y: 40px;
+        size: 120px;
+        icon: IconSet.Settings;
+        stroke: #f2f4f3;
+        stroke-width: 4;
+        absolute-stroke-width: true;
+    }
+
+    Rectangle {
+        x: root.width * 3 / 4 - self.width / 2;
+        y: 20px;
+        width: 180px;
+        height: 180px;
+        background: transparent;
+        opacity: power-touch.pressed ? 0.55 : 1;
+
+        IconDisplay {
+            x: (parent.width - self.width) / 2;
+            y: 20px;
+            size: 120px;
+            icon: IconSet.Power;
+            stroke: #f2f4f3;
+            stroke-width: 4;
+            absolute-stroke-width: true;
+        }
+
+        power-touch := TouchArea {
+            clicked => { root.power-selected(); }
+        }
+    }
+}
+
+component PowerAction inherits Rectangle {
+    in property <int> action;
+    in property <string> label;
+    callback clicked();
+
+    background: transparent;
+    opacity: touch.pressed ? 0.55 : 1;
+
+    IconDisplay {
+        x: (parent.width - self.width) / 2;
+        y: 20px;
+        size: 110px;
+        icon: root.action == 0 ? IconSet.RefreshCw
+            : root.action == 1 ? IconSet.RotateCcw
+            : IconSet.Power;
+        stroke: #f2f4f3;
+        stroke-width: 4;
+        absolute-stroke-width: true;
+    }
+
+    Text {
+        y: 145px;
+        width: parent.width;
+        height: 36px;
+        text: root.label;
+        color: #f2f4f3;
+        font-size: 22px;
+        font-weight: 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+component PowerMenu inherits Rectangle {
+    callback restart-requested();
+    callback reboot-requested();
+    callback shutdown-requested();
+
+    background: #000000;
+
+    HorizontalLayout {
+        padding-left: 74px;
+        padding-right: 74px;
+        spacing: 44px;
+
+        PowerAction {
+            width: 230px;
+            action: 0;
+            label: "Restart app";
+            clicked => { root.restart-requested(); }
+        }
+
+        PowerAction {
+            width: 230px;
+            action: 1;
+            label: "Reboot";
+            clicked => { root.reboot-requested(); }
+        }
+
+        PowerAction {
+            width: 230px;
+            action: 2;
+            label: "Shutdown";
+            clicked => { root.shutdown-requested(); }
+        }
+    }
+}
+
+export component MenuPage inherits Rectangle {
+    in-out property <bool> power-menu-open: false;
+    callback restart-requested();
+    callback reboot-requested();
+    callback shutdown-requested();
+
+    background: #000000;
+
+    menu-swipe := SwipeGestureHandler {
+        handle-swipe-right: root.power-menu-open;
+
+        swiped => {
+            if self.current-position.x > self.pressed-position.x + self.width / 4 {
+                root.power-menu-open = false;
+            }
+        }
+
+        HorizontalLayout {
+            property <length> resting-x: root.power-menu-open ? -root.width : 0px;
+            property <length> swipe-offset;
+            x: self.resting-x + self.swipe-offset;
+            spacing: 0px;
+
+            animate resting-x { duration: 200ms; easing: ease-in-out; }
+
+            states [
+                swiping when menu-swipe.swiping: {
+                    swipe-offset: menu-swipe.current-position.x - menu-swipe.pressed-position.x;
+                    out { animate swipe-offset { duration: 200ms; easing: ease-in-out; } }
+                }
+            ]
+
+            MainMenu {
+                width: root.width;
+                height: root.height;
+                power-selected => { root.power-menu-open = true; }
+            }
+
+            PowerMenu {
+                width: root.width;
+                height: root.height;
+                restart-requested => { root.restart-requested(); }
+                reboot-requested => { root.reboot-requested(); }
+                shutdown-requested => { root.shutdown-requested(); }
+            }
+        }
+    }
+}
