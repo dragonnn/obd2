@@ -12,26 +12,18 @@ export struct TouchMarker {
     y: float,
 }
 
-export component AppWindow inherits Window {
-    in property <[TouchMarker]> touch-markers;
-    in-out property <bool> show-touch-indicators: true;
-    height: 262px;
-    width: 928px;
-
-    title: "OBD2 Dashboard";
-    in-out property <int> counter: 42;
-    callback request-increase-value();
-    in-out property <float> speed-kmh: 74;
-    in-out property <float> clutch-temperature: 60;
-    in-out property <float> clutch-temperature-deviation: 2;
-    in-out property <int> gear: 3;
-    in-out property <string> gear-mode: "D";
-    in-out property <float> fuel-consumption: 4.8;
-    in-out property <float> battery-power-kw: 11;
-    in-out property <float> coolant-temperature: 88;
-    in-out property <float> humidity: 64;
-    in-out property <float> ac-compressor-temperature: 7;
-    in-out property <bool> ac-compressor-running: true;
+component MainDashboard inherits Rectangle {
+    in property <float> speed-kmh;
+    in property <float> clutch-temperature;
+    in property <float> clutch-temperature-deviation;
+    in property <int> gear;
+    in property <string> gear-mode;
+    in property <float> fuel-consumption;
+    in property <float> battery-power-kw;
+    in property <float> coolant-temperature;
+    in property <float> humidity;
+    in property <float> ac-compressor-temperature;
+    in property <bool> ac-compressor-running;
 
     background: #000000;
 
@@ -81,7 +73,7 @@ export component AppWindow inherits Window {
     }
 
     CoolantGauge {
-        x: 590px; 
+        x: 590px;
         y: 133px;
         width: 180px; height: 60px;
         temperature: root.coolant-temperature;
@@ -95,17 +87,109 @@ export component AppWindow inherits Window {
         ice-on: false;
         electric-on: true;
     }
+}
 
-    /*TemperatureWidget {
-        x: 670px;
-        y: 16px;
-        width: 118px;
-        height: parent.height / 2 - 32px;
-        temperature: 100;
-        minimum-temperature: 0;
-        maximum-temperature: 130;
-        label: "COOLANT";
-    }*/
+component SecondPage inherits Rectangle {
+    background: #101417;
+
+    Text {
+        y: 76px;
+        width: parent.width;
+        height: 48px;
+        text: "SECOND PAGE";
+        color: #ffffff;
+        font-size: 32px;
+        font-weight: 700;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    Text {
+        y: 132px;
+        width: parent.width;
+        height: 30px;
+        text: "Swipe right to return to the dashboard";
+        color: #8d9ba3;
+        font-size: 16px;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+export component AppWindow inherits Window {
+    in property <[TouchMarker]> touch-markers;
+    in-out property <bool> show-touch-indicators: true;
+    height: 262px;
+    width: 928px;
+
+    title: "OBD2 Dashboard";
+    in-out property <int> counter: 42;
+    callback request-increase-value();
+    in-out property <float> speed-kmh: 74;
+    in-out property <float> clutch-temperature: 60;
+    in-out property <float> clutch-temperature-deviation: 2;
+    in-out property <int> gear: 3;
+    in-out property <string> gear-mode: "D";
+    in-out property <float> fuel-consumption: 4.8;
+    in-out property <float> battery-power-kw: 11;
+    in-out property <float> coolant-temperature: 88;
+    in-out property <float> humidity: 64;
+    in-out property <float> ac-compressor-temperature: 7;
+    in-out property <bool> ac-compressor-running: true;
+    in-out property <int> current-page: 0;
+
+    background: #000000;
+
+    swipe := SwipeGestureHandler {
+        handle-swipe-left: root.current-page == 0;
+        handle-swipe-right: root.current-page == 1;
+
+        swiped => {
+            if self.current-position.x < self.pressed-position.x - self.width / 4 {
+                root.current-page = 1;
+            } else if self.current-position.x > self.pressed-position.x + self.width / 4 {
+                root.current-page = 0;
+            }
+        }
+
+        HorizontalLayout {
+            property <length> resting-x: -root.current-page * root.width;
+            property <length> swipe-offset;
+            x: self.resting-x + self.swipe-offset;
+            spacing: 0px;
+
+            animate resting-x { duration: 200ms; easing: ease-in-out; }
+
+            states [
+                swiping when swipe.swiping: {
+                    swipe-offset: swipe.current-position.x - swipe.pressed-position.x;
+                    out { animate swipe-offset { duration: 200ms; easing: ease-in-out; } }
+                }
+            ]
+
+            MainDashboard {
+                width: root.width;
+                height: root.height;
+                speed-kmh: root.speed-kmh;
+                clutch-temperature: root.clutch-temperature;
+                clutch-temperature-deviation: root.clutch-temperature-deviation;
+                gear: root.gear;
+                gear-mode: root.gear-mode;
+                fuel-consumption: root.fuel-consumption;
+                battery-power-kw: root.battery-power-kw;
+                coolant-temperature: root.coolant-temperature;
+                humidity: root.humidity;
+                ac-compressor-temperature: root.ac-compressor-temperature;
+                ac-compressor-running: root.ac-compressor-running;
+            }
+
+            SecondPage {
+                width: root.width;
+                height: root.height;
+            }
+        }
+    }
+
     // Visual-only overlay: no TouchArea, so controls still receive input.
     for marker in root.touch-markers: Rectangle {
         visible: root.show-touch-indicators && marker.active;
