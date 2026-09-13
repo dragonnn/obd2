@@ -100,6 +100,8 @@
 &can0 {
 	assigned-clocks = <&cru CLK_CAN0>;
 	assigned-clock-rates = <300000000>;
+	dmas = <&dmac0 0 0xff2880a8 0x00030000 0x0 0x0>;
+	dma-names = "rx";
 	pinctrl-names = "default";
 	pinctrl-0 = <&rm_io27_can0_tx &rm_io28_can0_rx>;
 	status = "okay";
