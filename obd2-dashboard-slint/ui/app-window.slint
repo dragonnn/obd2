@@ -20,12 +20,16 @@ export component AppWindow inherits Window {
     in-out property <float> ac-compressor-temperature: 7;
     in-out property <bool> ac-compressor-running: true;
     in-out property <int> current-page: 0;
+    private property <bool> power-menu-open: false;
+    callback restart-requested();
+    callback reboot-requested();
+    callback shutdown-requested();
 
     background: #000000;
 
     swipe := SwipeGestureHandler {
         handle-swipe-left: root.current-page == 0;
-        handle-swipe-right: root.current-page == 1;
+        handle-swipe-right: root.current-page == 1 && !root.power-menu-open;
 
         swiped => {
             if self.current-position.x < self.pressed-position.x - self.width / 4 {
@@ -69,6 +73,10 @@ export component AppWindow inherits Window {
             MenuPage {
                 width: root.width;
                 height: root.height;
+                power-menu-open <=> root.power-menu-open;
+                restart-requested => { root.restart-requested(); }
+                reboot-requested => { root.reboot-requested(); }
+                shutdown-requested => { root.shutdown-requested(); }
             }
         }
     }

@@ -2,10 +2,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::error::Error;
-use std::fs;
-use std::process::Command;
 use std::thread;
 use std::time::Duration;
+
+#[cfg(feature = "board-kms")]
+use std::fs;
+#[cfg(feature = "board-kms")]
+use std::process::Command;
 
 use signal_hook::consts::{SIGINT, SIGQUIT, SIGTERM};
 use signal_hook::iterator::Signals;
@@ -125,6 +128,19 @@ fn start_debug_wifi_in_background() {
     });
 }
 
+#[cfg(feature = "board-kms")]
+fn spawn_system_action(name: &str, program: &str, args: &[&str]) {
+    match Command::new(program).args(args).spawn() {
+        Ok(_) => eprintln!("power menu: requested {name}"),
+        Err(error) => eprintln!("power menu: failed to request {name}: {error}"),
+    }
+}
+
+#[cfg(not(feature = "board-kms"))]
+fn spawn_system_action(name: &str, _program: &str, _args: &[&str]) {
+    eprintln!("power menu: {name} is disabled outside the board-kms build");
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     configure_board_backend();
     #[cfg(feature = "board-kms")]
@@ -148,6 +164,20 @@ fn main() -> Result<(), Box<dyn Error>> {
     ui.on_request_increase_value(move || {
         let ui = ui_handle.unwrap();
         ui.set_counter(ui.get_counter() + 1);
+    });
+
+    ui.on_restart_requested(|| {
+        spawn_system_action(
+            "application restart",
+            "/etc/init.d/S15obd2-dashboard",
+            &["restart"],
+        );
+    });
+    ui.on_reboot_requested(|| {
+        spawn_system_action("system reboot", "/sbin/reboot", &["-f"]);
+    });
+    ui.on_shutdown_requested(|| {
+        spawn_system_action("system shutdown", "/sbin/poweroff", &[]);
     });
 
     ui.run()?;

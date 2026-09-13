@@ -1,4 +1,5 @@
 import { IconDisplay, IconSet } from "../icons.slint";
+import { PowerMenu } from "power-menu.slint";
 
 component MainMenu inherits Rectangle {
     callback power-selected();
@@ -35,78 +36,6 @@ component MainMenu inherits Rectangle {
 
         power-touch := TouchArea {
             clicked => { root.power-selected(); }
-        }
-    }
-}
-
-component PowerAction inherits Rectangle {
-    in property <int> action;
-    in property <string> label;
-    callback clicked();
-
-    background: transparent;
-    opacity: touch.pressed ? 0.55 : 1;
-
-    IconDisplay {
-        x: (parent.width - self.width) / 2;
-        y: 20px;
-        size: 110px;
-        icon: root.action == 0 ? IconSet.RefreshCw
-            : root.action == 1 ? IconSet.RotateCcw
-            : IconSet.Power;
-        stroke: #f2f4f3;
-        stroke-width: 4;
-        absolute-stroke-width: true;
-    }
-
-    Text {
-        y: 145px;
-        width: parent.width;
-        height: 36px;
-        text: root.label;
-        color: #f2f4f3;
-        font-size: 22px;
-        font-weight: 600;
-        horizontal-alignment: center;
-        vertical-alignment: center;
-    }
-
-    touch := TouchArea {
-        clicked => { root.clicked(); }
-    }
-}
-
-component PowerMenu inherits Rectangle {
-    callback restart-requested();
-    callback reboot-requested();
-    callback shutdown-requested();
-
-    background: #000000;
-
-    HorizontalLayout {
-        padding-left: 74px;
-        padding-right: 74px;
-        spacing: 44px;
-
-        PowerAction {
-            width: 230px;
-            action: 0;
-            label: "Restart app";
-            clicked => { root.restart-requested(); }
-        }
-
-        PowerAction {
-            width: 230px;
-            action: 1;
-            label: "Reboot";
-            clicked => { root.reboot-requested(); }
-        }
-
-        PowerAction {
-            width: 230px;
-            action: 2;
-            label: "Shutdown";
-            clicked => { root.shutdown-requested(); }
         }
     }
 }
