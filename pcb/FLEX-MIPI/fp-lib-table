@@ -3,4 +3,5 @@
 	(lib (name "OK-14F024-04") (type "KiCad") (uri "${KIPRJMOD}/OK-14F024-04.pretty") (options "") (descr ""))
 	(lib (name "Flex_Tails") (type "KiCad") (uri "${KIPRJMOD}/Flex_Tails.pretty") (options "") (descr ""))
 	(lib (name "OK-23GF030-04") (type "KiCad") (uri "${KIPRJMOD}/OK-23GF030-04.pretty") (options "") (descr ""))
+	(lib (name "TestPoint_SMD_1.0x0.6mm_Flex") (type "KiCad") (uri "${KIPRJMOD}/TestPoint_SMD_1.0x0.6mm_Flex.pretty") (options "") (descr ""))
 )

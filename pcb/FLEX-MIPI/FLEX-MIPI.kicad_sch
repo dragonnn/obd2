@@ -5,6 +5,129 @@
 	(uuid "38ce2e03-1eb8-418d-a7f8-6a4b8bfe2962")
 	(paper "A4")
 	(lib_symbols
+		(symbol "Connector:TestPoint"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0.762)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "TP"
+				(at 0 6.858 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "TestPoint"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "test point"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "test point tp"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Pin* Test*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "TestPoint_0_1"
+				(circle
+					(center 0 3.302)
+					(radius 0.762)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "TestPoint_1_1"
+				(pin passive line
+					(at 0 0 90)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Connector_Generic:Conn_01x22"
 			(pin_names
 				(offset 1.016)
@@ -1956,7 +2079,7 @@
 		(at 158.75 146.05)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "214e30d6-c678-462c-814f-07ad553ee308")
+		(uuid "40c24710-2fdc-4732-9f73-1c9771b7ce30")
 	)
 	(junction
 		(at 124.46 85.09)
@@ -2210,6 +2333,16 @@
 	)
 	(wire
 		(pts
+			(xy 158.75 146.05) (xy 158.75 148.59)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3cce1a13-2305-42b4-a14d-3938a582b2dc")
+	)
+	(wire
+		(pts
 			(xy 140.97 77.47) (xy 143.51 77.47)
 		)
 		(stroke
@@ -2247,16 +2380,6 @@
 			(type default)
 		)
 		(uuid "46a4d697-8881-4ff9-b7ce-7a5e7ac2d0cc")
-	)
-	(wire
-		(pts
-			(xy 158.75 146.05) (xy 170.18 146.05)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "5317aeee-f864-4f66-ac9c-2bff6b6e3616")
 	)
 	(wire
 		(pts
@@ -2490,16 +2613,6 @@
 	)
 	(wire
 		(pts
-			(xy 74.93 81.28) (xy 86.36 81.28)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ba763625-616f-4a80-a1b7-9d093548d1c8")
-	)
-	(wire
-		(pts
 			(xy 123.19 74.93) (xy 125.73 74.93)
 		)
 		(stroke
@@ -2690,16 +2803,6 @@
 	)
 	(wire
 		(pts
-			(xy 158.75 146.05) (xy 158.75 148.59)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ee36dfa0-1162-49d5-883b-61e6e4c08f69")
-	)
-	(wire
-		(pts
 			(xy 127 143.51) (xy 129.54 143.51)
 		)
 		(stroke
@@ -2720,6 +2823,16 @@
 	)
 	(wire
 		(pts
+			(xy 158.75 146.05) (xy 162.56 146.05)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f5abb59b-527c-4b74-86eb-31fd69ac9bf5")
+	)
+	(wire
+		(pts
 			(xy 142.24 97.79) (xy 140.97 97.79)
 		)
 		(stroke
@@ -2727,6 +2840,26 @@
 			(type default)
 		)
 		(uuid "f874e4ce-4372-4f4e-8404-40677685fb39")
+	)
+	(wire
+		(pts
+			(xy 74.93 81.28) (xy 78.74 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "facddf45-2256-453a-a4a9-266c47f9c6fd")
+	)
+	(wire
+		(pts
+			(xy 182.88 76.2) (xy 186.69 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fcab1f96-81a3-4446-adac-cead0b9220f0")
 	)
 	(label "LCM_ID"
 		(at 123.19 102.87 180)
@@ -2780,17 +2913,6 @@
 		)
 		(uuid "33a1eda1-abcc-4243-9bca-8135626dd850")
 	)
-	(label "TP_RST"
-		(at 86.36 81.28 0)
-		(effects
-			(font
-				(size 1 1)
-				(color 221 133 0 1)
-			)
-			(justify left bottom)
-		)
-		(uuid "3843863d-1b7a-47b9-a01d-35d6bb16dfdc")
-	)
 	(label "LCM_CLKN"
 		(at 123.19 74.93 180)
 		(effects
@@ -2832,7 +2954,7 @@
 		)
 		(uuid "54e87e2e-c2e8-4e5b-991b-48c7b7239378")
 	)
-	(label "LCD_RST"
+	(label "RST"
 		(at 162.56 146.05 0)
 		(effects
 			(font
@@ -2862,6 +2984,17 @@
 		)
 		(uuid "90456358-1b35-4dd2-9142-27d29bb912a0")
 	)
+	(label "TP_INT"
+		(at 182.88 76.2 180)
+		(effects
+			(font
+				(size 1 1)
+				(color 221 133 0 1)
+			)
+			(justify right bottom)
+		)
+		(uuid "9432f8b2-129c-48b8-966a-13be435c18b3")
+	)
 	(label "LCM_D0N"
 		(at 78.74 119.38 0)
 		(effects
@@ -2872,7 +3005,7 @@
 		)
 		(uuid "9b91fcfc-db66-442a-8c08-cf960641a3ba")
 	)
-	(label "LCD_RST"
+	(label "RST"
 		(at 78.74 81.28 0)
 		(effects
 			(font
@@ -2933,7 +3066,7 @@
 		)
 		(uuid "c8688ab3-4d37-4f9a-a42c-2d3657c2bc31")
 	)
-	(label "LCD_RST"
+	(label "RST"
 		(at 123.19 97.79 180)
 		(effects
 			(font
@@ -3006,27 +3139,16 @@
 		)
 		(uuid "f8197be1-d8e5-4ab0-9dd4-baa030ae3ab4")
 	)
-	(label "TP_RST"
+	(label "RST"
 		(at 144.78 90.17 0)
 		(effects
 			(font
 				(size 1 1)
-				(color 221 133 0 1)
+				(color 0 0 0 1)
 			)
 			(justify left bottom)
 		)
 		(uuid "f9d208cc-98a4-4b4b-8e88-893860792fe0")
-	)
-	(label "TP_RST"
-		(at 170.18 146.05 0)
-		(effects
-			(font
-				(size 1 1)
-				(color 221 133 0 1)
-			)
-			(justify left bottom)
-		)
-		(uuid "fac149c4-5a90-49e3-821b-4a954cae1efd")
 	)
 	(symbol
 		(lib_id "power:GND")
@@ -3141,7 +3263,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0201_0603Metric_Pad0.64x0.40mm_HandSolder"
 			(at 159.7152 156.21 0)
 			(hide yes)
 			(show_name no)
@@ -3299,7 +3421,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0201_0603Metric_Pad0.64x0.40mm_HandSolder"
 			(at 160.528 140.97 90)
 			(hide yes)
 			(show_name no)
@@ -4389,7 +4511,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0201_0603Metric_Pad0.64x0.40mm_HandSolder"
 			(at 91.1352 148.59 0)
 			(hide yes)
 			(show_name no)
@@ -4549,7 +4671,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
 			(at 84.7852 148.59 0)
 			(hide yes)
 			(show_name no)
@@ -4671,6 +4793,85 @@
 			(project "FLEX-MIPI"
 				(path "/38ce2e03-1eb8-418d-a7f8-6a4b8bfe2962"
 					(reference "#PWR011")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 186.69 76.2 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "bd497d4b-24b4-43ab-8c93-659622c0b5bb")
+		(property "Reference" "TP1"
+			(at 191.77 74.9299 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "TestPoint"
+			(at 191.77 77.4699 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "TestPoint_SMD_1.0x0.6mm_Flex:TestPoint_SMD_1.0x0.6mm_Flex"
+			(at 186.69 81.28 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 186.69 81.28 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "test point"
+			(at 186.69 76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "41319458-d225-4a64-9f74-8b68142d80eb")
+		)
+		(instances
+			(project "FLEX-MIPI"
+				(path "/38ce2e03-1eb8-418d-a7f8-6a4b8bfe2962"
+					(reference "TP1")
 					(unit 1)
 				)
 			)
@@ -5130,7 +5331,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0201_0603Metric_Pad0.64x0.40mm_HandSolder"
 			(at 123.19 145.288 90)
 			(hide yes)
 			(show_name no)
@@ -5289,7 +5490,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0201_0603Metric_Pad0.64x0.40mm_HandSolder"
 			(at 123.19 141.478 90)
 			(hide yes)
 			(show_name no)
@@ -5448,7 +5649,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0201_0603Metric_Pad0.64x0.40mm_HandSolder"
 			(at 123.19 149.098 90)
 			(hide yes)
 			(show_name no)

@@ -1,0 +1,37 @@
+(footprint "TestPoint_SMD_1.0x0.6mm_Flex"
+  (version 20240108)
+  (generator "pcbnew")
+  (layer "F.Cu")
+  (descr "Compact hand-solder test pad for flex PCB; 1.0 x 0.6 mm rounded copper, 0.10 mm coverlay/mask expansion, no paste aperture")
+  (tags "test point flex FPC hand solder wire compact")
+  (attr smd)
+  (fp_text reference "TP"
+    (at 0 -1.1 0)
+    (layer "F.Fab")
+    hide
+    (effects
+      (font
+        (size 0.6 0.6)
+        (thickness 0.1)
+      )
+    )
+  )
+  (fp_text value "TestPoint_SMD_1.0x0.6mm_Flex"
+    (at 0 1.1 0)
+    (layer "F.Fab")
+    hide
+    (effects
+      (font
+        (size 0.6 0.6)
+        (thickness 0.1)
+      )
+    )
+  )
+  (pad "1" smd roundrect
+    (at 0 0)
+    (size 1 0.6)
+    (layers "F.Cu" "F.Mask")
+    (roundrect_rratio 0.25)
+    (solder_mask_margin 0.1)
+  )
+)
