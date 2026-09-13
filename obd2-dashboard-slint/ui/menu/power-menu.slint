@@ -6,13 +6,20 @@ component PowerAction inherits Rectangle {
     callback clicked();
     private property <bool> highlight;
 
-    background: touch.pressed || root.highlight ? #263139 : transparent;
-    border-radius: 20px;
-    animate background { duration: 90ms; easing: ease-in-out; }
+    background: transparent;
+
+    Rectangle {
+        y: 20px;
+        width: parent.width;
+        height: parent.height - 40px;
+        background: touch.pressed || root.highlight ? #263139 : transparent;
+        border-radius: 20px;
+        animate background { duration: 90ms; easing: ease-in-out; }
+    }
 
     IconDisplay {
         x: (parent.width - self.width) / 2;
-        y: 20px;
+        y: 55px;
         size: 110px;
         icon: root.action == 0 ? IconSet.RefreshCw
             : root.action == 1 ? IconSet.RotateCcw
@@ -23,7 +30,7 @@ component PowerAction inherits Rectangle {
     }
 
     Text {
-        y: 145px;
+        y: 175px;
         width: parent.width;
         height: 36px;
         text: root.label;
@@ -35,7 +42,7 @@ component PowerAction inherits Rectangle {
     }
 
     Timer {
-        interval: 180ms;
+        interval: 360ms;
         running: root.highlight;
         triggered => {
             root.highlight = false;

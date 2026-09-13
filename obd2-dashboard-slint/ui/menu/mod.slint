@@ -3,25 +3,45 @@ import { PowerMenu } from "power-menu.slint";
 
 component MainMenuAction inherits Rectangle {
     in property <bool> settings-icon;
+    in property <string> label;
     callback selected();
     private property <bool> highlight;
 
-    background: touch.pressed || root.highlight ? #263139 : transparent;
-    border-radius: 20px;
-    animate background { duration: 90ms; easing: ease-in-out; }
+    background: transparent;
+
+    Rectangle {
+        y: 20px;
+        width: parent.width;
+        height: parent.height - 40px;
+        background: touch.pressed || root.highlight ? #263139 : transparent;
+        border-radius: 20px;
+        animate background { duration: 90ms; easing: ease-in-out; }
+    }
 
     IconDisplay {
         x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
-        size: 120px;
+        y: 55px;
+        size: 110px;
         icon: root.settings-icon ? IconSet.Settings : IconSet.Power;
         stroke: #f2f4f3;
         stroke-width: 4;
         absolute-stroke-width: true;
     }
 
+    Text {
+        y: 175px;
+        width: parent.width;
+        height: 36px;
+        text: root.label;
+        color: #f2f4f3;
+        font-size: 22px;
+        font-weight: 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
     Timer {
-        interval: 180ms;
+        interval: 360ms;
         running: root.highlight;
         triggered => {
             root.highlight = false;
@@ -41,18 +61,18 @@ component MainMenu inherits Rectangle {
 
     MainMenuAction {
         x: root.width / 4 - self.width / 2;
-        y: 20px;
-        width: 180px;
-        height: 180px;
+        width: 230px;
+        height: root.height;
         settings-icon: true;
+        label: "Settings";
     }
 
     MainMenuAction {
         x: root.width * 3 / 4 - self.width / 2;
-        y: 20px;
-        width: 180px;
-        height: 180px;
+        width: 230px;
+        height: root.height;
         settings-icon: false;
+        label: "Power";
         selected => { root.power-selected(); }
     }
 }
