@@ -36,6 +36,7 @@ fi
 # Overlay copying does not preserve executable bits for these services.
 chmod 0755 \
     "$TARGET_DIR/etc/init.d/S00loopback" \
+    "$TARGET_DIR/etc/init.d/S14can0" \
     "$TARGET_DIR/etc/init.d/S15obd2-dashboard"
 
 # Install the direct framebuffer color diagnostic.  It writes pixels according

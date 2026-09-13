@@ -96,6 +96,15 @@
 	status = "okay";
 };
 
+/**********CAN**********/
+&can0 {
+	assigned-clocks = <&cru CLK_CAN0>;
+	assigned-clock-rates = <300000000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&rm_io27_can0_tx &rm_io28_can0_rx>;
+	status = "okay";
+};
+
 /**********usb**********/
 &usb20_otg0 {
 	dr_mode = "peripheral";

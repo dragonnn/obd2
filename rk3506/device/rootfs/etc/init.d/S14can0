@@ -1,0 +1,26 @@
+#!/bin/sh
+
+BITRATE=500000
+INTERFACE=can0
+
+case "$1" in
+start)
+	echo "Starting $INTERFACE at $BITRATE bit/s"
+	ip link set "$INTERFACE" down 2>/dev/null || true
+	ip link set "$INTERFACE" type can bitrate "$BITRATE" fd off restart-ms 100 || exit 1
+	ip link set "$INTERFACE" up
+	;;
+stop)
+	ip link set "$INTERFACE" down 2>/dev/null || true
+	;;
+restart)
+	"$0" stop
+	"$0" start
+	;;
+*)
+	echo "Usage: $0 {start|stop|restart}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

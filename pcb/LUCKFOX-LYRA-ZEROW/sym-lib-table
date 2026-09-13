@@ -1,0 +1,5 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "Luckfox_Lyra") (type "KiCad") (uri "${KIPRJMOD}/Luckfox_Lyra.kicad_sym") (options "") (descr ""))
+	(lib (name "MinewSemi_nRF54") (type "KiCad") (uri "${KIPRJMOD}/MinewSemi_nRF54.kicad_sym") (options "") (descr ""))
+)
