@@ -4,9 +4,11 @@ component PowerAction inherits Rectangle {
     in property <int> action;
     in property <string> label;
     callback clicked();
+    private property <bool> highlight;
 
-    background: transparent;
-    opacity: touch.pressed ? 0.55 : 1;
+    background: touch.pressed || root.highlight ? #263139 : transparent;
+    border-radius: 20px;
+    animate background { duration: 90ms; easing: ease-in-out; }
 
     IconDisplay {
         x: (parent.width - self.width) / 2;
@@ -32,8 +34,17 @@ component PowerAction inherits Rectangle {
         vertical-alignment: center;
     }
 
+    Timer {
+        interval: 180ms;
+        running: root.highlight;
+        triggered => {
+            root.highlight = false;
+            root.clicked();
+        }
+    }
+
     touch := TouchArea {
-        clicked => { root.clicked(); }
+        clicked => { root.highlight = true; }
     }
 }
 

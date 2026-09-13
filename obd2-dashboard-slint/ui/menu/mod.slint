@@ -1,42 +1,59 @@
 import { IconDisplay, IconSet } from "../icons.slint";
 import { PowerMenu } from "power-menu.slint";
 
-component MainMenu inherits Rectangle {
-    callback power-selected();
+component MainMenuAction inherits Rectangle {
+    in property <bool> settings-icon;
+    callback selected();
+    private property <bool> highlight;
 
-    background: #000000;
+    background: touch.pressed || root.highlight ? #263139 : transparent;
+    border-radius: 20px;
+    animate background { duration: 90ms; easing: ease-in-out; }
 
     IconDisplay {
-        x: root.width / 4 - self.width / 2;
-        y: 40px;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
         size: 120px;
-        icon: IconSet.Settings;
+        icon: root.settings-icon ? IconSet.Settings : IconSet.Power;
         stroke: #f2f4f3;
         stroke-width: 4;
         absolute-stroke-width: true;
     }
 
-    Rectangle {
+    Timer {
+        interval: 180ms;
+        running: root.highlight;
+        triggered => {
+            root.highlight = false;
+            root.selected();
+        }
+    }
+
+    touch := TouchArea {
+        clicked => { root.highlight = true; }
+    }
+}
+
+component MainMenu inherits Rectangle {
+    callback power-selected();
+
+    background: #000000;
+
+    MainMenuAction {
+        x: root.width / 4 - self.width / 2;
+        y: 20px;
+        width: 180px;
+        height: 180px;
+        settings-icon: true;
+    }
+
+    MainMenuAction {
         x: root.width * 3 / 4 - self.width / 2;
         y: 20px;
         width: 180px;
         height: 180px;
-        background: transparent;
-        opacity: power-touch.pressed ? 0.55 : 1;
-
-        IconDisplay {
-            x: (parent.width - self.width) / 2;
-            y: 20px;
-            size: 120px;
-            icon: IconSet.Power;
-            stroke: #f2f4f3;
-            stroke-width: 4;
-            absolute-stroke-width: true;
-        }
-
-        power-touch := TouchArea {
-            clicked => { root.power-selected(); }
-        }
+        settings-icon: false;
+        selected => { root.power-selected(); }
     }
 }
 
