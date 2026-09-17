@@ -22,10 +22,11 @@ OBD2_DASHBOARD_DEPENDENCIES = eudev fontconfig libdrm libevdev libinput libxkbco
 OBD2_DASHBOARD_CARGO_ENV = PKG_CONFIG_PATH=$(STAGING_DIR)/usr/lib/pkgconfig:$(STAGING_DIR)/usr/share/pkgconfig
 OBD2_DASHBOARD_CARGO_BUILD_OPTS = --no-default-features --features board-kms
 OBD2_DASHBOARD_CARGO_INSTALL_OPTS = --no-default-features --features board-kms
+OBD2_DASHBOARD_SLINT_FONT = $(firstword $(wildcard /project/obd2-dashboard-slint/vendor/i-slint-common*/sharedfontique/Inter-VariableFont.ttf))
 
 define OBD2_DASHBOARD_INSTALL_FONT
 	install -d $(TARGET_DIR)/usr/share/fonts/slint
-	install -m 0644 /project/obd2-dashboard-slint/vendor/i-slint-common/sharedfontique/Inter-VariableFont.ttf \
+	install -m 0644 $(OBD2_DASHBOARD_SLINT_FONT) \
 		$(TARGET_DIR)/usr/share/fonts/slint/Inter-VariableFont.ttf
 endef
 

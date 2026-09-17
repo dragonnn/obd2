@@ -27,11 +27,13 @@ rm -f \
 # Slint's software renderer needs at least one usable font. Keep the board
 # image independent of a desktop font installation by shipping Slint's bundled
 # Inter font from the vendored dependency tree.
-SLINT_FONT=/project/obd2-dashboard-slint/vendor/i-slint-common/sharedfontique/Inter-VariableFont.ttf
-if [ -f "$SLINT_FONT" ]; then
-    install -d "$TARGET_DIR/usr/share/fonts/slint"
-    install -m 0644 "$SLINT_FONT" "$TARGET_DIR/usr/share/fonts/slint/Inter-VariableFont.ttf"
-fi
+for SLINT_FONT in /project/obd2-dashboard-slint/vendor/i-slint-common*/sharedfontique/Inter-VariableFont.ttf; do
+    if [ -f "$SLINT_FONT" ]; then
+        install -d "$TARGET_DIR/usr/share/fonts/slint"
+        install -m 0644 "$SLINT_FONT" "$TARGET_DIR/usr/share/fonts/slint/Inter-VariableFont.ttf"
+        break
+    fi
+done
 
 # Overlay copying does not preserve executable bits for these services.
 chmod 0755 \
