@@ -50,11 +50,11 @@ impl TouchInput {
 pub fn install() -> Result<(), Box<dyn std::error::Error>> {
     let touch = Rc::new(TouchInput::default());
     let hook = touch.clone();
-    let backend = i_slint_backend_linuxkms::BackendBuilder::default()
-        .with_renderer_name("software".into())
-        .with_libinput_event_hook(Box::new(move |event| hook.event(event)))
-        .build()?;
-    slint::platform::set_platform(Box::new(backend))?;
+    slint::BackendSelector::new()
+        .backend_name("linuxkms".into())
+        .renderer_name("software".into())
+        .with_libinput_event_hook(move |event| hook.event(event))
+        .select()?;
     Ok(())
 }
 
