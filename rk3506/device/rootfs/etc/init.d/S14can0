@@ -1,17 +1,21 @@
 #!/bin/sh
 
 BITRATE=500000
-INTERFACE=can0
+INTERFACES="can0 can1"
 
 case "$1" in
 start)
-	echo "Starting $INTERFACE at $BITRATE bit/s"
-	ip link set "$INTERFACE" down 2>/dev/null || true
-	ip link set "$INTERFACE" type can bitrate "$BITRATE" fd off restart-ms 100 || exit 1
-	ip link set "$INTERFACE" up
+	for INTERFACE in $INTERFACES; do
+		echo "Starting $INTERFACE at $BITRATE bit/s"
+		ip link set "$INTERFACE" down 2>/dev/null || true
+		ip link set "$INTERFACE" type can bitrate "$BITRATE" fd off restart-ms 100 || exit 1
+		ip link set "$INTERFACE" up || exit 1
+	done
 	;;
 stop)
-	ip link set "$INTERFACE" down 2>/dev/null || true
+	for INTERFACE in $INTERFACES; do
+		ip link set "$INTERFACE" down 2>/dev/null || true
+	done
 	;;
 restart)
 	"$0" stop

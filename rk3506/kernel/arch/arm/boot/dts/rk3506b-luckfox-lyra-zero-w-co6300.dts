@@ -107,6 +107,16 @@
 	status = "okay";
 };
 
+&can1 {
+	assigned-clocks = <&cru CLK_CAN1>;
+	assigned-clock-rates = <300000000>;
+	dmas = <&dmac0 1 0xff2880a8 0x000c0000 0x0 0x0>;
+	dma-names = "rx";
+	pinctrl-names = "default";
+	pinctrl-0 = <&rm_io25_can1_tx &rm_io26_can1_rx>;
+	status = "okay";
+};
+
 /**********usb**********/
 &usb20_otg0 {
 	dr_mode = "peripheral";

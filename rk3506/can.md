@@ -1,9 +1,9 @@
 # CAN and OBD-II
 
-The board image enables the RK3506 CAN0 controller as the Linux SocketCAN
-interface `can0`. The init script configures Classical CAN at 500 kbit/s with
-automatic bus-off recovery after 100 ms. Both raw CAN sockets and the ISO-TP
-transport used by ISO 15765 diagnostics are built into the kernel.
+The board image enables both RK3506 controllers as the Linux SocketCAN
+interfaces `can0` and `can1`. The init script configures both for Classical CAN
+at 500 kbit/s with automatic bus-off recovery after 100 ms. Both raw CAN sockets
+and the ISO-TP transport used by ISO 15765 diagnostics are built into the kernel.
 
 ## Board pins and transceiver
 
@@ -12,16 +12,21 @@ An external 3.3 V logic-compatible high-speed CAN transceiver is mandatory.
 
 | Signal | Lyra Zero W header | SoC signal | Connect to |
 | --- | ---: | --- | --- |
-| CAN0 TX | pin 35 | GPIO1_C2 / RM_IO27 | transceiver TXD |
+| CAN0 TX | pin 33 | GPIO1_C2 / RM_IO27 | transceiver TXD |
 | CAN0 RX | pin 37 | GPIO1_C3 / RM_IO28 | transceiver RXD |
-| Ground | pin 39 (or another GND pin) | GND | transceiver GND and OBD ground |
+| CAN1 TX | pin 29 | GPIO1_B2 / RM_IO25 | second transceiver TXD |
+| CAN1 RX | pin 31 | GPIO1_B3 / RM_IO26 | second transceiver RXD |
+| Ground | pin 34 or 38 (or another GND pin) | GND | transceiver GND and OBD ground |
 
 Connect the transceiver bus side to OBD-II pin 6 (CAN High) and pin 14 (CAN
 Low). Connect ground to OBD-II signal ground pin 5. Do not connect OBD-II pin
 16 directly to the Lyra power rails; it is unswitched vehicle battery voltage
 and needs an automotive-rated protected regulator if it powers the board.
 
-The vehicle diagnostic bus is already terminated. Do not fit a 120 ohm
+Each controller requires its own transceiver. Connect only one transceiver to
+the standard OBD-II CAN bus unless the second interface is intentionally used
+for a separate CAN network or gateway. The vehicle diagnostic bus is already
+terminated. Do not fit a 120 ohm
 termination resistor at this short diagnostic stub unless measurements show
 that the bus is otherwise unterminated.
 
@@ -31,6 +36,7 @@ After booting the new image:
 
 ```sh
 ip -details link show can0
+ip -details link show can1
 candump can0
 ```
 

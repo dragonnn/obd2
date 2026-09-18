@@ -58,7 +58,8 @@ unchanged file timestamps. The first build compiles any missing dependencies;
 
 The CO6300 board configuration includes an interrupt-driven CST3530 touchscreen
 driver. See [CST3530 wiring and validation](cst3530.md) before connecting it.
-It also enables CAN0 as a 500 kbit/s SocketCAN interface. See
+It also enables CAN0 and CAN1 as 500 kbit/s SocketCAN interfaces. See
+[the used 40-pin connector assignments](pins.md) and
 [CAN and OBD-II wiring](can.md) before connecting it to a vehicle.
 
 After building, put the board in Rockchip loader mode and flash the generated
