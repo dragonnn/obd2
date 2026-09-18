@@ -117,6 +117,13 @@
 	status = "okay";
 };
 
+/**********UART**********/
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&rm_io2_uart1_tx &rm_io14_uart1_rx>;
+	status = "okay";
+};
+
 /**********usb**********/
 &usb20_otg0 {
 	dr_mode = "peripheral";
