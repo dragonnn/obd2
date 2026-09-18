@@ -119,6 +119,7 @@
 
 /**********UART**********/
 &uart1 {
+	dma-names = "tx", "rx";
 	pinctrl-names = "default";
 	pinctrl-0 = <&rm_io2_uart1_tx &rm_io14_uart1_rx>;
 	status = "okay";
