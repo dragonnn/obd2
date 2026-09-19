@@ -134,14 +134,15 @@ static int co6300_backlight_update_status(struct backlight_device *backlight)
 	if (!ctx->prepared)
 		return 0;
 
-	pr_info("panel-co6300: brightness write begin: 0x%02x\n",
-		brightness);
 	old_mode_flags = ctx->dsi->mode_flags;
 	ctx->dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
 	ret = co6300_write(ctx, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
 			   &brightness, sizeof(brightness));
 	ctx->dsi->mode_flags = old_mode_flags;
-	pr_info("panel-co6300: brightness write end: ret=%d\n", ret);
+	if (ret)
+		dev_err(&ctx->dsi->dev,
+			"brightness write failed: value=0x%02x ret=%d\n",
+			brightness, ret);
 
 	return ret;
 }
