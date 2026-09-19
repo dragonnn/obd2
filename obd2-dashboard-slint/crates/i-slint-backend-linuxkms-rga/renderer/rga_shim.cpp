@@ -9,6 +9,8 @@
 #include <linux/dma-buf.h>
 #include <linux/dma-heap.h>
 #include <linux/fb.h>
+#include <linux/kd.h>
+#include <linux/vt.h>
 #include <rga/im2d.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -39,7 +41,59 @@ struct RgaSurface {
     uint32_t source_height = 0;
     uint32_t destination_width = 0;
     uint32_t destination_height = 0;
+    int tty_fd = -1;
+    int original_tty_mode = KD_TEXT;
 };
+
+void setup_graphics_mode(RgaSurface *surface) {
+    const int console_fd = open("/dev/console", O_RDONLY | O_CLOEXEC);
+    if (console_fd < 0) {
+        std::fprintf(stderr, "Slint RGA: could not open /dev/console (%s)\n",
+                     std::strerror(errno));
+        return;
+    }
+
+    vt_stat state = {};
+    const int state_result = ioctl(console_fd, VT_GETSTATE, &state);
+    close(console_fd);
+    if (state_result < 0) {
+        std::fprintf(stderr, "Slint RGA: VT_GETSTATE failed (%s)\n", std::strerror(errno));
+        return;
+    }
+
+    char tty_path[32] = {};
+    std::snprintf(tty_path, sizeof(tty_path), "/dev/tty%u", state.v_active);
+    surface->tty_fd = open(tty_path, O_RDWR | O_CLOEXEC);
+    if (surface->tty_fd < 0) {
+        std::fprintf(stderr, "Slint RGA: could not open %s (%s)\n", tty_path,
+                     std::strerror(errno));
+        return;
+    }
+
+    if (ioctl(surface->tty_fd, KDGETMODE, &surface->original_tty_mode) < 0 ||
+        ioctl(surface->tty_fd, KDSETMODE, KD_GRAPHICS) < 0) {
+        std::fprintf(stderr, "Slint RGA: could not switch %s to graphics mode (%s)\n",
+                     tty_path, std::strerror(errno));
+        close(surface->tty_fd);
+        surface->tty_fd = -1;
+        return;
+    }
+
+    const char hide_cursor[] = "\x1b[?25l";
+    (void)write(surface->tty_fd, hide_cursor, sizeof(hide_cursor) - 1);
+    std::fprintf(stderr, "Slint RGA: framebuffer console disabled on %s\n", tty_path);
+}
+
+void restore_text_mode(RgaSurface *surface) {
+    if (surface->tty_fd < 0) {
+        return;
+    }
+    (void)ioctl(surface->tty_fd, KDSETMODE, surface->original_tty_mode);
+    const char show_cursor[] = "\x1b[?25h";
+    (void)write(surface->tty_fd, show_cursor, sizeof(show_cursor) - 1);
+    close(surface->tty_fd);
+    surface->tty_fd = -1;
+}
 
 bool query_framebuffer(int fd, fb_var_screeninfo *variable, fb_fix_screeninfo *fixed) {
     if (ioctl(fd, FBIOGET_VSCREENINFO, variable) < 0 ||
@@ -221,6 +275,7 @@ extern "C" RgaSurface *slint_rga_surface_create(int framebuffer_fd, uint32_t sou
         }
     }
 
+    setup_graphics_mode(surface);
     return surface;
 }
 
@@ -291,5 +346,6 @@ extern "C" void slint_rga_surface_destroy(RgaSurface *surface) {
     if (surface->framebuffer != MAP_FAILED) {
         munmap(surface->framebuffer, surface->framebuffer_bytes);
     }
+    restore_text_mode(surface);
     delete surface;
 }
