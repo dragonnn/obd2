@@ -52,7 +52,7 @@ pub fn install() -> Result<(), Box<dyn std::error::Error>> {
     let hook = touch.clone();
     slint::BackendSelector::new()
         .backend_name("linuxkms".into())
-        .renderer_name("software".into())
+        .renderer_name("rga".into())
         .with_libinput_event_hook(move |event| hook.event(event))
         .select()?;
     Ok(())

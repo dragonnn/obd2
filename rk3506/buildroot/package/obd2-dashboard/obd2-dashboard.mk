@@ -18,7 +18,7 @@ define OBD2_DASHBOARD_SYNC_SOURCES
 endef
 OBD2_DASHBOARD_POST_RSYNC_HOOKS += OBD2_DASHBOARD_SYNC_SOURCES
 OBD2_DASHBOARD_LICENSE = MIT
-OBD2_DASHBOARD_DEPENDENCIES = eudev fontconfig libdrm libevdev libinput libxkbcommon
+OBD2_DASHBOARD_DEPENDENCIES = eudev fontconfig libdrm libevdev libinput libxkbcommon rockchip-rga
 OBD2_DASHBOARD_CARGO_ENV = PKG_CONFIG_PATH=$(STAGING_DIR)/usr/lib/pkgconfig:$(STAGING_DIR)/usr/share/pkgconfig
 OBD2_DASHBOARD_CARGO_BUILD_OPTS = --no-default-features --features board-kms
 OBD2_DASHBOARD_CARGO_INSTALL_OPTS = --no-default-features --features board-kms

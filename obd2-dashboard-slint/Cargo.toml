@@ -34,5 +34,5 @@ lucide-slint = "1.46.0"
 codegen-units = 1
 lto = true
 
-#[patch.crates-io]
-#i-slint-renderer-software = { path = "vendor/i-slint-renderer-software" }
+[patch.crates-io]
+i-slint-backend-linuxkms = { path = "crates/i-slint-backend-linuxkms-rga" }
