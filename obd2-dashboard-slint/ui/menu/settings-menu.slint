@@ -1,0 +1,96 @@
+component BrightnessSlider inherits Rectangle {
+    in-out property <int> value: 255;
+    out property <bool> adjusting: touch.pressed;
+    callback changed(value: int);
+
+    background: transparent;
+
+    Rectangle {
+        x: 16px;
+        y: (parent.height - self.height) / 2;
+        width: parent.width - 32px;
+        height: 12px;
+        border-radius: self.height / 2;
+        background: #263139;
+    }
+
+    Rectangle {
+        x: 16px;
+        y: (parent.height - self.height) / 2;
+        width: max(0px, min(parent.width - 32px,
+            (parent.width - 32px) * root.value / 255));
+        height: 12px;
+        border-radius: self.height / 2;
+        background: #f2f4f3;
+    }
+
+    Rectangle {
+        x: (parent.width - self.width) * root.value / 255;
+        y: (parent.height - self.height) / 2;
+        width: 32px;
+        height: 32px;
+        border-radius: self.width / 2;
+        background: #f2f4f3;
+        border-width: 3px;
+        border-color: #263139;
+    }
+
+    touch := TouchArea {
+        clicked => { root.set-from-position(self.mouse-x); }
+        moved => {
+            if (self.pressed) {
+                root.set-from-position(self.mouse-x);
+            }
+        }
+    }
+
+    function set-from-position(x: length) {
+        let next = round(max(0px, min(root.width, x)) / root.width * 255);
+        if (next != root.value) {
+            root.value = next;
+            root.changed(next);
+        }
+    }
+}
+
+export component SettingsMenu inherits Rectangle {
+    in-out property <int> brightness: 255;
+    out property <bool> brightness-adjusting: slider.adjusting;
+    callback brightness-changed(value: int);
+
+    background: #000000;
+
+    Text {
+        x: 110px;
+        y: 48px;
+        width: parent.width - 220px;
+        height: 40px;
+        text: "Brightness";
+        color: #f2f4f3;
+        font-size: 26px;
+        font-weight: 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    slider := BrightnessSlider {
+        x: 150px;
+        y: 112px;
+        width: parent.width - 300px;
+        height: 70px;
+        value <=> root.brightness;
+        changed(value) => { root.brightness-changed(value); }
+    }
+
+    Text {
+        x: 110px;
+        y: 190px;
+        width: parent.width - 220px;
+        height: 32px;
+        text: "\{round(root.brightness * 100 / 255)}%";
+        color: #aeb8bd;
+        font-size: 20px;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}

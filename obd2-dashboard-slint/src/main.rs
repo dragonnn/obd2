@@ -141,12 +141,51 @@ fn spawn_system_action(name: &str, _program: &str, _args: &[&str]) {
     eprintln!("power menu: {name} is disabled outside the board-kms build");
 }
 
+#[cfg(feature = "board-kms")]
+const BACKLIGHT_BRIGHTNESS_PATH: &str = "/sys/class/backlight/co6300/brightness";
+
+#[cfg(feature = "board-kms")]
+fn read_brightness() -> i32 {
+    match fs::read_to_string(BACKLIGHT_BRIGHTNESS_PATH) {
+        Ok(value) => match value.trim().parse::<i32>() {
+            Ok(value) => value.clamp(0, 255),
+            Err(error) => {
+                eprintln!("settings menu: invalid brightness value: {error}");
+                255
+            }
+        },
+        Err(error) => {
+            eprintln!("settings menu: failed to read brightness: {error}");
+            255
+        }
+    }
+}
+
+#[cfg(not(feature = "board-kms"))]
+fn read_brightness() -> i32 {
+    255
+}
+
+#[cfg(feature = "board-kms")]
+fn write_brightness(value: i32) {
+    let value = value.clamp(0, 255);
+    if let Err(error) = fs::write(BACKLIGHT_BRIGHTNESS_PATH, value.to_string()) {
+        eprintln!("settings menu: failed to write brightness: {error}");
+    }
+}
+
+#[cfg(not(feature = "board-kms"))]
+fn write_brightness(value: i32) {
+    eprintln!("settings menu: brightness {value} is disabled outside the board-kms build");
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     configure_board_backend();
     #[cfg(feature = "board-kms")]
     touch::install()?;
     start_debug_wifi_in_background();
     let ui = AppWindow::new()?;
+    ui.set_brightness(read_brightness());
 
     // SIGTERM does not unwind Rust stack frames. Ask Slint's event loop to
     // quit instead, so the KMS/framebuffer backend is dropped normally and
@@ -179,6 +218,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     ui.on_shutdown_requested(|| {
         spawn_system_action("system shutdown", "/sbin/poweroff", &[]);
     });
+    ui.on_brightness_changed(write_brightness);
 
     ui.run()?;
 
