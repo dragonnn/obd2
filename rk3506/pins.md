@@ -15,6 +15,10 @@ included.
 - Pin 12 — `UART1_RX` — GPIO0_B6 — enabled application UART receive
 - Pin 13 — `TOUCH_RST` — GPIO0_A4 — active-low reset
 - Pin 16 — `LCD_RST` — GPIO0_B5 — active-low reset
+- Pin 21 — `SPI1_CS1` — GPIO0_A7 — SPI1 chip select 1, active low
+- Pin 23 — `SPI1_SCLK` — GPIO0_B0 — SPI1 clock
+- Pin 24 — `SPI1_MISO` — GPIO0_B2 — SPI1 controller input
+- Pin 26 — `SPI1_MOSI` — GPIO0_B1 — SPI1 controller output
 - Pin 29 — `CAN1_TX` — GPIO1_B2 — second transceiver TXD
 - Pin 31 — `CAN1_RX` — GPIO1_B3 — second transceiver RXD
 - Pin 33 — `CAN0_TX` — GPIO1_C2 — first transceiver TXD
@@ -23,9 +27,9 @@ included.
 ## Physical 40-pin connector layout
 
 Power and ground rails are shown directly. An em dash (`—`) means the remaining
-signal pin is not claimed by the project-specific display, touch, CAN, or UART
-configuration. UART0 is shown because its pins are reserved, although UART0 is
-not currently enabled.
+signal pin is not claimed by the project-specific display, touch, CAN, UART,
+or SPI configuration. UART0 is shown because its pins are reserved, although
+UART0 is not currently enabled.
 
 Pin pair 1/2 is at the top of the connector and pin pair 39/40 is at the
 bottom.
@@ -42,9 +46,9 @@ bottom.
 | — | GPIO0_A5 | 15 | 16 | GPIO0_B5 | `LCD_RST` |
 | 3.3 V | 3.3 V | 17 | 18 | GPIO0_B4 | — |
 | — | GPIO0_A6 | 19 | 20 | GND | GND |
-| — | GPIO0_A7 | 21 | 22 | GPIO0_B3 | — |
-| — | GPIO0_B0 | 23 | 24 | GPIO0_B2 | — |
-| GND | GND | 25 | 26 | GPIO0_B1 | — |
+| `SPI1_CS1` | GPIO0_A7 | 21 | 22 | GPIO0_B3 | — |
+| `SPI1_SCLK` | GPIO0_B0 | 23 | 24 | GPIO0_B2 | `SPI1_MISO` |
+| GND | GND | 25 | 26 | GPIO0_B1 | `SPI1_MOSI` |
 | — | GPIO1_B1 | 27 | 28 | GPIO1_D3 | — |
 | `CAN1_TX` | GPIO1_B2 | 29 | 30 | GND | GND |
 | `CAN1_RX` | GPIO1_B3 | 31 | 32 | GPIO1_D2 | — |
@@ -73,12 +77,22 @@ UART1 RX to its TX, and use a common ground. Do not connect RS-232 voltage level
 or 5 V UART signals directly. UART0 remains disabled and reserved for a possible
 future debug console.
 
+SPI1 is enabled as a controller with chip select 1. Its userspace device is
+`/dev/spidev1.1` (10 MHz maximum configured in the device tree). Connect
+`SPI1_SCLK` to the peripheral clock, `SPI1_MOSI` to its input, `SPI1_MISO` to
+its output, and `SPI1_CS1` to its active-low select. Use a common ground and
+3.3 V logic. SPI1 chip select 0 would use GPIO0_B6 on pin 12, which is already
+assigned to UART1 RX, so it is not enabled.
+
 ## Source of truth
 
 The assignments come from the selected board device tree and its CO6300 include:
 
 - `kernel/arch/arm/boot/dts/rk3506b-luckfox-lyra-zero-w-co6300.dts`
 - `kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi`
+
+The SPI1 GPIO mux mapping is defined by the SDK's
+`sdk/kernel/arch/arm/boot/dts/rk3506-pinctrl.dtsi`.
 
 Physical connector numbering was checked against the official Luckfox Lyra
 Zero W schematic, connector `PI1`.

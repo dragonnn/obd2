@@ -2,4 +2,7 @@
 	(version 7)
 	(lib (name "Luckfox_Lyra") (type "KiCad") (uri "${KIPRJMOD}/Luckfox_Lyra.kicad_sym") (options "") (descr ""))
 	(lib (name "MinewSemi_nRF54") (type "KiCad") (uri "${KIPRJMOD}/MinewSemi_nRF54.kicad_sym") (options "") (descr ""))
+	(lib (name "Core52840") (type "KiCad") (uri "${KIPRJMOD}/Core52840.kicad_sym") (options "") (descr ""))
+	(lib (name "74AUP2G34") (type "KiCad") (uri "${KIPRJMOD}/74AUP2G34.kicad_sym") (options "") (descr ""))
+	(lib (name "RAA211403") (type "KiCad") (uri "${KIPRJMOD}/RAA211403.kicad_sym") (options "") (descr ""))
 )

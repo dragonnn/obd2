@@ -125,6 +125,20 @@
 	status = "okay";
 };
 
+/**********SPI**********/
+&spi1 {
+	/* CS0 is GPIO0_B6, already used by UART1 RX. Use CS1 instead. */
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi1_csn1_pins &spi1_clk_pins>;
+	status = "okay";
+
+	spidev@1 {
+		compatible = "rockchip,spidev";
+		reg = <1>;
+		spi-max-frequency = <10000000>;
+	};
+};
+
 /**********usb**********/
 &usb20_otg0 {
 	dr_mode = "peripheral";
