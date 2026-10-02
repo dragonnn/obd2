@@ -6853,12 +6853,6 @@
 		)
 	)
 	(junction
-		(at 185.42 127)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "01f4ca94-d3f4-4635-89f6-6425f74af94c")
-	)
-	(junction
 		(at 67.31 171.45)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -6875,12 +6869,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "07517d58-1076-45ff-92b9-9a8cf5d74da4")
-	)
-	(junction
-		(at 229.87 124.46)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "0a308451-0fa6-4c31-a840-76d385ac06f5")
 	)
 	(junction
 		(at 58.42 158.75)
@@ -6955,22 +6943,10 @@
 		(uuid "22011c21-2982-47bd-b996-035109112bdf")
 	)
 	(junction
-		(at 156.21 27.94)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "25487603-3b37-4614-a6a0-54ef55098b46")
-	)
-	(junction
 		(at 375.92 45.72)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "263b2f31-d119-423c-8fc0-8e32f5ee222e")
-	)
-	(junction
-		(at 375.92 91.44)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "26540f3e-ff9a-4d5d-a0c3-2164b596945b")
 	)
 	(junction
 		(at 119.38 209.55)
@@ -7081,28 +7057,10 @@
 		(uuid "8451a4db-1a86-45a0-b9d1-8462f9436051")
 	)
 	(junction
-		(at 156.21 38.1)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "85f4017c-bbd2-4caf-8cb4-bde3cd78f3ce")
-	)
-	(junction
-		(at 229.87 134.62)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "8785707b-ca3e-44b1-ad61-53256e0c905f")
-	)
-	(junction
 		(at 340.36 106.68)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "8882202b-880f-405f-af75-b9a4ca4a9b0c")
-	)
-	(junction
-		(at 39.37 232.41)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "88fc7ca3-9614-4e0f-842e-5e7073a9fbb8")
 	)
 	(junction
 		(at 88.9 158.75)
@@ -7135,12 +7093,6 @@
 		(uuid "9a513682-6fd3-4cf4-8447-5227a91d3057")
 	)
 	(junction
-		(at 375.92 101.6)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "9c063dff-5445-4af1-a93b-d74d284efe70")
-	)
-	(junction
 		(at 147.32 196.85)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -7151,12 +7103,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "a1c1d80a-2ccc-4476-adcb-34726684ec85")
-	)
-	(junction
-		(at 185.42 137.16)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "a74735a2-13c8-4f24-8ca6-97d21e955ade")
 	)
 	(junction
 		(at 264.16 62.23)
@@ -7235,12 +7181,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "cc1ca04b-5c12-41de-b439-c93606b5e5ae")
-	)
-	(junction
-		(at 39.37 242.57)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "cf63fae6-50bc-4852-afa5-01ee281716db")
 	)
 	(junction
 		(at 264.16 66.04)
@@ -7404,16 +7344,6 @@
 	)
 	(wire
 		(pts
-			(xy 162.56 38.1) (xy 156.21 38.1)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "025532f5-cd7c-4d88-9779-0dab5db69676")
-	)
-	(wire
-		(pts
 			(xy 107.95 184.15) (xy 107.95 181.61)
 		)
 		(stroke
@@ -7431,16 +7361,6 @@
 			(type default)
 		)
 		(uuid "02d13bd6-0cda-4b10-a544-3407d44e7b75")
-	)
-	(wire
-		(pts
-			(xy 39.37 45.72) (xy 45.72 45.72)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "03bf9b26-7c25-4f00-b504-62a3b1b5050c")
 	)
 	(wire
 		(pts
@@ -7644,16 +7564,6 @@
 	)
 	(wire
 		(pts
-			(xy 45.72 242.57) (xy 39.37 242.57)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "0e178fd8-4c63-4836-acf2-62fe4a1d4b95")
-	)
-	(wire
-		(pts
 			(xy 139.7 119.38) (xy 144.78 119.38)
 		)
 		(stroke
@@ -7714,23 +7624,13 @@
 	)
 	(wire
 		(pts
-			(xy 185.42 137.16) (xy 185.42 139.7)
+			(xy 185.42 134.62) (xy 185.42 139.7)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "10a705ea-7629-4f8e-9d5c-2cbae2c051d7")
-	)
-	(wire
-		(pts
-			(xy 382.27 99.06) (xy 382.27 101.6)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "11045439-84c5-4d02-97f7-0a551dacd8dd")
 	)
 	(wire
 		(pts
@@ -7781,16 +7681,6 @@
 			(type default)
 		)
 		(uuid "137187a1-17c9-4339-965b-6e3e5263d2bf")
-	)
-	(wire
-		(pts
-			(xy 162.56 27.94) (xy 156.21 27.94)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "137f166e-d3bd-496b-868b-19d87e2324d6")
 	)
 	(wire
 		(pts
@@ -7984,16 +7874,6 @@
 	)
 	(wire
 		(pts
-			(xy 375.92 88.9) (xy 375.92 91.44)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "2126f7d8-c9fa-4d20-9baf-957c45a7c14e")
-	)
-	(wire
-		(pts
 			(xy 293.37 64.77) (xy 293.37 67.31)
 		)
 		(stroke
@@ -8104,16 +7984,6 @@
 	)
 	(wire
 		(pts
-			(xy 191.77 137.16) (xy 185.42 137.16)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "26ac5804-bedf-43a0-8411-f302a645863e")
-	)
-	(wire
-		(pts
 			(xy 139.7 132.08) (xy 139.7 128.27)
 		)
 		(stroke
@@ -8204,16 +8074,6 @@
 	)
 	(wire
 		(pts
-			(xy 375.92 99.06) (xy 375.92 101.6)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "2e7581b3-3f73-4c09-a2b6-e27d38b9e7c6")
-	)
-	(wire
-		(pts
 			(xy 139.7 87.63) (xy 139.7 85.09)
 		)
 		(stroke
@@ -8234,7 +8094,7 @@
 	)
 	(wire
 		(pts
-			(xy 185.42 127) (xy 185.42 129.54)
+			(xy 185.42 124.46) (xy 185.42 129.54)
 		)
 		(stroke
 			(width 0)
@@ -8324,7 +8184,7 @@
 	)
 	(wire
 		(pts
-			(xy 229.87 134.62) (xy 229.87 137.16)
+			(xy 229.87 132.08) (xy 229.87 137.16)
 		)
 		(stroke
 			(width 0)
@@ -8384,6 +8244,16 @@
 	)
 	(wire
 		(pts
+			(xy 39.37 71.12) (xy 45.72 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "380ce093-f977-415a-9fdc-1bdb17e13a36")
+	)
+	(wire
+		(pts
 			(xy 142.24 175.26) (xy 125.73 175.26)
 		)
 		(stroke
@@ -8421,16 +8291,6 @@
 			(type default)
 		)
 		(uuid "396a7fb9-7c8a-42d6-b31c-643fd73e34a7")
-	)
-	(wire
-		(pts
-			(xy 236.22 127) (xy 236.22 124.46)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "399bdaec-04dc-4361-ab8a-86fa58941d8a")
 	)
 	(wire
 		(pts
@@ -8514,13 +8374,13 @@
 	)
 	(wire
 		(pts
-			(xy 45.72 232.41) (xy 39.37 232.41)
+			(xy 284.48 121.92) (xy 284.48 127)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "41f67758-c63e-4f85-9593-a69a905321e9")
+		(uuid "4207a3db-d38b-40db-b521-4660a449d4c6")
 	)
 	(wire
 		(pts
@@ -8581,16 +8441,6 @@
 			(type default)
 		)
 		(uuid "4433d2ac-7dc6-4f5b-b571-a82da344eaa9")
-	)
-	(wire
-		(pts
-			(xy 45.72 234.95) (xy 45.72 232.41)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "449b6f11-f014-4a6e-97b7-82f275bee8b1")
 	)
 	(wire
 		(pts
@@ -8704,26 +8554,6 @@
 	)
 	(wire
 		(pts
-			(xy 156.21 35.56) (xy 156.21 38.1)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "4dc9c67a-cac4-48d9-abd1-8250d79faff4")
-	)
-	(wire
-		(pts
-			(xy 236.22 134.62) (xy 229.87 134.62)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "4e7d76c2-c6f4-408f-bb27-331d7f7bb1a6")
-	)
-	(wire
-		(pts
 			(xy 208.28 55.88) (xy 204.47 55.88)
 		)
 		(stroke
@@ -8784,16 +8614,6 @@
 	)
 	(wire
 		(pts
-			(xy 375.92 91.44) (xy 375.92 93.98)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "52046f53-a30a-4129-b3cd-3de8cd1bb8ca")
-	)
-	(wire
-		(pts
 			(xy 29.21 204.47) (xy 29.21 208.28)
 		)
 		(stroke
@@ -8804,17 +8624,7 @@
 	)
 	(wire
 		(pts
-			(xy 236.22 132.08) (xy 236.22 134.62)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "52ef4919-f676-4356-a74c-96c6e11af24d")
-	)
-	(wire
-		(pts
-			(xy 39.37 232.41) (xy 39.37 234.95)
+			(xy 39.37 229.87) (xy 39.37 234.95)
 		)
 		(stroke
 			(width 0)
@@ -8954,16 +8764,6 @@
 	)
 	(wire
 		(pts
-			(xy 382.27 93.98) (xy 382.27 91.44)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "5a715ae3-f622-4b4f-81bd-a011e28cb9cf")
-	)
-	(wire
-		(pts
 			(xy 39.37 83.82) (xy 45.72 83.82)
 		)
 		(stroke
@@ -9014,7 +8814,7 @@
 	)
 	(wire
 		(pts
-			(xy 156.21 38.1) (xy 156.21 40.64)
+			(xy 156.21 35.56) (xy 156.21 40.64)
 		)
 		(stroke
 			(width 0)
@@ -9204,16 +9004,6 @@
 	)
 	(wire
 		(pts
-			(xy 162.56 30.48) (xy 162.56 27.94)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6d2cd79b-a9cc-4252-81d5-5e6f24f58113")
-	)
-	(wire
-		(pts
 			(xy 325.12 106.68) (xy 340.36 106.68)
 		)
 		(stroke
@@ -9364,7 +9154,7 @@
 	)
 	(wire
 		(pts
-			(xy 229.87 124.46) (xy 229.87 127)
+			(xy 229.87 121.92) (xy 229.87 127)
 		)
 		(stroke
 			(width 0)
@@ -9604,16 +9394,6 @@
 	)
 	(wire
 		(pts
-			(xy 229.87 121.92) (xy 229.87 124.46)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "84350191-3339-487e-94cc-9c210387bff3")
-	)
-	(wire
-		(pts
 			(xy 92.71 102.87) (xy 92.71 105.41)
 		)
 		(stroke
@@ -9631,16 +9411,6 @@
 			(type default)
 		)
 		(uuid "84f4aea4-26b0-437b-b2a5-0d88105e07ae")
-	)
-	(wire
-		(pts
-			(xy 191.77 129.54) (xy 191.77 127)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "85217c18-d15c-4cb0-93a7-bdd8b0f6c5ac")
 	)
 	(wire
 		(pts
@@ -10004,7 +9774,7 @@
 	)
 	(wire
 		(pts
-			(xy 39.37 242.57) (xy 39.37 245.11)
+			(xy 39.37 240.03) (xy 39.37 245.11)
 		)
 		(stroke
 			(width 0)
@@ -10111,16 +9881,6 @@
 			(type default)
 		)
 		(uuid "9e4c8237-bc1c-4411-9b8f-19a8f66f81a5")
-	)
-	(wire
-		(pts
-			(xy 191.77 134.62) (xy 191.77 137.16)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "9eea1009-5439-432f-afdc-ff8649267889")
 	)
 	(wire
 		(pts
@@ -10464,16 +10224,6 @@
 	)
 	(wire
 		(pts
-			(xy 191.77 127) (xy 185.42 127)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b0213415-7abc-4641-a540-85e0aca1ace9")
-	)
-	(wire
-		(pts
 			(xy 325.12 95.25) (xy 325.12 97.79)
 		)
 		(stroke
@@ -10534,7 +10284,7 @@
 	)
 	(wire
 		(pts
-			(xy 156.21 27.94) (xy 156.21 30.48)
+			(xy 156.21 25.4) (xy 156.21 30.48)
 		)
 		(stroke
 			(width 0)
@@ -10621,16 +10371,6 @@
 			(type default)
 		)
 		(uuid "b795f73e-d452-45d0-af57-d33ae0bdb8ef")
-	)
-	(wire
-		(pts
-			(xy 39.37 240.03) (xy 39.37 242.57)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b7a6f5f8-8228-4cbc-977e-0d592f5d10fa")
 	)
 	(wire
 		(pts
@@ -10724,16 +10464,6 @@
 	)
 	(wire
 		(pts
-			(xy 382.27 101.6) (xy 375.92 101.6)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "be341508-e3ad-4332-b7d2-e08491c8e485")
-	)
-	(wire
-		(pts
 			(xy 93.98 73.66) (xy 97.79 73.66)
 		)
 		(stroke
@@ -10761,16 +10491,6 @@
 			(type default)
 		)
 		(uuid "bfab2e55-ec12-403b-a1d6-b55d8a156f31")
-	)
-	(wire
-		(pts
-			(xy 236.22 124.46) (xy 229.87 124.46)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "bfdc7748-da84-48dc-ba62-d4690d8b4ebf")
 	)
 	(wire
 		(pts
@@ -10901,16 +10621,6 @@
 			(type default)
 		)
 		(uuid "c4d3d09f-37e8-44dd-8f18-fa8302633d54")
-	)
-	(wire
-		(pts
-			(xy 45.72 240.03) (xy 45.72 242.57)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c5cc6e59-b2a4-492f-894c-2f7c543c7e29")
 	)
 	(wire
 		(pts
@@ -11051,16 +10761,6 @@
 			(type default)
 		)
 		(uuid "cdd29d24-9db0-4cbf-9ab3-5e52d61a832b")
-	)
-	(wire
-		(pts
-			(xy 382.27 91.44) (xy 375.92 91.44)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ce45f48a-eef7-48f8-b79e-4611f451e031")
 	)
 	(wire
 		(pts
@@ -11214,16 +10914,6 @@
 	)
 	(wire
 		(pts
-			(xy 162.56 35.56) (xy 162.56 38.1)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d8d799b5-6d21-4ced-a698-4fe3b974ff2f")
-	)
-	(wire
-		(pts
 			(xy 208.28 88.9) (xy 204.47 88.9)
 		)
 		(stroke
@@ -11231,16 +10921,6 @@
 			(type default)
 		)
 		(uuid "d9ed01e8-cac4-4c93-94a9-dfd8b22f0e82")
-	)
-	(wire
-		(pts
-			(xy 375.92 101.6) (xy 375.92 104.14)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "da223167-11c8-407e-8e94-5f1abd55ee0c")
 	)
 	(wire
 		(pts
@@ -11534,13 +11214,13 @@
 	)
 	(wire
 		(pts
-			(xy 156.21 25.4) (xy 156.21 27.94)
+			(xy 284.48 132.08) (xy 284.48 137.16)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "ed3e3250-a4c0-4123-b4aa-9bcf25c62ec1")
+		(uuid "ed7c3c49-79b7-4271-8add-6e9e6c5139e5")
 	)
 	(wire
 		(pts
@@ -11581,16 +11261,6 @@
 			(type default)
 		)
 		(uuid "f1d81a90-2ae9-4e7f-b3fd-16b0a6a1b9ea")
-	)
-	(wire
-		(pts
-			(xy 185.42 134.62) (xy 185.42 137.16)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "f25415af-6d5d-49af-9a47-b52f489113af")
 	)
 	(wire
 		(pts
@@ -11734,16 +11404,6 @@
 	)
 	(wire
 		(pts
-			(xy 39.37 229.87) (xy 39.37 232.41)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "fa5def84-bc1e-41c7-b7cb-f9685bab1ed4")
-	)
-	(wire
-		(pts
 			(xy 52.07 113.03) (xy 55.88 113.03)
 		)
 		(stroke
@@ -11764,16 +11424,6 @@
 	)
 	(wire
 		(pts
-			(xy 229.87 132.08) (xy 229.87 134.62)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "fbb9bb71-09cf-4042-89c4-4ab03b41da07")
-	)
-	(wire
-		(pts
 			(xy 273.05 95.25) (xy 278.13 95.25)
 		)
 		(stroke
@@ -11781,16 +11431,6 @@
 			(type default)
 		)
 		(uuid "fbd41825-ded4-4057-b0b0-f8fd808e7966")
-	)
-	(wire
-		(pts
-			(xy 185.42 124.46) (xy 185.42 127)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "fcacfb78-2d2d-4ad7-a26c-79378fe28f01")
 	)
 	(wire
 		(pts
@@ -12003,7 +11643,7 @@
 		(uuid "1d243372-84e8-4936-9f9a-78de2a9a7b9f")
 	)
 	(label "OBD2 CAN L"
-		(at 31.75 160.02 0)
+		(at 39.37 162.56 0)
 		(effects
 			(font
 				(size 1 1)
@@ -12203,7 +11843,7 @@
 		(uuid "53b58efb-28c0-4e9c-9eda-c3e198554657")
 	)
 	(label "LYRA_UART1_TX"
-		(at 39.37 45.72 180)
+		(at 39.37 71.12 180)
 		(effects
 			(font
 				(size 1 1)
@@ -12393,7 +12033,7 @@
 		(uuid "7dc35ddb-705e-431c-875e-a785c2f7b273")
 	)
 	(label "OBD2 CAN H"
-		(at 31.75 162.56 0)
+		(at 39.37 160.02 0)
 		(effects
 			(font
 				(size 1 1)
@@ -13200,98 +12840,6 @@
 		)
 	)
 	(symbol
-		(lib_id "ETH3:C_small_PG")
-		(at 375.92 96.52 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "0b6bb430-c1cf-4374-8342-822add9d1860")
-		(property "Reference" "C24"
-			(at 371.348 99.06 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "100nF/50V-X7R_0805"
-			(at 374.015 88.265 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
-			(at 375.92 96.52 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 375.92 96.52 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" ""
-			(at 375.92 96.52 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Wartość wyśw." "100nF"
-			(at 372.11 101.092 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "cd283919-5caa-465c-a466-2915ecfb278c")
-		)
-		(pin "2"
-			(uuid "d7e9e28b-34cc-4336-abbd-a9bfc531aefc")
-		)
-		(instances
-			(project "LUCKFOX-LYRA-ZEROW"
-				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
-					(reference "C24")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:GND")
 		(at 41.91 48.26 270)
 		(unit 1)
@@ -13674,84 +13222,6 @@
 			(project "LUCKFOX-LYRA-ZEROW"
 				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
 					(reference "U14")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 375.92 104.14 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "15f6db87-b1e2-42a2-8f99-d92cb1aec2be")
-		(property "Reference" "#PWR056"
-			(at 375.92 110.49 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 375.92 109.22 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 375.92 104.14 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 375.92 104.14 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 375.92 104.14 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "0c199a1f-2607-41fb-ad61-637670bd8407")
-		)
-		(instances
-			(project "LUCKFOX-LYRA-ZEROW"
-				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
-					(reference "#PWR056")
 					(unit 1)
 				)
 			)
@@ -14562,6 +14032,84 @@
 			(project "LUCKFOX-LYRA-ZEROW"
 				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
 					(reference "F1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 284.48 137.16 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "26299dd5-cb41-4a9e-8bd8-e9eaf9efe74b")
+		(property "Reference" "#PWR056"
+			(at 284.48 143.51 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 284.48 142.24 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 284.48 137.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 284.48 137.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 284.48 137.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "7cf90c11-58ed-4b1d-b2b9-a051fb0658fb")
+		)
+		(instances
+			(project "LUCKFOX-LYRA-ZEROW"
+				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
+					(reference "#PWR056")
 					(unit 1)
 				)
 			)
@@ -16328,6 +15876,84 @@
 		)
 	)
 	(symbol
+		(lib_id "power:+3V3")
+		(at 284.48 121.92 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "4fd9bd96-b8ef-447a-977c-7d74cbced9a1")
+		(property "Reference" "#PWR055"
+			(at 284.48 125.73 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 284.48 116.84 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Package_DFN_QFN:Diodes_UDFN3810-9_TYPE_B"
+			(at 284.48 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 284.48 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at 284.48 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "ea7502ed-183b-459f-8b34-43fb01694b44")
+		)
+		(instances
+			(project "LUCKFOX-LYRA-ZEROW"
+				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
+					(reference "#PWR055")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 293.37 67.31 0)
 		(unit 1)
@@ -16647,6 +16273,98 @@
 			(project "LUCKFOX-LYRA-ZEROW"
 				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
 					(reference "C28")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "ETH3:C_small_PG")
+		(at 284.48 129.54 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "590937a5-e0d5-41e9-84ff-b3ca1109faef")
+		(property "Reference" "C23"
+			(at 279.908 132.08 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "100nF/50V-X7R_0805"
+			(at 282.575 121.285 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
+			(at 284.48 129.54 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 284.48 129.54 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 284.48 129.54 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Wartość wyśw." "100nF"
+			(at 280.67 134.112 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "e47e8c71-2cbe-4937-887b-ae8009d51be4")
+		)
+		(pin "2"
+			(uuid "bc498eb0-2e60-41ec-bbf7-bc9960d451a6")
+		)
+		(instances
+			(project "LUCKFOX-LYRA-ZEROW"
+				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
+					(reference "C23")
 					(unit 1)
 				)
 			)
@@ -19291,84 +19009,6 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3V3")
-		(at 375.92 88.9 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "811b1610-672f-47de-acb0-aa46622a8ff3")
-		(property "Reference" "#PWR055"
-			(at 375.92 92.71 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "+3V3"
-			(at 375.92 83.82 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Package_DFN_QFN:Diodes_UDFN3810-9_TYPE_B"
-			(at 375.92 88.9 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 375.92 88.9 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"+3V3\""
-			(at 375.92 88.9 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "0d1fc808-b1f8-4bf9-abdc-928017956e76")
-		)
-		(instances
-			(project "LUCKFOX-LYRA-ZEROW"
-				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
-					(reference "#PWR055")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:GND")
 		(at 64.77 139.7 0)
 		(unit 1)
@@ -20145,98 +19785,6 @@
 			(project "LUCKFOX-LYRA-ZEROW"
 				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
 					(reference "#PWR035")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "ETH3:C_small_PG")
-		(at 162.56 33.02 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "8d6ff88c-a237-4eb7-9123-3d1c6d101a28")
-		(property "Reference" "C29"
-			(at 163.83 35.306 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "10uF/50V-X5R(X7R)_1206"
-			(at 159.385 24.765 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
-			(at 162.56 33.02 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 162.56 33.02 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" ""
-			(at 162.56 33.02 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Wartość wyśw." "10uF"
-			(at 166.37 37.592 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "91bd2ee1-e558-4b54-9afd-83796be81cf0")
-		)
-		(pin "2"
-			(uuid "15d2e46a-f5fa-454b-96f7-28ea35280dd3")
-		)
-		(instances
-			(project "LUCKFOX-LYRA-ZEROW"
-				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
-					(reference "C29")
 					(unit 1)
 				)
 			)
@@ -22033,98 +21581,6 @@
 		)
 	)
 	(symbol
-		(lib_id "ETH3:C_small_PG")
-		(at 236.22 129.54 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "aae9e054-cae2-435d-9c37-397ca006f944")
-		(property "Reference" "C23"
-			(at 237.49 131.826 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "10uF/50V-X5R(X7R)_1206"
-			(at 233.045 121.285 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
-			(at 236.22 129.54 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 236.22 129.54 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" ""
-			(at 236.22 129.54 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Wartość wyśw." "10uF"
-			(at 240.03 134.112 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "fe49ea0a-c212-419a-bddf-91ef2b501563")
-		)
-		(pin "2"
-			(uuid "2e3f2f68-4c87-43f6-9967-4c408d99136c")
-		)
-		(instances
-			(project "LUCKFOX-LYRA-ZEROW"
-				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
-					(reference "C23")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:+3.3VA")
 		(at 144.78 69.85 90)
 		(unit 1)
@@ -22690,98 +22146,6 @@
 			(project "LUCKFOX-LYRA-ZEROW"
 				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
 					(reference "#PWR058")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "ETH3:C_small_PG")
-		(at 45.72 237.49 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "b514eb8b-a952-4c55-91b3-316c5622c11b")
-		(property "Reference" "C19"
-			(at 46.99 239.776 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "10uF/50V-X5R(X7R)_1206"
-			(at 42.545 229.235 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
-			(at 45.72 237.49 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 45.72 237.49 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" ""
-			(at 45.72 237.49 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Wartość wyśw." "10uF"
-			(at 49.53 242.062 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "bf648910-8141-460c-9123-0756abff2c10")
-		)
-		(pin "2"
-			(uuid "ce0b78d1-89ce-41ab-b6a7-e356a01814f2")
-		)
-		(instances
-			(project "LUCKFOX-LYRA-ZEROW"
-				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
-					(reference "C19")
 					(unit 1)
 				)
 			)
@@ -25827,190 +25191,6 @@
 			(project "LUCKFOX-LYRA-ZEROW"
 				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
 					(reference "#PWR062")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "ETH3:C_small_PG")
-		(at 382.27 96.52 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "f7f3f459-7039-44a2-b1ce-4a95166007fe")
-		(property "Reference" "C25"
-			(at 383.54 98.806 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "10uF/50V-X5R(X7R)_1206"
-			(at 379.095 88.265 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
-			(at 382.27 96.52 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 382.27 96.52 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" ""
-			(at 382.27 96.52 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Wartość wyśw." "10uF"
-			(at 386.08 101.092 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "cb523287-a884-4dac-b24f-45e5c4140fa1")
-		)
-		(pin "2"
-			(uuid "78ad8225-e4f4-4e5e-a888-75b1acc879ea")
-		)
-		(instances
-			(project "LUCKFOX-LYRA-ZEROW"
-				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
-					(reference "C25")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "ETH3:C_small_PG")
-		(at 191.77 132.08 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "f83b769a-a898-4952-8673-5ee302dda1c5")
-		(property "Reference" "C21"
-			(at 193.04 134.366 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "10uF/50V-X5R(X7R)_1206"
-			(at 188.595 123.825 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
-			(at 191.77 132.08 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 191.77 132.08 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" ""
-			(at 191.77 132.08 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Wartość wyśw." "10uF"
-			(at 195.58 136.652 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "f97c1b2c-cb41-41c0-a141-733d97080684")
-		)
-		(pin "2"
-			(uuid "68afc2e3-0e53-44c1-89a9-a48e887aa326")
-		)
-		(instances
-			(project "LUCKFOX-LYRA-ZEROW"
-				(path "/01a1a023-e48c-458b-aa28-b9cd6c31a0a1"
-					(reference "C21")
 					(unit 1)
 				)
 			)

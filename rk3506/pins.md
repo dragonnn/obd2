@@ -8,7 +8,6 @@ included.
 
 - Pin 3 — `TOUCH_SDA` — GPIO0_A0 — I2C2 SDA, 3.3 V host side
 - Pin 5 — `TOUCH_SCL` — GPIO0_A1 — I2C2 SCL, 3.3 V host side
-- Pin 7 — `UART1_TX` — GPIO0_A2 — enabled application UART transmit
 - Pin 8 — `UART0_TX` — GPIO0_C6 — reserved for a future debug console; not enabled
 - Pin 10 — `UART0_RX` — GPIO0_C7 — reserved for a future debug console; not enabled
 - Pin 11 — `TOUCH_INT` — GPIO0_A3 — falling-edge interrupt
@@ -19,6 +18,7 @@ included.
 - Pin 23 — `SPI1_SCLK` — GPIO0_B0 — SPI1 clock
 - Pin 24 — `SPI1_MISO` — GPIO0_B2 — SPI1 controller input
 - Pin 26 — `SPI1_MOSI` — GPIO0_B1 — SPI1 controller output
+- Pin 27 — `UART1_TX` — GPIO1_B1 — enabled application UART transmit
 - Pin 29 — `CAN1_TX` — GPIO1_B2 — second transceiver TXD
 - Pin 31 — `CAN1_RX` — GPIO1_B3 — second transceiver RXD
 - Pin 33 — `CAN0_TX` — GPIO1_C2 — first transceiver TXD
@@ -39,7 +39,7 @@ bottom.
 | 3.3 V | 3.3 V | 1 | 2 | 5 V | 5 V |
 | `TOUCH_SDA` | GPIO0_A0 | 3 | 4 | 5 V | 5 V |
 | `TOUCH_SCL` | GPIO0_A1 | 5 | 6 | GND | GND |
-| `UART1_TX` | GPIO0_A2 | 7 | 8 | GPIO0_C6 | `UART0_TX` (reserved) |
+| — | GPIO0_A2 | 7 | 8 | GPIO0_C6 | `UART0_TX` (reserved) |
 | GND | GND | 9 | 10 | GPIO0_C7 | `UART0_RX` (reserved) |
 | `TOUCH_INT` | GPIO0_A3 | 11 | 12 | GPIO0_B6 | `UART1_RX` |
 | `TOUCH_RST` | GPIO0_A4 | 13 | 14 | GND | GND |
@@ -49,7 +49,7 @@ bottom.
 | `SPI1_CS1` | GPIO0_A7 | 21 | 22 | GPIO0_B3 | — |
 | `SPI1_SCLK` | GPIO0_B0 | 23 | 24 | GPIO0_B2 | `SPI1_MISO` |
 | GND | GND | 25 | 26 | GPIO0_B1 | `SPI1_MOSI` |
-| — | GPIO1_B1 | 27 | 28 | GPIO1_D3 | — |
+| `UART1_TX` | GPIO1_B1 | 27 | 28 | GPIO1_D3 | — |
 | `CAN1_TX` | GPIO1_B2 | 29 | 30 | GND | GND |
 | `CAN1_RX` | GPIO1_B3 | 31 | 32 | GPIO1_D2 | — |
 | `CAN0_TX` | GPIO1_C2 | 33 | 34 | GND | GND |
@@ -92,7 +92,9 @@ The assignments come from the selected board device tree and its CO6300 include:
 - `kernel/arch/arm/boot/dts/rk3506-luckfox-lyra-co6300.dtsi`
 
 The SPI1 GPIO mux mapping is defined by the SDK's
-`sdk/kernel/arch/arm/boot/dts/rk3506-pinctrl.dtsi`.
+`sdk/kernel/arch/arm/boot/dts/rk3506-pinctrl.dtsi`. UART1 uses
+`rm_io24_uart1_tx` (GPIO1_B1, pin 27) and `rm_io14_uart1_rx` (GPIO0_B6,
+pin 12) from `sdk/kernel/arch/arm/boot/dts/rk3506-pinctrl-rmio.dtsi`.
 
 Physical connector numbering was checked against the official Luckfox Lyra
 Zero W schematic, connector `PI1`.
