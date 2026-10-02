@@ -5,4 +5,5 @@
 	(lib (name "Core52840") (type "KiCad") (uri "${KIPRJMOD}/Core52840.kicad_sym") (options "") (descr ""))
 	(lib (name "74AUP2G34") (type "KiCad") (uri "${KIPRJMOD}/74AUP2G34.kicad_sym") (options "") (descr ""))
 	(lib (name "RAA211403") (type "KiCad") (uri "${KIPRJMOD}/RAA211403.kicad_sym") (options "") (descr ""))
+	(lib (name "SN74LVC1G74") (type "KiCad") (uri "${KIPRJMOD}/SN74LVC1G74.kicad_sym") (options "") (descr ""))
 )
