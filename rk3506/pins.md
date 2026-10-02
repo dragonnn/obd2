@@ -80,7 +80,8 @@ The UART pins are 3.3 V TTL logic. Connect UART1 TX to the external device's RX,
 UART1 RX to its TX, and use a common ground. Do not connect RS-232 voltage levels
 or 5 V UART signals directly. The PCB nets named `LYRA_UART0_RX` and
 `LYRA_UART0_TX` use UART2 (`/dev/ttyS2`): RX on pin 36 and TX on pin 38.
-Both UART1 and UART2 have TX and RX DMA enabled. UART0 remains disabled;
+Both UART1 and UART2 have TX and RX DMA enabled. CAN0 and CAN1 receive DMA
+use DMA1 to leave DMA0 capacity for SPI1 and both UARTs. UART0 remains disabled;
 its fixed RX and TX pins are 10 and 8.
 
 SPI1 is enabled as a controller with chip select 1. Its userspace device is
