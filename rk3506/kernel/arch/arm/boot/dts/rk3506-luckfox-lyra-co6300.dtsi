@@ -72,7 +72,8 @@
 
 	compatible = "boe,co6300";
 	backlight = <&backlight>;
-	reset-gpios = <&gpio0 RK_PB5 GPIO_ACTIVE_LOW>;
+	/* PCB LCD_RST: U1 pin 28 (GPIO1_D3). */
+	reset-gpios = <&gpio1 RK_PD3 GPIO_ACTIVE_LOW>;
 	dsi,format = <MIPI_DSI_FMT_RGB888>;
 	bus-format = <MEDIA_BUS_FMT_RGB888_3X8>;
 	dsi,lanes = <1>;

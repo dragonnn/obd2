@@ -119,17 +119,27 @@
 
 /**********UART**********/
 &uart1 {
+	/* PCB U1: TX pin 27 (GPIO1_B1), RX pin 26 (GPIO0_B1). */
 	dma-names = "tx", "rx";
 	pinctrl-names = "default";
-	pinctrl-0 = <&rm_io24_uart1_tx &rm_io14_uart1_rx>;
+	pinctrl-0 = <&rm_io24_uart1_tx &rm_io9_uart1_rx>;
+	status = "okay";
+};
+
+&uart2 {
+	/* PCB U1: TX pin 38 (GPIO0_C1), RX pin 36 (GPIO1_D1). */
+	dma-names = "tx", "rx";
+	pinctrl-names = "default";
+	pinctrl-0 = <&rm_io17_uart2_tx &rm_io29_uart2_rx>;
 	status = "okay";
 };
 
 /**********SPI**********/
 &spi1 {
-	/* CS0 is GPIO0_B6, already used by UART1 RX. Use CS1 instead. */
+	/* PCB U1: CS1 pin 21, SCLK pin 23, MISO pin 22, MOSI pin 18. */
 	pinctrl-names = "default";
-	pinctrl-0 = <&spi1_csn1_pins &spi1_clk_pins>;
+	pinctrl-0 = <&rm_io7_spi1_csn1 &rm_io8_spi1_clk
+		     &rm_io11_spi1_miso &rm_io12_spi1_mosi>;
 	status = "okay";
 
 	spidev@1 {

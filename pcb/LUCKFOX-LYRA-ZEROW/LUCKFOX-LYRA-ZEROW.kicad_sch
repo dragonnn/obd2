@@ -9054,6 +9054,16 @@
 	)
 	(wire
 		(pts
+			(xy 93.98 68.58) (xy 100.33 68.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "72b00b6a-6205-4488-9b8d-aac347e80310")
+	)
+	(wire
+		(pts
 			(xy 307.34 152.4) (xy 313.69 152.4)
 		)
 		(stroke
@@ -9301,16 +9311,6 @@
 			(type default)
 		)
 		(uuid "7f48e38f-cd66-43e9-b5d3-d48f1af25fa3")
-	)
-	(wire
-		(pts
-			(xy 93.98 76.2) (xy 100.33 76.2)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7f70a9b6-5ce2-4cfa-972c-45d356ab601d")
 	)
 	(wire
 		(pts
@@ -12022,16 +12022,6 @@
 		)
 		(uuid "79cd51a5-95b6-4479-a5b6-4b5fdb3d4ab6")
 	)
-	(label "LYRA_UART1_RX"
-		(at 100.33 76.2 0)
-		(effects
-			(font
-				(size 1 1)
-			)
-			(justify left bottom)
-		)
-		(uuid "7dc35ddb-705e-431c-875e-a785c2f7b273")
-	)
 	(label "OBD2 CAN H"
 		(at 39.37 160.02 0)
 		(effects
@@ -12241,6 +12231,16 @@
 			(justify right bottom)
 		)
 		(uuid "9ad71fb8-c7e6-4e33-8b73-53fad980925d")
+	)
+	(label "LYRA_UART1_RX"
+		(at 100.33 68.58 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "9b2fdb78-1b60-4c53-9838-cc919147f5a7")
 	)
 	(label "NRF_CS2_CAN2"
 		(at 245.11 92.71 0)
