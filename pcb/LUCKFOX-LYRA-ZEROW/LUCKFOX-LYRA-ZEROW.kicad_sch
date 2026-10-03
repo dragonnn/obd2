@@ -5092,7 +5092,7 @@
 				(pin bidirectional line
 					(at 30.48 8.89 180)
 					(length 5.08)
-					(name "RMIO31_/_GPIO1_D3"
+					(name "RMIO31_/_GPIO0_B5"
 						(effects
 							(font
 								(size 1 1)
@@ -5308,7 +5308,7 @@
 				(pin bidirectional line
 					(at 30.48 -6.35 180)
 					(length 5.08)
-					(name "RMIO13_/_GPIO0_B5"
+					(name "RMIO13_/_GPIO1_D3"
 						(effects
 							(font
 								(size 1 1)

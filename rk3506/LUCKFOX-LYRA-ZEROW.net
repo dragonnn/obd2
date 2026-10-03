@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "/home/mateusz/Kia/kia-obd2-esp32c3-v2/pcb/LUCKFOX-LYRA-ZEROW/LUCKFOX-LYRA-ZEROW.kicad_sch")
-		(date "2026-10-02T21:22:00")
+		(date "2026-10-02T22:23:14")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -5751,7 +5751,7 @@
 				)
 				(pin
 					(num "16")
-					(name "RMIO31_/_GPIO1_D3")
+					(name "RMIO31_/_GPIO0_B5")
 					(type "bidirectional")
 				)
 				(pin
@@ -5811,7 +5811,7 @@
 				)
 				(pin
 					(num "28")
-					(name "RMIO13_/_GPIO0_B5")
+					(name "RMIO13_/_GPIO1_D3")
 					(type "bidirectional")
 				)
 				(pin
@@ -6544,7 +6544,7 @@
 			(node
 				(ref "U1")
 				(pin "28")
-				(pinfunction "RMIO13_/_GPIO0_B5_28")
+				(pinfunction "RMIO13_/_GPIO1_D3_28")
 				(pintype "bidirectional")
 			)
 		)
@@ -8251,12 +8251,12 @@
 		)
 		(net
 			(code "87")
-			(name "unconnected-(U1-RMIO31_{slash}_GPIO1_D3-Pad16)")
+			(name "unconnected-(U1-RMIO31_{slash}_GPIO0_B5-Pad16)")
 			(class "Default")
 			(node
 				(ref "U1")
 				(pin "16")
-				(pinfunction "RMIO31_/_GPIO1_D3_16")
+				(pinfunction "RMIO31_/_GPIO0_B5_16")
 				(pintype "bidirectional")
 			)
 		)

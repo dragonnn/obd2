@@ -18,8 +18,8 @@ physical pin numbers and the official board schematic.
 - Pin 21 — `SPI1_CS1` — GPIO0_A7 — SPI1 chip select 1, active low
 - Pin 22 — `SPI1_MISO` — GPIO0_B3 — SPI1 controller input
 - Pin 23 — `SPI1_SCLK` — GPIO0_B0 — SPI1 clock
-- Pin 26 — `UART1_RX` — GPIO0_B1 — enabled application UART receive
-- Pin 27 — `UART1_TX` — GPIO1_B1 — enabled application UART transmit
+- Pin 26 — `UART1_RX` — GPIO0_B1 — UART1 receive (`/dev/ttyS1`)
+- Pin 27 — `UART1_TX` — GPIO1_B1 — UART1 transmit (`/dev/ttyS1`)
 - Pin 28 — `LCD_RST` — GPIO1_D3 — active-low reset
 - Pin 29 — `CAN1_TX` — GPIO1_B2 — second transceiver TXD
 - Pin 31 — `CAN1_RX` — GPIO1_B3 — second transceiver RXD
@@ -52,13 +52,13 @@ bottom.
 | — | GPIO0_A6 | 19 | 20 | GND | GND |
 | `SPI1_CS1` | GPIO0_A7 | 21 | 22 | GPIO0_B3 | `SPI1_MISO` |
 | `SPI1_SCLK` | GPIO0_B0 | 23 | 24 | GPIO0_B2 | — |
-| GND | GND | 25 | 26 | GPIO0_B1 | `UART1_RX` |
-| `UART1_TX` | GPIO1_B1 | 27 | 28 | GPIO1_D3 | `LCD_RST` |
+| GND | GND | 25 | 26 | GPIO0_B1 | `UART1_RX` (`/dev/ttyS1`) |
+| `UART1_TX` (`/dev/ttyS1`) | GPIO1_B1 | 27 | 28 | GPIO1_D3 | `LCD_RST` |
 | `CAN1_TX` | GPIO1_B2 | 29 | 30 | GND | GND |
 | `CAN1_RX` | GPIO1_B3 | 31 | 32 | GPIO1_D2 | — |
 | `CAN0_TX` | GPIO1_C2 | 33 | 34 | GND | GND |
-| — | GPIO0_C0 | 35 | 36 | GPIO1_D1 | `LYRA_UART0_RX` (UART2 RX) |
-| `CAN0_RX` | GPIO1_C3 | 37 | 38 | GPIO0_C1 | `LYRA_UART0_TX` (UART2 TX) |
+| — | GPIO0_C0 | 35 | 36 | GPIO1_D1 | `LYRA_UART0_RX` (UART2 RX, `/dev/ttyS2`) |
+| `CAN0_RX` | GPIO1_C3 | 37 | 38 | GPIO0_C1 | `LYRA_UART0_TX` (UART2 TX, `/dev/ttyS2`) |
 | GND | GND | 39 | 40 | GPIO0_C2 | — |
 
 ## Power and ground
@@ -76,7 +76,8 @@ CAN-H or CAN-L. The touch entries describe the adapter/host side. The bare
 panel touch signals use different voltage levels and must not be wired directly
 from this table without the appropriate adapter or level translation.
 
-The UART pins are 3.3 V TTL logic. Connect UART1 TX to the external device's RX,
+The UART pins are 3.3 V TTL logic. UART1 (`/dev/ttyS1`) uses RX pin 26 and
+TX pin 27. Connect UART1 TX to the external device's RX,
 UART1 RX to its TX, and use a common ground. Do not connect RS-232 voltage levels
 or 5 V UART signals directly. The PCB nets named `LYRA_UART0_RX` and
 `LYRA_UART0_TX` use UART2 (`/dev/ttyS2`): RX on pin 36 and TX on pin 38.
