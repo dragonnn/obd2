@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "/home/mateusz/Kia/kia-obd2-esp32c3-v2/pcb/LUCKFOX-LYRA-ZEROW/LUCKFOX-LYRA-ZEROW.kicad_sch")
-		(date "2026-10-02T22:23:14")
+		(date "2026-10-03T09:34:12")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -5711,7 +5711,7 @@
 				)
 				(pin
 					(num "8")
-					(name "RMIO17_/_GPIO0_C1")
+					(name "RMIO22_/_GPIO0_C6")
 					(type "bidirectional")
 				)
 				(pin
@@ -5721,7 +5721,7 @@
 				)
 				(pin
 					(num "10")
-					(name "RMIO29_/_GPIO1_D1")
+					(name "RMIO23_/_GPIO0_C7")
 					(type "bidirectional")
 				)
 				(pin
@@ -5731,7 +5731,7 @@
 				)
 				(pin
 					(num "12")
-					(name "RMIO30_/_GPIO1_D2")
+					(name "RMIO14_/_GPIO0_B6")
 					(type "bidirectional")
 				)
 				(pin
@@ -5751,7 +5751,7 @@
 				)
 				(pin
 					(num "16")
-					(name "RMIO31_/_GPIO0_B5")
+					(name "RMIO13_/_GPIO0_B5")
 					(type "bidirectional")
 				)
 				(pin
@@ -5761,7 +5761,7 @@
 				)
 				(pin
 					(num "18")
-					(name "RMIO9_/_GPIO0_B1")
+					(name "RMIO12_/_GPIO0_B4")
 					(type "bidirectional")
 				)
 				(pin
@@ -5781,7 +5781,7 @@
 				)
 				(pin
 					(num "22")
-					(name "RMIO10_/_GPIO0_B2")
+					(name "RMIO11_/_GPIO0_B3")
 					(type "bidirectional")
 				)
 				(pin
@@ -5791,7 +5791,7 @@
 				)
 				(pin
 					(num "24")
-					(name "RMIO11_/_GPIO0_B3")
+					(name "RMIO10_/_GPIO0_B2")
 					(type "bidirectional")
 				)
 				(pin
@@ -5801,7 +5801,7 @@
 				)
 				(pin
 					(num "26")
-					(name "RMIO12_/_GPIO0_B4")
+					(name "RMIO9_/_GPIO0_B1")
 					(type "bidirectional")
 				)
 				(pin
@@ -5811,7 +5811,7 @@
 				)
 				(pin
 					(num "28")
-					(name "RMIO13_/_GPIO1_D3")
+					(name "RMIO31_/_GPIO1_D3")
 					(type "bidirectional")
 				)
 				(pin
@@ -5831,7 +5831,7 @@
 				)
 				(pin
 					(num "32")
-					(name "RMIO14_/_GPIO0_B6")
+					(name "RMIO30_/_GPIO1_D2")
 					(type "bidirectional")
 				)
 				(pin
@@ -5851,7 +5851,7 @@
 				)
 				(pin
 					(num "36")
-					(name "RMIO23_/_GPIO0_C7")
+					(name "RMIO29_/_GPIO1_D1")
 					(type "bidirectional")
 				)
 				(pin
@@ -5861,7 +5861,7 @@
 				)
 				(pin
 					(num "38")
-					(name "RMIO22_/_GPIO0_C6")
+					(name "RMIO17_/_GPIO0_C1")
 					(type "bidirectional")
 				)
 				(pin
@@ -6544,7 +6544,7 @@
 			(node
 				(ref "U1")
 				(pin "28")
-				(pinfunction "RMIO13_/_GPIO1_D3_28")
+				(pinfunction "RMIO31_/_GPIO1_D3_28")
 				(pintype "bidirectional")
 			)
 		)
@@ -6605,7 +6605,7 @@
 			(node
 				(ref "U1")
 				(pin "22")
-				(pinfunction "RMIO10_/_GPIO0_B2_22")
+				(pinfunction "RMIO11_/_GPIO0_B3_22")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6626,7 +6626,7 @@
 			(node
 				(ref "U1")
 				(pin "18")
-				(pinfunction "RMIO9_/_GPIO0_B1_18")
+				(pinfunction "RMIO12_/_GPIO0_B4_18")
 				(pintype "bidirectional")
 			)
 		)
@@ -6653,7 +6653,7 @@
 			(node
 				(ref "U1")
 				(pin "36")
-				(pinfunction "RMIO23_/_GPIO0_C7_36")
+				(pinfunction "RMIO29_/_GPIO1_D1_36")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6670,7 +6670,7 @@
 			(node
 				(ref "U1")
 				(pin "38")
-				(pinfunction "RMIO22_/_GPIO0_C6_38")
+				(pinfunction "RMIO17_/_GPIO0_C1_38")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6687,7 +6687,7 @@
 			(node
 				(ref "U1")
 				(pin "26")
-				(pinfunction "RMIO12_/_GPIO0_B4_26")
+				(pinfunction "RMIO9_/_GPIO0_B1_26")
 				(pintype "bidirectional")
 			)
 			(node
@@ -8174,45 +8174,45 @@
 		)
 		(net
 			(code "80")
-			(name "unconnected-(U1-RMIO11_{slash}_GPIO0_B3-Pad24)")
+			(name "unconnected-(U1-RMIO10_{slash}_GPIO0_B2-Pad24)")
 			(class "Default")
 			(node
 				(ref "U1")
 				(pin "24")
-				(pinfunction "RMIO11_/_GPIO0_B3_24")
+				(pinfunction "RMIO10_/_GPIO0_B2_24")
 				(pintype "bidirectional")
 			)
 		)
 		(net
 			(code "81")
-			(name "unconnected-(U1-RMIO14_{slash}_GPIO0_B6-Pad32)")
+			(name "unconnected-(U1-RMIO13_{slash}_GPIO0_B5-Pad16)")
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "32")
-				(pinfunction "RMIO14_/_GPIO0_B6_32")
+				(pin "16")
+				(pinfunction "RMIO13_/_GPIO0_B5_16")
 				(pintype "bidirectional")
 			)
 		)
 		(net
 			(code "82")
+			(name "unconnected-(U1-RMIO14_{slash}_GPIO0_B6-Pad12)")
+			(class "Default")
+			(node
+				(ref "U1")
+				(pin "12")
+				(pinfunction "RMIO14_/_GPIO0_B6_12")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "83")
 			(name "unconnected-(U1-RMIO16_{slash}_GPIO0_C0-Pad35)")
 			(class "Default")
 			(node
 				(ref "U1")
 				(pin "35")
 				(pinfunction "RMIO16_/_GPIO0_C0_35")
-				(pintype "bidirectional")
-			)
-		)
-		(net
-			(code "83")
-			(name "unconnected-(U1-RMIO17_{slash}_GPIO0_C1-Pad8)")
-			(class "Default")
-			(node
-				(ref "U1")
-				(pin "8")
-				(pinfunction "RMIO17_/_GPIO0_C1_8")
 				(pintype "bidirectional")
 			)
 		)
@@ -8229,34 +8229,34 @@
 		)
 		(net
 			(code "85")
-			(name "unconnected-(U1-RMIO29_{slash}_GPIO1_D1-Pad10)")
+			(name "unconnected-(U1-RMIO22_{slash}_GPIO0_C6-Pad8)")
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "10")
-				(pinfunction "RMIO29_/_GPIO1_D1_10")
+				(pin "8")
+				(pinfunction "RMIO22_/_GPIO0_C6_8")
 				(pintype "bidirectional")
 			)
 		)
 		(net
 			(code "86")
-			(name "unconnected-(U1-RMIO30_{slash}_GPIO1_D2-Pad12)")
+			(name "unconnected-(U1-RMIO23_{slash}_GPIO0_C7-Pad10)")
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "12")
-				(pinfunction "RMIO30_/_GPIO1_D2_12")
+				(pin "10")
+				(pinfunction "RMIO23_/_GPIO0_C7_10")
 				(pintype "bidirectional")
 			)
 		)
 		(net
 			(code "87")
-			(name "unconnected-(U1-RMIO31_{slash}_GPIO0_B5-Pad16)")
+			(name "unconnected-(U1-RMIO30_{slash}_GPIO1_D2-Pad32)")
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "16")
-				(pinfunction "RMIO31_/_GPIO0_B5_16")
+				(pin "32")
+				(pinfunction "RMIO30_/_GPIO1_D2_32")
 				(pintype "bidirectional")
 			)
 		)

@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "/home/mateusz/Kia/kia-obd2-esp32c3-v2/pcb/LUCKFOX-LYRA-ZEROW/LUCKFOX-LYRA-ZEROW.kicad_sch")
-		(date "2026-10-02T13:41:33")
+		(date "2026-10-03T09:34:12")
 		(tool "Eeschema 10.0.6")
 		(sheet
 			(number "1")
@@ -895,58 +895,6 @@
 			)
 		)
 		(comp
-			(ref "C19")
-			(value "10uF/50V-X5R(X7R)_1206")
-			(footprint "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder")
-			(fields
-				(field
-					(name "Wartość wyśw.") "10uF")
-				(field
-					(name "Footprint") "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description")
-				)
-			)
-			(libsource
-				(lib "ETH3")
-				(part "C_small_PG")
-				(description "")
-			)
-			(property
-				(name "Wartość wyśw.")
-				(value "10uF")
-			)
-			(property
-				(name "Sheetname")
-				(value "Root")
-			)
-			(property
-				(name "Sheetfile")
-				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "b514eb8b-a952-4c55-91b3-316c5622c11b")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
 			(ref "C20")
 			(value "100nF/50V-X7R_0805")
 			(footprint "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder")
@@ -984,58 +932,6 @@
 				(tstamps "/")
 			)
 			(tstamps "1cac1342-c30a-4ee5-87e8-103010802baf")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "C21")
-			(value "10uF/50V-X5R(X7R)_1206")
-			(footprint "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder")
-			(fields
-				(field
-					(name "Wartość wyśw.") "10uF")
-				(field
-					(name "Footprint") "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description")
-				)
-			)
-			(libsource
-				(lib "ETH3")
-				(part "C_small_PG")
-				(description "")
-			)
-			(property
-				(name "Wartość wyśw.")
-				(value "10uF")
-			)
-			(property
-				(name "Sheetname")
-				(value "Root")
-			)
-			(property
-				(name "Sheetfile")
-				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "f83b769a-a898-4952-8673-5ee302dda1c5")
 			(units
 				(unit
 					(name "A")
@@ -1104,58 +1000,6 @@
 		)
 		(comp
 			(ref "C23")
-			(value "10uF/50V-X5R(X7R)_1206")
-			(footprint "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder")
-			(fields
-				(field
-					(name "Wartość wyśw.") "10uF")
-				(field
-					(name "Footprint") "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description")
-				)
-			)
-			(libsource
-				(lib "ETH3")
-				(part "C_small_PG")
-				(description "")
-			)
-			(property
-				(name "Wartość wyśw.")
-				(value "10uF")
-			)
-			(property
-				(name "Sheetname")
-				(value "Root")
-			)
-			(property
-				(name "Sheetfile")
-				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "aae9e054-cae2-435d-9c37-397ca006f944")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "C24")
 			(value "100nF/50V-X7R_0805")
 			(footprint "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder")
 			(fields
@@ -1191,59 +1035,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "0b6bb430-c1cf-4374-8342-822add9d1860")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "C25")
-			(value "10uF/50V-X5R(X7R)_1206")
-			(footprint "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder")
-			(fields
-				(field
-					(name "Wartość wyśw.") "10uF")
-				(field
-					(name "Footprint") "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description")
-				)
-			)
-			(libsource
-				(lib "ETH3")
-				(part "C_small_PG")
-				(description "")
-			)
-			(property
-				(name "Wartość wyśw.")
-				(value "10uF")
-			)
-			(property
-				(name "Sheetname")
-				(value "Root")
-			)
-			(property
-				(name "Sheetfile")
-				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "f7f3f459-7039-44a2-b1ce-4a95166007fe")
+			(tstamps "590937a5-e0d5-41e9-84ff-b3ca1109faef")
 			(units
 				(unit
 					(name "A")
@@ -1400,58 +1192,6 @@
 				(tstamps "/")
 			)
 			(tstamps "527c426e-550e-4342-a713-7f960740c849")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "C29")
-			(value "10uF/50V-X5R(X7R)_1206")
-			(footprint "Diode_SMD:D_1206_3216Metric")
-			(fields
-				(field
-					(name "Wartość wyśw.") "10uF")
-				(field
-					(name "Footprint") "Diode_SMD:D_1206_3216Metric")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description")
-				)
-			)
-			(libsource
-				(lib "ETH3")
-				(part "C_small_PG")
-				(description "")
-			)
-			(property
-				(name "Wartość wyśw.")
-				(value "10uF")
-			)
-			(property
-				(name "Sheetname")
-				(value "Root")
-			)
-			(property
-				(name "Sheetfile")
-				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "8d6ff88c-a237-4eb7-9123-3d1c6d101a28")
 			(units
 				(unit
 					(name "A")
@@ -1676,7 +1416,7 @@
 		)
 		(comp
 			(ref "C34")
-			(value "100nF/50V-X7R_0805")
+			(value "22uF / 50V")
 			(footprint "Capacitor_SMD:C_2220_5750Metric_Pad1.97x5.40mm_HandSolder")
 			(fields
 				(field
@@ -1950,14 +1690,14 @@
 		)
 		(comp
 			(ref "DL2")
-			(value "SRP7028CC-220M (SRP7028A-220M), (SRP7028AA-220M), (SRP6540-220M)")
-			(footprint "Inductor_SMD:L_Taiyo-Yuden_NR-50xx_HandSoldering")
+			(value "SRP7028CC-220M/150M")
+			(footprint "Inductor_SMD:L_Bourns_SRP7028A_7.3x6.6mm")
 			(description "Dla układu LMR5410 dławik 150uH")
 			(fields
 				(field
-					(name "Wartość wyśw.") "SRP7028CC-220M/NRS5030T220MMGJ")
+					(name "Wartość wyśw.") "SRP7028CC-220M/150M")
 				(field
-					(name "Footprint") "Inductor_SMD:L_Taiyo-Yuden_NR-50xx_HandSoldering")
+					(name "Footprint") "Inductor_SMD:L_Bourns_SRP7028A_7.3x6.6mm")
 				(field
 					(name "Datasheet")
 				)
@@ -1971,7 +1711,7 @@
 			)
 			(property
 				(name "Wartość wyśw.")
-				(value "SRP7028CC-220M/NRS5030T220MMGJ")
+				(value "SRP7028CC-220M/150M")
 			)
 			(property
 				(name "Sheetname")
@@ -3843,12 +3583,12 @@
 		(comp
 			(ref "U4")
 			(value "MCP2518FD-xQBB")
-			(footprint "Package_DFN_QFN:DFN-14-1EP_3x4.5mm_P0.65mm_EP1.65x4.25mm")
+			(footprint "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm")
 			(datasheet "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/External-CAN-FD-Controller-with-SPI-Interface-DS20006027B.pdf")
 			(description "CAN FD Controller with SPI Interface, up to 8 Mbps, Vdd 2.7..5.5V,  functional safety ready, VDFN-14")
 			(fields
 				(field
-					(name "Footprint") "Package_DFN_QFN:DFN-14-1EP_3x4.5mm_P0.65mm_EP1.65x4.25mm")
+					(name "Footprint") "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm")
 				(field
 					(name "Datasheet") "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/External-CAN-FD-Controller-with-SPI-Interface-DS20006027B.pdf")
 				(field
@@ -4080,12 +3820,12 @@
 		(comp
 			(ref "U7")
 			(value "MCP2518FD-xQBB")
-			(footprint "Package_DFN_QFN:DFN-14-1EP_3x4.5mm_P0.65mm_EP1.65x4.25mm")
+			(footprint "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm")
 			(datasheet "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/External-CAN-FD-Controller-with-SPI-Interface-DS20006027B.pdf")
 			(description "CAN FD Controller with SPI Interface, up to 8 Mbps, Vdd 2.7..5.5V,  functional safety ready, VDFN-14")
 			(fields
 				(field
-					(name "Footprint") "Package_DFN_QFN:DFN-14-1EP_3x4.5mm_P0.65mm_EP1.65x4.25mm")
+					(name "Footprint") "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm")
 				(field
 					(name "Datasheet") "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/External-CAN-FD-Controller-with-SPI-Interface-DS20006027B.pdf")
 				(field
@@ -5971,7 +5711,7 @@
 				)
 				(pin
 					(num "8")
-					(name "RMIO17_/_GPIO0_C1")
+					(name "RMIO22_/_GPIO0_C6")
 					(type "bidirectional")
 				)
 				(pin
@@ -5981,7 +5721,7 @@
 				)
 				(pin
 					(num "10")
-					(name "RMIO29_/_GPIO1_D1")
+					(name "RMIO23_/_GPIO0_C7")
 					(type "bidirectional")
 				)
 				(pin
@@ -5991,7 +5731,7 @@
 				)
 				(pin
 					(num "12")
-					(name "RMIO30_/_GPIO1_D2")
+					(name "RMIO14_/_GPIO0_B6")
 					(type "bidirectional")
 				)
 				(pin
@@ -6011,7 +5751,7 @@
 				)
 				(pin
 					(num "16")
-					(name "RMIO31_/_GPIO1_D3")
+					(name "RMIO13_/_GPIO0_B5")
 					(type "bidirectional")
 				)
 				(pin
@@ -6021,7 +5761,7 @@
 				)
 				(pin
 					(num "18")
-					(name "RMIO9_/_GPIO0_B1")
+					(name "RMIO12_/_GPIO0_B4")
 					(type "bidirectional")
 				)
 				(pin
@@ -6041,7 +5781,7 @@
 				)
 				(pin
 					(num "22")
-					(name "RMIO10_/_GPIO0_B2")
+					(name "RMIO11_/_GPIO0_B3")
 					(type "bidirectional")
 				)
 				(pin
@@ -6051,7 +5791,7 @@
 				)
 				(pin
 					(num "24")
-					(name "RMIO11_/_GPIO0_B3")
+					(name "RMIO10_/_GPIO0_B2")
 					(type "bidirectional")
 				)
 				(pin
@@ -6061,7 +5801,7 @@
 				)
 				(pin
 					(num "26")
-					(name "RMIO12_/_GPIO0_B4")
+					(name "RMIO9_/_GPIO0_B1")
 					(type "bidirectional")
 				)
 				(pin
@@ -6071,7 +5811,7 @@
 				)
 				(pin
 					(num "28")
-					(name "RMIO13_/_GPIO0_B5")
+					(name "RMIO31_/_GPIO1_D3")
 					(type "bidirectional")
 				)
 				(pin
@@ -6091,7 +5831,7 @@
 				)
 				(pin
 					(num "32")
-					(name "RMIO14_/_GPIO0_B6")
+					(name "RMIO30_/_GPIO1_D2")
 					(type "bidirectional")
 				)
 				(pin
@@ -6111,7 +5851,7 @@
 				)
 				(pin
 					(num "36")
-					(name "RMIO23_/_GPIO0_C7")
+					(name "RMIO29_/_GPIO1_D1")
 					(type "bidirectional")
 				)
 				(pin
@@ -6121,7 +5861,7 @@
 				)
 				(pin
 					(num "38")
-					(name "RMIO22_/_GPIO0_C6")
+					(name "RMIO17_/_GPIO0_C1")
 					(type "bidirectional")
 				)
 				(pin
@@ -6349,11 +6089,6 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "C29")
-				(pin "1")
-				(pintype "passive")
-			)
-			(node
 				(ref "C30")
 				(pin "1")
 				(pintype "passive")
@@ -6436,17 +6171,7 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "C19")
-				(pin "1")
-				(pintype "passive")
-			)
-			(node
 				(ref "C20")
-				(pin "1")
-				(pintype "passive")
-			)
-			(node
-				(ref "C21")
 				(pin "1")
 				(pintype "passive")
 			)
@@ -6457,16 +6182,6 @@
 			)
 			(node
 				(ref "C23")
-				(pin "1")
-				(pintype "passive")
-			)
-			(node
-				(ref "C24")
-				(pin "1")
-				(pintype "passive")
-			)
-			(node
-				(ref "C25")
 				(pin "1")
 				(pintype "passive")
 			)
@@ -6829,7 +6544,7 @@
 			(node
 				(ref "U1")
 				(pin "28")
-				(pinfunction "RMIO13_/_GPIO0_B5_28")
+				(pinfunction "RMIO31_/_GPIO1_D3_28")
 				(pintype "bidirectional")
 			)
 		)
@@ -6890,7 +6605,7 @@
 			(node
 				(ref "U1")
 				(pin "22")
-				(pinfunction "RMIO10_/_GPIO0_B2_22")
+				(pinfunction "RMIO11_/_GPIO0_B3_22")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6911,7 +6626,7 @@
 			(node
 				(ref "U1")
 				(pin "18")
-				(pinfunction "RMIO9_/_GPIO0_B1_18")
+				(pinfunction "RMIO12_/_GPIO0_B4_18")
 				(pintype "bidirectional")
 			)
 		)
@@ -6938,7 +6653,7 @@
 			(node
 				(ref "U1")
 				(pin "36")
-				(pinfunction "RMIO23_/_GPIO0_C7_36")
+				(pinfunction "RMIO29_/_GPIO1_D1_36")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6955,7 +6670,7 @@
 			(node
 				(ref "U1")
 				(pin "38")
-				(pinfunction "RMIO22_/_GPIO0_C6_38")
+				(pinfunction "RMIO17_/_GPIO0_C1_38")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6971,8 +6686,8 @@
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "32")
-				(pinfunction "RMIO14_/_GPIO0_B6_32")
+				(pin "26")
+				(pinfunction "RMIO9_/_GPIO0_B1_26")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6988,8 +6703,8 @@
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "7")
-				(pinfunction "RMIO2_/_GPIO0_A2_7")
+				(pin "27")
+				(pinfunction "RMIO24_/_GPIO1_B1_27")
 				(pintype "bidirectional")
 			)
 			(node
@@ -7291,23 +7006,6 @@
 		)
 		(net
 			(code "39")
-			(name "/NRF_SCA")
-			(class "Default")
-			(node
-				(ref "J2")
-				(pin "3")
-				(pinfunction "Pin_3_3")
-				(pintype "passive")
-			)
-			(node
-				(ref "U2")
-				(pin "16")
-				(pinfunction "P1.09_16")
-				(pintype "unspecified")
-			)
-		)
-		(net
-			(code "40")
 			(name "/NRF_SCK")
 			(class "Default")
 			(node
@@ -7336,7 +7034,7 @@
 			)
 		)
 		(net
-			(code "41")
+			(code "40")
 			(name "/NRF_SCL")
 			(class "Default")
 			(node
@@ -7349,6 +7047,23 @@
 				(ref "U2")
 				(pin "17")
 				(pinfunction "P0.12_17")
+				(pintype "unspecified")
+			)
+		)
+		(net
+			(code "41")
+			(name "/NRF_SDA")
+			(class "Default")
+			(node
+				(ref "J2")
+				(pin "3")
+				(pinfunction "Pin_3_3")
+				(pintype "passive")
+			)
+			(node
+				(ref "U2")
+				(pin "16")
+				(pinfunction "P1.09_16")
 				(pintype "unspecified")
 			)
 		)
@@ -7509,8 +7224,8 @@
 			(class "Default")
 			(node
 				(ref "J1")
-				(pin "3")
-				(pinfunction "Pin_3_3")
+				(pin "2")
+				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
 			(node
@@ -7537,8 +7252,8 @@
 			(class "Default")
 			(node
 				(ref "J1")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(pin "3")
+				(pinfunction "Pin_3_3")
 				(pintype "passive")
 			)
 			(node
@@ -7653,11 +7368,6 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "C19")
-				(pin "2")
-				(pintype "passive")
-			)
-			(node
 				(ref "C2")
 				(pin "1")
 				(pintype "passive")
@@ -7668,27 +7378,12 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "C21")
-				(pin "2")
-				(pintype "passive")
-			)
-			(node
 				(ref "C22")
 				(pin "2")
 				(pintype "passive")
 			)
 			(node
 				(ref "C23")
-				(pin "2")
-				(pintype "passive")
-			)
-			(node
-				(ref "C24")
-				(pin "2")
-				(pintype "passive")
-			)
-			(node
-				(ref "C25")
 				(pin "2")
 				(pintype "passive")
 			)
@@ -7704,11 +7399,6 @@
 			)
 			(node
 				(ref "C28")
-				(pin "2")
-				(pintype "passive")
-			)
-			(node
-				(ref "C29")
 				(pin "2")
 				(pintype "passive")
 			)
@@ -8451,6 +8141,17 @@
 		)
 		(net
 			(code "77")
+			(name "unconnected-(U1-RMIO2_{slash}_GPIO0_A2-Pad7)")
+			(class "Default")
+			(node
+				(ref "U1")
+				(pin "7")
+				(pinfunction "RMIO2_/_GPIO0_A2_7")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "78")
 			(name "unconnected-(U1-RMIO5_{slash}_GPIO0_A5-Pad15)")
 			(class "Default")
 			(node
@@ -8461,7 +8162,7 @@
 			)
 		)
 		(net
-			(code "78")
+			(code "79")
 			(name "unconnected-(U1-RMIO6_{slash}_GPIO0_A6-Pad19)")
 			(class "Default")
 			(node
@@ -8472,29 +8173,40 @@
 			)
 		)
 		(net
-			(code "79")
-			(name "unconnected-(U1-RMIO11_{slash}_GPIO0_B3-Pad24)")
+			(code "80")
+			(name "unconnected-(U1-RMIO10_{slash}_GPIO0_B2-Pad24)")
 			(class "Default")
 			(node
 				(ref "U1")
 				(pin "24")
-				(pinfunction "RMIO11_/_GPIO0_B3_24")
-				(pintype "bidirectional")
-			)
-		)
-		(net
-			(code "80")
-			(name "unconnected-(U1-RMIO12_{slash}_GPIO0_B4-Pad26)")
-			(class "Default")
-			(node
-				(ref "U1")
-				(pin "26")
-				(pinfunction "RMIO12_/_GPIO0_B4_26")
+				(pinfunction "RMIO10_/_GPIO0_B2_24")
 				(pintype "bidirectional")
 			)
 		)
 		(net
 			(code "81")
+			(name "unconnected-(U1-RMIO13_{slash}_GPIO0_B5-Pad16)")
+			(class "Default")
+			(node
+				(ref "U1")
+				(pin "16")
+				(pinfunction "RMIO13_/_GPIO0_B5_16")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "82")
+			(name "unconnected-(U1-RMIO14_{slash}_GPIO0_B6-Pad12)")
+			(class "Default")
+			(node
+				(ref "U1")
+				(pin "12")
+				(pinfunction "RMIO14_/_GPIO0_B6_12")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "83")
 			(name "unconnected-(U1-RMIO16_{slash}_GPIO0_C0-Pad35)")
 			(class "Default")
 			(node
@@ -8505,18 +8217,7 @@
 			)
 		)
 		(net
-			(code "82")
-			(name "unconnected-(U1-RMIO17_{slash}_GPIO0_C1-Pad8)")
-			(class "Default")
-			(node
-				(ref "U1")
-				(pin "8")
-				(pinfunction "RMIO17_/_GPIO0_C1_8")
-				(pintype "bidirectional")
-			)
-		)
-		(net
-			(code "83")
+			(code "84")
 			(name "unconnected-(U1-RMIO18_{slash}_GPIO0_C2-Pad40)")
 			(class "Default")
 			(node
@@ -8527,46 +8228,35 @@
 			)
 		)
 		(net
-			(code "84")
-			(name "unconnected-(U1-RMIO24_{slash}_GPIO1_B1-Pad27)")
-			(class "Default")
-			(node
-				(ref "U1")
-				(pin "27")
-				(pinfunction "RMIO24_/_GPIO1_B1_27")
-				(pintype "bidirectional")
-			)
-		)
-		(net
 			(code "85")
-			(name "unconnected-(U1-RMIO29_{slash}_GPIO1_D1-Pad10)")
+			(name "unconnected-(U1-RMIO22_{slash}_GPIO0_C6-Pad8)")
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "10")
-				(pinfunction "RMIO29_/_GPIO1_D1_10")
+				(pin "8")
+				(pinfunction "RMIO22_/_GPIO0_C6_8")
 				(pintype "bidirectional")
 			)
 		)
 		(net
 			(code "86")
-			(name "unconnected-(U1-RMIO30_{slash}_GPIO1_D2-Pad12)")
+			(name "unconnected-(U1-RMIO23_{slash}_GPIO0_C7-Pad10)")
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "12")
-				(pinfunction "RMIO30_/_GPIO1_D2_12")
+				(pin "10")
+				(pinfunction "RMIO23_/_GPIO0_C7_10")
 				(pintype "bidirectional")
 			)
 		)
 		(net
 			(code "87")
-			(name "unconnected-(U1-RMIO31_{slash}_GPIO1_D3-Pad16)")
+			(name "unconnected-(U1-RMIO30_{slash}_GPIO1_D2-Pad32)")
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "16")
-				(pinfunction "RMIO31_/_GPIO1_D3_16")
+				(pin "32")
+				(pinfunction "RMIO30_/_GPIO1_D2_32")
 				(pintype "bidirectional")
 			)
 		)

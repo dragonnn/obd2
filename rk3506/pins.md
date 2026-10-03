@@ -4,9 +4,8 @@ This document covers the Luckfox Lyra Zero W 40-pin connector (`PI1` in the
 schematic). Onboard-only signals and pins on the separate DSI connector are not
 included.
 
-PCB connections come from `LUCKFOX-LYRA-ZEROW.net` (U1). Its symbol has incorrect
-GPIO names on several even-numbered pins, so GPIO identities below use the
-physical pin numbers and the official board schematic.
+PCB connections come from `LUCKFOX-LYRA-ZEROW.net` (U1). The symbol's GPIO and
+RMIO names match the physical pin numbers in the official board schematic.
 
 ## Used and reserved pins
 

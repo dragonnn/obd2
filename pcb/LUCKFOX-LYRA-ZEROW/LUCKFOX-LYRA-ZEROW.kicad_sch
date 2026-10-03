@@ -4948,7 +4948,7 @@
 				(pin bidirectional line
 					(at 30.48 19.05 180)
 					(length 5.08)
-					(name "RMIO17_/_GPIO0_C1"
+					(name "RMIO22_/_GPIO0_C6"
 						(effects
 							(font
 								(size 1 1)
@@ -4984,7 +4984,7 @@
 				(pin bidirectional line
 					(at 30.48 16.51 180)
 					(length 5.08)
-					(name "RMIO29_/_GPIO1_D1"
+					(name "RMIO23_/_GPIO0_C7"
 						(effects
 							(font
 								(size 1 1)
@@ -5020,7 +5020,7 @@
 				(pin bidirectional line
 					(at 30.48 13.97 180)
 					(length 5.08)
-					(name "RMIO30_/_GPIO1_D2"
+					(name "RMIO14_/_GPIO0_B6"
 						(effects
 							(font
 								(size 1 1)
@@ -5092,7 +5092,7 @@
 				(pin bidirectional line
 					(at 30.48 8.89 180)
 					(length 5.08)
-					(name "RMIO31_/_GPIO0_B5"
+					(name "RMIO13_/_GPIO0_B5"
 						(effects
 							(font
 								(size 1 1)
@@ -5128,7 +5128,7 @@
 				(pin bidirectional line
 					(at 30.48 6.35 180)
 					(length 5.08)
-					(name "RMIO9_/_GPIO0_B1"
+					(name "RMIO12_/_GPIO0_B4"
 						(effects
 							(font
 								(size 1 1)
@@ -5200,7 +5200,7 @@
 				(pin bidirectional line
 					(at 30.48 1.27 180)
 					(length 5.08)
-					(name "RMIO10_/_GPIO0_B2"
+					(name "RMIO11_/_GPIO0_B3"
 						(effects
 							(font
 								(size 1 1)
@@ -5236,7 +5236,7 @@
 				(pin bidirectional line
 					(at 30.48 -1.27 180)
 					(length 5.08)
-					(name "RMIO11_/_GPIO0_B3"
+					(name "RMIO10_/_GPIO0_B2"
 						(effects
 							(font
 								(size 1 1)
@@ -5272,7 +5272,7 @@
 				(pin bidirectional line
 					(at 30.48 -3.81 180)
 					(length 5.08)
-					(name "RMIO12_/_GPIO0_B4"
+					(name "RMIO9_/_GPIO0_B1"
 						(effects
 							(font
 								(size 1 1)
@@ -5308,7 +5308,7 @@
 				(pin bidirectional line
 					(at 30.48 -6.35 180)
 					(length 5.08)
-					(name "RMIO13_/_GPIO1_D3"
+					(name "RMIO31_/_GPIO1_D3"
 						(effects
 							(font
 								(size 1 1)
@@ -5380,7 +5380,7 @@
 				(pin bidirectional line
 					(at 30.48 -11.43 180)
 					(length 5.08)
-					(name "RMIO14_/_GPIO0_B6"
+					(name "RMIO30_/_GPIO1_D2"
 						(effects
 							(font
 								(size 1 1)
@@ -5452,7 +5452,7 @@
 				(pin bidirectional line
 					(at 30.48 -16.51 180)
 					(length 5.08)
-					(name "RMIO23_/_GPIO0_C7"
+					(name "RMIO29_/_GPIO1_D1"
 						(effects
 							(font
 								(size 1 1)
@@ -5488,7 +5488,7 @@
 				(pin bidirectional line
 					(at 30.48 -19.05 180)
 					(length 5.08)
-					(name "RMIO22_/_GPIO0_C6"
+					(name "RMIO17_/_GPIO0_C1"
 						(effects
 							(font
 								(size 1 1)
