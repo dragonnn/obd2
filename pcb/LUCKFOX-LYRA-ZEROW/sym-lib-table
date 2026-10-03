@@ -6,4 +6,5 @@
 	(lib (name "74AUP2G34") (type "KiCad") (uri "${KIPRJMOD}/74AUP2G34.kicad_sym") (options "") (descr ""))
 	(lib (name "RAA211403") (type "KiCad") (uri "${KIPRJMOD}/RAA211403.kicad_sym") (options "") (descr ""))
 	(lib (name "SN74LVC1G74") (type "KiCad") (uri "${KIPRJMOD}/SN74LVC1G74.kicad_sym") (options "") (descr ""))
+	(lib (name "MCP2518FD") (type "KiCad") (uri "${KIPRJMOD}/MCP2518FD.kicad_sym") (options "") (descr ""))
 )
