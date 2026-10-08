@@ -10058,24 +10058,24 @@
 		(embedded_fonts no)
 		(model "${KIPRJMOD}/Luckfox_Lyra.3dshapes/Luckfox_Lyra_Zero_W.step"
 			(offset
-				(xyz -8.28 -4.87 -4.5)
+				(xyz 56.22 -4.87 -5.5)
 			)
 			(scale
 				(xyz 1 1 1)
 			)
 			(rotate
-				(xyz -0 -0 -0)
+				(xyz -180 -0 -180)
 			)
 		)
 		(model "${KIPRJMOD}/AM319M262928ZS.step"
 			(offset
-				(xyz 20.5 10 -11)
+				(xyz 33 10.5 -10.5)
 			)
 			(scale
 				(xyz 1 1 1)
 			)
 			(rotate
-				(xyz -0 -180 90)
+				(xyz -0 -180 -90)
 			)
 		)
 	)
