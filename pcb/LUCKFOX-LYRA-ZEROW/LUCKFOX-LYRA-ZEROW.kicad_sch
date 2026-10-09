@@ -8012,6 +8012,26 @@
 	)
 	(wire
 		(pts
+			(xy 39.37 45.72) (xy 45.72 45.72)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "15c6fd93-6895-4370-9606-d0170e0f5d9f")
+	)
+	(wire
+		(pts
+			(xy 39.37 55.88) (xy 45.72 55.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "16498573-b903-4a6b-bc3c-bb6407d3df7a")
+	)
+	(wire
+		(pts
 			(xy 492.76 113.03) (xy 487.68 113.03)
 		)
 		(stroke
@@ -8849,6 +8869,16 @@
 			(type default)
 		)
 		(uuid "4d9e2684-8702-4227-8252-603376c74d90")
+	)
+	(wire
+		(pts
+			(xy 93.98 66.04) (xy 99.06 66.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4e25d703-d242-4bc2-a077-211aad854003")
 	)
 	(wire
 		(pts
@@ -10372,6 +10402,16 @@
 	)
 	(wire
 		(pts
+			(xy 93.98 48.26) (xy 97.79 48.26)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "aa3d53c6-8fce-4402-aff3-abd80de55692")
+	)
+	(wire
+		(pts
 			(xy 22.86 118.11) (xy 22.86 120.65)
 		)
 		(stroke
@@ -10569,6 +10609,16 @@
 			(type default)
 		)
 		(uuid "b3d0ecc4-88d6-4723-87ab-a020fb421234")
+	)
+	(wire
+		(pts
+			(xy 93.98 45.72) (xy 97.79 45.72)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b4649840-b7be-4270-8ebc-1e2967a7f723")
 	)
 	(wire
 		(pts
@@ -10882,6 +10932,26 @@
 	)
 	(wire
 		(pts
+			(xy 93.98 55.88) (xy 99.06 55.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c670b7dd-c5b2-486f-ba26-6ba35fd0a8cf")
+	)
+	(wire
+		(pts
+			(xy 93.98 50.8) (xy 97.79 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c6a7d0df-f410-4be6-b1b7-f6af02042e83")
+	)
+	(wire
+		(pts
 			(xy 524.51 88.9) (xy 528.32 88.9)
 		)
 		(stroke
@@ -11039,6 +11109,16 @@
 			(type default)
 		)
 		(uuid "cefc2132-3b15-41ba-abb0-9f05f2dd0a96")
+	)
+	(wire
+		(pts
+			(xy 40.64 60.96) (xy 45.72 60.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cf82cc2c-b618-4c0d-a30a-cf9d5aa10a94")
 	)
 	(wire
 		(pts
@@ -11860,6 +11940,16 @@
 		)
 		(uuid "05a195b8-6759-49b6-a6fe-585e765f1ca4")
 	)
+	(label "LYRA_SPI1_SCLK"
+		(at 40.64 60.96 180)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify right bottom)
+		)
+		(uuid "0696d502-9c60-4e5d-80f2-cfcab4ee3749")
+	)
 	(label "NRF_CAN2_SHDN"
 		(at 245.11 59.69 0)
 		(effects
@@ -11921,12 +12011,12 @@
 		(uuid "16ca7a07-d3a4-4a29-b9a0-221a883358b5")
 	)
 	(label "CAN0_RX"
-		(at 39.37 83.82 180)
+		(at 97.79 45.72 0)
 		(effects
 			(font
 				(size 1 1)
 			)
-			(justify right bottom)
+			(justify left bottom)
 		)
 		(uuid "17b6ceca-2b20-4008-9856-a4b854f81978")
 	)
@@ -11939,16 +12029,6 @@
 			(justify right bottom)
 		)
 		(uuid "1a4a68fb-5a6d-44f4-8772-500056df1c34")
-	)
-	(label "LYRA_SPI1_SCLK"
-		(at 40.64 66.04 180)
-		(effects
-			(font
-				(size 1 1)
-			)
-			(justify right bottom)
-		)
-		(uuid "1a948797-f387-4430-a238-6645bb0f8581")
 	)
 	(label "NRF_SWDIO"
 		(at 172.72 87.63 0)
@@ -12191,7 +12271,7 @@
 		(uuid "4f13c709-77f1-49d4-b3b2-8fd17010ed81")
 	)
 	(label "LYRA_UART1_TX"
-		(at 39.37 71.12 180)
+		(at 39.37 55.88 180)
 		(effects
 			(font
 				(size 1 1)
@@ -12221,12 +12301,12 @@
 		(uuid "5dcde258-2253-4f9e-ae42-2b83306935ca")
 	)
 	(label "CAN1_TX"
-		(at 39.37 73.66 180)
+		(at 97.79 50.8 0)
 		(effects
 			(font
 				(size 1 1)
 			)
-			(justify right bottom)
+			(justify left bottom)
 		)
 		(uuid "5f67cc1a-6970-4471-81c5-3be047f85aa2")
 	)
@@ -12241,7 +12321,7 @@
 		(uuid "6259c19c-c619-4ae3-88f3-d0d8d237dd01")
 	)
 	(label "LYRA_UART0_RX"
-		(at 100.33 81.28 0)
+		(at 99.06 66.04 0)
 		(effects
 			(font
 				(size 1 1)
@@ -12321,7 +12401,7 @@
 		(uuid "712a7bfd-9ff0-4aa6-8975-c2c9a1e75045")
 	)
 	(label "LYRA_SPI1_MISO"
-		(at 99.06 63.5 0)
+		(at 99.06 58.42 0)
 		(effects
 			(font
 				(size 1 1)
@@ -12561,7 +12641,7 @@
 		(uuid "9ad71fb8-c7e6-4e33-8b73-53fad980925d")
 	)
 	(label "LYRA_UART1_RX"
-		(at 100.33 68.58 0)
+		(at 99.06 55.88 0)
 		(effects
 			(font
 				(size 1 1)
@@ -12731,12 +12811,12 @@
 		(uuid "cdfa0beb-0d4c-42f8-ac98-2db728f3832f")
 	)
 	(label "LYRA_UART0_TX"
-		(at 100.33 83.82 0)
+		(at 40.64 66.04 180)
 		(effects
 			(font
 				(size 1 1)
 			)
-			(justify left bottom)
+			(justify right bottom)
 		)
 		(uuid "d39de4f8-5e2e-4077-bc8e-49c1084c66c7")
 	)
@@ -12821,7 +12901,7 @@
 		(uuid "e469853b-020c-40c4-8e07-f00ecd442b27")
 	)
 	(label "LYRA_SPI1_MOSI"
-		(at 99.06 58.42 0)
+		(at 99.06 63.5 0)
 		(effects
 			(font
 				(size 1 1)
@@ -12871,12 +12951,12 @@
 		(uuid "ee2e5135-88e2-4ddd-9de3-6e2658594f91")
 	)
 	(label "CAN1_RX"
-		(at 39.37 76.2 180)
+		(at 97.79 48.26 0)
 		(effects
 			(font
 				(size 1 1)
 			)
-			(justify right bottom)
+			(justify left bottom)
 		)
 		(uuid "f58e77aa-4789-4163-83d2-266d585f2684")
 	)
@@ -12901,7 +12981,7 @@
 		(uuid "f978c589-be04-45f1-af44-d117eb008fe0")
 	)
 	(label "CAN0_TX"
-		(at 39.37 78.74 180)
+		(at 39.37 45.72 180)
 		(effects
 			(font
 				(size 1 1)
