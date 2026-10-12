@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// UART1 loopback: connect header pin 27 (TX) to pin 26 (RX).
+// UART1 loopback: connect header pin 15 (TX) to pin 16 (RX).
 #define _DEFAULT_SOURCE
 #include <errno.h>
 #include <fcntl.h>
@@ -22,7 +22,7 @@ static long long now_ms(void)
 
 int main(int argc, char **argv)
 {
-    const char message[] = "UART1 loopback: hello from TX pin 27!\r\n";
+    const char message[] = "UART1 loopback: hello from TX pin 15!\r\n";
     char received[sizeof(message)] = {0};
     const size_t length = sizeof(message) - 1;
     const char *device = argc == 2 ? argv[1] : "/dev/ttyS1";
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
     if (argc > 2 || (argc == 2 && !strcmp(argv[1], "--help"))) {
         printf("Usage: %s [/dev/ttyS1]\n"
-               "Connect UART1 TX pin 27 to RX pin 26.\n"
+               "Connect UART1 TX pin 15 to RX pin 16.\n"
                "Uses 115200 baud, 8N1, no flow control, 2-second timeout.\n",
                argv[0]);
         return argc > 2;

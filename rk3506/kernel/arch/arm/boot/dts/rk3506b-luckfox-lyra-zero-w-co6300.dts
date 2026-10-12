@@ -99,48 +99,59 @@
 /**********CAN**********/
 /* Keep CAN RX on DMA1 so SPI1 and both UARTs fit DMA0's six channels. */
 &can0 {
+	/* PCB U1: TX pin 7 (GPIO0_A2), RX pin 8 (GPIO0_C6). */
 	assigned-clocks = <&cru CLK_CAN0>;
 	assigned-clock-rates = <300000000>;
 	dmas = <&dmac1 10 0xff288078 0x0c000400 0xff2880ac 0x03000000>;
 	dma-names = "rx";
 	pinctrl-names = "default";
-	pinctrl-0 = <&rm_io27_can0_tx &rm_io28_can0_rx>;
+	pinctrl-0 = <&rm_io2_can0_tx &rm_io22_can0_rx>;
 	status = "okay";
 };
 
 &can1 {
+	/* PCB U1: TX pin 12 (GPIO0_B6), RX pin 10 (GPIO0_C7). */
 	assigned-clocks = <&cru CLK_CAN1>;
 	assigned-clock-rates = <300000000>;
 	dmas = <&dmac1 11 0xff288078 0x30001000 0xff2880ac 0x0c000000>;
 	dma-names = "rx";
 	pinctrl-names = "default";
-	pinctrl-0 = <&rm_io25_can1_tx &rm_io26_can1_rx>;
+	pinctrl-0 = <&rm_io14_can1_tx &rm_io23_can1_rx>;
 	status = "okay";
 };
 
 /**********UART**********/
+/* UART0's fixed pins 8/10 carry CAN RX on this PCB. */
+&uart0 {
+	status = "disabled";
+};
+
+&fiq_debugger {
+	status = "disabled";
+};
+
 &uart1 {
-	/* PCB U1: TX pin 27 (GPIO1_B1), RX pin 26 (GPIO0_B1). */
+	/* PCB U1: TX pin 15 (GPIO0_A5), RX pin 16 (GPIO0_B5). */
 	dma-names = "tx", "rx";
 	pinctrl-names = "default";
-	pinctrl-0 = <&rm_io24_uart1_tx &rm_io9_uart1_rx>;
+	pinctrl-0 = <&rm_io5_uart1_tx &rm_io13_uart1_rx>;
 	status = "okay";
 };
 
 &uart2 {
-	/* PCB U1: TX pin 38 (GPIO0_C1), RX pin 36 (GPIO1_D1). */
+	/* PCB LYRA_UART0 nets: TX pin 23 (GPIO0_B0), RX pin 24 (GPIO0_B2). */
 	dma-names = "tx", "rx";
 	pinctrl-names = "default";
-	pinctrl-0 = <&rm_io17_uart2_tx &rm_io29_uart2_rx>;
+	pinctrl-0 = <&rm_io8_uart2_tx &rm_io10_uart2_rx>;
 	status = "okay";
 };
 
 /**********SPI**********/
 &spi1 {
-	/* PCB U1: CS1 pin 21, SCLK pin 23, MISO pin 22, MOSI pin 18. */
+	/* PCB U1: CS1 pin 21, SCLK pin 19, MISO pin 18, MOSI pin 22. */
 	pinctrl-names = "default";
-	pinctrl-0 = <&rm_io7_spi1_csn1 &rm_io8_spi1_clk
-		     &rm_io11_spi1_miso &rm_io12_spi1_mosi>;
+	pinctrl-0 = <&rm_io7_spi1_csn1 &rm_io6_spi1_clk
+		     &rm_io12_spi1_miso &rm_io11_spi1_mosi>;
 	status = "okay";
 
 	spidev@1 {

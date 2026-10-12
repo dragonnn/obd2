@@ -2,8 +2,8 @@
 	(version "E")
 	(design
 		(source "/home/mateusz/Kia/kia-obd2-esp32c3-v2/pcb/LUCKFOX-LYRA-ZEROW/LUCKFOX-LYRA-ZEROW.kicad_sch")
-		(date "2026-10-03T09:34:12")
-		(tool "Eeschema 10.0.6")
+		(date "2026-10-12T20:02:47")
+		(tool "Eeschema 10.0.7")
 		(sheet
 			(number "1")
 			(name "/")
@@ -54,114 +54,6 @@
 		)
 	)
 	(components
-		(comp
-			(ref "C1")
-			(value "22pF")
-			(footprint "Capacitor_SMD:C_0805_2012Metric")
-			(description "Unpolarized capacitor, small symbol")
-			(fields
-				(field
-					(name "Footprint") "Capacitor_SMD:C_0805_2012Metric")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "Unpolarized capacitor, small symbol")
-			)
-			(libsource
-				(lib "Device")
-				(part "C_Small")
-				(description "Unpolarized capacitor, small symbol")
-			)
-			(property
-				(name "Sheetname")
-				(value "Root")
-			)
-			(property
-				(name "Sheetfile")
-				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "capacitor cap")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "C_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "79d38920-b97a-4c3a-9b03-276d5252eb6b")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "C2")
-			(value "22pF")
-			(footprint "Capacitor_SMD:C_0805_2012Metric")
-			(description "Unpolarized capacitor, small symbol")
-			(fields
-				(field
-					(name "Footprint") "Capacitor_SMD:C_0805_2012Metric")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "Unpolarized capacitor, small symbol")
-			)
-			(libsource
-				(lib "Device")
-				(part "C_Small")
-				(description "Unpolarized capacitor, small symbol")
-			)
-			(property
-				(name "Sheetname")
-				(value "Root")
-			)
-			(property
-				(name "Sheetfile")
-				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "capacitor cap")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "C_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "1c9530eb-a693-468f-90a0-249a82a86c36")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
 		(comp
 			(ref "C3")
 			(value "100nF/50V-X7R_0805")
@@ -267,7 +159,7 @@
 			)
 		)
 		(comp
-			(ref "C5")
+			(ref "C7")
 			(value "22pF")
 			(footprint "Capacitor_SMD:C_0805_2012Metric")
 			(description "Unpolarized capacitor, small symbol")
@@ -305,7 +197,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "c462fe10-6eec-48de-a71f-2ab0508e89d7")
+			(tstamps "1a176237-1cb4-43f5-af57-6c92ffa9bf58")
 			(units
 				(unit
 					(name "A")
@@ -321,7 +213,7 @@
 			)
 		)
 		(comp
-			(ref "C6")
+			(ref "C8")
 			(value "22pF")
 			(footprint "Capacitor_SMD:C_0805_2012Metric")
 			(description "Unpolarized capacitor, small symbol")
@@ -359,7 +251,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "8367c564-e104-4b86-8e85-d41339079f55")
+			(tstamps "76547c01-a298-47c6-b45e-3a211055cbfc")
 			(units
 				(unit
 					(name "A")
@@ -895,6 +787,60 @@
 			)
 		)
 		(comp
+			(ref "C19")
+			(value "22pF")
+			(footprint "Capacitor_SMD:C_0805_2012Metric")
+			(description "Unpolarized capacitor, small symbol")
+			(fields
+				(field
+					(name "Footprint") "Capacitor_SMD:C_0805_2012Metric")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description") "Unpolarized capacitor, small symbol")
+			)
+			(libsource
+				(lib "Device")
+				(part "C_Small")
+				(description "Unpolarized capacitor, small symbol")
+			)
+			(property
+				(name "Sheetname")
+				(value "Root")
+			)
+			(property
+				(name "Sheetfile")
+				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
+			)
+			(property
+				(name "ki_keywords")
+				(value "capacitor cap")
+			)
+			(property
+				(name "ki_fp_filters")
+				(value "C_*")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "25982030-731c-4b50-a02b-893e7da6d81e")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
 			(ref "C20")
 			(value "100nF/50V-X7R_0805")
 			(footprint "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder")
@@ -932,6 +878,60 @@
 				(tstamps "/")
 			)
 			(tstamps "1cac1342-c30a-4ee5-87e8-103010802baf")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "C21")
+			(value "22pF")
+			(footprint "Capacitor_SMD:C_0805_2012Metric")
+			(description "Unpolarized capacitor, small symbol")
+			(fields
+				(field
+					(name "Footprint") "Capacitor_SMD:C_0805_2012Metric")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description") "Unpolarized capacitor, small symbol")
+			)
+			(libsource
+				(lib "Device")
+				(part "C_Small")
+				(description "Unpolarized capacitor, small symbol")
+			)
+			(property
+				(name "Sheetname")
+				(value "Root")
+			)
+			(property
+				(name "Sheetfile")
+				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
+			)
+			(property
+				(name "ki_keywords")
+				(value "capacitor cap")
+			)
+			(property
+				(name "ki_fp_filters")
+				(value "C_*")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "21d09c37-b58d-4607-aae5-5cb1834c585f")
 			(units
 				(unit
 					(name "A")
@@ -2031,75 +2031,6 @@
 			)
 		)
 		(comp
-			(ref "J3")
-			(value "Conn_01x07")
-			(footprint "Connector_JST:JST_GH_SM07B-GHS-TB_1x07-1MP_P1.25mm_Horizontal")
-			(description "Generic connector, single row, 01x07, script generated (kicad-library-utils/schlib/autogen/connector/)")
-			(fields
-				(field
-					(name "Footprint") "Connector_JST:JST_GH_SM07B-GHS-TB_1x07-1MP_P1.25mm_Horizontal")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "Generic connector, single row, 01x07, script generated (kicad-library-utils/schlib/autogen/connector/)")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x07")
-				(description "Generic connector, single row, 01x07, script generated (kicad-library-utils/schlib/autogen/connector/)")
-			)
-			(property
-				(name "Sheetname")
-				(value "Root")
-			)
-			(property
-				(name "Sheetfile")
-				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "connector")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "Connector*:*_1x??_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "daa7d3d1-cdc1-48c3-be67-a70c568234a9")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-						(pin
-							(num "5")
-						)
-						(pin
-							(num "6")
-						)
-						(pin
-							(num "7")
-						)
-					)
-				)
-			)
-		)
-		(comp
 			(ref "J4")
 			(value "Conn_01x05")
 			(footprint "Connector_JST:JST_GH_SM05B-GHS-TB_1x05-1MP_P1.25mm_Horizontal")
@@ -2220,6 +2151,78 @@
 						)
 						(pin
 							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "J6")
+			(value "Conn_01x08")
+			(footprint "Connector_JST:JST_GH_SM08B-GHS-TB_1x08-1MP_P1.25mm_Horizontal")
+			(description "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
+			(fields
+				(field
+					(name "Footprint") "Connector_JST:JST_GH_SM08B-GHS-TB_1x08-1MP_P1.25mm_Horizontal")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description") "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
+			)
+			(libsource
+				(lib "Connector_Generic")
+				(part "Conn_01x08")
+				(description "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
+			)
+			(property
+				(name "Sheetname")
+				(value "Root")
+			)
+			(property
+				(name "Sheetfile")
+				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
+			)
+			(property
+				(name "ki_keywords")
+				(value "connector")
+			)
+			(property
+				(name "ki_fp_filters")
+				(value "Connector*:*_1x??_*")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "8d26c334-8823-4586-a3e2-64218fe5b14c")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+						(pin
+							(num "6")
+						)
+						(pin
+							(num "7")
+						)
+						(pin
+							(num "8")
 						)
 					)
 				)
@@ -2854,110 +2857,6 @@
 			)
 		)
 		(comp
-			(ref "R19")
-			(value "(150k/1%_0805)")
-			(footprint "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder")
-			(fields
-				(field
-					(name "Wartość wyśw.") "100k")
-				(field
-					(name "Footprint") "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description")
-				)
-			)
-			(libsource
-				(lib "ETH3")
-				(part "R_small_PG")
-				(description "")
-			)
-			(property
-				(name "Wartość wyśw.")
-				(value "100k")
-			)
-			(property
-				(name "Sheetname")
-				(value "Root")
-			)
-			(property
-				(name "Sheetfile")
-				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "5cb1c215-9afe-4e89-9436-c5765a416dfe")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "R20")
-			(value "(150k/1%_0805)")
-			(footprint "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder")
-			(fields
-				(field
-					(name "Wartość wyśw.") "100k")
-				(field
-					(name "Footprint") "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description")
-				)
-			)
-			(libsource
-				(lib "ETH3")
-				(part "R_small_PG")
-				(description "")
-			)
-			(property
-				(name "Wartość wyśw.")
-				(value "100k")
-			)
-			(property
-				(name "Sheetname")
-				(value "Root")
-			)
-			(property
-				(name "Sheetfile")
-				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "f61aa03d-6d5c-4105-aedd-93358dc5ecb1")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
 			(ref "R21")
 			(value "~")
 			(footprint "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder")
@@ -2995,6 +2894,110 @@
 				(tstamps "/")
 			)
 			(tstamps "ee6218c6-215b-41c3-a618-f50969df82e4")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "R22")
+			(value "(150k/1%_0805)")
+			(footprint "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder")
+			(fields
+				(field
+					(name "Wartość wyśw.") "100k")
+				(field
+					(name "Footprint") "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "ETH3")
+				(part "R_small_PG")
+				(description "")
+			)
+			(property
+				(name "Wartość wyśw.")
+				(value "100k")
+			)
+			(property
+				(name "Sheetname")
+				(value "Root")
+			)
+			(property
+				(name "Sheetfile")
+				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "11472649-05c8-4456-b18a-c1f74d2cbc7b")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "R23")
+			(value "(150k/1%_0805)")
+			(footprint "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder")
+			(fields
+				(field
+					(name "Wartość wyśw.") "100k")
+				(field
+					(name "Footprint") "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "ETH3")
+				(part "R_small_PG")
+				(description "")
+			)
+			(property
+				(name "Wartość wyśw.")
+				(value "100k")
+			)
+			(property
+				(name "Sheetname")
+				(value "Root")
+			)
+			(property
+				(name "Sheetfile")
+				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "361c58d4-2919-4d04-b80d-87669615c4f6")
 			(units
 				(unit
 					(name "A")
@@ -3581,99 +3584,6 @@
 			)
 		)
 		(comp
-			(ref "U4")
-			(value "MCP2518FD-xQBB")
-			(footprint "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm")
-			(datasheet "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/External-CAN-FD-Controller-with-SPI-Interface-DS20006027B.pdf")
-			(description "CAN FD Controller with SPI Interface, up to 8 Mbps, Vdd 2.7..5.5V,  functional safety ready, VDFN-14")
-			(fields
-				(field
-					(name "Footprint") "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm")
-				(field
-					(name "Datasheet") "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/External-CAN-FD-Controller-with-SPI-Interface-DS20006027B.pdf")
-				(field
-					(name "Description") "CAN FD Controller with SPI Interface, up to 8 Mbps, Vdd 2.7..5.5V,  functional safety ready, VDFN-14")
-			)
-			(libsource
-				(lib "Interface_CAN_LIN")
-				(part "MCP2518FD-xQBB")
-				(description "CAN FD Controller with SPI Interface, up to 8 Mbps, Vdd 2.7..5.5V,  functional safety ready, VDFN-14")
-			)
-			(property
-				(name "Sheetname")
-				(value "Root")
-			)
-			(property
-				(name "Sheetfile")
-				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "microchip")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "DFN*1EP*3x4.5mm*P0.65mm*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "678ec46a-e407-4c7e-b3fb-e6e082cab972")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "11")
-						)
-						(pin
-							(num "12")
-						)
-						(pin
-							(num "13")
-						)
-						(pin
-							(num "10")
-						)
-						(pin
-							(num "5")
-						)
-						(pin
-							(num "6")
-						)
-						(pin
-							(num "14")
-						)
-						(pin
-							(num "7")
-						)
-						(pin
-							(num "15")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-						(pin
-							(num "9")
-						)
-						(pin
-							(num "8")
-						)
-					)
-				)
-			)
-		)
-		(comp
 			(ref "U5")
 			(value "MAX3051")
 			(footprint "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm")
@@ -3784,7 +3694,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "de36d83d-df16-445c-899f-08b9710ce409")
+			(tstamps "350fee53-1a71-4004-9814-a0b3cdd88aea")
 			(units
 				(unit
 					(name "A")
@@ -3812,99 +3722,6 @@
 						)
 						(pin
 							(num "6")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "U7")
-			(value "MCP2518FD-xQBB")
-			(footprint "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm")
-			(datasheet "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/External-CAN-FD-Controller-with-SPI-Interface-DS20006027B.pdf")
-			(description "CAN FD Controller with SPI Interface, up to 8 Mbps, Vdd 2.7..5.5V,  functional safety ready, VDFN-14")
-			(fields
-				(field
-					(name "Footprint") "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm")
-				(field
-					(name "Datasheet") "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/External-CAN-FD-Controller-with-SPI-Interface-DS20006027B.pdf")
-				(field
-					(name "Description") "CAN FD Controller with SPI Interface, up to 8 Mbps, Vdd 2.7..5.5V,  functional safety ready, VDFN-14")
-			)
-			(libsource
-				(lib "Interface_CAN_LIN")
-				(part "MCP2518FD-xQBB")
-				(description "CAN FD Controller with SPI Interface, up to 8 Mbps, Vdd 2.7..5.5V,  functional safety ready, VDFN-14")
-			)
-			(property
-				(name "Sheetname")
-				(value "Root")
-			)
-			(property
-				(name "Sheetfile")
-				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "microchip")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "DFN*1EP*3x4.5mm*P0.65mm*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "b66b40b2-3a11-4e90-821e-ceacda038e3d")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "11")
-						)
-						(pin
-							(num "12")
-						)
-						(pin
-							(num "13")
-						)
-						(pin
-							(num "10")
-						)
-						(pin
-							(num "5")
-						)
-						(pin
-							(num "6")
-						)
-						(pin
-							(num "14")
-						)
-						(pin
-							(num "7")
-						)
-						(pin
-							(num "15")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-						(pin
-							(num "9")
-						)
-						(pin
-							(num "8")
 						)
 					)
 				)
@@ -4443,7 +4260,215 @@
 			)
 		)
 		(comp
-			(ref "Y4")
+			(ref "U15")
+			(value "MCP2518FDT-E/SL")
+			(footprint "MCP2518FD:SOIC-14_L8.7-W3.9-P1.27-LS6.0-BL")
+			(datasheet "https://www.lcsc.com/datasheet/C626758.pdf")
+			(fields
+				(field
+					(name "Manufacturer") "MICROCHIP(美国微芯)")
+				(field
+					(name "MPN") "MCP2518FDT-E/SL")
+				(field
+					(name "LCSC Part") "C626758")
+				(field
+					(name "Footprint") "MCP2518FD:SOIC-14_L8.7-W3.9-P1.27-LS6.0-BL")
+				(field
+					(name "Datasheet") "https://www.lcsc.com/datasheet/C626758.pdf")
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "MCP2518FD")
+				(part "MCP2518FDT-E_SL")
+				(description "")
+			)
+			(property
+				(name "Manufacturer")
+				(value "MICROCHIP(美国微芯)")
+			)
+			(property
+				(name "MPN")
+				(value "MCP2518FDT-E/SL")
+			)
+			(property
+				(name "LCSC Part")
+				(value "C626758")
+			)
+			(property
+				(name "Sheetname")
+				(value "Root")
+			)
+			(property
+				(name "Sheetfile")
+				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
+			)
+			(property
+				(name "ki_keywords")
+				(value "Pre-ordered MCUs")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "d972d236-6663-4e58-9d7d-369eb1af8548")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+						(pin
+							(num "6")
+						)
+						(pin
+							(num "7")
+						)
+						(pin
+							(num "14")
+						)
+						(pin
+							(num "13")
+						)
+						(pin
+							(num "12")
+						)
+						(pin
+							(num "11")
+						)
+						(pin
+							(num "10")
+						)
+						(pin
+							(num "9")
+						)
+						(pin
+							(num "8")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "U16")
+			(value "MCP2518FDT-E/SL")
+			(footprint "MCP2518FD:SOIC-14_L8.7-W3.9-P1.27-LS6.0-BL")
+			(datasheet "https://www.lcsc.com/datasheet/C626758.pdf")
+			(fields
+				(field
+					(name "Manufacturer") "MICROCHIP(美国微芯)")
+				(field
+					(name "MPN") "MCP2518FDT-E/SL")
+				(field
+					(name "LCSC Part") "C626758")
+				(field
+					(name "Footprint") "MCP2518FD:SOIC-14_L8.7-W3.9-P1.27-LS6.0-BL")
+				(field
+					(name "Datasheet") "https://www.lcsc.com/datasheet/C626758.pdf")
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "MCP2518FD")
+				(part "MCP2518FDT-E_SL")
+				(description "")
+			)
+			(property
+				(name "Manufacturer")
+				(value "MICROCHIP(美国微芯)")
+			)
+			(property
+				(name "MPN")
+				(value "MCP2518FDT-E/SL")
+			)
+			(property
+				(name "LCSC Part")
+				(value "C626758")
+			)
+			(property
+				(name "Sheetname")
+				(value "Root")
+			)
+			(property
+				(name "Sheetfile")
+				(value "LUCKFOX-LYRA-ZEROW.kicad_sch")
+			)
+			(property
+				(name "ki_keywords")
+				(value "Pre-ordered MCUs")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "5239160b-4c54-4da3-9565-0ae21d88634e")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+						(pin
+							(num "6")
+						)
+						(pin
+							(num "7")
+						)
+						(pin
+							(num "14")
+						)
+						(pin
+							(num "13")
+						)
+						(pin
+							(num "12")
+						)
+						(pin
+							(num "11")
+						)
+						(pin
+							(num "10")
+						)
+						(pin
+							(num "9")
+						)
+						(pin
+							(num "8")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "Y6")
 			(value "Crystal_GND24_Small")
 			(footprint "Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm")
 			(description "Four pin crystal, GND on pins 2 and 4, small symbol")
@@ -4481,7 +4506,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "b1fa1132-7f34-45ed-869e-4c172a496311")
+			(tstamps "c74a0786-84ab-4d3b-ad08-59b0bbf46836")
 			(units
 				(unit
 					(name "A")
@@ -4503,7 +4528,7 @@
 			)
 		)
 		(comp
-			(ref "Y5")
+			(ref "Y7")
 			(value "Crystal_GND24_Small")
 			(footprint "Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm")
 			(description "Four pin crystal, GND on pins 2 and 4, small symbol")
@@ -4541,7 +4566,7 @@
 				(names "/")
 				(tstamps "/")
 			)
-			(tstamps "65258288-7989-493d-890d-0879681ada41")
+			(tstamps "732ff65d-864c-4fa3-9f3d-f186de124aff")
 			(units
 				(unit
 					(name "A")
@@ -4791,6 +4816,70 @@
 				(pin
 					(num "7")
 					(name "Pin_7")
+					(type "passive")
+				)
+			)
+		)
+		(libpart
+			(lib "Connector_Generic")
+			(part "Conn_01x08")
+			(description "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
+			(footprints
+				(fp "Connector*:*_1x??_*")
+			)
+			(fields
+				(field
+					(name "Reference") "J")
+				(field
+					(name "Value") "Conn_01x08")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description") "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "Pin_1")
+					(type "passive")
+				)
+				(pin
+					(num "2")
+					(name "Pin_2")
+					(type "passive")
+				)
+				(pin
+					(num "3")
+					(name "Pin_3")
+					(type "passive")
+				)
+				(pin
+					(num "4")
+					(name "Pin_4")
+					(type "passive")
+				)
+				(pin
+					(num "5")
+					(name "Pin_5")
+					(type "passive")
+				)
+				(pin
+					(num "6")
+					(name "Pin_6")
+					(type "passive")
+				)
+				(pin
+					(num "7")
+					(name "Pin_7")
+					(type "passive")
+				)
+				(pin
+					(num "8")
+					(name "Pin_8")
 					(type "passive")
 				)
 			)
@@ -5494,104 +5583,6 @@
 			)
 		)
 		(libpart
-			(lib "Interface_CAN_LIN")
-			(part "MCP2518FD-xQBB")
-			(description "CAN FD Controller with SPI Interface, up to 8 Mbps, Vdd 2.7..5.5V,  functional safety ready, VDFN-14")
-			(docs "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/External-CAN-FD-Controller-with-SPI-Interface-DS20006027B.pdf")
-			(footprints
-				(fp "DFN*1EP*3x4.5mm*P0.65mm*")
-			)
-			(fields
-				(field
-					(name "Reference") "U")
-				(field
-					(name "Value") "MCP2518FD-xQBB")
-				(field
-					(name "Footprint") "Package_DFN_QFN:DFN-14-1EP_3x4.5mm_P0.65mm_EP1.65x4.25mm")
-				(field
-					(name "Datasheet") "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/External-CAN-FD-Controller-with-SPI-Interface-DS20006027B.pdf")
-				(field
-					(name "Description") "CAN FD Controller with SPI Interface, up to 8 Mbps, Vdd 2.7..5.5V,  functional safety ready, VDFN-14")
-			)
-			(pins
-				(pin
-					(num "1")
-					(name "TXCAN")
-					(type "output")
-				)
-				(pin
-					(num "2")
-					(name "RXCAN")
-					(type "input")
-				)
-				(pin
-					(num "3")
-					(name "CLKO/SOF")
-					(type "output")
-				)
-				(pin
-					(num "4")
-					(name "~{INT}")
-					(type "output")
-				)
-				(pin
-					(num "5")
-					(name "OSC2")
-					(type "output")
-				)
-				(pin
-					(num "6")
-					(name "OSC1")
-					(type "input")
-				)
-				(pin
-					(num "7")
-					(name "VSS")
-					(type "power_in")
-				)
-				(pin
-					(num "8")
-					(name "~{INT1}/GPIO1")
-					(type "bidirectional")
-				)
-				(pin
-					(num "9")
-					(name "~{INT0}/GPIO0/XSTBY")
-					(type "bidirectional")
-				)
-				(pin
-					(num "10")
-					(name "SCK")
-					(type "input")
-				)
-				(pin
-					(num "11")
-					(name "SDI")
-					(type "input")
-				)
-				(pin
-					(num "12")
-					(name "SDO")
-					(type "output")
-				)
-				(pin
-					(num "13")
-					(name "~{CS}")
-					(type "input")
-				)
-				(pin
-					(num "14")
-					(name "VDD")
-					(type "power_in")
-				)
-				(pin
-					(num "15")
-					(name "VSS")
-					(type "passive")
-				)
-			)
-		)
-		(libpart
 			(lib "Interface_UART")
 			(part "MAX3051")
 			(description "High-Speed CAN Transceiver, 1Mbps, 3.3V supply")
@@ -5877,6 +5868,102 @@
 			)
 		)
 		(libpart
+			(lib "MCP2518FD")
+			(part "MCP2518FDT-E_SL")
+			(docs "https://www.lcsc.com/datasheet/C626758.pdf")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "MCP2518FDT-E/SL")
+				(field
+					(name "Footprint") "MCP2518FD:SOIC-14_L8.7-W3.9-P1.27-LS6.0-BL")
+				(field
+					(name "Datasheet") "https://www.lcsc.com/datasheet/C626758.pdf")
+				(field
+					(name "Description")
+				)
+				(field
+					(name "Manufacturer") "MICROCHIP(美国微芯)")
+				(field
+					(name "MPN") "MCP2518FDT-E/SL")
+				(field
+					(name "LCSC Part") "C626758")
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "TXCAN")
+					(type "unspecified")
+				)
+				(pin
+					(num "2")
+					(name "RXCAN")
+					(type "unspecified")
+				)
+				(pin
+					(num "3")
+					(name "CLKO/SOF")
+					(type "unspecified")
+				)
+				(pin
+					(num "4")
+					(name "~{INT}")
+					(type "unspecified")
+				)
+				(pin
+					(num "5")
+					(name "OSC2")
+					(type "unspecified")
+				)
+				(pin
+					(num "6")
+					(name "OSC1")
+					(type "unspecified")
+				)
+				(pin
+					(num "7")
+					(name "VSS")
+					(type "unspecified")
+				)
+				(pin
+					(num "8")
+					(name "~{INT1}/GPIO1")
+					(type "unspecified")
+				)
+				(pin
+					(num "9")
+					(name "~{INT0}/GPIO0/XSTBY")
+					(type "unspecified")
+				)
+				(pin
+					(num "10")
+					(name "SCK")
+					(type "unspecified")
+				)
+				(pin
+					(num "11")
+					(name "SDI")
+					(type "unspecified")
+				)
+				(pin
+					(num "12")
+					(name "SDO")
+					(type "unspecified")
+				)
+				(pin
+					(num "13")
+					(name "nCS")
+					(type "unspecified")
+				)
+				(pin
+					(num "14")
+					(name "VDD")
+					(type "unspecified")
+				)
+			)
+		)
+		(libpart
 			(lib "Power_Supervisor")
 			(part "TPS3839DBZ")
 			(description "150-nA, Ultralow Power, Supply Voltage Monitor, SOT-23")
@@ -6054,16 +6141,16 @@
 			(uri "${KICAD9_SYMBOL_DIR}/Device.kicad_sym")
 		)
 		(library
-			(logical "Interface_CAN_LIN")
-			(uri "${KICAD9_SYMBOL_DIR}/Interface_CAN_LIN.kicad_sym")
-		)
-		(library
 			(logical "Interface_UART")
 			(uri "${KICAD9_SYMBOL_DIR}/Interface_UART.kicad_sym")
 		)
 		(library
 			(logical "Luckfox_Lyra")
 			(uri "${KIPRJMOD}/Luckfox_Lyra.kicad_sym")
+		)
+		(library
+			(logical "MCP2518FD")
+			(uri "${KIPRJMOD}/MCP2518FD.kicad_sym")
 		)
 		(library
 			(logical "Power_Supervisor")
@@ -6208,24 +6295,24 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J3")
-				(pin "6")
-				(pinfunction "Pin_6_6")
-				(pintype "passive")
-			)
-			(node
 				(ref "J4")
 				(pin "4")
 				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 			(node
-				(ref "R19")
+				(ref "J6")
+				(pin "7")
+				(pinfunction "Pin_7_7")
+				(pintype "passive")
+			)
+			(node
+				(ref "R22")
 				(pin "2")
 				(pintype "passive")
 			)
 			(node
-				(ref "R20")
+				(ref "R23")
 				(pin "2")
 				(pintype "passive")
 			)
@@ -6260,27 +6347,27 @@
 				(pintype "power_in")
 			)
 			(node
+				(ref "U15")
+				(pin "14")
+				(pinfunction "VDD_14")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "U16")
+				(pin "14")
+				(pinfunction "VDD_14")
+				(pintype "unspecified")
+			)
+			(node
 				(ref "U2")
 				(pin "14")
 				(pinfunction "VDD-nRF_14")
 				(pintype "unspecified")
 			)
 			(node
-				(ref "U4")
-				(pin "14")
-				(pinfunction "VDD_14")
-				(pintype "power_in")
-			)
-			(node
 				(ref "U6")
 				(pin "3")
 				(pinfunction "VDD_3")
-				(pintype "power_in")
-			)
-			(node
-				(ref "U7")
-				(pin "14")
-				(pinfunction "VDD_14")
 				(pintype "power_in")
 			)
 			(node
@@ -6323,6 +6410,12 @@
 				(ref "DL2")
 				(pin "2")
 				(pinfunction "2_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "J5")
+				(pin "1")
+				(pinfunction "Pin_1_1")
 				(pintype "passive")
 			)
 			(node
@@ -6458,8 +6551,8 @@
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "37")
-				(pinfunction "RMIO28_/_GPIO1_C3_37")
+				(pin "8")
+				(pinfunction "RMIO22_/_GPIO0_C6_8")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6475,8 +6568,8 @@
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "33")
-				(pinfunction "RMIO27_/_GPIO1_C2_33")
+				(pin "7")
+				(pinfunction "RMIO2_/_GPIO0_A2_7")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6492,8 +6585,8 @@
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "31")
-				(pinfunction "RMIO26_/_GPIO1_B3_31")
+				(pin "10")
+				(pinfunction "RMIO23_/_GPIO0_C7_10")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6509,8 +6602,8 @@
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "29")
-				(pinfunction "RMIO25_/_GPIO1_B2_29")
+				(pin "12")
+				(pinfunction "RMIO14_/_GPIO0_B6_12")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6604,8 +6697,8 @@
 			)
 			(node
 				(ref "U1")
-				(pin "22")
-				(pinfunction "RMIO11_/_GPIO0_B3_22")
+				(pin "18")
+				(pinfunction "RMIO12_/_GPIO0_B4_18")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6625,8 +6718,8 @@
 			)
 			(node
 				(ref "U1")
-				(pin "18")
-				(pinfunction "RMIO12_/_GPIO0_B4_18")
+				(pin "22")
+				(pinfunction "RMIO11_/_GPIO0_B3_22")
 				(pintype "bidirectional")
 			)
 		)
@@ -6636,8 +6729,8 @@
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "23")
-				(pinfunction "RMIO8_/_GPIO0_B0_23")
+				(pin "19")
+				(pinfunction "RMIO6_/_GPIO0_A6_19")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6652,8 +6745,8 @@
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "36")
-				(pinfunction "RMIO29_/_GPIO1_D1_36")
+				(pin "24")
+				(pinfunction "RMIO10_/_GPIO0_B2_24")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6669,8 +6762,8 @@
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "38")
-				(pinfunction "RMIO17_/_GPIO0_C1_38")
+				(pin "23")
+				(pinfunction "RMIO8_/_GPIO0_B0_23")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6686,8 +6779,8 @@
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "26")
-				(pinfunction "RMIO9_/_GPIO0_B1_26")
+				(pin "16")
+				(pinfunction "RMIO13_/_GPIO0_B5_16")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6703,8 +6796,8 @@
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "27")
-				(pinfunction "RMIO24_/_GPIO1_B1_27")
+				(pin "15")
+				(pinfunction "RMIO5_/_GPIO0_A5_15")
 				(pintype "bidirectional")
 			)
 			(node
@@ -6719,16 +6812,16 @@
 			(name "/NRF_CAN1_INT")
 			(class "Default")
 			(node
+				(ref "U16")
+				(pin "4")
+				(pinfunction "~{INT}_4")
+				(pintype "unspecified")
+			)
+			(node
 				(ref "U2")
 				(pin "3")
 				(pinfunction "P1.10_3")
 				(pintype "unspecified")
-			)
-			(node
-				(ref "U4")
-				(pin "4")
-				(pinfunction "~{INT}_4")
-				(pintype "output")
 			)
 		)
 		(net
@@ -6753,16 +6846,16 @@
 			(name "/NRF_CAN2_INT")
 			(class "Default")
 			(node
+				(ref "U15")
+				(pin "4")
+				(pinfunction "~{INT}_4")
+				(pintype "unspecified")
+			)
+			(node
 				(ref "U2")
 				(pin "4")
 				(pinfunction "P1.13_4")
 				(pintype "unspecified")
-			)
-			(node
-				(ref "U7")
-				(pin "4")
-				(pinfunction "~{INT}_4")
-				(pintype "output")
 			)
 		)
 		(net
@@ -6787,9 +6880,15 @@
 			(name "/NRF_CS1_CAN1")
 			(class "Default")
 			(node
-				(ref "R19")
+				(ref "R22")
 				(pin "1")
 				(pintype "passive")
+			)
+			(node
+				(ref "U16")
+				(pin "13")
+				(pinfunction "nCS_13")
+				(pintype "unspecified")
 			)
 			(node
 				(ref "U2")
@@ -6797,33 +6896,27 @@
 				(pinfunction "P0.07_15")
 				(pintype "unspecified")
 			)
-			(node
-				(ref "U4")
-				(pin "13")
-				(pinfunction "~{CS}_13")
-				(pintype "input")
-			)
 		)
 		(net
 			(code "29")
 			(name "/NRF_CS2_CAN2")
 			(class "Default")
 			(node
-				(ref "R20")
+				(ref "R23")
 				(pin "1")
 				(pintype "passive")
+			)
+			(node
+				(ref "U15")
+				(pin "13")
+				(pinfunction "nCS_13")
+				(pintype "unspecified")
 			)
 			(node
 				(ref "U2")
 				(pin "21")
 				(pinfunction "P0.18_21")
 				(pintype "unspecified")
-			)
-			(node
-				(ref "U7")
-				(pin "13")
-				(pinfunction "~{CS}_13")
-				(pintype "input")
 			)
 		)
 		(net
@@ -6896,10 +6989,22 @@
 			(name "/NRF_MISO")
 			(class "Default")
 			(node
-				(ref "J3")
-				(pin "3")
-				(pinfunction "Pin_3_3")
+				(ref "J6")
+				(pin "4")
+				(pinfunction "Pin_4_4")
 				(pintype "passive")
+			)
+			(node
+				(ref "U15")
+				(pin "12")
+				(pinfunction "SDO_12")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "U16")
+				(pin "12")
+				(pinfunction "SDO_12")
+				(pintype "unspecified")
 			)
 			(node
 				(ref "U2")
@@ -6907,46 +7012,34 @@
 				(pinfunction "P0.23_18")
 				(pintype "unspecified")
 			)
-			(node
-				(ref "U4")
-				(pin "12")
-				(pinfunction "SDO_12")
-				(pintype "output")
-			)
-			(node
-				(ref "U7")
-				(pin "12")
-				(pinfunction "SDO_12")
-				(pintype "output")
-			)
 		)
 		(net
 			(code "35")
 			(name "/NRF_MOSI")
 			(class "Default")
 			(node
-				(ref "J3")
-				(pin "4")
-				(pinfunction "Pin_4_4")
+				(ref "J6")
+				(pin "5")
+				(pinfunction "Pin_5_5")
 				(pintype "passive")
+			)
+			(node
+				(ref "U15")
+				(pin "11")
+				(pinfunction "SDI_11")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "U16")
+				(pin "11")
+				(pinfunction "SDI_11")
+				(pintype "unspecified")
 			)
 			(node
 				(ref "U2")
 				(pin "19")
 				(pinfunction "P0.21_19")
 				(pintype "unspecified")
-			)
-			(node
-				(ref "U4")
-				(pin "11")
-				(pinfunction "SDI_11")
-				(pintype "input")
-			)
-			(node
-				(ref "U7")
-				(pin "11")
-				(pinfunction "SDI_11")
-				(pintype "input")
 			)
 		)
 		(net
@@ -7009,28 +7102,28 @@
 			(name "/NRF_SCK")
 			(class "Default")
 			(node
-				(ref "J3")
-				(pin "5")
-				(pinfunction "Pin_5_5")
+				(ref "J6")
+				(pin "6")
+				(pinfunction "Pin_6_6")
 				(pintype "passive")
+			)
+			(node
+				(ref "U15")
+				(pin "10")
+				(pinfunction "SCK_10")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "U16")
+				(pin "10")
+				(pinfunction "SCK_10")
+				(pintype "unspecified")
 			)
 			(node
 				(ref "U2")
 				(pin "20")
 				(pinfunction "P0.19_20")
 				(pintype "unspecified")
-			)
-			(node
-				(ref "U4")
-				(pin "10")
-				(pinfunction "SCK_10")
-				(pintype "input")
-			)
-			(node
-				(ref "U7")
-				(pin "10")
-				(pinfunction "SCK_10")
-				(pintype "input")
 			)
 		)
 		(net
@@ -7072,9 +7165,9 @@
 			(name "/NRF_SPI_CS")
 			(class "Default")
 			(node
-				(ref "J3")
-				(pin "2")
-				(pinfunction "Pin_2_2")
+				(ref "J6")
+				(pin "3")
+				(pinfunction "Pin_3_3")
 				(pintype "passive")
 			)
 			(node
@@ -7089,9 +7182,9 @@
 			(name "/NRF_SPI_IRQ")
 			(class "Default")
 			(node
-				(ref "J3")
-				(pin "1")
-				(pinfunction "Pin_1_1")
+				(ref "J6")
+				(pin "2")
+				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
 			(node
@@ -7103,6 +7196,23 @@
 		)
 		(net
 			(code "44")
+			(name "/NRF_SPI_RST")
+			(class "Default")
+			(node
+				(ref "J6")
+				(pin "1")
+				(pinfunction "Pin_1_1")
+				(pintype "passive")
+			)
+			(node
+				(ref "U2")
+				(pin "34")
+				(pinfunction "P1.06_34")
+				(pintype "unspecified")
+			)
+		)
+		(net
+			(code "45")
 			(name "/NRF_SWDCLK")
 			(class "Default")
 			(node
@@ -7118,7 +7228,7 @@
 			)
 		)
 		(net
-			(code "45")
+			(code "46")
 			(name "/NRF_SWDIO")
 			(class "Default")
 			(node
@@ -7134,7 +7244,7 @@
 			)
 		)
 		(net
-			(code "46")
+			(code "47")
 			(name "/NRF_UART2_IRQ")
 			(class "Default")
 			(node
@@ -7151,7 +7261,7 @@
 			)
 		)
 		(net
-			(code "47")
+			(code "48")
 			(name "/NRF_UART2_RX")
 			(class "Default")
 			(node
@@ -7168,7 +7278,7 @@
 			)
 		)
 		(net
-			(code "48")
+			(code "49")
 			(name "/NRF_UART2_TX")
 			(class "Default")
 			(node
@@ -7185,7 +7295,7 @@
 			)
 		)
 		(net
-			(code "49")
+			(code "50")
 			(name "/NRF_UART_RX")
 			(class "Default")
 			(node
@@ -7202,7 +7312,7 @@
 			)
 		)
 		(net
-			(code "50")
+			(code "51")
 			(name "/NRF_UART_TX")
 			(class "Default")
 			(node
@@ -7219,7 +7329,7 @@
 			)
 		)
 		(net
-			(code "51")
+			(code "52")
 			(name "/OBD2 CAN H")
 			(class "Default")
 			(node
@@ -7247,7 +7357,7 @@
 			)
 		)
 		(net
-			(code "52")
+			(code "53")
 			(name "/OBD2 CAN L")
 			(class "Default")
 			(node
@@ -7275,7 +7385,7 @@
 			)
 		)
 		(net
-			(code "53")
+			(code "54")
 			(name "/TOUCH_INT")
 			(class "Default")
 			(node
@@ -7286,7 +7396,7 @@
 			)
 		)
 		(net
-			(code "54")
+			(code "55")
 			(name "/TOUCH_RST")
 			(class "Default")
 			(node
@@ -7297,7 +7407,7 @@
 			)
 		)
 		(net
-			(code "55")
+			(code "56")
 			(name "/TOUCH_SCL")
 			(class "Default")
 			(node
@@ -7308,7 +7418,7 @@
 			)
 		)
 		(net
-			(code "56")
+			(code "57")
 			(name "/TOUCH_SDA")
 			(class "Default")
 			(node
@@ -7319,14 +7429,9 @@
 			)
 		)
 		(net
-			(code "57")
+			(code "58")
 			(name "GND")
 			(class "Default")
-			(node
-				(ref "C1")
-				(pin "1")
-				(pintype "passive")
-			)
 			(node
 				(ref "C10")
 				(pin "2")
@@ -7368,13 +7473,18 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "C2")
+				(ref "C19")
 				(pin "1")
 				(pintype "passive")
 			)
 			(node
 				(ref "C20")
 				(pin "2")
+				(pintype "passive")
+			)
+			(node
+				(ref "C21")
+				(pin "1")
 				(pintype "passive")
 			)
 			(node
@@ -7438,12 +7548,12 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "C5")
+				(ref "C7")
 				(pin "1")
 				(pintype "passive")
 			)
 			(node
-				(ref "C6")
+				(ref "C8")
 				(pin "1")
 				(pintype "passive")
 			)
@@ -7482,12 +7592,6 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J3")
-				(pin "7")
-				(pinfunction "Pin_7_7")
-				(pintype "passive")
-			)
-			(node
 				(ref "J4")
 				(pin "5")
 				(pinfunction "Pin_5_5")
@@ -7497,6 +7601,12 @@
 				(ref "J5")
 				(pin "5")
 				(pinfunction "Pin_5_5")
+				(pintype "passive")
+			)
+			(node
+				(ref "J6")
+				(pin "8")
+				(pinfunction "Pin_8_8")
 				(pintype "passive")
 			)
 			(node
@@ -7619,6 +7729,18 @@
 				(pintype "unspecified")
 			)
 			(node
+				(ref "U15")
+				(pin "7")
+				(pinfunction "VSS_7")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "U16")
+				(pin "7")
+				(pinfunction "VSS_7")
+				(pintype "unspecified")
+			)
+			(node
 				(ref "U2")
 				(pin "1")
 				(pinfunction "GND_1")
@@ -7655,18 +7777,6 @@
 				(pintype "input")
 			)
 			(node
-				(ref "U4")
-				(pin "15")
-				(pinfunction "VSS_15")
-				(pintype "passive")
-			)
-			(node
-				(ref "U4")
-				(pin "7")
-				(pinfunction "VSS_7")
-				(pintype "power_in")
-			)
-			(node
 				(ref "U5")
 				(pin "2")
 				(pinfunction "GND_2")
@@ -7697,18 +7807,6 @@
 				(pintype "input")
 			)
 			(node
-				(ref "U7")
-				(pin "15")
-				(pinfunction "VSS_15")
-				(pintype "passive")
-			)
-			(node
-				(ref "U7")
-				(pin "7")
-				(pinfunction "VSS_7")
-				(pintype "power_in")
-			)
-			(node
 				(ref "U8")
 				(pin "2")
 				(pinfunction "GND_2")
@@ -7727,32 +7825,32 @@
 				(pintype "unspecified")
 			)
 			(node
-				(ref "Y4")
+				(ref "Y6")
 				(pin "2")
 				(pinfunction "2_2")
 				(pintype "passive")
 			)
 			(node
-				(ref "Y4")
+				(ref "Y6")
 				(pin "4")
 				(pinfunction "4_4")
 				(pintype "passive")
 			)
 			(node
-				(ref "Y5")
+				(ref "Y7")
 				(pin "2")
 				(pinfunction "2_2")
 				(pintype "passive")
 			)
 			(node
-				(ref "Y5")
+				(ref "Y7")
 				(pin "4")
 				(pinfunction "4_4")
 				(pintype "passive")
 			)
 		)
 		(net
-			(code "58")
+			(code "59")
 			(name "Net-(C34-Pad1)")
 			(class "Default")
 			(node
@@ -7767,7 +7865,7 @@
 			)
 		)
 		(net
-			(code "59")
+			(code "60")
 			(name "Net-(D5-K)")
 			(class "Default")
 			(node
@@ -7795,7 +7893,7 @@
 			)
 		)
 		(net
-			(code "60")
+			(code "61")
 			(name "Net-(D6-K)")
 			(class "Default")
 			(node
@@ -7818,7 +7916,7 @@
 			)
 		)
 		(net
-			(code "61")
+			(code "62")
 			(name "Net-(D9-K)")
 			(class "Default")
 			(node
@@ -7834,7 +7932,7 @@
 			)
 		)
 		(net
-			(code "62")
+			(code "63")
 			(name "Net-(J1-Pin_1)")
 			(class "Default")
 			(node
@@ -7850,7 +7948,7 @@
 			)
 		)
 		(net
-			(code "63")
+			(code "64")
 			(name "Net-(S1-CB)")
 			(class "Default")
 			(node
@@ -7866,7 +7964,7 @@
 			)
 		)
 		(net
-			(code "64")
+			(code "65")
 			(name "Net-(S1-FB)")
 			(class "Default")
 			(node
@@ -7892,7 +7990,7 @@
 			)
 		)
 		(net
-			(code "65")
+			(code "66")
 			(name "Net-(S1-Vin)")
 			(class "Default")
 			(node
@@ -7940,163 +8038,7 @@
 			)
 		)
 		(net
-			(code "66")
-			(name "Net-(U4-OSC1)")
-			(class "Default")
-			(node
-				(ref "C2")
-				(pin "2")
-				(pintype "passive")
-			)
-			(node
-				(ref "U4")
-				(pin "6")
-				(pinfunction "OSC1_6")
-				(pintype "input")
-			)
-			(node
-				(ref "Y4")
-				(pin "1")
-				(pinfunction "1_1")
-				(pintype "passive")
-			)
-		)
-		(net
 			(code "67")
-			(name "Net-(U4-OSC2)")
-			(class "Default")
-			(node
-				(ref "C1")
-				(pin "2")
-				(pintype "passive")
-			)
-			(node
-				(ref "U4")
-				(pin "5")
-				(pinfunction "OSC2_5")
-				(pintype "output")
-			)
-			(node
-				(ref "Y4")
-				(pin "3")
-				(pinfunction "3_3")
-				(pintype "passive")
-			)
-		)
-		(net
-			(code "68")
-			(name "Net-(U4-RXCAN)")
-			(class "Default")
-			(node
-				(ref "U4")
-				(pin "2")
-				(pinfunction "RXCAN_2")
-				(pintype "input")
-			)
-			(node
-				(ref "U6")
-				(pin "4")
-				(pinfunction "RXD_4")
-				(pintype "output")
-			)
-		)
-		(net
-			(code "69")
-			(name "Net-(U4-TXCAN)")
-			(class "Default")
-			(node
-				(ref "U4")
-				(pin "1")
-				(pinfunction "TXCAN_1")
-				(pintype "output")
-			)
-			(node
-				(ref "U6")
-				(pin "1")
-				(pinfunction "TXD_1")
-				(pintype "input")
-			)
-		)
-		(net
-			(code "70")
-			(name "Net-(U7-OSC1)")
-			(class "Default")
-			(node
-				(ref "C6")
-				(pin "2")
-				(pintype "passive")
-			)
-			(node
-				(ref "U7")
-				(pin "6")
-				(pinfunction "OSC1_6")
-				(pintype "input")
-			)
-			(node
-				(ref "Y5")
-				(pin "1")
-				(pinfunction "1_1")
-				(pintype "passive")
-			)
-		)
-		(net
-			(code "71")
-			(name "Net-(U7-OSC2)")
-			(class "Default")
-			(node
-				(ref "C5")
-				(pin "2")
-				(pintype "passive")
-			)
-			(node
-				(ref "U7")
-				(pin "5")
-				(pinfunction "OSC2_5")
-				(pintype "output")
-			)
-			(node
-				(ref "Y5")
-				(pin "3")
-				(pinfunction "3_3")
-				(pintype "passive")
-			)
-		)
-		(net
-			(code "72")
-			(name "Net-(U7-RXCAN)")
-			(class "Default")
-			(node
-				(ref "U7")
-				(pin "2")
-				(pinfunction "RXCAN_2")
-				(pintype "input")
-			)
-			(node
-				(ref "U8")
-				(pin "4")
-				(pinfunction "RXD_4")
-				(pintype "output")
-			)
-		)
-		(net
-			(code "73")
-			(name "Net-(U7-TXCAN)")
-			(class "Default")
-			(node
-				(ref "U7")
-				(pin "1")
-				(pinfunction "TXCAN_1")
-				(pintype "output")
-			)
-			(node
-				(ref "U8")
-				(pin "1")
-				(pinfunction "TXD_1")
-				(pintype "input")
-			)
-		)
-		(net
-			(code "74")
 			(name "Net-(U10-EN)")
 			(class "Default")
 			(node
@@ -8112,7 +8054,7 @@
 			)
 		)
 		(net
-			(code "75")
+			(code "68")
 			(name "Net-(U11-~{CLR})")
 			(class "Default")
 			(node
@@ -8129,84 +8071,174 @@
 			)
 		)
 		(net
-			(code "76")
-			(name "unconnected-(J5-Pin_1-Pad1)")
+			(code "69")
+			(name "Net-(U15-OSC1)")
 			(class "Default")
 			(node
-				(ref "J5")
+				(ref "C21")
+				(pin "2")
+				(pintype "passive")
+			)
+			(node
+				(ref "U15")
+				(pin "6")
+				(pinfunction "OSC1_6")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "Y7")
 				(pin "1")
-				(pinfunction "Pin_1_1")
+				(pinfunction "1_1")
 				(pintype "passive")
 			)
 		)
 		(net
+			(code "70")
+			(name "Net-(U15-OSC2)")
+			(class "Default")
+			(node
+				(ref "C19")
+				(pin "2")
+				(pintype "passive")
+			)
+			(node
+				(ref "U15")
+				(pin "5")
+				(pinfunction "OSC2_5")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "Y7")
+				(pin "3")
+				(pinfunction "3_3")
+				(pintype "passive")
+			)
+		)
+		(net
+			(code "71")
+			(name "Net-(U15-RXCAN)")
+			(class "Default")
+			(node
+				(ref "U15")
+				(pin "2")
+				(pinfunction "RXCAN_2")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "U8")
+				(pin "4")
+				(pinfunction "RXD_4")
+				(pintype "output")
+			)
+		)
+		(net
+			(code "72")
+			(name "Net-(U15-TXCAN)")
+			(class "Default")
+			(node
+				(ref "U15")
+				(pin "1")
+				(pinfunction "TXCAN_1")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "U8")
+				(pin "1")
+				(pinfunction "TXD_1")
+				(pintype "input")
+			)
+		)
+		(net
+			(code "73")
+			(name "Net-(U16-OSC1)")
+			(class "Default")
+			(node
+				(ref "C8")
+				(pin "2")
+				(pintype "passive")
+			)
+			(node
+				(ref "U16")
+				(pin "6")
+				(pinfunction "OSC1_6")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "Y6")
+				(pin "1")
+				(pinfunction "1_1")
+				(pintype "passive")
+			)
+		)
+		(net
+			(code "74")
+			(name "Net-(U16-OSC2)")
+			(class "Default")
+			(node
+				(ref "C7")
+				(pin "2")
+				(pintype "passive")
+			)
+			(node
+				(ref "U16")
+				(pin "5")
+				(pinfunction "OSC2_5")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "Y6")
+				(pin "3")
+				(pinfunction "3_3")
+				(pintype "passive")
+			)
+		)
+		(net
+			(code "75")
+			(name "Net-(U16-RXCAN)")
+			(class "Default")
+			(node
+				(ref "U16")
+				(pin "2")
+				(pinfunction "RXCAN_2")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "U6")
+				(pin "4")
+				(pinfunction "RXD_4")
+				(pintype "output")
+			)
+		)
+		(net
+			(code "76")
+			(name "Net-(U16-TXCAN)")
+			(class "Default")
+			(node
+				(ref "U16")
+				(pin "1")
+				(pinfunction "TXCAN_1")
+				(pintype "unspecified")
+			)
+			(node
+				(ref "U6")
+				(pin "1")
+				(pinfunction "TXD_1")
+				(pintype "input")
+			)
+		)
+		(net
 			(code "77")
-			(name "unconnected-(U1-RMIO2_{slash}_GPIO0_A2-Pad7)")
+			(name "unconnected-(U1-RMIO9_{slash}_GPIO0_B1-Pad26)")
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "7")
-				(pinfunction "RMIO2_/_GPIO0_A2_7")
+				(pin "26")
+				(pinfunction "RMIO9_/_GPIO0_B1_26")
 				(pintype "bidirectional")
 			)
 		)
 		(net
 			(code "78")
-			(name "unconnected-(U1-RMIO5_{slash}_GPIO0_A5-Pad15)")
-			(class "Default")
-			(node
-				(ref "U1")
-				(pin "15")
-				(pinfunction "RMIO5_/_GPIO0_A5_15")
-				(pintype "bidirectional")
-			)
-		)
-		(net
-			(code "79")
-			(name "unconnected-(U1-RMIO6_{slash}_GPIO0_A6-Pad19)")
-			(class "Default")
-			(node
-				(ref "U1")
-				(pin "19")
-				(pinfunction "RMIO6_/_GPIO0_A6_19")
-				(pintype "bidirectional")
-			)
-		)
-		(net
-			(code "80")
-			(name "unconnected-(U1-RMIO10_{slash}_GPIO0_B2-Pad24)")
-			(class "Default")
-			(node
-				(ref "U1")
-				(pin "24")
-				(pinfunction "RMIO10_/_GPIO0_B2_24")
-				(pintype "bidirectional")
-			)
-		)
-		(net
-			(code "81")
-			(name "unconnected-(U1-RMIO13_{slash}_GPIO0_B5-Pad16)")
-			(class "Default")
-			(node
-				(ref "U1")
-				(pin "16")
-				(pinfunction "RMIO13_/_GPIO0_B5_16")
-				(pintype "bidirectional")
-			)
-		)
-		(net
-			(code "82")
-			(name "unconnected-(U1-RMIO14_{slash}_GPIO0_B6-Pad12)")
-			(class "Default")
-			(node
-				(ref "U1")
-				(pin "12")
-				(pinfunction "RMIO14_/_GPIO0_B6_12")
-				(pintype "bidirectional")
-			)
-		)
-		(net
-			(code "83")
 			(name "unconnected-(U1-RMIO16_{slash}_GPIO0_C0-Pad35)")
 			(class "Default")
 			(node
@@ -8217,7 +8249,18 @@
 			)
 		)
 		(net
-			(code "84")
+			(code "79")
+			(name "unconnected-(U1-RMIO17_{slash}_GPIO0_C1-Pad38)")
+			(class "Default")
+			(node
+				(ref "U1")
+				(pin "38")
+				(pinfunction "RMIO17_/_GPIO0_C1_38")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "80")
 			(name "unconnected-(U1-RMIO18_{slash}_GPIO0_C2-Pad40)")
 			(class "Default")
 			(node
@@ -8228,24 +8271,68 @@
 			)
 		)
 		(net
-			(code "85")
-			(name "unconnected-(U1-RMIO22_{slash}_GPIO0_C6-Pad8)")
+			(code "81")
+			(name "unconnected-(U1-RMIO24_{slash}_GPIO1_B1-Pad27)")
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "8")
-				(pinfunction "RMIO22_/_GPIO0_C6_8")
+				(pin "27")
+				(pinfunction "RMIO24_/_GPIO1_B1_27")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "82")
+			(name "unconnected-(U1-RMIO25_{slash}_GPIO1_B2-Pad29)")
+			(class "Default")
+			(node
+				(ref "U1")
+				(pin "29")
+				(pinfunction "RMIO25_/_GPIO1_B2_29")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "83")
+			(name "unconnected-(U1-RMIO26_{slash}_GPIO1_B3-Pad31)")
+			(class "Default")
+			(node
+				(ref "U1")
+				(pin "31")
+				(pinfunction "RMIO26_/_GPIO1_B3_31")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "84")
+			(name "unconnected-(U1-RMIO27_{slash}_GPIO1_C2-Pad33)")
+			(class "Default")
+			(node
+				(ref "U1")
+				(pin "33")
+				(pinfunction "RMIO27_/_GPIO1_C2_33")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "85")
+			(name "unconnected-(U1-RMIO28_{slash}_GPIO1_C3-Pad37)")
+			(class "Default")
+			(node
+				(ref "U1")
+				(pin "37")
+				(pinfunction "RMIO28_/_GPIO1_C3_37")
 				(pintype "bidirectional")
 			)
 		)
 		(net
 			(code "86")
-			(name "unconnected-(U1-RMIO23_{slash}_GPIO0_C7-Pad10)")
+			(name "unconnected-(U1-RMIO29_{slash}_GPIO1_D1-Pad36)")
 			(class "Default")
 			(node
 				(ref "U1")
-				(pin "10")
-				(pinfunction "RMIO23_/_GPIO0_C7_10")
+				(pin "36")
+				(pinfunction "RMIO29_/_GPIO1_D1_36")
 				(pintype "bidirectional")
 			)
 		)
@@ -8460,17 +8547,6 @@
 		)
 		(net
 			(code "106")
-			(name "unconnected-(U2-P1.06-Pad34)")
-			(class "Default")
-			(node
-				(ref "U2")
-				(pin "34")
-				(pinfunction "P1.06_34")
-				(pintype "unspecified")
-			)
-		)
-		(net
-			(code "107")
 			(name "unconnected-(U2-P1.07-Pad47)")
 			(class "Default")
 			(node
@@ -8481,7 +8557,7 @@
 			)
 		)
 		(net
-			(code "108")
+			(code "107")
 			(name "unconnected-(U2-P1.08-Pad42)")
 			(class "Default")
 			(node
@@ -8492,7 +8568,7 @@
 			)
 		)
 		(net
-			(code "109")
+			(code "108")
 			(name "unconnected-(U2-P1.12-Pad39)")
 			(class "Default")
 			(node
@@ -8503,7 +8579,7 @@
 			)
 		)
 		(net
-			(code "110")
+			(code "109")
 			(name "unconnected-(U2-P1.14-Pad38)")
 			(class "Default")
 			(node
@@ -8514,7 +8590,7 @@
 			)
 		)
 		(net
-			(code "111")
+			(code "110")
 			(name "unconnected-(U2-VBUS-Pad22)")
 			(class "Default")
 			(node
@@ -8525,79 +8601,79 @@
 			)
 		)
 		(net
-			(code "112")
-			(name "unconnected-(U4-CLKO{slash}SOF-Pad3)")
-			(class "Default")
-			(node
-				(ref "U4")
-				(pin "3")
-				(pinfunction "CLKO/SOF_3")
-				(pintype "output")
-			)
-		)
-		(net
-			(code "113")
-			(name "unconnected-(U4-~{INT0}{slash}GPIO0{slash}XSTBY-Pad9)")
-			(class "Default")
-			(node
-				(ref "U4")
-				(pin "9")
-				(pinfunction "~{INT0}/GPIO0/XSTBY_9")
-				(pintype "bidirectional")
-			)
-		)
-		(net
-			(code "114")
-			(name "unconnected-(U4-~{INT1}{slash}GPIO1-Pad8)")
-			(class "Default")
-			(node
-				(ref "U4")
-				(pin "8")
-				(pinfunction "~{INT1}/GPIO1_8")
-				(pintype "bidirectional")
-			)
-		)
-		(net
-			(code "115")
-			(name "unconnected-(U7-CLKO{slash}SOF-Pad3)")
-			(class "Default")
-			(node
-				(ref "U7")
-				(pin "3")
-				(pinfunction "CLKO/SOF_3")
-				(pintype "output")
-			)
-		)
-		(net
-			(code "116")
-			(name "unconnected-(U7-~{INT0}{slash}GPIO0{slash}XSTBY-Pad9)")
-			(class "Default")
-			(node
-				(ref "U7")
-				(pin "9")
-				(pinfunction "~{INT0}/GPIO0/XSTBY_9")
-				(pintype "bidirectional")
-			)
-		)
-		(net
-			(code "117")
-			(name "unconnected-(U7-~{INT1}{slash}GPIO1-Pad8)")
-			(class "Default")
-			(node
-				(ref "U7")
-				(pin "8")
-				(pinfunction "~{INT1}/GPIO1_8")
-				(pintype "bidirectional")
-			)
-		)
-		(net
-			(code "118")
+			(code "111")
 			(name "unconnected-(U11-~{Q}-Pad3)")
 			(class "Default")
 			(node
 				(ref "U11")
 				(pin "3")
 				(pinfunction "~{Q}_3")
+				(pintype "unspecified")
+			)
+		)
+		(net
+			(code "112")
+			(name "unconnected-(U15-CLKO{slash}SOF-Pad3)")
+			(class "Default")
+			(node
+				(ref "U15")
+				(pin "3")
+				(pinfunction "CLKO/SOF_3")
+				(pintype "unspecified")
+			)
+		)
+		(net
+			(code "113")
+			(name "unconnected-(U15-~{INT0}{slash}GPIO0{slash}XSTBY-Pad9)")
+			(class "Default")
+			(node
+				(ref "U15")
+				(pin "9")
+				(pinfunction "~{INT0}/GPIO0/XSTBY_9")
+				(pintype "unspecified")
+			)
+		)
+		(net
+			(code "114")
+			(name "unconnected-(U15-~{INT1}{slash}GPIO1-Pad8)")
+			(class "Default")
+			(node
+				(ref "U15")
+				(pin "8")
+				(pinfunction "~{INT1}/GPIO1_8")
+				(pintype "unspecified")
+			)
+		)
+		(net
+			(code "115")
+			(name "unconnected-(U16-CLKO{slash}SOF-Pad3)")
+			(class "Default")
+			(node
+				(ref "U16")
+				(pin "3")
+				(pinfunction "CLKO/SOF_3")
+				(pintype "unspecified")
+			)
+		)
+		(net
+			(code "116")
+			(name "unconnected-(U16-~{INT0}{slash}GPIO0{slash}XSTBY-Pad9)")
+			(class "Default")
+			(node
+				(ref "U16")
+				(pin "9")
+				(pinfunction "~{INT0}/GPIO0/XSTBY_9")
+				(pintype "unspecified")
+			)
+		)
+		(net
+			(code "117")
+			(name "unconnected-(U16-~{INT1}{slash}GPIO1-Pad8)")
+			(class "Default")
+			(node
+				(ref "U16")
+				(pin "8")
+				(pinfunction "~{INT1}/GPIO1_8")
 				(pintype "unspecified")
 			)
 		)
