@@ -1,0 +1,8 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "Luckfox_Lyra") (type "KiCad") (uri "${KIPRJMOD}/Luckfox_Lyra.pretty") (options "") (descr ""))
+	(lib (name "MinewSemi_nRF54") (type "KiCad") (uri "${KIPRJMOD}/MinewSemi_nRF54.pretty") (options "") (descr ""))
+	(lib (name "Core52840") (type "KiCad") (uri "${KIPRJMOD}/Core52840.pretty") (options "") (descr ""))
+	(lib (name "RAA211403") (type "KiCad") (uri "${KIPRJMOD}/RAA211403.pretty") (options "") (descr ""))
+	(lib (name "MCP2518FD") (type "KiCad") (uri "${KIPRJMOD}/MCP2518FD.pretty") (options "") (descr ""))
+)
