@@ -1,11 +1,11 @@
 # Used and reserved 40-pin connector pins
 
 This document covers the Luckfox Lyra Zero W 40-pin connector (`PI1` in the
-schematic). Onboard-only signals and pins on the separate DSI connector are not
-included.
+schematic), plus the display and touch GPIOs used outside that connector.
 
 PCB connections come from `LUCKFOX-LYRA-ZEROW.net` (U1). The symbol's GPIO and
 RMIO names match the physical pin numbers in the official board schematic.
+The display and touch GPIO assignments below follow the current device tree.
 
 ## Used and reserved pins
 
@@ -14,7 +14,6 @@ RMIO names match the physical pin numbers in the official board schematic.
 - Pin 7 — `CAN0_TX` — GPIO0_A2 — first transceiver TXD
 - Pin 8 — `CAN0_RX` — GPIO0_C6 — first transceiver RXD
 - Pin 10 — `CAN1_RX` — GPIO0_C7 — second transceiver RXD
-- Pin 11 — `TOUCH_INT` — GPIO0_A3 — falling-edge interrupt
 - Pin 12 — `CAN1_TX` — GPIO0_B6 — second transceiver TXD
 - Pin 13 — `TOUCH_RST` — GPIO0_A4 — active-low reset
 - Pin 15 — `LYRA_UART1_TX` — GPIO0_A5 — UART1 transmit (`/dev/ttyS1`)
@@ -25,7 +24,15 @@ RMIO names match the physical pin numbers in the official board schematic.
 - Pin 22 — `LYRA_SPI1_MOSI` — GPIO0_B3 — SPI1 controller output
 - Pin 23 — `LYRA_UART0_TX` — GPIO0_B0 — UART2 transmit (`/dev/ttyS2`)
 - Pin 24 — `LYRA_UART0_RX` — GPIO0_B2 — UART2 receive (`/dev/ttyS2`)
-- Pin 28 — `LCD_RST` — GPIO1_D3 — active-low reset
+
+## Display and touch GPIOs outside the 40-pin connector
+
+- `TP_INT` / `TOUCH_INT` — GPIO1_C4 — falling-edge interrupt with pull-up
+- `LCD_RST` — GPIO0_B7 — active-low panel reset
+
+The device tree no longer uses header pin 11 (GPIO0_A3) for touch interrupt
+or header pin 28 (GPIO1_D3) for panel reset. Touch reset remains on header
+pin 13 (GPIO0_A4). GPIO1_C4 is no longer assigned to the LCD supply pinctrl.
 
 ## Physical 40-pin connector layout
 
@@ -44,7 +51,7 @@ bottom.
 | `TOUCH_SCL` | GPIO0_A1 | 5 | 6 | GND | GND |
 | `CAN0_TX` | GPIO0_A2 | 7 | 8 | GPIO0_C6 | `CAN0_RX` |
 | GND | GND | 9 | 10 | GPIO0_C7 | `CAN1_RX` |
-| `TOUCH_INT` | GPIO0_A3 | 11 | 12 | GPIO0_B6 | `CAN1_TX` |
+| — | GPIO0_A3 | 11 | 12 | GPIO0_B6 | `CAN1_TX` |
 | `TOUCH_RST` | GPIO0_A4 | 13 | 14 | GND | GND |
 | `LYRA_UART1_TX` (`/dev/ttyS1`) | GPIO0_A5 | 15 | 16 | GPIO0_B5 | `LYRA_UART1_RX` (`/dev/ttyS1`) |
 | 3.3 V | 3.3 V | 17 | 18 | GPIO0_B4 | `LYRA_SPI1_MISO` |
@@ -52,7 +59,7 @@ bottom.
 | `LYRA_SPI1_CS1` | GPIO0_A7 | 21 | 22 | GPIO0_B3 | `LYRA_SPI1_MOSI` |
 | `LYRA_UART0_TX` (UART2, `/dev/ttyS2`) | GPIO0_B0 | 23 | 24 | GPIO0_B2 | `LYRA_UART0_RX` (UART2, `/dev/ttyS2`) |
 | GND | GND | 25 | 26 | GPIO0_B1 | — |
-| — | GPIO1_B1 | 27 | 28 | GPIO1_D3 | `LCD_RST` |
+| — | GPIO1_B1 | 27 | 28 | GPIO1_D3 | — |
 | — | GPIO1_B2 | 29 | 30 | GND | GND |
 | — | GPIO1_B3 | 31 | 32 | GPIO1_D2 | — |
 | — | GPIO1_C2 | 33 | 34 | GND | GND |

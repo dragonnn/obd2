@@ -40,8 +40,8 @@
 		reg = <0x58>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&cst3530_int &cst3530_reset>;
-		interrupt-parent = <&gpio0>;
-		interrupts = <RK_PA3 IRQ_TYPE_EDGE_FALLING>;
+		interrupt-parent = <&gpio1>;
+		interrupts = <RK_PC4 IRQ_TYPE_EDGE_FALLING>;
 		reset-gpios = <&gpio0 RK_PA4 GPIO_ACTIVE_LOW>;
 		vdd-supply = <&vcc_3v3>;
 		touchscreen-size-x = <262>;
@@ -53,11 +53,17 @@
 &pinctrl {
 	cst3530 {
 		cst3530_int: cst3530-int {
-			rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>;
+			rockchip,pins = <1 RK_PC4 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 
 		cst3530_reset: cst3530-reset {
 			rockchip,pins = <0 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	lcd {
+		co6300_reset: co6300-reset {
+			rockchip,pins = <0 RK_PB7 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 	};
 };
@@ -72,8 +78,9 @@
 
 	compatible = "boe,co6300";
 	backlight = <&backlight>;
-	/* PCB LCD_RST: U1 pin 28 (GPIO1_D3). */
-	reset-gpios = <&gpio1 RK_PD3 GPIO_ACTIVE_LOW>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&co6300_reset>;
+	reset-gpios = <&gpio0 RK_PB7 GPIO_ACTIVE_LOW>;
 	dsi,format = <MIPI_DSI_FMT_RGB888>;
 	bus-format = <MEDIA_BUS_FMT_RGB888_3X8>;
 	dsi,lanes = <1>;
