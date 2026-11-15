@@ -3,20 +3,28 @@
 //! SWDCLK/SWDIO remain dedicated to debugging. Unconnected GPIOs are omitted.
 
 use embassy_nrf::{
-    Peri, Peripherals,
+    Peri, Peripherals, bind_interrupts,
     gpio::{Input, Level, Output, OutputDrive, Pull},
     peripherals,
+    uarte::{self, Uarte},
 };
 use embassy_time::Timer;
 
+bind_interrupts!(struct UartIrqs {
+    UARTE0 => uarte::InterruptHandler<peripherals::UARTE0>;
+    UARTE1 => uarte::InterruptHandler<peripherals::UARTE1>;
+});
+
 pub struct Board {
     pub pins: Pins,
+    pub lyra_uart: Uarte<'static>, // UARTE0, TX P0.22 / RX P1.00, Lyra via U9
+    pub ext_uart: Uarte<'static>,  // UARTE1, TX P0.04 / RX P0.05, J4.2 / J4.3
     pub radio: Peri<'static, peripherals::RADIO>,
     pub wdt: Peri<'static, peripherals::WDT>,
 }
 
 /// Keep these pins alive: dropping a GPIO driver resets its configuration.
-/// Bus and ADC pins retain their types for use with peripheral drivers.
+/// SPI, I2C, and ADC pins retain their types for use with peripheral drivers.
 #[allow(dead_code)]
 pub struct Pins {
     pub can1_shdn: Output<'static>, // P1.15, NRF_CAN1_SHDN, U6 MAX3051
@@ -40,23 +48,19 @@ pub struct Pins {
     pub sda: Peri<'static, peripherals::P1_09>, // NRF_SDA, J2.3
     pub i2c_irq: Input<'static>,                // P0.30, NRF_I2C_IRQ, J2.1
 
-    pub uart_tx: Peri<'static, peripherals::P0_22>, // NRF_UART_TX, Lyra via U9
-    pub uart_rx: Peri<'static, peripherals::P1_00>, // NRF_UART_RX, Lyra via U9
-    pub uart2_tx: Peri<'static, peripherals::P0_04>, // NRF_UART2_TX, J4.2
-    pub uart2_rx: Peri<'static, peripherals::P0_05>, // NRF_UART2_RX, J4.3
-    pub uart2_irq: Input<'static>,                  // P1.03, NRF_UART2_IRQ, J4.1
+    pub ext_uart_irq: Input<'static>, // P1.03, NRF_UART2_IRQ, J4.1
 
     pub ignition: Peri<'static, peripherals::P0_03>, // NRF_ING12V+, R13/R14 divider
-    pub power: Power,
+    pub lyra_power: LyraPower,
 }
 
-/// Regulator enable latched by U11 (SN74LVC1G74) on CLK's rising edge.
-pub struct Power {
+/// Lyra regulator enable latched by U11 (SN74LVC1G74) on CLK's rising edge.
+pub struct LyraPower {
     pwr_clk: Output<'static>,   // P1.02, NRF_PWR_CLK, U11 CLK
     pwr_state: Output<'static>, // P1.01, NRF_PWR_STATE, U11 D
 }
 
-impl Power {
+impl LyraPower {
     pub async fn power_up(&mut self) {
         self.set_power(Level::High).await;
     }
@@ -89,6 +93,10 @@ pub fn setup(p: Peripherals) -> Board {
     let pwr_clk = Output::new(p.P1_02, Level::Low, OutputDrive::Standard);
     let pwr_state = Output::new(p.P1_01, Level::Low, OutputDrive::Standard);
 
+    let mut uart_config = uarte::Config::default();
+    uart_config.baudrate = uarte::Baudrate::Baud115200;
+    uart_config.parity = uarte::Parity::Excluded;
+
     Board {
         pins: Pins {
             can1_shdn,
@@ -109,14 +117,12 @@ pub fn setup(p: Peripherals) -> Board {
             scl: p.P0_12,
             sda: p.P1_09,
             i2c_irq: Input::new(p.P0_30, Pull::Up),
-            uart_tx: p.P0_22,
-            uart_rx: p.P1_00,
-            uart2_tx: p.P0_04,
-            uart2_rx: p.P0_05,
-            uart2_irq: Input::new(p.P1_03, Pull::Up),
+            ext_uart_irq: Input::new(p.P1_03, Pull::Up),
             ignition: p.P0_03,
-            power: Power { pwr_clk, pwr_state },
+            lyra_power: LyraPower { pwr_clk, pwr_state },
         },
+        lyra_uart: Uarte::new(p.UARTE0, p.P1_00, p.P0_22, UartIrqs, uart_config.clone()),
+        ext_uart: Uarte::new(p.UARTE1, p.P0_05, p.P0_04, UartIrqs, uart_config),
         radio: p.RADIO,
         wdt: p.WDT,
     }

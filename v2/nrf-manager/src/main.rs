@@ -7,14 +7,13 @@ extern crate alloc;
 use byte::TryWrite;
 use defmt::*;
 use embassy_executor::Spawner;
+use embassy_futures::join::join;
 use embassy_nrf::{
-    Peri, bind_interrupts,
-    peripherals::{self, UARTE0},
-    radio, uarte,
+    Peri, bind_interrupts, peripherals, radio,
+    uarte::Uarte,
     wdt::{Config, Watchdog, WatchdogHandle},
 };
-use embassy_time::Duration;
-use embassy_time::Timer;
+use embassy_time::{Duration, Ticker, Timer, with_timeout};
 use embedded_alloc::LlffHeap as Heap;
 use ieee802154::mac::FooterMode;
 use ieee802154::mac::FrameSerDesContext;
@@ -27,9 +26,6 @@ static HEAP: Heap = Heap::empty();
 
 bind_interrupts!(struct Ieee802154Irqs {
     RADIO => radio::InterruptHandler<peripherals::RADIO>;
-});
-bind_interrupts!(struct UartIrqs {
-    UARTE0 => uarte::InterruptHandler<UARTE0>;
 });
 
 pub struct Wdg(WatchdogHandle);
@@ -69,6 +65,44 @@ impl Wdg {
     }
 }
 
+async fn lyra_uart_echo_test(uart: &mut Uarte<'_>) {
+    let (tx, rx) = uart.split_by_ref();
+    let mut ticker = Ticker::every(Duration::from_secs(1));
+
+    for attempt in 1..=50 {
+        let mut sent = *b"echo 0\r\n";
+        sent[5] = b'0' + attempt;
+        let mut received = [0; 8];
+        info!("lyra_uart echo {}: TX {=[u8]:a}", attempt, sent);
+
+        // Poll RX first so an immediate echo is captured during transmission.
+        let (read_result, write_result) = join(
+            with_timeout(Duration::from_millis(500), rx.read(&mut received)),
+            with_timeout(Duration::from_millis(500), tx.write(&sent)),
+        )
+        .await;
+
+        match (write_result, read_result) {
+            (Ok(Ok(())), Ok(Ok(()))) if received == sent => {
+                info!("lyra_uart echo {}: OK, RX {=[u8]:a}", attempt, received);
+            }
+            (Ok(Ok(())), Ok(Ok(()))) => {
+                warn!(
+                    "lyra_uart echo {}: mismatch, RX {=[u8]:a}",
+                    attempt, received
+                );
+            }
+            (tx, rx) => {
+                warn!("lyra_uart echo {}: TX {:?}, RX {:?}", attempt, tx, rx);
+            }
+        }
+
+        if attempt < 5 {
+            ticker.next().await;
+        }
+    }
+}
+
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let mut config = embassy_nrf::config::Config::default();
@@ -77,25 +111,27 @@ async fn main(_spawner: Spawner) {
     let p = embassy_nrf::init(config);
     let board::Board {
         mut pins,
-        radio,
+        mut lyra_uart,
+        ext_uart: _ext_uart,
+        radio: _radio,
         wdt,
     } = board::setup(p);
     let (mut wdg0, mut wdg1) = Wdg::new(wdt).await;
     // U13 (TPS3839) holds U11's CLR low for up to 350 ms after power-on.
     Timer::after_millis(400).await;
-    pins.power.power_up().await;
-    Timer::after_secs(20).await;
-    pins.power.power_down().await;
+    pins.lyra_power.power_up().await;
+    join(Timer::after_secs(5), lyra_uart_echo_test(&mut lyra_uart)).await;
+    pins.lyra_power.power_down().await;
 
-    let mut ieee802154 = embassy_nrf::radio::ieee802154::Radio::new(radio, Ieee802154Irqs);
+    /*let mut ieee802154 = embassy_nrf::radio::ieee802154::Radio::new(_radio, Ieee802154Irqs);
     ieee802154.set_channel(15);
-    ieee802154.set_cca(radio::ieee802154::Cca::CarrierSense);
-    info!("Radio initialized");
+    ieee802154.set_cca(radio::ieee802154::Cca::CarrierSense);*/
+    info!("Main loop");
 
     loop {
         wdg0.pet().await;
         wdg1.pet().await;
-        embassy_time::Timer::after_secs(1).await;
+        embassy_time::Timer::after_secs(5).await;
     }
 }
 
