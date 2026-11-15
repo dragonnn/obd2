@@ -6,6 +6,7 @@ use embassy_nrf::{
     Peri, Peripherals, bind_interrupts,
     gpio::{Input, Level, Output, OutputDrive, Pull},
     peripherals,
+    spim::{self, Spim},
     uarte::{self, Uarte},
 };
 use embassy_time::Timer;
@@ -15,8 +16,13 @@ bind_interrupts!(struct UartIrqs {
     UARTE1 => uarte::InterruptHandler<peripherals::UARTE1>;
 });
 
+bind_interrupts!(struct SpiIrqs {
+    SPIM3 => spim::InterruptHandler<peripherals::SPI3>;
+});
+
 pub struct Board {
     pub pins: Pins,
+    pub spi: Spim<'static>,        // SPI3, SCK P0.19 / MISO P0.23 / MOSI P0.21
     pub lyra_uart: Uarte<'static>, // UARTE0, TX P0.22 / RX P1.00, Lyra via U9
     pub ext_uart: Uarte<'static>,  // UARTE1, TX P0.04 / RX P0.05, J4.2 / J4.3
     pub radio: Peri<'static, peripherals::RADIO>,
@@ -24,7 +30,7 @@ pub struct Board {
 }
 
 /// Keep these pins alive: dropping a GPIO driver resets its configuration.
-/// SPI, I2C, and ADC pins retain their types for use with peripheral drivers.
+/// I2C and ADC pins retain their types for use with peripheral drivers.
 #[allow(dead_code)]
 pub struct Pins {
     pub can1_shdn: Output<'static>, // P1.15, NRF_CAN1_SHDN, U6 MAX3051
@@ -37,12 +43,9 @@ pub struct Pins {
     pub eink_dc: Output<'static>,   // P0.02, NRF_EINK_DC
     pub rst: Output<'static>,       // P0.29, NRF_RST
 
-    pub sck: Peri<'static, peripherals::P0_19>, // NRF_SCK, shared SPI / J6.6
-    pub mosi: Peri<'static, peripherals::P0_21>, // NRF_MOSI, shared SPI / J6.5
-    pub miso: Peri<'static, peripherals::P0_23>, // NRF_MISO, shared SPI / J6.4
-    pub spi_cs: Output<'static>,                // P0.31, NRF_SPI_CS, J6.3
-    pub spi_irq: Input<'static>,                // P1.04, NRF_SPI_IRQ, J6.2
-    pub spi_rst: Output<'static>,               // P1.06, NRF_SPI_RST, J6.1
+    pub spi_cs: Output<'static>,  // P0.31, NRF_SPI_CS, J6.3
+    pub spi_irq: Input<'static>,  // P1.04, NRF_SPI_IRQ, J6.2
+    pub spi_rst: Output<'static>, // P1.06, NRF_SPI_RST, J6.1
 
     pub scl: Peri<'static, peripherals::P0_12>, // NRF_SCL, J2.2
     pub sda: Peri<'static, peripherals::P1_09>, // NRF_SDA, J2.3
@@ -97,6 +100,11 @@ pub fn setup(p: Peripherals) -> Board {
     uart_config.baudrate = uarte::Baudrate::Baud115200;
     uart_config.parity = uarte::Parity::Excluded;
 
+    let mut spi_config = spim::Config::default();
+    spi_config.frequency = spim::Frequency::M1;
+    spi_config.mode = spim::MODE_0;
+    spi_config.bit_order = spim::BitOrder::MsbFirst;
+
     Board {
         pins: Pins {
             can1_shdn,
@@ -108,9 +116,6 @@ pub fn setup(p: Peripherals) -> Board {
             cs3_eink: Output::new(p.P1_11, Level::High, OutputDrive::Standard),
             eink_dc: Output::new(p.P0_02, Level::Low, OutputDrive::Standard),
             rst: Output::new(p.P0_29, Level::High, OutputDrive::Standard),
-            sck: p.P0_19,
-            mosi: p.P0_21,
-            miso: p.P0_23,
             spi_cs: Output::new(p.P0_31, Level::High, OutputDrive::Standard),
             spi_irq: Input::new(p.P1_04, Pull::Up),
             spi_rst: Output::new(p.P1_06, Level::High, OutputDrive::Standard),
@@ -121,6 +126,7 @@ pub fn setup(p: Peripherals) -> Board {
             ignition: p.P0_03,
             lyra_power: LyraPower { pwr_clk, pwr_state },
         },
+        spi: Spim::new(p.SPI3, SpiIrqs, p.P0_19, p.P0_23, p.P0_21, spi_config),
         lyra_uart: Uarte::new(p.UARTE0, p.P1_00, p.P0_22, UartIrqs, uart_config.clone()),
         ext_uart: Uarte::new(p.UARTE1, p.P0_05, p.P0_04, UartIrqs, uart_config),
         radio: p.RADIO,
