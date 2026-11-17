@@ -2,6 +2,8 @@
 //!
 //! SWDCLK/SWDIO remain dedicated to debugging. Unconnected GPIOs are omitted.
 
+use crate::can::{self, Can};
+use defmt::{info, warn};
 use embassy_nrf::{
     Peri, Peripherals, bind_interrupts,
     gpio::{Input, Level, Output, OutputDrive, Pull},
@@ -9,7 +11,19 @@ use embassy_nrf::{
     spim::{self, Spim},
     uarte::{self, Uarte},
 };
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 use embassy_time::Timer;
+use static_cell::StaticCell;
+
+pub type SpiBus = Mutex<CriticalSectionRawMutex, Spim<'static>>;
+pub type SpiDevice = embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
+    'static,
+    CriticalSectionRawMutex,
+    Spim<'static>,
+    Output<'static>,
+>;
+
+static SPI_BUS: StaticCell<SpiBus> = StaticCell::new();
 
 bind_interrupts!(struct UartIrqs {
     UARTE0 => uarte::InterruptHandler<peripherals::UARTE0>;
@@ -17,12 +31,15 @@ bind_interrupts!(struct UartIrqs {
 });
 
 bind_interrupts!(struct SpiIrqs {
-    SPIM3 => spim::InterruptHandler<peripherals::SPI3>;
+    TWISPI0 => spim::InterruptHandler<peripherals::TWISPI0>;
 });
 
 pub struct Board {
     pub pins: Pins,
-    pub spi: Spim<'static>,        // SPI3, SCK P0.19 / MISO P0.23 / MOSI P0.21
+    /// Shared SPIM0 bus. Other peripherals can use `SpiDevice::new(spi, cs)`.
+    pub spi: &'static SpiBus, // SCK P0.19 / MISO P0.23 / MOSI P0.21
+    pub can_listen: Can,           // CAN2/U15, CAN LISTEN
+    pub can_obd2: Can,             // CAN1/U16, OBD2 CAN
     pub lyra_uart: Uarte<'static>, // UARTE0, TX P0.22 / RX P1.00, Lyra via U9
     pub ext_uart: Uarte<'static>,  // UARTE1, TX P0.04 / RX P0.05, J4.2 / J4.3
     pub radio: Peri<'static, peripherals::RADIO>,
@@ -33,15 +50,13 @@ pub struct Board {
 /// I2C and ADC pins retain their types for use with peripheral drivers.
 #[allow(dead_code)]
 pub struct Pins {
-    pub can1_shdn: Output<'static>, // P1.15, NRF_CAN1_SHDN, U6 MAX3051
-    pub can2_shdn: Output<'static>, // P0.28, NRF_CAN2_SHDN, U8 MAX3051
-    pub can1_int: Input<'static>,   // P1.10, NRF_CAN1_INT, U16 MCP2518FD
-    pub can2_int: Input<'static>,   // P1.13, NRF_CAN2_INT, U15 MCP2518FD
-    pub cs1_can1: Output<'static>,  // P0.07, NRF_CS1_CAN1
-    pub cs2_can2: Output<'static>,  // P0.18, NRF_CS2_CAN2 (reset-pin-as-gpio)
-    pub cs3_eink: Output<'static>,  // P1.11, NRF_CS3_EINK
-    pub eink_dc: Output<'static>,   // P0.02, NRF_EINK_DC
-    pub rst: Output<'static>,       // P0.29, NRF_RST
+    pub can_obd2_shdn: Output<'static>, // P1.15, NRF_CAN1_SHDN, U6 MAX3051
+    pub can_listen_shdn: Output<'static>, // P0.28, NRF_CAN2_SHDN, U8 MAX3051
+    pub can_obd2_int: Input<'static>,   // P1.10, NRF_CAN1_INT, U16 MCP2518FD
+    pub can_listen_int: Input<'static>, // P1.13, NRF_CAN2_INT, U15 MCP2518FD
+    pub cs3_eink: Output<'static>,      // P1.11, NRF_CS3_EINK
+    pub eink_dc: Output<'static>,       // P0.02, NRF_EINK_DC
+    pub rst: Output<'static>,           // P0.29, NRF_RST
 
     pub spi_cs: Output<'static>,  // P0.31, NRF_SPI_CS, J6.3
     pub spi_irq: Input<'static>,  // P1.04, NRF_SPI_IRQ, J6.2
@@ -86,11 +101,11 @@ impl LyraPower {
 }
 
 /// Map all 26 connected GPIOs and establish idle control levels before any await.
-pub fn setup(p: Peripherals) -> Board {
+pub async fn setup(p: Peripherals) -> Board {
     // MAX3051 shutdown is active high. Set these first and retain both drivers.
     // U3/U5 SHDN are grounded; they shut down with the switched regulator rail.
-    let can1_shdn = Output::new(p.P1_15, Level::High, OutputDrive::Standard);
-    let can2_shdn = Output::new(p.P0_28, Level::High, OutputDrive::Standard);
+    let can_obd2_shdn = Output::new(p.P1_15, Level::High, OutputDrive::Standard);
+    let can_listen_shdn = Output::new(p.P0_28, Level::High, OutputDrive::Standard);
 
     // U11 latches D on CLK's rising edge. Start CLK low without clocking it.
     let pwr_clk = Output::new(p.P1_02, Level::Low, OutputDrive::Standard);
@@ -105,31 +120,69 @@ pub fn setup(p: Peripherals) -> Board {
     spi_config.mode = spim::MODE_0;
     spi_config.bit_order = spim::BitOrder::MsbFirst;
 
-    Board {
-        pins: Pins {
-            can1_shdn,
-            can2_shdn,
-            can1_int: Input::new(p.P1_10, Pull::Up),
-            can2_int: Input::new(p.P1_13, Pull::Up),
-            cs1_can1: Output::new(p.P0_07, Level::High, OutputDrive::Standard),
-            cs2_can2: Output::new(p.P0_18, Level::High, OutputDrive::Standard),
-            cs3_eink: Output::new(p.P1_11, Level::High, OutputDrive::Standard),
-            eink_dc: Output::new(p.P0_02, Level::Low, OutputDrive::Standard),
-            rst: Output::new(p.P0_29, Level::High, OutputDrive::Standard),
-            spi_cs: Output::new(p.P0_31, Level::High, OutputDrive::Standard),
-            spi_irq: Input::new(p.P1_04, Pull::Up),
-            spi_rst: Output::new(p.P1_06, Level::High, OutputDrive::Standard),
-            scl: p.P0_12,
-            sda: p.P1_09,
-            i2c_irq: Input::new(p.P0_30, Pull::Up),
-            ext_uart_irq: Input::new(p.P1_03, Pull::Up),
-            ignition: p.P0_03,
-            lyra_power: LyraPower { pwr_clk, pwr_state },
-        },
-        spi: Spim::new(p.SPI3, SpiIrqs, p.P0_19, p.P0_23, p.P0_21, spi_config),
+    let pins = Pins {
+        can_obd2_shdn,
+        can_listen_shdn,
+        can_obd2_int: Input::new(p.P1_10, Pull::Up),
+        can_listen_int: Input::new(p.P1_13, Pull::Up),
+        cs3_eink: Output::new(p.P1_11, Level::High, OutputDrive::Standard),
+        eink_dc: Output::new(p.P0_02, Level::Low, OutputDrive::Standard),
+        rst: Output::new(p.P0_29, Level::High, OutputDrive::Standard),
+        spi_cs: Output::new(p.P0_31, Level::High, OutputDrive::Standard),
+        spi_irq: Input::new(p.P1_04, Pull::Up),
+        spi_rst: Output::new(p.P1_06, Level::High, OutputDrive::Standard),
+        scl: p.P0_12,
+        sda: p.P1_09,
+        i2c_irq: Input::new(p.P0_30, Pull::Up),
+        ext_uart_irq: Input::new(p.P1_03, Pull::Up),
+        ignition: p.P0_03,
+        lyra_power: LyraPower { pwr_clk, pwr_state },
+    };
+    let can_obd2_cs = Output::new(p.P0_07, Level::High, OutputDrive::Standard);
+    let can_listen_cs = Output::new(p.P0_18, Level::High, OutputDrive::Standard);
+    // TWISPI0 is reserved for this shared SPI bus; I2C can use TWISPI1.
+    let spi = Spim::new(p.TWISPI0, SpiIrqs, p.P0_19, p.P0_23, p.P0_21, spi_config);
+    let spi = SPI_BUS.init(Mutex::new(spi));
+    let mut board = Board {
+        pins,
+        spi,
+        can_listen: Can::new(
+            SpiDevice::new(spi, can_listen_cs),
+            &can::LISTEN_LAYOUT,
+            can::LISTEN_RX,
+        ),
+        can_obd2: Can::new(
+            SpiDevice::new(spi, can_obd2_cs),
+            &can::OBD2_LAYOUT,
+            can::OBD2_RX,
+        ),
         lyra_uart: Uarte::new(p.UARTE0, p.P1_00, p.P0_22, UartIrqs, uart_config.clone()),
         ext_uart: Uarte::new(p.UARTE1, p.P0_05, p.P0_04, UartIrqs, uart_config),
         radio: p.RADIO,
         wdt: p.WDT,
+    };
+
+    // U13 holds the Lyra power latch in reset for up to 350 ms after power-on.
+    // Establish every GPIO and UART before waiting or initializing CAN.
+    Timer::after_millis(400).await;
+    info!("can init start");
+    for (name, controller) in [
+        ("can_listen", &mut board.can_listen),
+        ("can_obd2", &mut board.can_obd2),
+    ] {
+        match controller.init().await {
+            Ok(variant) => {
+                info!(
+                    "{} async driver initialized: {:?}, 40 MHz, 500 kbit/s classic CAN",
+                    name, variant
+                );
+                match controller.sleep().await {
+                    Ok(()) => info!("{} sleep requested", name),
+                    Err(error) => warn!("{} sleep failed: {:?}", name, error),
+                }
+            }
+            Err(error) => warn!("{} async driver initialization failed: {:?}", name, error),
+        }
     }
+    board
 }

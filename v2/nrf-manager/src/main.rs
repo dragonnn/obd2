@@ -9,10 +9,7 @@ use defmt::*;
 use embassy_executor::Spawner;
 use embassy_futures::join::join;
 use embassy_nrf::{
-    Peri, bind_interrupts,
-    gpio::Output,
-    peripherals, radio,
-    spim::{self, Spim},
+    Peri, bind_interrupts, peripherals, radio,
     uarte::Uarte,
     wdt::{Config, Watchdog, WatchdogHandle},
 };
@@ -23,6 +20,7 @@ use ieee802154::mac::FrameSerDesContext;
 use {defmt_rtt as _, panic_probe as _};
 
 mod board;
+mod can;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -106,102 +104,24 @@ async fn lyra_uart_echo_test(uart: &mut Uarte<'_>) {
     }
 }
 
-async fn mcp2518fd_read_register(
-    spi: &mut Spim<'_>,
-    cs: &mut Output<'_>,
-    address: u16,
-) -> Result<u32, spim::Error> {
-    // READ instruction: 4-bit opcode 0b0011, then the 12-bit register address.
-    let mut data = [
-        0x30 | ((address >> 8) as u8 & 0x0f),
-        address as u8,
-        0,
-        0,
-        0,
-        0,
-    ];
-    cs.set_low();
-    Timer::after_micros(1).await;
-    let result = spi.transfer_in_place(&mut data).await;
-    cs.set_high();
-    result?;
-    Timer::after_micros(1).await;
-
-    // Register bytes are read in increasing address order, low byte first.
-    Ok(u32::from_le_bytes([data[2], data[3], data[4], data[5]]))
-}
-
-async fn mcp2518fd_spi_test<'d>(
-    spi: &mut Spim<'_>,
-    can1_cs: &mut Output<'d>,
-    can2_cs: &mut Output<'d>,
-) {
-    // Both CS lines must be inactive before accessing either device.
-    can1_cs.set_high();
-    can2_cs.set_high();
-    info!("MCP2518FD SPI test: 1 MHz, mode 0");
-
-    for (can, cs) in [(1, can1_cs), (2, can2_cs)] {
-        let devid = mcp2518fd_read_register(spi, cs, 0xE14).await;
-        let osc = mcp2518fd_read_register(spi, cs, 0xE00).await;
-
-        match (devid, osc) {
-            (Ok(devid), Ok(osc)) => {
-                info!(
-                    "CAN{} MCP2518FD DEVID=0x{:08x}, ID=0x{:x}, REV=0x{:x}",
-                    can,
-                    devid,
-                    (devid >> 4) & 0xf,
-                    devid & 0xf
-                );
-                info!(
-                    "CAN{} OSC=0x{:08x}, OSCRDY={}",
-                    can,
-                    osc,
-                    osc & (1 << 10) != 0
-                );
-
-                // DEVID can legitimately be zero; use OSC to check the reply too.
-                if devid & !0xff != 0 || osc & !0x157d != 0 {
-                    warn!(
-                        "CAN{} invalid reserved bits; check SPI wiring, CS, and power",
-                        can
-                    );
-                } else if osc & (1 << 10) == 0 {
-                    warn!(
-                        "CAN{} oscillator not ready; check controller power, clock, and SPI",
-                        can
-                    );
-                }
-            }
-            (devid, osc) => {
-                warn!(
-                    "CAN{} SPI read failed: DEVID {:?}, OSC {:?}",
-                    can, devid, osc
-                );
-            }
-        }
-    }
-}
-
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let mut config = embassy_nrf::config::Config::default();
     config.hfclk_source = embassy_nrf::config::HfclkSource::ExternalXtal;
 
     let p = embassy_nrf::init(config);
+    info!("start board setup");
     let board::Board {
         mut pins,
-        mut spi,
+        spi: _spi,
+        can_listen: _can_listen,
+        can_obd2: _can_obd2,
         mut lyra_uart,
         ext_uart: _ext_uart,
         radio: _radio,
         wdt,
-    } = board::setup(p);
+    } = board::setup(p).await;
     let (mut wdg0, mut wdg1) = Wdg::new(wdt).await;
-    // U13 (TPS3839) holds U11's CLR low for up to 350 ms after power-on.
-    Timer::after_millis(400).await;
-    mcp2518fd_spi_test(&mut spi, &mut pins.cs1_can1, &mut pins.cs2_can2).await;
     pins.lyra_power.power_up().await;
     join(Timer::after_secs(5), lyra_uart_echo_test(&mut lyra_uart)).await;
     pins.lyra_power.power_down().await;

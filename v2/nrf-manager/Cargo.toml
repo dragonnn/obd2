@@ -6,6 +6,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 embassy-futures = { version = "0.1.2" }
+embassy-embedded-hal = { version = "0.6.0", features = ["defmt", "time"] }
 embassy-sync = { version = "0.8.0", features = ["defmt"] }
 embassy-executor = { version = "0.10.0", features = [
     "nightly",
@@ -44,6 +45,7 @@ rand = { version = "0.10.3", default-features = false }
 embedded-hal = { version = "1.0" }
 embedded-hal-async = { version = "1.0" }
 embedded-hal-bus = { version = "0.3.0", features = ["async"] }
+mcp251xfd = { version = "0.2.0", features = ["async", "defmt"] }
 num-integer = { version = "0.1.47", default-features = false }
 ieee802154 = { version = "0.6.1", features = ["defmt"] }
 byte = "0.2.7"
