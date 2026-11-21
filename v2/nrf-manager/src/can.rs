@@ -46,11 +46,11 @@ impl Can {
         info!("before variant");
         let variant = self.driver.init(&CONFIG, &mut delay).await?;
         info!("before apply layout");
-        self.driver.apply_layout(self.layout).await?;
+        //self.driver.apply_layout(self.layout).await?;
         info!("before set filter");
-        self.driver
-            .set_filter(Filter::F0, FilterMatch::accept_all(), self.rx_fifo)
-            .await?;
+        /*self.driver
+        .set_filter(Filter::F0, FilterMatch::accept_all(), self.rx_fifo)
+        .await?;*/
         info!("before set configure interrupts");
         self.driver
             .configure_interrupts(CiInt(0).with_rxie(true))
@@ -59,6 +59,36 @@ impl Can {
     }
 
     pub async fn sleep(&mut self) -> Result<(), Error> {
-        self.driver.set_mode(OperationMode::Sleep, &mut Delay).await
+        self.driver
+            .set_mode(OperationMode::Configuration, &mut Delay)
+            .await?;
+        self.driver
+            .set_mode(OperationMode::Sleep, &mut Delay)
+            .await?;
+        // Give it time to finish the transition
+        embassy_time::Timer::after_millis(10).await;
+
+        // Normal Sleep allows SPI register inspection
+        let osc = self
+            .driver
+            .read_register_raw(mcp251xfd::registers::addr::OSC)
+            .await?;
+        let con = self
+            .driver
+            .read_register_raw(mcp251xfd::registers::addr::C1CON)
+            .await?;
+        let intr = self
+            .driver
+            .read_register_raw(mcp251xfd::registers::addr::C1INT)
+            .await?;
+
+        defmt::info!(
+            "OSC={:#010x}, CiINT={:#010x}, WAKIE={}, WAKIF={}",
+            osc,
+            intr,
+            intr & (1 << 30) != 0,
+            intr & (1 << 14) != 0
+        );
+        Ok(())
     }
 }

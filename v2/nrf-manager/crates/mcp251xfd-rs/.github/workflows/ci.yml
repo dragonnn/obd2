@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test
+      # Not `--all-features`: the `defmt` feature cannot link a host test
+      # binary. defmt >= 1.0 needs both a `#[global_logger]` and its own
+      # linker script (`-Tdefmt.x`) to define the `__DEFMT_MARKER_*` section
+      # symbols, and that script only exists for embedded targets. The
+      # `defmt::Format` derives are type-checked by the `lint` job's clippy
+      # run and compiled for real by `build-no-std` below.
+      - run: cargo test --features async
+
+  build-no-std:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv6m-none-eabi
+      - run: cargo build --target thumbv6m-none-eabi --no-default-features
+      - run: cargo build --target thumbv6m-none-eabi --all-features
+      # The examples crate pins its own lockfile; `--locked` makes drift fail
+      # loudly instead of being silently rewritten.
+      - run: cargo build --release --locked
+        working-directory: examples/rp2040
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - run: cargo clippy --all-features --all-targets -- -D warnings
+      - run: cargo fmt --check
+
+  docs:
+    runs-on: ubuntu-latest
+    env:
+      RUSTDOCFLAGS: "-D warnings"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo doc --all-features --no-deps
+
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.85
+      - run: cargo check --all-features
+      - run: cargo check --no-default-features
+
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv6m-none-eabi
+          components: clippy, rustfmt
+      - run: cargo build --release
+        working-directory: examples/rp2040
+      # examples/rp2040 declares its own [workspace], so the root job's
+      # clippy/fmt cannot reach it. `--bins` rather than `--all-targets`:
+      # the test targets need libtest, which thumbv6m-none-eabi has no
+      # prebuilt copy of. The binaries are the whole crate.
+      - run: cargo clippy --bins -- -D warnings
+        working-directory: examples/rp2040
+      - run: cargo fmt --check
+        working-directory: examples/rp2040

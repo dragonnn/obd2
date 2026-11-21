@@ -134,7 +134,7 @@ async fn main(_spawner: Spawner) {
     loop {
         wdg0.pet().await;
         wdg1.pet().await;
-        embassy_time::Timer::after_secs(5).await;
+        embassy_time::Timer::after_secs(60).await;
     }
 }
 

@@ -3,7 +3,7 @@
 //! SWDCLK/SWDIO remain dedicated to debugging. Unconnected GPIOs are omitted.
 
 use crate::can::{self, Can};
-use defmt::{info, warn};
+use defmt::{error, info, warn};
 use embassy_nrf::{
     Peri, Peripherals, bind_interrupts,
     gpio::{Input, Level, Output, OutputDrive, Pull},
@@ -31,12 +31,12 @@ bind_interrupts!(struct UartIrqs {
 });
 
 bind_interrupts!(struct SpiIrqs {
-    TWISPI0 => spim::InterruptHandler<peripherals::TWISPI0>;
+    SPIM3 => spim::InterruptHandler<peripherals::SPI3>;
 });
 
 pub struct Board {
     pub pins: Pins,
-    /// Shared SPIM0 bus. Other peripherals can use `SpiDevice::new(spi, cs)`.
+    /// Shared SPIM3 bus. Other peripherals can use `SpiDevice::new(spi, cs)`.
     pub spi: &'static SpiBus, // SCK P0.19 / MISO P0.23 / MOSI P0.21
     pub can_listen: Can,           // CAN2/U15, CAN LISTEN
     pub can_obd2: Can,             // CAN1/U16, OBD2 CAN
@@ -104,8 +104,8 @@ impl LyraPower {
 pub async fn setup(p: Peripherals) -> Board {
     // MAX3051 shutdown is active high. Set these first and retain both drivers.
     // U3/U5 SHDN are grounded; they shut down with the switched regulator rail.
-    let can_obd2_shdn = Output::new(p.P1_15, Level::High, OutputDrive::Standard);
-    let can_listen_shdn = Output::new(p.P0_28, Level::High, OutputDrive::Standard);
+    let can_obd2_shdn = Output::new(p.P1_15, Level::Low, OutputDrive::Standard);
+    let can_listen_shdn = Output::new(p.P0_28, Level::Low, OutputDrive::Standard);
 
     // U11 latches D on CLK's rising edge. Start CLK low without clocking it.
     let pwr_clk = Output::new(p.P1_02, Level::Low, OutputDrive::Standard);
@@ -119,16 +119,18 @@ pub async fn setup(p: Peripherals) -> Board {
     spi_config.frequency = spim::Frequency::M1;
     spi_config.mode = spim::MODE_0;
     spi_config.bit_order = spim::BitOrder::MsbFirst;
+    spi_config.sck_drive = OutputDrive::HighDrive;
+    spi_config.mosi_drive = OutputDrive::HighDrive;
 
     let pins = Pins {
         can_obd2_shdn,
         can_listen_shdn,
         can_obd2_int: Input::new(p.P1_10, Pull::Up),
         can_listen_int: Input::new(p.P1_13, Pull::Up),
-        cs3_eink: Output::new(p.P1_11, Level::High, OutputDrive::Standard),
+        cs3_eink: Output::new(p.P1_11, Level::High, OutputDrive::HighDrive),
         eink_dc: Output::new(p.P0_02, Level::Low, OutputDrive::Standard),
         rst: Output::new(p.P0_29, Level::High, OutputDrive::Standard),
-        spi_cs: Output::new(p.P0_31, Level::High, OutputDrive::Standard),
+        spi_cs: Output::new(p.P0_31, Level::High, OutputDrive::HighDrive),
         spi_irq: Input::new(p.P1_04, Pull::Up),
         spi_rst: Output::new(p.P1_06, Level::High, OutputDrive::Standard),
         scl: p.P0_12,
@@ -138,10 +140,9 @@ pub async fn setup(p: Peripherals) -> Board {
         ignition: p.P0_03,
         lyra_power: LyraPower { pwr_clk, pwr_state },
     };
-    let can_obd2_cs = Output::new(p.P0_07, Level::High, OutputDrive::Standard);
-    let can_listen_cs = Output::new(p.P0_18, Level::High, OutputDrive::Standard);
-    // TWISPI0 is reserved for this shared SPI bus; I2C can use TWISPI1.
-    let spi = Spim::new(p.TWISPI0, SpiIrqs, p.P0_19, p.P0_23, p.P0_21, spi_config);
+    let can_obd2_cs = Output::new(p.P0_07, Level::High, OutputDrive::HighDrive);
+    let can_listen_cs = Output::new(p.P0_18, Level::High, OutputDrive::HighDrive);
+    let spi = Spim::new(p.SPI3, SpiIrqs, p.P0_19, p.P0_23, p.P0_21, spi_config);
     let spi = SPI_BUS.init(Mutex::new(spi));
     let mut board = Board {
         pins,
@@ -166,10 +167,9 @@ pub async fn setup(p: Peripherals) -> Board {
     // Establish every GPIO and UART before waiting or initializing CAN.
     Timer::after_millis(400).await;
     info!("can init start");
-    for (name, controller) in [
-        ("can_listen", &mut board.can_listen),
-        ("can_obd2", &mut board.can_obd2),
-    ] {
+    for i in 0..5000 {
+        let name = "can_listen";
+        let controller = &mut board.can_listen;
         match controller.init().await {
             Ok(variant) => {
                 info!(
@@ -177,12 +177,44 @@ pub async fn setup(p: Peripherals) -> Board {
                     name, variant
                 );
                 match controller.sleep().await {
-                    Ok(()) => info!("{} sleep requested", name),
+                    Ok(()) => {
+                        info!("{} sleep requested", name);
+                        break;
+                    }
                     Err(error) => warn!("{} sleep failed: {:?}", name, error),
                 }
+                error!("wtf break");
+                break;
             }
             Err(error) => warn!("{} async driver initialization failed: {:?}", name, error),
         }
+        Timer::after_millis(10).await;
     }
+
+    /*for i in 0..5000 {
+        let name = "can_obd2";
+        let controller = &mut board.can_obd2;
+        match controller.init().await {
+            Ok(variant) => {
+                info!(
+                    "{} async driver initialized: {:?}, 40 MHz, 500 kbit/s classic CAN",
+                    name, variant
+                );
+                match controller.sleep().await {
+                    Ok(()) => {
+                        info!("{} sleep requested", name);
+                        break;
+                    }
+                    Err(error) => warn!("{} sleep failed: {:?}", name, error),
+                }
+                error!("wtf break");
+                break;
+            }
+            Err(error) => warn!("{} async driver initialization failed: {:?}", name, error),
+        }
+    }*/
+    Timer::after_millis(2000).await;
+    board.pins.can_listen_shdn.set_high();
+    board.pins.can_obd2_shdn.set_high();
     board
 }
