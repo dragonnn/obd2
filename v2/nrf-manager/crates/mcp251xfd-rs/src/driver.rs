@@ -198,10 +198,40 @@ impl<SPI: SpiDevice> MCP251xFd<SPI> {
         config: &Config,
         delay: &mut D,
     ) -> Result<Variant, Error<SPI::Error>> {
+        use defmt::error;
+        use defmt::info;
+        // Wake the MCP2518FD before attempting RESET.
+        // 0x60 = CLKODIV / 10, OSCDIS cleared.
+        self.bus.write_sfr32(addr::OSC, 0x60).await?;
+
+        // Wait for oscillator to start.
+        let mut ready = false;
+
+        for _ in 0..100 {
+            let osc = self.bus.read_sfr32(addr::OSC).await?;
+
+            if osc & (1 << 10) != 0 && osc & (1 << 2) == 0 {
+                ready = true;
+                break;
+            }
+
+            delay.delay_us(100).await;
+        }
+
+        if !ready {
+            return Err(Error::ClockNotReady);
+        }
+
         config.validate().map_err(Error::InvalidConfig)?;
         self.bus.reset().await?;
-        // TOSCSTAB: oscillator stabilization time (DS20006027B Table 7-3).
-        delay.delay_us(3000).await;
+        delay.delay_ms(20).await;
+
+        let osc = self.bus.read_sfr32(addr::OSC).await?;
+        info!(
+            "OSC before RAM check: {:#010x}, ready: {}",
+            osc,
+            osc & (1 << 10) != 0
+        );
 
         // SPI sanity check: catches wiring and over-spec SPI clocks early.
         const ECHO: u32 = 0xAA55_AA55;
@@ -210,7 +240,10 @@ impl<SPI: SpiDevice> MCP251xFd<SPI> {
         let mut echo = [0u8; 4];
         self.bus.read_ram(ECHO_ADDR, &mut echo).await?;
         if u32::from_le_bytes(echo) != ECHO {
+            error!("readed bytes: {}", echo);
             return Err(Error::CommunicationCheckFailed);
+        } else {
+            info!("readed bytes: {}", echo);
         }
 
         // Oscillator. CLKODIV keeps its power-on default (divide by 10).
