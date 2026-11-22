@@ -3,6 +3,7 @@
 
 use crate::board::SpiDevice;
 use defmt::info;
+use embassy_nrf::gpio::Output;
 use embassy_time::Delay;
 use mcp251xfd::{
     CiInt, ClockConfig, Config, Fifo, FifoLayout, Filter, FilterMatch, MCP251xFdAsync,
@@ -17,27 +18,24 @@ const CONFIG: Config = Config {
     data: None,
 };
 
-pub const LISTEN_RX: Fifo = Fifo::F1;
-pub const OBD2_TX: Fifo = Fifo::F1;
-pub const OBD2_RX: Fifo = Fifo::F2;
-pub const LISTEN_LAYOUT: FifoLayout = FifoLayout::new().rx_fifo(LISTEN_RX, PayloadSize::B8, 32);
-pub const OBD2_LAYOUT: FifoLayout = FifoLayout::new()
-    .tx_fifo(OBD2_TX, PayloadSize::B8, 8)
-    .rx_fifo(OBD2_RX, PayloadSize::B8, 32);
+pub const TX: Fifo = Fifo::F1;
+pub const RX: Fifo = Fifo::F2;
+pub const LAYOUT: FifoLayout =
+    FifoLayout::new()
+        .tx_fifo(TX, PayloadSize::B8, 8)
+        .rx_fifo(RX, PayloadSize::B8, 32);
 
 /// Board configuration around the crate's async driver.
 pub struct Can {
-    pub driver: MCP251xFdAsync<SpiDevice>,
-    layout: &'static FifoLayout,
-    rx_fifo: Fifo,
+    driver: MCP251xFdAsync<SpiDevice>,
+    transceiver_shutdown: Output<'static>,
 }
 
 impl Can {
-    pub fn new(spi: SpiDevice, layout: &'static FifoLayout, rx_fifo: Fifo) -> Self {
+    pub fn new(spi: SpiDevice, transceiver_shutdown: Output<'static>) -> Self {
         Self {
             driver: MCP251xFdAsync::new(spi),
-            layout,
-            rx_fifo,
+            transceiver_shutdown,
         }
     }
 
@@ -113,6 +111,7 @@ impl Can {
             "MCP sleep={}, OSC={:#010x}, CON={:#010x}, OPMOD={}, REQOP={}",
             sleeping, osc, con, opmode, reqop
         );
+        self.transceiver_shutdown.set_high();
         Ok(())
     }
 }

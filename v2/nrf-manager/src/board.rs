@@ -50,13 +50,11 @@ pub struct Board {
 /// I2C and ADC pins retain their types for use with peripheral drivers.
 #[allow(dead_code)]
 pub struct Pins {
-    pub can_obd2_shdn: Output<'static>, // P1.15, NRF_CAN1_SHDN, U6 MAX3051
-    pub can_listen_shdn: Output<'static>, // P0.28, NRF_CAN2_SHDN, U8 MAX3051
-    pub can_obd2_int: Input<'static>,   // P1.10, NRF_CAN1_INT, U16 MCP2518FD
+    pub can_obd2_int: Input<'static>, // P1.10, NRF_CAN1_INT, U16 MCP2518FD
     pub can_listen_int: Input<'static>, // P1.13, NRF_CAN2_INT, U15 MCP2518FD
-    pub cs3_eink: Output<'static>,      // P1.11, NRF_CS3_EINK
-    pub eink_dc: Output<'static>,       // P0.02, NRF_EINK_DC
-    pub rst: Output<'static>,           // P0.29, NRF_RST
+    pub cs3_eink: Output<'static>,    // P1.11, NRF_CS3_EINK
+    pub eink_dc: Output<'static>,     // P0.02, NRF_EINK_DC
+    pub rst: Output<'static>,         // P0.29, NRF_RST
 
     pub spi_cs: Output<'static>,  // P0.31, NRF_SPI_CS, J6.3
     pub spi_irq: Input<'static>,  // P1.04, NRF_SPI_IRQ, J6.2
@@ -123,8 +121,6 @@ pub async fn setup(p: Peripherals) -> Board {
     spi_config.mosi_drive = OutputDrive::HighDrive;
 
     let pins = Pins {
-        can_obd2_shdn,
-        can_listen_shdn,
         can_obd2_int: Input::new(p.P1_10, Pull::Up),
         can_listen_int: Input::new(p.P1_13, Pull::Up),
         cs3_eink: Output::new(p.P1_11, Level::High, OutputDrive::HighDrive),
@@ -149,16 +145,8 @@ pub async fn setup(p: Peripherals) -> Board {
     let mut board = Board {
         pins,
         spi,
-        can_listen: Can::new(
-            SpiDevice::new(spi, can_listen_cs),
-            &can::LISTEN_LAYOUT,
-            can::LISTEN_RX,
-        ),
-        can_obd2: Can::new(
-            SpiDevice::new(spi, can_obd2_cs),
-            &can::OBD2_LAYOUT,
-            can::OBD2_RX,
-        ),
+        can_listen: Can::new(SpiDevice::new(spi, can_listen_cs), can_listen_shdn),
+        can_obd2: Can::new(SpiDevice::new(spi, can_obd2_cs), can_obd2_shdn),
         lyra_uart: Uarte::new(p.UARTE0, p.P1_00, p.P0_22, UartIrqs, uart_config.clone()),
         ext_uart: Uarte::new(p.UARTE1, p.P0_05, p.P0_04, UartIrqs, uart_config),
         radio: p.RADIO,
@@ -216,8 +204,6 @@ pub async fn setup(p: Peripherals) -> Board {
         }
     }
     Timer::after_millis(2000).await;
-    board.pins.can_listen_shdn.set_high();
-    board.pins.can_obd2_shdn.set_high();
 
     board
 }
