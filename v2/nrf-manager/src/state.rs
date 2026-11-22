@@ -1,12 +1,13 @@
 #![allow(dead_code)]
 #![allow(unexpected_cfgs)]
 
+use defmt::info;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::Channel;
 use hsmc::{Duration, statechart};
 
 #[derive(Debug, Clone)]
-pub enum RadioEv {
+pub enum Event {
     StartRx,
     IrqPacketReady,
     StopRx,
@@ -20,10 +21,11 @@ pub struct RadioData {
 statechart! {
     Radio {
         context: RadioData;
-        events: RadioEv;
+        events: Event;
         terminate(Shutdown);
         default(Idle);
         state Idle {
+            entry: on_enter_listening;
             on(StartRx) => Listening;
         }
         state Listening {
@@ -41,6 +43,7 @@ impl RadioActions for RadioActionContext<'_> {
         // In a real firmware this might `radio.start_rx().await` or
         // `display.flush().await` — actions are `async fn` under the
         // embassy feature so peripheral calls can run inline.
+        info!("on_enter_listening");
     }
     async fn on_exit_listening(&mut self) {}
     async fn count_packet(&mut self) {
@@ -53,12 +56,14 @@ impl RadioActions for RadioActionContext<'_> {
 // at the type level via the channel's `N` const generic.
 pub const QN: usize = 8;
 
-pub static RADIO_CHAN: Channel<CriticalSectionRawMutex, RadioEv, QN> = Channel::new();
+pub static EVENT_CHAN: Channel<CriticalSectionRawMutex, Event, QN> = Channel::new();
 
 /// Entry point for the radio task — this is what `#[embassy_executor::task]`
 /// would wrap in a real firmware.
-pub async fn radio_task(ctx: RadioData) -> Result<(), hsmc::HsmcError> {
-    let mut machine = Radio::new(ctx, &RADIO_CHAN);
+pub async fn radio_task() -> Result<(), hsmc::HsmcError> {
+    info!("state task");
+    let ctx = RadioData { packets_seen: 0 };
+    let mut machine = Radio::new(ctx, &EVENT_CHAN);
     machine.run().await?;
     // `into_context()` still works after Embassy run exits cleanly.
     let _ctx = machine.into_context();
@@ -68,8 +73,8 @@ pub async fn radio_task(ctx: RadioData) -> Result<(), hsmc::HsmcError> {
 /// How a *command* task would enqueue events with backpressure.
 pub async fn command_task() {
     let sender: RadioSender = sender_from_channel();
-    let _ = sender.send(RadioEv::StartRx).await;
-    let _ = sender.send(RadioEv::StopRx).await;
+    let _ = sender.send(Event::StartRx).await;
+    let _ = sender.send(Event::StopRx).await;
 }
 
 /// How a hardware ISR would push an event. `try_send` is non-blocking and
@@ -78,12 +83,12 @@ pub async fn command_task() {
 pub fn on_radio_irq() {
     let sender: RadioSender = sender_from_channel();
     // Best-effort push; drop on overflow rather than panic in an ISR.
-    let _ = sender.try_send(RadioEv::IrqPacketReady);
+    let _ = sender.try_send(Event::IrqPacketReady);
 }
 
 /// A `RadioSender` can also be built directly from the static channel when
 /// you haven't retained a reference to the `Radio` machine — e.g., an ISR
 /// shim initialised before the task spawns.
 fn sender_from_channel() -> RadioSender {
-    RadioSender::from_channel(&RADIO_CHAN)
+    RadioSender::from_channel(&EVENT_CHAN)
 }
