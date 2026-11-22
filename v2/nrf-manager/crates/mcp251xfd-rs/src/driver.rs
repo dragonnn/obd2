@@ -13,6 +13,7 @@ use crate::registers::{
     CiCon, CiDbtCfg, CiFifoCon, CiFifoSta, CiInt, CiNbtCfg, CiTdc, CiTrec, CiVec, Fifo, Filter,
     OperationMode, Osc, PayloadSize, TdcMode, Variant, addr,
 };
+use defmt::debug;
 use embedded_hal::delay::DelayNs;
 use embedded_hal::spi::SpiDevice;
 #[cfg(feature = "async")]
@@ -207,8 +208,10 @@ impl<SPI: SpiDevice> MCP251xFd<SPI> {
         // Wait for oscillator to start.
         let mut ready = false;
 
-        for _ in 0..100 {
+        for _ in 0..1000 {
             let osc = self.bus.read_sfr32(addr::OSC).await?;
+
+            info!("osc: {:?}", osc);
 
             if osc & (1 << 10) != 0 && osc & (1 << 2) == 0 {
                 ready = true;

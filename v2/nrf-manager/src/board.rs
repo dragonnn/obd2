@@ -143,6 +143,8 @@ pub async fn setup(p: Peripherals) -> Board {
     let can_obd2_cs = Output::new(p.P0_07, Level::High, OutputDrive::HighDrive);
     let can_listen_cs = Output::new(p.P0_18, Level::High, OutputDrive::HighDrive);
     let spi = Spim::new(p.SPI3, SpiIrqs, p.P0_19, p.P0_23, p.P0_21, spi_config);
+    use embassy_nrf::pac::{self};
+
     let spi = SPI_BUS.init(Mutex::new(spi));
     let mut board = Board {
         pins,
@@ -191,7 +193,7 @@ pub async fn setup(p: Peripherals) -> Board {
         Timer::after_millis(10).await;
     }
 
-    /*for i in 0..5000 {
+    for i in 0..5000 {
         let name = "can_obd2";
         let controller = &mut board.can_obd2;
         match controller.init().await {
@@ -212,9 +214,10 @@ pub async fn setup(p: Peripherals) -> Board {
             }
             Err(error) => warn!("{} async driver initialization failed: {:?}", name, error),
         }
-    }*/
+    }
     Timer::after_millis(2000).await;
     board.pins.can_listen_shdn.set_high();
     board.pins.can_obd2_shdn.set_high();
+
     board
 }

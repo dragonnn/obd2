@@ -91,4 +91,28 @@ impl Can {
         );
         Ok(())
     }
+
+    pub async fn idle(&mut self) -> Result<(), Error> {
+        let osc = self
+            .driver
+            .read_register_raw(mcp251xfd::registers::addr::OSC)
+            .await?;
+        let con = self
+            .driver
+            .read_register_raw(mcp251xfd::registers::addr::C1CON)
+            .await?;
+
+        let osc_disabled = (osc & (1 << 2)) != 0;
+        let osc_ready = (osc & (1 << 10)) != 0;
+        let opmode = (con >> 21) & 0x07;
+        let reqop = (con >> 24) & 0x07;
+
+        let sleeping = osc_disabled && !osc_ready && opmode == 4;
+
+        info!(
+            "MCP sleep={}, OSC={:#010x}, CON={:#010x}, OPMOD={}, REQOP={}",
+            sleeping, osc, con, opmode, reqop
+        );
+        Ok(())
+    }
 }

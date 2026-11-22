@@ -108,13 +108,16 @@ async fn lyra_uart_echo_test(uart: &mut Uarte<'_>) {
 async fn main(_spawner: Spawner) {
     let mut config = embassy_nrf::config::Config::default();
     config.hfclk_source = embassy_nrf::config::HfclkSource::ExternalXtal;
+    config.dcdc.reg0 = false;
+    config.dcdc.reg0_voltage = None;
+    config.dcdc.reg1 = true;
 
     let p = embassy_nrf::init(config);
     info!("start board setup");
     let board::Board {
         mut pins,
         spi: _spi,
-        can_listen: _can_listen,
+        mut can_listen,
         can_obd2: _can_obd2,
         mut lyra_uart,
         ext_uart: _ext_uart,
@@ -134,7 +137,8 @@ async fn main(_spawner: Spawner) {
     loop {
         wdg0.pet().await;
         wdg1.pet().await;
-        embassy_time::Timer::after_secs(60).await;
+        embassy_time::Timer::after_secs(10).await;
+        can_listen.idle().await;
     }
 }
 

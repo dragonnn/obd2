@@ -786,8 +786,6 @@ dependencies = [
 [[package]]
 name = "mcp251xfd"
 version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2fb81ca51415b47b247a90c0c0a8e2582a0d6ed840805ca895f122114afa098"
 dependencies = [
  "defmt 0.3.101",
  "embedded-can",
