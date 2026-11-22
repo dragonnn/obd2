@@ -21,6 +21,7 @@ use {defmt_rtt as _, panic_probe as _};
 
 mod board;
 mod can;
+mod state;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();

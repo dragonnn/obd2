@@ -5,7 +5,7 @@ version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-hsmc = { path = "./crates/hsmc/hsmc", features = ["embassy"] }
+hsmc = { path = "./crates/hsmc/hsmc", features = ["embassy", "trace-defmt"] }
 embassy-futures = { version = "0.1.2" }
 embassy-embedded-hal = { version = "0.6.0", features = ["defmt", "time"] }
 embassy-sync = { version = "0.8.0", features = ["defmt"] }
@@ -56,3 +56,7 @@ embedded-alloc = "0.7.0"
 
 [profile.release]
 debug = 2
+
+[features]
+default = ["embassy"]
+embassy = []
