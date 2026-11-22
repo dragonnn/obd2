@@ -118,7 +118,7 @@ async fn main(_spawner: Spawner) {
         mut pins,
         spi: _spi,
         mut can_listen,
-        can_obd2: _can_obd2,
+        mut can_obd2,
         mut lyra_uart,
         ext_uart: _ext_uart,
         radio: _radio,
@@ -139,6 +139,7 @@ async fn main(_spawner: Spawner) {
         wdg1.pet().await;
         embassy_time::Timer::after_secs(10).await;
         can_listen.idle().await;
+        can_obd2.idle().await;
     }
 }
 
