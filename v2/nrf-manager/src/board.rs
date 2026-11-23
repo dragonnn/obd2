@@ -41,11 +41,11 @@ pub struct Board {
     pub pins: Pins,
     /// Shared SPIM3 bus. Other peripherals can use `SpiDevice::new(spi, cs)`.
     pub spi: &'static SpiBus, // SCK P0.19 / MISO P0.23 / MOSI P0.21
-    pub can_listen: Can,           // CAN2/U15, CAN LISTEN
-    pub can_obd2: Can,             // CAN1/U16, OBD2 CAN
+    pub can_listen: Can, // CAN2/U15, CAN LISTEN
+    pub can_obd2: Can,   // CAN1/U16, OBD2 CAN
     // Buffered RX uses TIMER0, PPI_CH0/PPI_CH1 and PPI_GROUP0.
     pub lyra_uart: BufferedUarte<'static>, // UARTE0, TX P0.22 / RX P1.00, Lyra via U9
-    pub ext_uart: Uarte<'static>,  // UARTE1, TX P0.04 / RX P0.05, J4.2 / J4.3
+    pub ext_uart: Uarte<'static>,          // UARTE1, TX P0.04 / RX P0.05, J4.2 / J4.3
     pub radio: Peri<'static, peripherals::RADIO>,
     pub wdt: Peri<'static, peripherals::WDT>,
 }
@@ -81,11 +81,11 @@ pub struct LyraPower {
 }
 
 impl LyraPower {
-    pub async fn power_up(&mut self) {
+    pub async fn power_on(&mut self) {
         self.set_power(Level::High).await;
     }
 
-    pub async fn power_down(&mut self) {
+    pub async fn power_off(&mut self) {
         self.set_power(Level::Low).await;
     }
 

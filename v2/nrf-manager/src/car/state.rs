@@ -3,17 +3,21 @@ use embassy_sync::channel::Channel;
 use hsmc::Duration;
 use hsmc::statechart;
 
+use crate::prelude::*;
+
 #[derive(Debug, Clone)]
 pub enum CarEvent {
     IgnitionOn,
     IgnitionOff,
 }
 
-pub struct CarData {}
+pub struct CarContext {
+    lyra_event_sender: LyraSender,
+}
 
 statechart! {
     Car {
-        context: CarData;
+        context: CarContext;
         events: CarEvent;
         default(Shutdown);
         state Shutdown {
@@ -34,6 +38,7 @@ impl CarShutdownActions for CarActionContext<'_> {
         // `display.flush().await` — actions are `async fn` under the
         // embassy feature so peripheral calls can run inline.
         info!("idle on_enter_listening");
+        self.lyra_event_sender.send(LyraEvent::Shutdown).await.ok();
     }
 }
 
@@ -43,6 +48,7 @@ impl CarDrivingActions for CarActionContext<'_> {
         // `display.flush().await` — actions are `async fn` under the
         // embassy feature so peripheral calls can run inline.
         info!("idle on_enter_listening");
+        self.lyra_event_sender.send(LyraEvent::PowerOn).await.ok();
     }
 }
 
@@ -57,7 +63,9 @@ pub fn sender() -> CarSender {
 #[embassy_executor::task]
 pub async fn run() {
     info!("state task");
-    let ctx = CarData {};
+    let ctx = CarContext {
+        lyra_event_sender: lyra_event_sender(),
+    };
     let mut machine = Car::new(ctx, &EVENT_CHAN);
     machine.run().await.unwrap();
     // `into_context()` still works after Embassy run exits cleanly.

@@ -89,19 +89,16 @@ async fn main(spawner: Spawner) {
         wdt,
     } = board::setup(p).await;
     let (mut wdg0, mut wdg1) = Wdg::new(wdt).await;
-    spawner.spawn(lyra::rpc::run(lyra_uart, spawner).unwrap());
-    pins.lyra_power.power_up().await;
-    Timer::after_secs(5).await;
-    pins.lyra_power.power_down().await;
 
     /*let mut ieee802154 = embassy_nrf::radio::ieee802154::Radio::new(_radio, Ieee802154Irqs);
     ieee802154.set_channel(15);
     ieee802154.set_cca(radio::ieee802154::Cca::CarrierSense);*/
     info!("Main loop");
     //state::radio_task().await;
-
+    spawner.spawn(lyra::rpc::run(lyra_uart, spawner).unwrap());
     spawner.spawn(car::ignition::run(pins.ignition).unwrap());
     spawner.spawn(car::state::run().unwrap());
+    spawner.spawn(lyra::state::run(pins.lyra_power).unwrap());
 
     loop {
         wdg0.pet().await;
