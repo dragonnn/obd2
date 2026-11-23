@@ -66,7 +66,7 @@ pub struct Pins {
 
     pub ext_uart_irq: Input<'static>, // P1.03, NRF_UART2_IRQ, J4.1
 
-    pub ignition: Peri<'static, peripherals::P0_03>, // NRF_ING12V+, R13/R14 divider
+    pub ignition: Input<'static>, // NRF_ING12V+, R13/R14 divider
     pub lyra_power: LyraPower,
 }
 
@@ -133,7 +133,7 @@ pub async fn setup(p: Peripherals) -> Board {
         sda: p.P1_09,
         i2c_irq: Input::new(p.P0_30, Pull::Up),
         ext_uart_irq: Input::new(p.P1_03, Pull::Up),
-        ignition: p.P0_03,
+        ignition: Input::new(p.P0_03, Pull::Up),
         lyra_power: LyraPower { pwr_clk, pwr_state },
     };
     let can_obd2_cs = Output::new(p.P0_07, Level::High, OutputDrive::HighDrive);

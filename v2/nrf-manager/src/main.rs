@@ -1,6 +1,8 @@
 #![no_std]
 #![no_main]
 #![feature(impl_trait_in_assoc_type)]
+#[macro_use]
+extern crate defmt;
 
 extern crate alloc;
 
@@ -22,6 +24,8 @@ use {defmt_rtt as _, panic_probe as _};
 mod board;
 mod can;
 mod state;
+
+mod car;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -102,7 +106,7 @@ async fn lyra_uart_echo_test(uart: &mut Uarte<'_>) {
 }
 
 #[embassy_executor::main]
-async fn main(_spawner: Spawner) {
+async fn main(spawner: Spawner) {
     let mut config = embassy_nrf::config::Config::default();
     config.hfclk_source = embassy_nrf::config::HfclkSource::ExternalXtal;
     config.dcdc.reg0 = false;
@@ -130,7 +134,10 @@ async fn main(_spawner: Spawner) {
     ieee802154.set_channel(15);
     ieee802154.set_cca(radio::ieee802154::Cca::CarrierSense);*/
     info!("Main loop");
-    state::radio_task().await;
+    //state::radio_task().await;
+
+    spawner.spawn(car::ignition::run(pins.ignition).unwrap());
+
     loop {
         wdg0.pet().await;
         wdg1.pet().await;
