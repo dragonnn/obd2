@@ -56,7 +56,3 @@ embedded-alloc = "0.7.0"
 
 [profile.release]
 debug = 2
-
-[features]
-default = ["embassy"]
-embassy = []

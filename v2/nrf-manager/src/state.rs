@@ -38,12 +38,21 @@ statechart! {
     }
 }
 
-impl RadioActions for RadioActionContext<'_> {
+impl RadioIdleActions for RadioActionContext<'_> {
     async fn on_enter_listening(&mut self) {
         // In a real firmware this might `radio.start_rx().await` or
         // `display.flush().await` — actions are `async fn` under the
         // embassy feature so peripheral calls can run inline.
-        info!("on_enter_listening");
+        info!("idle on_enter_listening");
+    }
+}
+
+impl RadioListeningActions for RadioActionContext<'_> {
+    async fn on_enter_listening(&mut self) {
+        // In a real firmware this might `radio.start_rx().await` or
+        // `display.flush().await` — actions are `async fn` under the
+        // embassy feature so peripheral calls can run inline.
+        info!("listening on_enter_listening");
     }
     async fn on_exit_listening(&mut self) {}
     async fn count_packet(&mut self) {
@@ -67,6 +76,7 @@ pub async fn radio_task() -> Result<(), hsmc::HsmcError> {
     machine.run().await?;
     // `into_context()` still works after Embassy run exits cleanly.
     let _ctx = machine.into_context();
+    info!("exit state task");
     Ok(())
 }
 
