@@ -1,0 +1,42 @@
+digraph LyraController {
+    graph [rankdir=TB, compound=true, bgcolor="white", pad=0.35,
+           nodesep=0.65, ranksep=0.8, fontname="DejaVu Sans", fontsize=20,
+           fontcolor="#0f172a", label="Lyra controller: power and UART lifecycle",
+           labelloc=t];
+    node [shape=box, style="rounded,filled", fontname="DejaVu Sans",
+          fontsize=13, color="#a78bfa", fillcolor="#f5f3ff",
+          fontcolor="#0f172a", margin="0.22,0.16", penwidth=1.3];
+    edge [fontname="DejaVu Sans", fontsize=11, color="#475569",
+          fontcolor="#334155", arrowsize=0.8, penwidth=1.3];
+
+    off [label="PowerOff", fillcolor="#f1f5f9", color="#94a3b8"];
+    starting [label="Starting\nPower ON; verify application"];
+    online [label="Online\nMonitor valid UART traffic", fillcolor="#dcfce7", color="#16a34a"];
+    retry [label="RetryWait\nPower OFF; bounded retry delay"];
+    cut [label="Cut power\nThen report LyraPoweredOff", fillcolor="#fee2e2", color="#ef4444"];
+
+    subgraph cluster_stopping {
+        label="Stopping";
+        fontsize=16;
+        style="rounded,filled";
+        color="#fbbf24";
+        fillcolor="#fffbeb";
+        margin=24;
+        ack [label="AwaitShutdownAck\nSend shutdown request", fillcolor="white", color="#d97706"];
+        ping [label="PingUntilSilent\nSend ping every 1 second", fillcolor="white", color="#d97706"];
+        ack -> ping [label="Shutdown acknowledged"];
+    }
+
+    off -> starting [label="Requested ON\nenable power"];
+    starting -> online [label="Application\nhandshake succeeds"];
+    starting -> retry [label="Boot timeout\ncut power"];
+    online -> retry [label="UART health failure\ncut power"];
+    retry -> starting [label="Retry delay expires\nenable power", constraint=false];
+    retry -> off [label="Requested OFF", constraint=false];
+    starting -> ack [label="Requested OFF", lhead=cluster_stopping];
+    online -> ack [label="Requested OFF", lhead=cluster_stopping];
+    ping -> cut [label="Confirmed missed replies"];
+    ack -> cut [label="Absolute deadline: ignition-off + 30 s\n(applies to both Stopping children)",
+                ltail=cluster_stopping, color="#dc2626", fontcolor="#b91c1c"];
+    cut -> off [label="Power cut complete", constraint=false];
+}

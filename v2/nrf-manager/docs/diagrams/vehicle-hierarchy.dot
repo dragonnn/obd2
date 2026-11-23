@@ -1,0 +1,24 @@
+digraph VehicleHierarchy {
+    graph [rankdir=TB, bgcolor="white", pad=0.3, nodesep=0.35, ranksep=0.65,
+           fontname="DejaVu Sans", fontsize=20, fontcolor="#0f172a",
+           label="Vehicle supervisor: state hierarchy", labelloc=t];
+    node [shape=box, style="rounded,filled", fontname="DejaVu Sans",
+          fontsize=13, color="#94a3b8", fillcolor="#f8fafc",
+          fontcolor="#0f172a", margin="0.20,0.14", penwidth=1.3];
+    edge [color="#94a3b8", arrowhead=none, penwidth=1.3];
+
+    root [label="VehicleSupervisor", fillcolor="#dbeafe", color="#2563eb"];
+    init [label="Initialising"];
+    driving [label="Driving", fillcolor="#dbeafe", color="#2563eb"];
+    ignition_off [label="IgnitionOff", fillcolor="#dcfce7", color="#16a34a"];
+    stop_can [label="StopLocalCan\n(initial child)"];
+    lyra_managed [label="LyraManaged"];
+    wait_off [label="WaitingForLyraOff\n(initial child)"];
+    observing [label="Observing"];
+    charging [label="Charging"];
+    sleep [label="ParkedSleep"];
+
+    root -> {init driving ignition_off};
+    driving -> {stop_can lyra_managed};
+    ignition_off -> {wait_off observing charging sleep};
+}
