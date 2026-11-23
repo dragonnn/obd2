@@ -38,7 +38,7 @@ impl CarShutdownActions for CarActionContext<'_> {
         // `display.flush().await` — actions are `async fn` under the
         // embassy feature so peripheral calls can run inline.
         info!("idle on_enter_listening");
-        self.lyra_event_sender.send(LyraEvent::Shutdown).await.ok();
+        self.lyra_event_sender.send(LyraEvent::PowerOff).await.ok();
     }
 }
 

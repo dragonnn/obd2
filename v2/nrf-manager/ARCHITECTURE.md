@@ -84,7 +84,7 @@ and receive status updates; they never toggle Lyra power themselves.
   visible.
 - **Retries remain periodic while ignition is on.** Use a minimum power-off
   interval and a capped retry delay to avoid rapid cycling.
-- **Requested OFF supersedes boot and recovery.** In `RetryWait`, power is
+- **Requested OFF supersedes boot and recovery.** In `Retry`, power is
   already off, so the controller can enter `PowerOff` directly.
 
 Boot deadlines, health intervals, missed-reply thresholds and retry delays are
@@ -109,11 +109,11 @@ be mistaken for completed shutdown. Use a small configurable missed-reply
 threshold rather than cutting power after one lost reply, while remaining
 within the overall deadline.
 
-If ignition returns during shutdown, update the desired state to ON. Once
-shutdown has begun, complete the shutdown/cut and then boot again. Do not
-assume Linux can reverse a shutdown already in progress. The vehicle
-supervisor can already be in `Driving` while the Lyra controller finishes
-this sequence.
+If ignition returns during shutdown, defer its `PowerOn` request until
+shutdown and the power cut finish. Then handle it through the normal
+`PowerOff` → `PowerOn` transition. A later `PowerOff` cancels the deferred
+request. The vehicle supervisor can already be in `Driving` while the Lyra
+controller finishes shutting down.
 
 ## Tasks and ownership
 
@@ -220,10 +220,61 @@ let response = client.send_resp::<EchoEndpoint>(&request).await.unwrap();
 assert_eq!(response, request);
 ```
 
-The existing temporary five-second Lyra power cycle in `main` is retained;
-the RPC task starts before that cycle and continues listening afterwards.
-Persistent Lyra operation and ignition-based power control still belong to
-the planned Lyra controller.
+The ignition/car tasks drive [src/lyra/state.rs](src/lyra/state.rs), which owns
+the power latch. The RPC transport is initialized first and shares its sender
+with this controller. The implemented chart is shown below; the earlier Lyra
+diagram describes the architecture proposal.
+
+![Implemented Lyra states, recovery, shutdown and deferred PowerOn](docs/diagrams/lyra-state.svg)
+
+Editable source: [lyra-state.dot](docs/diagrams/lyra-state.dot).
+
+`PowerOn` represents the requested-on lifecycle and contains `Starting`,
+`Online` and `Retry`. `Starting` enables hardware power on each boot attempt.
+`Retry` cuts power, waits five seconds and returns to `Starting`; a `PowerOff`
+request in `Retry` enters the outer `PowerOff` state immediately.
+
+Its current defaults are:
+
+- Probe Lyra once per second after power-on; a matching reply enters `Online`.
+- Allow 60 seconds for boot, then cut power and wait five seconds before retry.
+- In `Online`, three consecutive missed replies trigger the same recovery.
+- On `PowerOff` from `Starting` or `Online`, send and retry one shutdown
+  request ID once per second.
+- After its matching ACK, probe once per second and cut power after three
+  consecutive missed replies.
+- Enforce one absolute 30-second shutdown budget, including when no ACK
+  arrives. Start the latch sequence 20 ms before the deadline to allow its
+  15 ms GPIO sequence to complete. UART sends are bounded and use the
+  remaining deadline when stopping.
+- A `PowerOn` received during `Stopping` is deferred until shutdown and the
+  power cut finish, then processed normally without entering `Retry`.
+  Another `PowerOff` cancels the pending `PowerOn`. Duplicate requests and
+  ACKs do not reset the shutdown deadline.
+
+Control messages use a `u64` ID in the message body. Lyra must subscribe to
+both outgoing topics before relying on this lifecycle:
+
+| Topic | Direction | Lyra behaviour |
+| --- | --- | --- |
+| `lyra/echo/probe` | nRF to Lyra | Publish the same ID on `lyra/echo/reply` |
+| `lyra/echo/reply` | Lyra to nRF | Reply to the current probe; old IDs are ignored |
+| `lyra/shutdown/request` | nRF to Lyra | Accept once per ID and publish that ID on `lyra/shutdown/ack` |
+| `lyra/shutdown/ack` | Lyra to nRF | Confirm acceptance, then remain responsive until it is safe to cut power |
+
+The existing `lyra/echo` endpoint still tests requests from Lyra to the nRF.
+It does not answer nRF-initiated probes. Echo health currently establishes
+that Lyra's control handler responds; PID acquisition readiness and freshness
+still need separate reporting. The Linux-side topic handlers are not yet
+implemented here.
+
+The host tests run the actual `hsmc` chart with mock power and UART output,
+and a controllable Embassy clock:
+
+```sh
+cargo test --manifest-path tests/lyra-state/Cargo.toml \
+  --target x86_64-unknown-linux-gnu --target-dir /tmp/nrf-lyra-state-tests-target
+```
 
 The following messages are proposed for later implementation:
 
@@ -231,10 +282,6 @@ The following messages are proposed for later implementation:
 | --- | --- | --- |
 | Application ready, protocol version and boot ID | Lyra to nRF | Topic |
 | PID snapshot | Lyra to nRF | Topic |
-| Health probe with nonce | nRF to Lyra | Topic |
-| Health reply with matching nonce | Lyra to nRF | Topic |
-| Shutdown request with command ID | nRF to Lyra | Topic |
-| Shutdown accepted with matching command ID | Lyra to nRF | Topic |
 | Information received from the modem | nRF to Lyra | Topic |
 | Read manager status | Lyra to nRF | Endpoint |
 

@@ -1,0 +1,20 @@
+[package]
+name = "lyra-state-tests"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+critical-section = { version = "1", features = ["std"] }
+embassy-executor = { version = "0.10", features = ["platform-std", "executor-thread"] }
+embassy-futures = "0.1.2"
+embassy-sync = "0.8"
+embassy-time = { version = "0.5.1", features = ["mock-driver", "generic-queue-8"] }
+hsmc = { path = "../../crates/hsmc/hsmc", features = ["embassy"] }
+lyra-protocol = { path = "../../crates/lyra-protocol" }
+postcard-rpc = { git = "https://github.com/jamesmunns/postcard-rpc.git", rev = "2469ebc614108ac2ab68d923d50c8da4c9f3e91d", default-features = false }

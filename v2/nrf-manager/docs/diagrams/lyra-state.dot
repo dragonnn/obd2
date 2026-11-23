@@ -1,0 +1,79 @@
+// Implemented chart in src/lyra/state.rs, rather than the architecture proposal.
+// Render: dot -Tsvg docs/diagrams/lyra-state.dot -o docs/diagrams/lyra-state.svg
+digraph LyraState {
+    graph [rankdir=TB, compound=true, newrank=true, bgcolor="white", pad=0.4,
+           nodesep=0.8, ranksep=0.85, fontname="DejaVu Sans", fontsize=22,
+           fontcolor="#0f172a", labelloc=t,
+           label="Lyra state machine\nsrc/lyra/state.rs — current implementation"];
+    node [shape=box, style="rounded,filled", fontname="DejaVu Sans",
+          fontsize=12, color="#94a3b8", fillcolor="white",
+          fontcolor="#0f172a", margin="0.22,0.18", penwidth=1.4];
+    edge [fontname="DejaVu Sans", fontsize=11, color="#475569",
+          fontcolor="#334155", arrowsize=0.85, penwidth=1.4];
+
+    initial [shape=point, width=0.15, fillcolor="#0f172a", color="#0f172a"];
+    power_off [label=<<B>PowerOff</B><BR/><BR/>entry: cut power; clear pending IDs<BR/>Stay off until PowerOn is handled>,
+              fillcolor="#f1f5f9", color="#64748b"];
+
+    subgraph cluster_power_on {
+        label="PowerOn · Lyra is requested on\ndefault: Starting";
+        fontsize=15;
+        style="rounded,filled";
+        color="#93c5fd";
+        fillcolor="#eff6ff";
+        margin=24;
+
+        starting [label=<<B>Starting</B><BR/><BR/>entry: enable power; send first echo probe<BR/>Probe every 1 s; allow 60 s to boot>,
+                  color="#3b82f6"];
+        online [label=<<B>Online</B><BR/><BR/>entry: send first echo probe<BR/>Probe every 1 s<BR/>Matching reply resets missed count>,
+                fillcolor="#dcfce7", color="#16a34a"];
+        retry [label=<<B>Retry</B><BR/><BR/>entry: cut power<BR/>Wait 5 s before another boot>,
+               fillcolor="#fff7ed", color="#ea580c"];
+
+        starting -> online [label="Matching EchoReply\nemit Responsive", style=dashed,
+                            color="#16a34a", fontcolor="#15803d"];
+    }
+
+    subgraph cluster_stopping {
+        label="Stopping · composite state\nentry: begin_shutdown() · default: AwaitShutdownAck\nexit: queue any deferred PowerOn";
+        fontsize=15;
+        style="rounded,filled";
+        color="#fbbf24";
+        fillcolor="#fffbeb";
+        margin=24;
+
+        ack [label=<<B>AwaitShutdownAck</B><BR/><BR/>Retry shutdown request every 1 s<BR/>Reuse the same shutdown ID<BR/>Wait for matching ACK, even if silent>,
+             color="#d97706"];
+        ping [label=<<B>PingUntilSilent</B><BR/><BR/>entry: reset misses; send echo probe<BR/>Probe every 1 s<BR/>Matching reply resets missed count>,
+              color="#d97706"];
+        stopping_rules [shape=note, style=filled, fillcolor="#fef3c7", color="#fbbf24",
+                        fontsize=11,
+                        label="Handled in either Stopping child:\l  PowerOn → defer until shutdown completes\l  PowerOff → cancel any deferred PowerOn\l  Neither event changes state or resets the deadline.\l  Queued PowerOn runs after PowerOff cuts power.\l\lOne absolute 30 s budget covers both children.\lCut starts 20 ms early to allow the latch sequence.\l"];
+
+        ack -> ping [label="Matching ShutdownAck\nemit ShutdownAccepted", style=dashed];
+        ping -> stopping_rules [style=invis, weight=8];
+    }
+
+    initial -> power_off [label="Initial state"];
+    power_off -> starting [label="PowerOn\n(new request or deferred while Stopping)", lhead=cluster_power_on,
+                          color="#2563eb", fontcolor="#1d4ed8", weight=8];
+    starting -> retry [label="Boot timeout: 60 s",
+                       color="#ea580c", fontcolor="#c2410c"];
+    online -> retry [label="3 consecutive missed echoes\nemit Unresponsive", style=dashed,
+                     color="#ea580c", fontcolor="#c2410c"];
+    retry -> starting [label="Retry delay: 5 s",
+                       constraint=false, color="#2563eb", fontcolor="#1d4ed8"];
+    retry -> power_off [label="PowerOff\ncancel retry immediately", constraint=false];
+
+    online -> ack [label="PowerOff\nfrom Starting or Online",
+                   lhead=cluster_stopping, minlen=2, weight=8];
+    ping -> power_off [label="3 consecutive missed echoes\nemit ForceOff", style=dashed,
+                      constraint=false, color="#dc2626", fontcolor="#b91c1c"];
+    ack -> power_off [label="Absolute deadline reached\nemit ForceOff\n(applies to both Stopping children)",
+                     ltail=cluster_stopping, style=dashed, constraint=false,
+                     color="#dc2626", fontcolor="#b91c1c"];
+
+    legend [shape=plain, fontsize=11,
+            label="Solid arrows: external events or timers. Dashed arrows: internally emitted events.\nOnly replies with the current ID count; stale echo replies and shutdown ACKs are ignored.\nStarting keeps probing until a matching reply or the 60 s boot timeout."];
+    stopping_rules -> legend [style=invis];
+}

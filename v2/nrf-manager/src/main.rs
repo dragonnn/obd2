@@ -95,10 +95,11 @@ async fn main(spawner: Spawner) {
     ieee802154.set_cca(radio::ieee802154::Cca::CarrierSense);*/
     info!("Main loop");
     //state::radio_task().await;
-    spawner.spawn(lyra::rpc::run(lyra_uart, spawner).unwrap());
+    let (rpc_server, rpc_sender) = lyra::rpc::init(lyra_uart, spawner);
+    spawner.spawn(lyra::rpc::run(rpc_server).unwrap());
     spawner.spawn(car::ignition::run(pins.ignition).unwrap());
     spawner.spawn(car::state::run().unwrap());
-    spawner.spawn(lyra::state::run(pins.lyra_power).unwrap());
+    spawner.spawn(lyra::state::run(pins.lyra_power, rpc_sender).unwrap());
 
     loop {
         wdg0.pet().await;
