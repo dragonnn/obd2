@@ -1,12 +1,36 @@
 use embassy_nrf::gpio::Input;
 use embassy_time::{Duration, with_timeout};
 
+const DEBOUNCE: Duration = Duration::from_millis(50);
+
 #[embassy_executor::task]
 pub async fn run(mut ing: Input<'static>) {
     let mut last_state = None;
 
     loop {
         let high = ing.is_high();
+        let timeout = if last_state != Some(high) {
+            DEBOUNCE
+        } else {
+            Duration::from_secs(1)
+        };
+
+        // A new level must stay stable for the debounce window.
+        // Accepted levels retain the one-second fallback check.
+        let changed = with_timeout(timeout, async {
+            if high {
+                ing.wait_for_low().await;
+            } else {
+                ing.wait_for_high().await;
+            }
+        })
+        .await
+        .is_ok();
+
+        if changed || ing.is_high() != high {
+            continue;
+        }
+
         if last_state != Some(high) {
             let level = if high { "high" } else { "low" };
             if last_state.is_none() {
@@ -16,16 +40,5 @@ pub async fn run(mut ing: Input<'static>) {
             }
             last_state = Some(high);
         }
-
-        // Waiting for a level also catches a change that happened during logging.
-        // Recheck after one second even if no input wakeup arrives.
-        let _ = with_timeout(Duration::from_secs(1), async {
-            if high {
-                ing.wait_for_low().await;
-            } else {
-                ing.wait_for_high().await;
-            }
-        })
-        .await;
     }
 }

@@ -133,7 +133,7 @@ pub async fn setup(p: Peripherals) -> Board {
         sda: p.P1_09,
         i2c_irq: Input::new(p.P0_30, Pull::Up),
         ext_uart_irq: Input::new(p.P1_03, Pull::Up),
-        ignition: Input::new(p.P0_03, Pull::Up),
+        ignition: Input::new(p.P0_03, Pull::None),
         lyra_power: LyraPower { pwr_clk, pwr_state },
     };
     let can_obd2_cs = Output::new(p.P0_07, Level::High, OutputDrive::HighDrive);
