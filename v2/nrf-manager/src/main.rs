@@ -26,6 +26,8 @@ mod state;
 mod car;
 mod lyra;
 
+mod prelude;
+
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
 
@@ -99,6 +101,7 @@ async fn main(spawner: Spawner) {
     //state::radio_task().await;
 
     spawner.spawn(car::ignition::run(pins.ignition).unwrap());
+    spawner.spawn(car::state::run().unwrap());
 
     loop {
         wdg0.pet().await;

@@ -1,10 +1,13 @@
 use embassy_nrf::gpio::Input;
 use embassy_time::{Duration, with_timeout};
 
+use crate::prelude::*;
+
 const DEBOUNCE: Duration = Duration::from_millis(50);
 
 #[embassy_executor::task]
 pub async fn run(mut ing: Input<'static>) {
+    let mut car_events_sender = car_event_sender();
     let mut last_state = None;
 
     loop {
@@ -38,6 +41,12 @@ pub async fn run(mut ing: Input<'static>) {
             } else {
                 info!("ing is {}", level);
             }
+            if high {
+                car_events_sender.send(CarEvent::IgnitionOn).await.ok();
+            } else {
+                car_events_sender.send(CarEvent::IgnitionOff).await.ok();
+            }
+
             last_state = Some(high);
         }
     }

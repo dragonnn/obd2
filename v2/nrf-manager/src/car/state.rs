@@ -1,3 +1,5 @@
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::channel::Channel;
 use hsmc::Duration;
 use hsmc::statechart;
 
@@ -21,6 +23,7 @@ statechart! {
 
         state Driving {
             entry: on_enter;
+            on(IgnitionOff) => Shutdown;
         }
     }
 }
@@ -43,5 +46,20 @@ impl CarDrivingActions for CarActionContext<'_> {
     }
 }
 
+pub const QN: usize = 8;
+
+pub static EVENT_CHAN: Channel<CriticalSectionRawMutex, CarEvent, QN> = Channel::new();
+
+pub fn sender() -> CarSender {
+    CarSender::from_channel(&EVENT_CHAN)
+}
+
 #[embassy_executor::task]
-pub async fn run() {}
+pub async fn run() {
+    info!("state task");
+    let ctx = CarData {};
+    let mut machine = Car::new(ctx, &EVENT_CHAN);
+    machine.run().await.unwrap();
+    // `into_context()` still works after Embassy run exits cleanly.
+    let _ctx = machine.into_context();
+}
