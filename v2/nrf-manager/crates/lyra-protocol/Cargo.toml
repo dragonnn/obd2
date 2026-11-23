@@ -1,0 +1,10 @@
+[package]
+name = "lyra-protocol"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+heapless = { version = "0.9.3", default-features = false, features = ["serde"] }
+postcard-rpc = { git = "https://github.com/jamesmunns/postcard-rpc.git", rev = "2469ebc614108ac2ab68d923d50c8da4c9f3e91d", default-features = false }
+postcard-schema = { version = "0.2.6", default-features = false, features = ["heapless-v0_9"] }

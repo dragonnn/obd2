@@ -5,6 +5,11 @@ version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+lyra-protocol = { path = "crates/lyra-protocol" }
+# The pinned upstream revision supports embedded-io 0.7 and Embassy executor 0.10.
+postcard-rpc = { git = "https://github.com/jamesmunns/postcard-rpc.git", rev = "2469ebc614108ac2ab68d923d50c8da4c9f3e91d", default-features = false, features = ["embedded-io-async-0_7-server", "defmt"] }
+# postcard-rpc's UART adapter still uses embassy-sync 0.7 internally.
+embassy-sync-0-7 = { package = "embassy-sync", version = "0.7", default-features = false }
 hsmc = { path = "./crates/hsmc/hsmc", features = ["embassy", "trace-defmt"] }
 embassy-futures = { version = "0.1.2" }
 embassy-embedded-hal = { version = "0.6.0", features = ["defmt", "time"] }

@@ -167,6 +167,90 @@ Radio reception windows can be adjusted by vehicle mode to balance delivery
 latency and parking power consumption. The modem and nRF need an agreed
 receive-window policy if immediate reception is not maintained.
 
+## Lyra UART protocol
+
+Use `postcard-rpc` over the full-duplex UART. The nRF is the RPC server and
+Lyra is the Linux host client. These protocol roles are independent of power
+authority: the nRF remains responsible for Lyra power and vehicle policy.
+
+Endpoint requests originate from Lyra. Topics can be sent by either side,
+so the nRF can initiate a health probe or shutdown without waiting for Lyra
+to poll. Paired topics need explicit command IDs, acknowledgements and
+timeouts; they do not automatically become request/response endpoints.
+
+The initial implementation is in [src/lyra/rpc.rs](src/lyra/rpc.rs). It uses
+buffered UART reception at 115200 baud, 8N1, and COBS-delimited frames. Its
+`lyra/echo` endpoint returns up to 128 arbitrary bytes unchanged, including
+zero bytes. Standard postcard-rpc ping and schema endpoints are also
+provided by the dispatcher. COBS provides framing, not a checksum; integrity
+checking remains a transport design item before relying on control messages.
+
+Shared endpoint definitions and wire types live in the small `no_std` crate
+[crates/lyra-protocol](crates/lyra-protocol). A separate crate is not required
+by UART itself, but gives both programs one definition of their protocol,
+including endpoint keys and payload limits. Keep hardware drivers and handlers
+in their respective applications.
+
+Both applications must use the same `postcard-rpc` dependency source. The
+firmware and protocol crate pin upstream revision
+`2469ebc614108ac2ab68d923d50c8da4c9f3e91d`, which provides the
+`embedded-io-async-0_7-server` adapter and supports Embassy executor 0.10.
+The released 0.12.1 adapter targets older versions. The adapter still needs
+Embassy sync 0.7 internally; the rest of this firmware keeps sync 0.8.
+
+For a Lyra client, add a path dependency on `lyra-protocol`, use the same
+`postcard-rpc` revision with its `use-std` and `cobs-serial` features, and run
+the following from a Tokio runtime. Replace the serial device path with
+Lyra's actual connection:
+
+```rust
+use lyra_protocol::{EchoEndpoint, EchoPayload};
+use postcard_rpc::{
+    header::VarSeqKind,
+    host_client::HostClient,
+    standard_icd::WireError,
+};
+
+let client = HostClient::<WireError>::try_new_serial_cobs(
+    "/dev/ttyS1", "error", 8, 115_200, VarSeqKind::Seq2,
+).expect("open nRF serial port");
+
+let request = EchoPayload::from_slice(b"hello nRF\0").unwrap();
+let response = client.send_resp::<EchoEndpoint>(&request).await.unwrap();
+assert_eq!(response, request);
+```
+
+The existing temporary five-second Lyra power cycle in `main` is retained;
+the RPC task starts before that cycle and continues listening afterwards.
+Persistent Lyra operation and ignition-based power control still belong to
+the planned Lyra controller.
+
+The following messages are proposed for later implementation:
+
+| Message | Direction | Mechanism |
+| --- | --- | --- |
+| Application ready, protocol version and boot ID | Lyra to nRF | Topic |
+| PID snapshot | Lyra to nRF | Topic |
+| Health probe with nonce | nRF to Lyra | Topic |
+| Health reply with matching nonce | Lyra to nRF | Topic |
+| Shutdown request with command ID | nRF to Lyra | Topic |
+| Shutdown accepted with matching command ID | Lyra to nRF | Topic |
+| Information received from the modem | nRF to Lyra | Topic |
+| Read manager status | Lyra to nRF | Endpoint |
+
+Lyra should install its incoming topic subscriptions before announcing
+readiness. UART handlers deliver events to the Lyra controller; that
+controller owns retry policy and the absolute 30-second shutdown deadline.
+
+Ergot remains an alternative if services need symmetric RPC initiation or
+the project grows into an addressed network spanning Lyra, the nRF and the
+modem. That would require suitable radio transport integration. Its wider
+routing scope is not needed for this initial point-to-point echo server.
+
+References: [postcard-rpc communication model](https://docs.rs/postcard-rpc/latest/postcard_rpc/),
+[Ergot messaging model](https://docs.rs/ergot/latest/ergot/book/_02_major_concepts/index.html),
+[Ergot project status](https://docs.rs/ergot/latest/ergot/).
+
 ## Inter-task communication
 
 Use two communication patterns:

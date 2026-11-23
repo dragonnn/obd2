@@ -9,13 +9,11 @@ extern crate alloc;
 use byte::TryWrite;
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_futures::join::join;
 use embassy_nrf::{
     Peri, bind_interrupts, peripherals, radio,
-    uarte::Uarte,
     wdt::{Config, Watchdog, WatchdogHandle},
 };
-use embassy_time::{Duration, Ticker, Timer, with_timeout};
+use embassy_time::{Duration, Timer};
 use embedded_alloc::LlffHeap as Heap;
 use ieee802154::mac::FooterMode;
 use ieee802154::mac::FrameSerDesContext;
@@ -26,6 +24,7 @@ mod can;
 mod state;
 
 mod car;
+mod lyra;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -67,44 +66,6 @@ impl Wdg {
     }
 }
 
-async fn lyra_uart_echo_test(uart: &mut Uarte<'_>) {
-    let (tx, rx) = uart.split_by_ref();
-    let mut ticker = Ticker::every(Duration::from_secs(1));
-
-    for attempt in 1..=5 {
-        let mut sent = *b"echo 0\r\n";
-        sent[5] = b'0' + attempt;
-        let mut received = [0; 8];
-        info!("lyra_uart echo {}: TX {=[u8]:a}", attempt, sent);
-
-        // Poll RX first so an immediate echo is captured during transmission.
-        let (read_result, write_result) = join(
-            with_timeout(Duration::from_millis(500), rx.read(&mut received)),
-            with_timeout(Duration::from_millis(500), tx.write(&sent)),
-        )
-        .await;
-
-        match (write_result, read_result) {
-            (Ok(Ok(())), Ok(Ok(()))) if received == sent => {
-                info!("lyra_uart echo {}: OK, RX {=[u8]:a}", attempt, received);
-            }
-            (Ok(Ok(())), Ok(Ok(()))) => {
-                warn!(
-                    "lyra_uart echo {}: mismatch, RX {=[u8]:a}",
-                    attempt, received
-                );
-            }
-            (tx, rx) => {
-                warn!("lyra_uart echo {}: TX {:?}, RX {:?}", attempt, tx, rx);
-            }
-        }
-
-        if attempt < 5 {
-            ticker.next().await;
-        }
-    }
-}
-
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
     let mut config = embassy_nrf::config::Config::default();
@@ -120,14 +81,15 @@ async fn main(spawner: Spawner) {
         spi: _spi,
         mut can_listen,
         mut can_obd2,
-        mut lyra_uart,
+        lyra_uart,
         ext_uart: _ext_uart,
         radio: _radio,
         wdt,
     } = board::setup(p).await;
     let (mut wdg0, mut wdg1) = Wdg::new(wdt).await;
+    spawner.spawn(lyra::rpc::run(lyra_uart, spawner).unwrap());
     pins.lyra_power.power_up().await;
-    join(Timer::after_secs(5), lyra_uart_echo_test(&mut lyra_uart)).await;
+    Timer::after_secs(5).await;
     pins.lyra_power.power_down().await;
 
     /*let mut ieee802154 = embassy_nrf::radio::ieee802154::Radio::new(_radio, Ieee802154Irqs);

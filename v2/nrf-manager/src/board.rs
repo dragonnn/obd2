@@ -6,6 +6,7 @@ use crate::can::{self, Can};
 use defmt::{error, info, warn};
 use embassy_nrf::{
     Peri, Peripherals, bind_interrupts,
+    buffered_uarte::{self, BufferedUarte},
     gpio::{Input, Level, Output, OutputDrive, Pull},
     peripherals,
     spim::{self, Spim},
@@ -13,7 +14,7 @@ use embassy_nrf::{
 };
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 use embassy_time::Timer;
-use static_cell::StaticCell;
+use static_cell::{ConstStaticCell, StaticCell};
 
 pub type SpiBus = Mutex<CriticalSectionRawMutex, Spim<'static>>;
 pub type SpiDevice = embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
@@ -24,9 +25,11 @@ pub type SpiDevice = embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
 >;
 
 static SPI_BUS: StaticCell<SpiBus> = StaticCell::new();
+static LYRA_UART_RX: ConstStaticCell<[u8; 1024]> = ConstStaticCell::new([0; 1024]);
+static LYRA_UART_TX: ConstStaticCell<[u8; 256]> = ConstStaticCell::new([0; 256]);
 
 bind_interrupts!(struct UartIrqs {
-    UARTE0 => uarte::InterruptHandler<peripherals::UARTE0>;
+    UARTE0 => buffered_uarte::InterruptHandler<peripherals::UARTE0>;
     UARTE1 => uarte::InterruptHandler<peripherals::UARTE1>;
 });
 
@@ -40,7 +43,8 @@ pub struct Board {
     pub spi: &'static SpiBus, // SCK P0.19 / MISO P0.23 / MOSI P0.21
     pub can_listen: Can,           // CAN2/U15, CAN LISTEN
     pub can_obd2: Can,             // CAN1/U16, OBD2 CAN
-    pub lyra_uart: Uarte<'static>, // UARTE0, TX P0.22 / RX P1.00, Lyra via U9
+    // Buffered RX uses TIMER0, PPI_CH0/PPI_CH1 and PPI_GROUP0.
+    pub lyra_uart: BufferedUarte<'static>, // UARTE0, TX P0.22 / RX P1.00, Lyra via U9
     pub ext_uart: Uarte<'static>,  // UARTE1, TX P0.04 / RX P0.05, J4.2 / J4.3
     pub radio: Peri<'static, peripherals::RADIO>,
     pub wdt: Peri<'static, peripherals::WDT>,
@@ -147,7 +151,19 @@ pub async fn setup(p: Peripherals) -> Board {
         spi,
         can_listen: Can::new(SpiDevice::new(spi, can_listen_cs), can_listen_shdn),
         can_obd2: Can::new(SpiDevice::new(spi, can_obd2_cs), can_obd2_shdn),
-        lyra_uart: Uarte::new(p.UARTE0, p.P1_00, p.P0_22, UartIrqs, uart_config.clone()),
+        lyra_uart: BufferedUarte::new(
+            p.UARTE0,
+            p.TIMER0,
+            p.PPI_CH0,
+            p.PPI_CH1,
+            p.PPI_GROUP0,
+            p.P1_00,
+            p.P0_22,
+            UartIrqs,
+            uart_config.clone(),
+            LYRA_UART_RX.take(),
+            LYRA_UART_TX.take(),
+        ),
         ext_uart: Uarte::new(p.UARTE1, p.P0_05, p.P0_04, UartIrqs, uart_config),
         radio: p.RADIO,
         wdt: p.WDT,
