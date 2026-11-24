@@ -3,9 +3,11 @@
 //! SWDCLK/SWDIO remain dedicated to debugging. Unconnected GPIOs are omitted.
 
 mod can;
+pub mod eink;
 
 pub use can::Can;
 use defmt::{error, info, warn};
+pub use eink::Eink;
 use embassy_nrf::{
     Peri, bind_interrupts,
     buffered_uarte::{self, BufferedUarte},
@@ -19,11 +21,11 @@ use embassy_time::Timer;
 use static_cell::{ConstStaticCell, StaticCell};
 
 pub type SpiBus = Mutex<CriticalSectionRawMutex, Spim<'static>>;
-pub type SpiDevice = embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
+pub type SpiDevice<CS = Output<'static>> = embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice<
     'static,
     CriticalSectionRawMutex,
     Spim<'static>,
-    Output<'static>,
+    CS,
 >;
 
 static SPI_BUS: StaticCell<SpiBus> = StaticCell::new();
@@ -45,6 +47,7 @@ pub struct Board {
     pub spi: &'static SpiBus, // SCK P0.19 / MISO P0.23 / MOSI P0.21
     pub can_listen: Can, // CAN2/U15, CAN LISTEN
     pub can_obd2: Can,   // CAN1/U16, OBD2 CAN
+    pub eink: Eink,      // Waveshare HAT on J6 and the shared SPI bus
     // Buffered RX uses TIMER0, PPI_CH0/PPI_CH1 and PPI_GROUP0.
     pub lyra_uart: BufferedUarte<'static>, // UARTE0, TX P0.22 / RX P1.00, Lyra via U9
     pub ext_uart: Uarte<'static>,          // UARTE1, TX P0.04 / RX P0.05, J4.2 / J4.3
@@ -59,12 +62,7 @@ pub struct Pins {
     pub can_obd2_int: Input<'static>, // P1.10, NRF_CAN1_INT, U16 MCP2518FD
     pub can_listen_int: Input<'static>, // P1.13, NRF_CAN2_INT, U15 MCP2518FD
     pub cs3_eink: Output<'static>,    // P1.11, NRF_CS3_EINK
-    pub eink_dc: Output<'static>,     // P0.02, NRF_EINK_DC
     pub rst: Output<'static>,         // P0.29, NRF_RST
-
-    pub spi_cs: Output<'static>,  // P0.31, NRF_SPI_CS, J6.3
-    pub spi_irq: Input<'static>,  // P1.04, NRF_SPI_IRQ, J6.2
-    pub spi_rst: Output<'static>, // P1.06, NRF_SPI_RST, J6.1
 
     pub scl: Peri<'static, peripherals::P0_12>, // NRF_SCL, J2.2
     pub sda: Peri<'static, peripherals::P1_09>, // NRF_SDA, J2.3
@@ -104,7 +102,7 @@ impl LyraPower {
     }
 }
 
-/// Map all 26 connected GPIOs and establish idle control levels before any await.
+/// Establish idle GPIO levels before initializing the CAN controllers.
 pub async fn setup() -> Board {
     let mut config = embassy_nrf::config::Config::default();
     config.hfclk_source = embassy_nrf::config::HfclkSource::ExternalXtal;
@@ -139,11 +137,7 @@ pub async fn setup() -> Board {
         can_obd2_int: Input::new(p.P1_10, Pull::Up),
         can_listen_int: Input::new(p.P1_13, Pull::Up),
         cs3_eink: Output::new(p.P1_11, Level::High, OutputDrive::HighDrive),
-        eink_dc: Output::new(p.P0_02, Level::Low, OutputDrive::Standard),
         rst: Output::new(p.P0_29, Level::High, OutputDrive::Standard),
-        spi_cs: Output::new(p.P0_31, Level::High, OutputDrive::HighDrive),
-        spi_irq: Input::new(p.P1_04, Pull::Up),
-        spi_rst: Output::new(p.P1_06, Level::High, OutputDrive::Standard),
         scl: p.P0_12,
         sda: p.P1_09,
         i2c_irq: Input::new(p.P0_30, Pull::Up),
@@ -162,6 +156,8 @@ pub async fn setup() -> Board {
         spi,
         can_listen: Can::new(SpiDevice::new(spi, can_listen_cs), can_listen_shdn),
         can_obd2: Can::new(SpiDevice::new(spi, can_obd2_cs), can_obd2_shdn),
+        // J6.3 NRF_SPI_CS, J6.2 NRF_SPI_IRQ, J6.1 NRF_SPI_RST.
+        eink: Eink::new(spi, p.P0_31, p.P1_04, p.P1_06),
         lyra_uart: BufferedUarte::new(
             p.UARTE0,
             p.TIMER0,

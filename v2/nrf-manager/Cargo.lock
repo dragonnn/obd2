@@ -693,6 +693,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "epdsi"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c29b05db1639ccfdf186fcbda6a96d3619a3436f3474fa365a2183d67e1435b"
+dependencies = [
+ "defmt 1.2.0",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "maybe-async-cfg",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1008,6 +1020,7 @@ dependencies = [
  "embedded-io 0.7.1",
  "embedded-io-async 0.7.0",
  "embedded-test",
+ "epdsi",
  "fixed",
  "heapless 0.9.4",
  "hsmc",

@@ -74,6 +74,7 @@ async fn main(spawner: Spawner) {
         spi: _spi,
         mut can_listen,
         mut can_obd2,
+        eink: _eink,
         lyra_uart,
         ext_uart: _ext_uart,
         radio: _radio,
