@@ -17,6 +17,7 @@ name = "nrf-test"
 harness = false
 
 [dev-dependencies]
+embedded-can = "0.4"
 embedded-test = { version = "0.7", features = ["embassy-010"] }
 
 [dependencies]

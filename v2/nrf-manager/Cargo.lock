@@ -1001,6 +1001,7 @@ dependencies = [
  "embassy-sync 0.8.0",
  "embassy-time",
  "embedded-alloc",
+ "embedded-can",
  "embedded-hal 1.0.0",
  "embedded-hal-async",
  "embedded-hal-bus",

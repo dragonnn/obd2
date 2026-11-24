@@ -4,7 +4,7 @@
 
 mod can;
 
-use can::Can;
+pub use can::Can;
 use defmt::{error, info, warn};
 use embassy_nrf::{
     Peri, bind_interrupts,

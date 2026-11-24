@@ -4,10 +4,11 @@
 use crate::board::SpiDevice;
 use defmt::info;
 use embassy_nrf::gpio::Output;
-use embassy_time::Delay;
+use embassy_time::{Delay, Timer};
 use mcp251xfd::{
-    CiInt, ClockConfig, Config, Fifo, FifoLayout, Filter, FilterMatch, MCP251xFdAsync,
-    NominalBitTiming, OperationMode, PayloadSize, Variant,
+    CiInt, ClockConfig, Config, Fifo, FifoLayout, Filter, FilterMatch, Frame, MCP251xFdAsync,
+    NominalBitTiming, OperationMode, PayloadSize, RxFrame, Variant,
+    registers::{Osc, addr},
 };
 pub type Error = mcp251xfd::Error<<SpiDevice as embedded_hal::spi::ErrorType>::Error>;
 
@@ -54,6 +55,37 @@ impl Can {
             .configure_interrupts(CiInt(0).with_rxie(true))
             .await?;
         Ok(variant)
+    }
+
+    /// Wake a configured controller and start classic CAN operation.
+    pub async fn wake(&mut self) -> Result<(), Error> {
+        let osc = Osc(self.driver.read_register_raw(addr::OSC).await?);
+        if osc.osc_disabled() {
+            self.driver
+                .write_register_raw(addr::OSC, osc.with_osc_disabled(false).0)
+                .await?;
+        }
+
+        for _ in 0..100 {
+            let osc = Osc(self.driver.read_register_raw(addr::OSC).await?);
+            if osc.osc_ready() && !osc.osc_disabled() {
+                self.transceiver_shutdown.set_low();
+                return self
+                    .driver
+                    .set_mode(OperationMode::Normal20, &mut Delay)
+                    .await;
+            }
+            Timer::after_millis(1).await;
+        }
+        Err(Error::ClockNotReady)
+    }
+
+    pub async fn transmit(&mut self, frame: &Frame) -> Result<(), Error> {
+        self.driver.transmit(TX, frame).await
+    }
+
+    pub async fn receive(&mut self) -> Result<RxFrame, Error> {
+        self.driver.receive(RX).await
     }
 
     pub async fn sleep(&mut self) -> Result<(), Error> {
