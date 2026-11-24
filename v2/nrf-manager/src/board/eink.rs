@@ -5,18 +5,14 @@ use core::convert::Infallible;
 use defmt::{info, warn};
 use embassy_nrf::{
     Peri,
-    gpio::{Flex, Level, Output, OutputDrive, Pull},
+    gpio::{Input, Level, Output, OutputDrive, Pull},
+    pac::{self, gpio, shared, spim},
     peripherals::{P0_31, P1_04, P1_06},
-};
-use embassy_sync::{
-    blocking_mutex::raw::CriticalSectionRawMutex,
-    mutex::{Mutex, MutexGuard},
 };
 use embassy_time::{Delay, Duration, block_for};
 use embedded_hal::digital::{ErrorType, InputPin, OutputPin};
 use embedded_hal_async::digital::Wait;
 use epdsi::{bus::EpdBusError, prelude::*};
-use static_cell::StaticCell;
 
 use super::{SpiBus, SpiDevice};
 
@@ -31,11 +27,12 @@ impl EpdPanel for Waveshare213 {
     const HEIGHT: u32 = HEIGHT;
 }
 
-type DcBusyGpio = Mutex<CriticalSectionRawMutex, Flex<'static>>;
-static DC_BUSY: StaticCell<DcBusyGpio> = StaticCell::new();
+const DC_PIN: usize = 23; // P0.23 / J6.4, shared with the CAN controllers' SDO.
+// Two 1 MHz SPI clock periods on the 64 MHz nRF52840 core.
+const CAN_SDO_RELEASE_CYCLES: u32 = 128;
 
 type DisplaySpi = SpiDevice<ChipSelect>;
-type DisplayBus = SpiBusWrapper<DisplaySpi, DcBusy, Reset, DcBusy>;
+type DisplayBus = SpiBusWrapper<DisplaySpi, DataCommand, Reset, Busy>;
 pub type Error = EpdBusError<
     <SpiDevice as embedded_hal::spi::ErrorType>::Error,
     Infallible,
@@ -54,15 +51,14 @@ impl Eink {
         irq: Peri<'static, P1_04>,
         rst: Peri<'static, P1_06>,
     ) -> Self {
-        let mut irq = Flex::new(irq);
-        irq.set_as_input(Pull::None);
-        let dc_busy = DcBusy(DC_BUSY.init(Mutex::new(irq)));
+        let busy = Busy(Input::new(irq, Pull::None));
         let cs = ChipSelect {
             pin: Output::new(cs, Level::High, OutputDrive::HighDrive),
-            dc_busy,
+            miso_psel: pac::SPIM3.psel().miso().read(),
+            miso_config: pac::P0.pin_cnf(DC_PIN).read(),
         };
         let reset = Reset(Output::new(rst, Level::High, OutputDrive::Standard));
-        let bus = SpiBusWrapper::new(SpiDevice::new(spi, cs), dc_busy, reset, dc_busy);
+        let bus = SpiBusWrapper::new(SpiDevice::new(spi, cs), DataCommand, reset, busy);
         let controller = Ssd1680Controller::for_panel::<Waveshare213>();
         Self {
             driver: EpdDriver::new(bus, controller),
@@ -87,81 +83,79 @@ impl Eink {
     }
 }
 
-// IRQ connects directly to DC and through 2 kΩ to BUSY. epdsi sees distinct
-// pins, while the SPI chip select controls when the shared GPIO drives DC.
-#[derive(Clone, Copy)]
-struct DcBusy(&'static DcBusyGpio);
+// epdsi sets DC before taking the SPI mutex. These writes only preload the
+// GPIO output latch. P0.23 stays an input until the e-ink CS hook owns the bus.
+struct DataCommand;
 
-impl DcBusy {
-    fn pin(&self) -> MutexGuard<'_, CriticalSectionRawMutex, Flex<'static>> {
-        // The driver issues DC, CS and BUSY operations sequentially.
-        self.0.try_lock().unwrap()
-    }
-}
-
-impl ErrorType for DcBusy {
+impl ErrorType for DataCommand {
     type Error = Infallible;
 }
 
-impl OutputPin for DcBusy {
+impl OutputPin for DataCommand {
     fn set_low(&mut self) -> Result<(), Self::Error> {
-        self.pin().set_low();
+        pac::P0.outclr().write(|w| w.set_pin(DC_PIN, true));
         Ok(())
     }
 
     fn set_high(&mut self) -> Result<(), Self::Error> {
-        self.pin().set_high();
+        pac::P0.outset().write(|w| w.set_pin(DC_PIN, true));
         Ok(())
     }
 }
 
-impl InputPin for DcBusy {
+struct Busy(Input<'static>);
+
+impl ErrorType for Busy {
+    type Error = Infallible;
+}
+
+impl InputPin for Busy {
     fn is_high(&mut self) -> Result<bool, Self::Error> {
-        let pin = self.pin().is_high();
-        info!("is_high dc read pin: {}", pin);
-        Ok(pin)
+        let high = self.0.is_high();
+        info!("E-ink BUSY high: {}", high);
+        Ok(high)
     }
 
     fn is_low(&mut self) -> Result<bool, Self::Error> {
-        let pin = self.pin().is_low();
-        info!("is_low dc read pin: {}", pin);
-        Ok(pin)
+        let low = self.0.is_low();
+        info!("E-ink BUSY low: {}", low);
+        Ok(low)
     }
 }
 
-impl Wait for DcBusy {
+impl Wait for Busy {
     async fn wait_for_high(&mut self) -> Result<(), Self::Error> {
-        self.0.lock().await.wait_for_high().await;
+        self.0.wait_for_high().await;
         Ok(())
     }
 
     async fn wait_for_low(&mut self) -> Result<(), Self::Error> {
-        let mut pin = self.0.lock().await;
-        defmt::trace!("E-ink BUSY high before idle wait: {}", pin.is_high());
-        pin.wait_for_low().await;
+        defmt::trace!("E-ink BUSY high before idle wait: {}", self.0.is_high());
+        self.0.wait_for_low().await;
         defmt::trace!("E-ink BUSY released");
         Ok(())
     }
 
     async fn wait_for_rising_edge(&mut self) -> Result<(), Self::Error> {
-        self.0.lock().await.wait_for_rising_edge().await;
+        self.0.wait_for_rising_edge().await;
         Ok(())
     }
 
     async fn wait_for_falling_edge(&mut self) -> Result<(), Self::Error> {
-        self.0.lock().await.wait_for_falling_edge().await;
+        self.0.wait_for_falling_edge().await;
         Ok(())
     }
 
     async fn wait_for_any_edge(&mut self) -> Result<(), Self::Error> {
-        self.0.lock().await.wait_for_any_edge().await;
+        self.0.wait_for_any_edge().await;
         Ok(())
     }
 }
 
 struct ChipSelect {
     pin: Output<'static>,
-    dc_busy: DcBusy,
+    miso_psel: shared::regs::Psel,
+    miso_config: gpio::regs::PinCnf,
 }
 
 impl ErrorType for ChipSelect {
@@ -170,27 +164,43 @@ impl ErrorType for ChipSelect {
 
 impl OutputPin for ChipSelect {
     fn set_low(&mut self) -> Result<(), Self::Error> {
+        // SpiDevice holds the bus mutex here, so both CAN chip selects are high.
+        cortex_m::asm::delay(CAN_SDO_RELEASE_CYCLES);
+        let spi = pac::SPIM3;
+        spi.enable()
+            .write(|w| w.set_enable(spim::vals::Enable::Disabled));
+        spi.psel()
+            .miso()
+            .modify(|w| w.set_connect(shared::vals::Connect::Disconnected));
+        pac::P0.pin_cnf(DC_PIN).write(|w| {
+            w.set_dir(gpio::vals::Dir::Output);
+            w.set_input(gpio::vals::Input::Disconnect);
+            w.set_drive(gpio::vals::Drive::H0h1);
+        });
+        spi.enable()
+            .write(|w| w.set_enable(spim::vals::Enable::Enabled));
         warn!("chip select assert");
-        self.dc_busy.pin().set_as_output(OutputDrive::HighDrive);
         self.pin.set_low();
         Ok(())
     }
 
     fn set_high(&mut self) -> Result<(), Self::Error> {
-        warn!("chip select deasert");
+        let spi = pac::SPIM3;
+        // SpiDevice also calls this on cancellation. Stop EasyDMA before
+        // changing the pin assignment if the write future was dropped.
+        if spi.events_end().read() == 0 {
+            spi.events_stopped().write_value(0);
+            spi.tasks_stop().write_value(1);
+            while spi.events_stopped().read() == 0 {}
+        }
+        warn!("chip select deassert");
         self.pin.set_high();
-        self.dc_busy.pin().set_as_input(Pull::None);
-        /*block_for(Duration::from_millis(2));
-        // The shared SPI device also deasserts CS on cancellation.
-        let mut dc_busy = self.dc_busy.pin();
-        let dc_level = dc_busy.get_output_level();
-        // Return DC low before releasing the line. With the HAT level shifter,
-        // releasing it directly from high can leave the shared node high at idle.
-        dc_busy.set_high();
-        dc_busy.set_as_disconnected();
-        dc_busy.set_as_input(Pull::None);
-        // Preserve the requested DC level for consecutive SPI transactions.
-        //dc_busy.set_level(dc_level);*/
+        spi.enable()
+            .write(|w| w.set_enable(spim::vals::Enable::Disabled));
+        pac::P0.pin_cnf(DC_PIN).write_value(self.miso_config);
+        spi.psel().miso().write_value(self.miso_psel);
+        spi.enable()
+            .write(|w| w.set_enable(spim::vals::Enable::Enabled));
         Ok(())
     }
 }

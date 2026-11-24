@@ -83,7 +83,10 @@ mod tests {
     #[timeout(30)]
     async fn eink_dc_high() {
         let p = embassy_nrf::init(Default::default());
-        hold_eink_pin_high(p.P1_04, p.P0_31, p.P1_06, "DC (P1.04 / J6.2)").await;
+        let _can_listen_cs = Output::new(p.P0_18, Level::High, OutputDrive::HighDrive);
+        let _can_obd2_cs = Output::new(p.P0_07, Level::High, OutputDrive::HighDrive);
+        cortex_m::asm::delay(128);
+        hold_eink_pin_high(p.P0_23, p.P0_31, p.P1_06, "DC (P0.23 / J6.4)").await;
     }
 
     #[test]
