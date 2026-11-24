@@ -4,6 +4,17 @@ name = "nrf-manager"
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
+[[bin]]
+name = "nrf-manager"
+test = false
+
+[[test]]
+name = "smoke"
+harness = false
+
+[dev-dependencies]
+embedded-test = "0.7"
+
 [dependencies]
 lyra-protocol = { path = "crates/lyra-protocol" }
 # The pinned upstream revision supports embedded-io 0.7 and Embassy executor 0.10.
