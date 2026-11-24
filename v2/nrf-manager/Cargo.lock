@@ -668,6 +668,7 @@ version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2cfbacda78e52f6f53ccd0d6f6f6a41a21b722c3a2d6bbc547aa2500d86521f"
 dependencies = [
+ "embassy-executor",
  "embedded-test-linker-script",
  "embedded-test-macros",
  "semihosting",

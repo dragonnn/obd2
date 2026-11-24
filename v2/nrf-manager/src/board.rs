@@ -2,10 +2,10 @@
 //!
 //! SWDCLK/SWDIO remain dedicated to debugging. Unconnected GPIOs are omitted.
 
-use crate::can::{self, Can};
+use crate::can::Can;
 use defmt::{error, info, warn};
 use embassy_nrf::{
-    Peri, Peripherals, bind_interrupts,
+    Peri, bind_interrupts,
     buffered_uarte::{self, BufferedUarte},
     gpio::{Input, Level, Output, OutputDrive, Pull},
     peripherals,
@@ -103,7 +103,16 @@ impl LyraPower {
 }
 
 /// Map all 26 connected GPIOs and establish idle control levels before any await.
-pub async fn setup(p: Peripherals) -> Board {
+pub async fn setup() -> Board {
+    let mut config = embassy_nrf::config::Config::default();
+    config.hfclk_source = embassy_nrf::config::HfclkSource::ExternalXtal;
+    config.dcdc.reg0 = false;
+    config.dcdc.reg0_voltage = None;
+    config.dcdc.reg1 = true;
+
+    let p = embassy_nrf::init(config);
+    info!("start board setup");
+
     // MAX3051 shutdown is active high. Set these first and retain both drivers.
     // U3/U5 SHDN are grounded; they shut down with the switched regulator rail.
     let can_obd2_shdn = Output::new(p.P1_15, Level::Low, OutputDrive::Standard);

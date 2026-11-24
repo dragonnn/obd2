@@ -4,16 +4,20 @@ name = "nrf-manager"
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
+[lib]
+test = false
+doctest = false
+
 [[bin]]
 name = "nrf-manager"
 test = false
 
 [[test]]
-name = "smoke"
+name = "nrf-test"
 harness = false
 
 [dev-dependencies]
-embedded-test = "0.7"
+embedded-test = { version = "0.7", features = ["embassy-010"] }
 
 [dependencies]
 lyra-protocol = { path = "crates/lyra-protocol" }

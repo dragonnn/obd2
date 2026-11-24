@@ -17,10 +17,9 @@ use embassy_time::{Duration, Timer};
 use embedded_alloc::LlffHeap as Heap;
 use ieee802154::mac::FooterMode;
 use ieee802154::mac::FrameSerDesContext;
+use nrf_manager::board;
 use {defmt_rtt as _, panic_probe as _};
 
-mod board;
-mod can;
 mod state;
 
 mod car;
@@ -70,14 +69,6 @@ impl Wdg {
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
-    let mut config = embassy_nrf::config::Config::default();
-    config.hfclk_source = embassy_nrf::config::HfclkSource::ExternalXtal;
-    config.dcdc.reg0 = false;
-    config.dcdc.reg0_voltage = None;
-    config.dcdc.reg1 = true;
-
-    let p = embassy_nrf::init(config);
-    info!("start board setup");
     let board::Board {
         mut pins,
         spi: _spi,
@@ -87,7 +78,7 @@ async fn main(spawner: Spawner) {
         ext_uart: _ext_uart,
         radio: _radio,
         wdt,
-    } = board::setup(p).await;
+    } = board::setup().await;
     let (mut wdg0, mut wdg1) = Wdg::new(wdt).await;
 
     /*let mut ieee802154 = embassy_nrf::radio::ieee802154::Radio::new(_radio, Ieee802154Irqs);
