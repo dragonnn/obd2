@@ -44,11 +44,11 @@ impl Can {
         info!("before variant");
         let variant = self.driver.init(&CONFIG, &mut delay).await?;
         info!("before apply layout");
-        //self.driver.apply_layout(self.layout).await?;
+        self.driver.apply_layout(&LAYOUT).await?;
         info!("before set filter");
-        /*self.driver
-        .set_filter(Filter::F0, FilterMatch::accept_all(), self.rx_fifo)
-        .await?;*/
+        self.driver
+            .set_filter(Filter::F0, FilterMatch::accept_all(), RX)
+            .await?;
         info!("before set configure interrupts");
         self.driver
             .configure_interrupts(CiInt(0).with_rxie(true))

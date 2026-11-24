@@ -12,7 +12,7 @@ mod tests {
     }
 
     #[test]
-    async fn can() {
+    async fn board() {
         let _board = nrf_manager::board::setup().await;
         defmt::info!("hello world");
     }

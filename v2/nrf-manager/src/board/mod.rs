@@ -2,7 +2,9 @@
 //!
 //! SWDCLK/SWDIO remain dedicated to debugging. Unconnected GPIOs are omitted.
 
-use crate::can::Can;
+mod can;
+
+use can::Can;
 use defmt::{error, info, warn};
 use embassy_nrf::{
     Peri, bind_interrupts,
