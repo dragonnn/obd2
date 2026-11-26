@@ -1,5 +1,10 @@
 [source.crates-io]
 replace-with = "vendored-sources"
 
+[source."git+https://github.com/jamesmunns/postcard-rpc.git?rev=2469ebc614108ac2ab68d923d50c8da4c9f3e91d"]
+git = "https://github.com/jamesmunns/postcard-rpc.git"
+rev = "2469ebc614108ac2ab68d923d50c8da4c9f3e91d"
+replace-with = "vendored-sources"
+
 [source.vendored-sources]
 directory = "./vendor"

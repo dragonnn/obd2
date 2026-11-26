@@ -16,17 +16,19 @@ use signal_hook::iterator::Signals;
 slint::include_modules!();
 
 #[cfg(feature = "board-kms")]
+mod rpc;
+#[cfg(feature = "board-kms")]
 mod touch;
 
 #[cfg(feature = "board-kms")]
 fn configure_board_backend() {
     // Keep the board executable self-contained: the LinuxKMS backend must be
-    // directed to the legacy framebuffer and use the panel's 270-degree
+    // directed to the legacy framebuffer and use the panel's 90-degree
     // orientation before Slint creates its window/backend.
     unsafe {
         std::env::set_var("SLINT_BACKEND", "linuxkms-software");
         std::env::set_var("SLINT_BACKEND_LINUXFB", "1");
-        std::env::set_var("SLINT_KMS_ROTATION", "270");
+        std::env::set_var("SLINT_KMS_ROTATION", "90");
     }
 }
 
@@ -219,6 +221,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         spawn_system_action("system shutdown", "/sbin/poweroff", &[]);
     });
     ui.on_brightness_changed(write_brightness);
+
+    #[cfg(feature = "board-kms")]
+    rpc::start()?;
 
     ui.run()?;
 

@@ -132,7 +132,7 @@ static void cst3530_reset(struct cst3530 *ts)
 {
 	if (ts->reset) {
 		gpiod_set_value_cansleep(ts->reset, 1);
-		msleep(200);
+		usleep_range(20000, 21000);
 		gpiod_set_value_cansleep(ts->reset, 0);
 	}
 	msleep(200);

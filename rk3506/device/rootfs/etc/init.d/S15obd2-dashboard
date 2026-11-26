@@ -20,7 +20,7 @@ start)
 	# linuxfb flag keeps this board on /dev/fb0 rather than Wayland/X11.
 	SLINT_BACKEND=linuxkms-software \
 	SLINT_BACKEND_LINUXFB=1 \
-	SLINT_KMS_ROTATION=270 \
+	SLINT_KMS_ROTATION=90 \
 	start-stop-daemon --start --background --make-pidfile --pidfile "$PIDFILE" \
 		--exec "$DAEMON" -- -q
 	;;

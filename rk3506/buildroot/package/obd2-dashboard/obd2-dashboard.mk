@@ -11,10 +11,14 @@ OBD2_DASHBOARD_OVERRIDE_SRCDIR_RSYNC_EXCLUSIONS = \
 # Buildroot uses rsync -u, which skips edits with older source timestamps.
 # Follow it with a checksum sync without -u, also removing deleted sources.
 # Changed files get fresh mtimes so Cargo notices them; cache/stamps survive.
+OBD2_DASHBOARD_LYRA_PROTOCOL = v2/nrf-manager/crates/lyra-protocol
 define OBD2_DASHBOARD_SYNC_SOURCES
 	rsync -a --delete --chmod=u=rwX,go=rX \
 		$(OBD2_DASHBOARD_OVERRIDE_SRCDIR_RSYNC_EXCLUSIONS) \
 		$(RSYNC_VCS_EXCLUSIONS) $(OBD2_DASHBOARD_SITE)/ $(@D)/
+	install -d $(@D)/../$(OBD2_DASHBOARD_LYRA_PROTOCOL)
+	rsync -a --checksum --no-times --delete $(RSYNC_VCS_EXCLUSIONS) \
+		/project/$(OBD2_DASHBOARD_LYRA_PROTOCOL)/ $(@D)/../$(OBD2_DASHBOARD_LYRA_PROTOCOL)/
 endef
 OBD2_DASHBOARD_POST_RSYNC_HOOKS += OBD2_DASHBOARD_SYNC_SOURCES
 OBD2_DASHBOARD_LICENSE = MIT

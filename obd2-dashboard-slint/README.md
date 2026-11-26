@@ -41,8 +41,8 @@ project.
 
 The `board-kms` build uses Slint's existing libinput backend for input.
 `src/touch.rs` identifies `Hynitron CST3530 Touchscreen` and applies the inverse
-of the dashboard's 270-degree rendering rotation: normalized portrait `(u, v)`
-becomes landscape `(1-v, u)`. Calibration is local to the application; the
+of the dashboard's 90-degree rendering rotation. Normalized portrait `(u, v)`
+becomes landscape `(v, 1-u)`. Calibration is local to the application. The
 kernel and `touch-test` retain native portrait coordinates. If the display
 rotation changes, update this calibration along with `SLINT_KMS_ROTATION`.
 

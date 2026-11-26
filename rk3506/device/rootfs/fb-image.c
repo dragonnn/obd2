@@ -246,7 +246,7 @@ int main(int argc, char **argv)
         image_free(&image);
         return 1;
     }
-    /* fbcon=rotate:3 makes the visible screen yres by xres. */
+    /* fbcon=rotate:1 makes the visible screen yres by xres. */
     unsigned display_width = var.yres;
     unsigned display_height = var.xres;
     if (image.width > display_width || image.height > display_height)

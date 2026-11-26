@@ -166,7 +166,7 @@ static int co6300_prepare(struct drm_panel *panel)
 
 	if (ctx->reset) {
 		gpiod_set_value_cansleep(ctx->reset, 1);
-		usleep_range(5000, 6000);
+		usleep_range(20000, 21000);
 		gpiod_set_value_cansleep(ctx->reset, 0);
 		msleep(120);
 	}

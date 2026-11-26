@@ -34,13 +34,13 @@ mod tests {
         let mut board = board::setup().await;
         let display = &mut board.eink;
         let message = [
-            "#   # ##### #     #      ###      #   #  ###  ####  #     ####   #",
-            "#   # #     #     #     #   #     #   # #   # #   # #     #   #  #",
-            "#   # #     #     #     #   #     #   # #   # #   # #     #   #  #",
-            "##### ####  #     #     #   #     # # # #   # ####  #     #   #  #",
-            "#   # #     #     #     #   #     # # # #   # # #   #     #   #  #",
-            "#   # #     #     #     #   #     ## ## #   # #  #  #     #   #   ",
-            "#   # ##### ##### #####  ###      #   #  ###  #   # ##### ####   #",
+            "##### #   #  #### #   # # # #",
+            "#     #   # #     #  #  # # #",
+            "#     #   # #     # #   # # #",
+            "####  #   # #     ##    # # #",
+            "#     #   # #     # #   # # #",
+            "#     #   # #     #  #",
+            "#      ###   #### #   # # # #",
         ];
         let scale = 3;
         let left = (eink::HEIGHT - message[0].len() as u32 * scale) / 2;
@@ -75,7 +75,7 @@ mod tests {
             refresh_ms
         );
         defmt::unwrap!(display.sleep().await, "E-ink sleep failed");
-        defmt::info!("Check the e-ink panel for HELLO WORLD!");
+        defmt::info!("Check the e-ink panel for FUCK!!!");
     }
 
     #[test]

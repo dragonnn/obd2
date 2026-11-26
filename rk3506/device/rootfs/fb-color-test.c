@@ -109,7 +109,7 @@ int main(int argc, char **argv)
         close(fd);
         return 1;
     }
-    /* The board boots with fbcon=rotate:3 (270 degrees counter-clockwise).
+    /* The board boots with fbcon=rotate:1 (90 degrees clockwise).
      * Interpret custom margins in the displayed orientation, not raw fb0
      * memory coordinates. */
     display_width = var.yres;

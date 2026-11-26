@@ -15,4 +15,5 @@ services:
       - ./buildroot:/project/buildroot:ro
       - ./device:/project/device:ro
       - ../obd2-dashboard-slint:/project/obd2-dashboard-slint:ro
+      - ../v2/nrf-manager/crates/lyra-protocol:/project/v2/nrf-manager/crates/lyra-protocol:ro
       - ./patches:/project/patches:ro

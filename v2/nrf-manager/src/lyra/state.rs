@@ -12,6 +12,7 @@ use super::rpc::RpcSender;
 const PROBE_INTERVAL: Duration = Duration::from_secs(1);
 const BOOT_TIMEOUT: Duration = Duration::from_secs(60);
 const RETRY_DELAY: Duration = Duration::from_secs(5);
+const SHUTDOWN_POWER_CUT_DELAY: Duration = Duration::from_secs(5);
 const MISSED_ECHO_LIMIT: u8 = 3;
 const TX_TIMEOUT: TimeDuration = TimeDuration::from_millis(100);
 const SHUTDOWN_TIMEOUT: TimeDuration = TimeDuration::from_secs(30);
@@ -27,6 +28,7 @@ pub enum LyraEvent {
     Responsive,
     Unresponsive,
     ShutdownAccepted,
+    ShutdownSilent,
     ForceOff,
 }
 
@@ -170,6 +172,11 @@ statechart! {
                 entry: send_first_probe;
                 on(every PROBE_INTERVAL) => check_shutdown_health;
                 on(EchoReply { id: ControlId }) => check_echo;
+                on(ShutdownSilent) => WaitBeforePowerOff;
+            }
+
+            state WaitBeforePowerOff {
+                on(after SHUTDOWN_POWER_CUT_DELAY) => PowerOff;
             }
         }
     }
@@ -285,8 +292,8 @@ impl LyraPingUntilSilentActions for LyraActionContext<'_> {
 
     async fn check_shutdown_health(&mut self) {
         if self.missed_echo() {
-            info!("Lyra stopped replying; cutting power");
-            self.emit(LyraEvent::ForceOff).unwrap();
+            info!("Lyra stopped replying; waiting before cutting power");
+            self.emit(LyraEvent::ShutdownSilent).unwrap();
         } else if let Some(budget) = self.shutdown_tx_budget() {
             self.probe(budget).await;
         }

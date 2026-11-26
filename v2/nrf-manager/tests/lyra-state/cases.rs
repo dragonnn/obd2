@@ -121,7 +121,7 @@ fn valid_echo_resets_missed_count_and_three_misses_trigger_recovery() {
 }
 
 #[test]
-fn shutdown_waits_for_matching_ack_and_then_three_missed_echoes() {
+fn shutdown_cuts_power_five_seconds_after_the_third_missed_echo() {
     let _clock = reset_clock();
     let (mut machine, power, rpc) = setup();
     online(&mut machine, &rpc);
@@ -140,8 +140,15 @@ fn shutdown_waits_for_matching_ack_and_then_three_missed_echoes() {
     assert!(power.is_on());
     dispatch(&mut machine, LyraEvent::ShutdownAck { id });
     tick(&mut machine, 1);
+    assert_eq!(machine.current_state(), LyraState::WaitBeforePowerOff);
+    let probes = rpc.count::<EchoProbeTopic>();
+    tick(&mut machine, 4);
+    assert_eq!(machine.current_state(), LyraState::WaitBeforePowerOff);
+    assert!(power.is_on());
+    tick(&mut machine, 1);
     assert_eq!(machine.current_state(), LyraState::PowerOff);
     assert!(!power.is_on());
+    assert_eq!(rpc.count::<EchoProbeTopic>(), probes);
     tick(&mut machine, 8);
     assert_eq!(machine.current_state(), LyraState::PowerOff);
     assert!(!power.is_on());
@@ -155,11 +162,15 @@ fn power_on_during_shutdown_is_handled_normally_after_power_is_cut() {
     dispatch(&mut machine, LyraEvent::PowerOff);
     let id = rpc.last::<ShutdownRequestTopic>();
     dispatch(&mut machine, LyraEvent::PowerOn);
-    dispatch(&mut machine, LyraEvent::PowerOn);
     assert_eq!(machine.current_state(), LyraState::AwaitShutdownAck);
     dispatch(&mut machine, LyraEvent::ShutdownAck { id });
     let changes = power.0.lock().unwrap().len();
     tick(&mut machine, 3);
+    assert_eq!(machine.current_state(), LyraState::WaitBeforePowerOff);
+    dispatch(&mut machine, LyraEvent::PowerOn);
+    tick(&mut machine, 4);
+    assert_eq!(power.0.lock().unwrap().len(), changes);
+    tick(&mut machine, 1);
     assert_eq!(machine.current_state(), LyraState::Starting);
     assert!(power.is_on());
     assert_eq!(&power.0.lock().unwrap()[changes..], &[false, true]);
@@ -173,14 +184,15 @@ fn shutdown_after_a_deferred_power_on_keeps_lyra_off() {
     dispatch(&mut machine, LyraEvent::PowerOff);
     let id = rpc.last::<ShutdownRequestTopic>();
     dispatch(&mut machine, LyraEvent::PowerOn);
-    dispatch(&mut machine, LyraEvent::PowerOff);
     dispatch(&mut machine, LyraEvent::ShutdownAck { id });
-    tick(&mut machine, 8);
+    tick(&mut machine, 3);
+    dispatch(&mut machine, LyraEvent::PowerOff);
+    tick(&mut machine, 5);
     assert_eq!(machine.current_state(), LyraState::PowerOff);
     assert!(!power.is_on());
 }
 
-fn check_absolute_shutdown_deadline(late_ack: bool, power_on_pending: bool) {
+fn check_absolute_shutdown_deadline(ack_at_secs: Option<u64>, power_on_pending: bool) {
     let power = LyraPower::default();
     let rpc = RpcSender::default();
     let channel = Box::leak(Box::new(
@@ -195,19 +207,19 @@ fn check_absolute_shutdown_deadline(late_ack: bool, power_on_pending: bool) {
     channel.try_send(LyraEvent::PowerOff).unwrap();
     assert!(running.as_mut().poll(&mut cx).is_pending());
     let id = rpc.last::<ShutdownRequestTopic>();
-    for _ in 0..29 {
+    for seconds in 1..=29 {
         embassy_time::MockDriver::get().advance(TimeDuration::from_secs(1));
         channel.try_send(LyraEvent::PowerOff).unwrap();
         channel.try_send(LyraEvent::EchoReply { id: 0 }).unwrap();
         assert!(running.as_mut().poll(&mut cx).is_pending());
         assert!(power.is_on());
+        if ack_at_secs == Some(seconds) {
+            channel.try_send(LyraEvent::ShutdownAck { id }).unwrap();
+            assert!(running.as_mut().poll(&mut cx).is_pending());
+        }
     }
     if power_on_pending {
         channel.try_send(LyraEvent::PowerOn).unwrap();
-        assert!(running.as_mut().poll(&mut cx).is_pending());
-    }
-    if late_ack {
-        channel.try_send(LyraEvent::ShutdownAck { id }).unwrap();
         assert!(running.as_mut().poll(&mut cx).is_pending());
     }
     embassy_time::MockDriver::get().advance(TimeDuration::from_millis(979));
@@ -227,17 +239,23 @@ fn check_absolute_shutdown_deadline(late_ack: bool, power_on_pending: bool) {
 #[test]
 fn absolute_shutdown_deadline_survives_duplicates_and_late_ack() {
     let _clock = reset_clock();
-    check_absolute_shutdown_deadline(true, false);
+    check_absolute_shutdown_deadline(Some(29), false);
+}
+
+#[test]
+fn absolute_shutdown_deadline_can_end_the_five_second_delay_early() {
+    let _clock = reset_clock();
+    check_absolute_shutdown_deadline(Some(26), false);
 }
 
 #[test]
 fn absolute_shutdown_deadline_cuts_power_without_any_ack() {
     let _clock = reset_clock();
-    check_absolute_shutdown_deadline(false, false);
+    check_absolute_shutdown_deadline(None, false);
 }
 
 #[test]
 fn deferred_power_on_waits_for_the_absolute_shutdown_deadline() {
     let _clock = reset_clock();
-    check_absolute_shutdown_deadline(false, true);
+    check_absolute_shutdown_deadline(None, true);
 }

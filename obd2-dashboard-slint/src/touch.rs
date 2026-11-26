@@ -3,9 +3,9 @@ use std::rc::Rc;
 
 use input::event::{DeviceEvent, EventTrait};
 
-// The software renderer maps landscape (x, y) to portrait (y, 927 - x).
-// Apply its inverse to normalized libinput coordinates: (u, v) -> (1-v, u).
-const CALIBRATION: [f32; 6] = [0., -1., 1., 1., 0., 0.];
+// The renderer maps normalized landscape (x, y) to portrait (1-y, x).
+// Apply its inverse to normalized libinput coordinates: (u, v) -> (v, 1-u).
+const CALIBRATION: [f32; 6] = [0., 1., 0., -1., 0., 1.];
 
 #[derive(Default)]
 struct TouchInput {
@@ -23,7 +23,7 @@ impl TouchInput {
                 match device.config_calibration_set_matrix(CALIBRATION) {
                     Ok(()) => {
                         self.calibrated.set(true);
-                        eprintln!("touch: CST3530 connected, mapped to 270-degree dashboard");
+                        eprintln!("touch: CST3530 connected, mapped to 90-degree dashboard");
                     }
                     Err(error) => {
                         self.calibrated.set(false);
@@ -65,10 +65,10 @@ mod tests {
     #[test]
     fn portrait_corners_map_to_rotated_dashboard() {
         for ((u, v), expected) in [
-            ((0., 0.), (1., 0.)),
-            ((1., 0.), (1., 1.)),
-            ((0., 1.), (0., 0.)),
-            ((1., 1.), (0., 1.)),
+            ((0., 0.), (0., 1.)),
+            ((1., 0.), (0., 0.)),
+            ((0., 1.), (1., 1.)),
+            ((1., 1.), (1., 0.)),
             ((0.5, 0.5), (0.5, 0.5)),
         ] {
             let [a, b, c, d, e, f] = CALIBRATION;
