@@ -11,7 +11,7 @@ use super::rpc::RpcSender;
 
 const PROBE_INTERVAL: Duration = Duration::from_secs(1);
 const BOOT_TIMEOUT: Duration = Duration::from_secs(60);
-const RETRY_DELAY: Duration = Duration::from_secs(5);
+const MINIMUM_OFF_TIME: TimeDuration = TimeDuration::from_secs(1);
 const SHUTDOWN_POWER_CUT_DELAY: Duration = Duration::from_secs(5);
 const MISSED_ECHO_LIMIT: u8 = 3;
 const TX_TIMEOUT: TimeDuration = TimeDuration::from_millis(100);
@@ -30,6 +30,7 @@ pub enum LyraEvent {
     ShutdownAccepted,
     ShutdownSilent,
     ForceOff,
+    OffTimeElapsed,
 }
 
 pub struct LyraContext {
@@ -40,6 +41,7 @@ pub struct LyraContext {
     missed_echoes: u8,
     shutdown_id: Option<ControlId>,
     shutdown_deadline: Instant,
+    power_on_allowed_at: Instant,
     pending_power_on: bool,
 }
 
@@ -53,6 +55,7 @@ impl LyraContext {
             missed_echoes: 0,
             shutdown_id: None,
             shutdown_deadline: Instant::MIN,
+            power_on_allowed_at: Instant::MIN,
             pending_power_on: false,
         }
     }
@@ -114,17 +117,41 @@ impl LyraContext {
         (now < self.shutdown_deadline)
             .then(|| core::cmp::min(TX_TIMEOUT, self.shutdown_deadline - now))
     }
+
+    async fn cut_power(&mut self) {
+        self.pending_echo = None;
+        self.shutdown_id = None;
+        self.lyra_power.power_off().await;
+        self.power_on_allowed_at = Instant::now() + MINIMUM_OFF_TIME;
+    }
 }
 
 statechart! {
     Lyra {
         context: LyraContext;
         events: LyraEvent;
-        default(PowerOff);
+        entry: initialize_power_off;
+        default(ReadyToPowerOn);
 
         state PowerOff {
-            entry: power_off;
-            on(PowerOn) => PowerOn;
+            default(CutPower);
+            on(PowerOn) => defer_power_on;
+            on(PowerOff) => cancel_power_on;
+
+            state CutPower {
+                entry: power_off;
+                default(MinimumOffTime);
+            }
+
+            state MinimumOffTime {
+                during: minimum_off_time(power_on_allowed_at);
+                on(OffTimeElapsed) => ReadyToPowerOn;
+            }
+
+            state ReadyToPowerOn {
+                entry: replay_power_on;
+                on(PowerOn) => PowerOn;
+            }
         }
 
         state PowerOn {
@@ -148,14 +175,14 @@ statechart! {
 
             state Retry {
                 entry: power_off;
-                on(after RETRY_DELAY) => Starting;
-                on(PowerOff) => PowerOff;
+                during: minimum_off_time(power_on_allowed_at);
+                on(OffTimeElapsed) => Starting;
+                on(PowerOff) => MinimumOffTime;
             }
         }
 
         state Stopping {
             entry: begin_shutdown;
-            exit: replay_power_on;
             during: shutdown_timeout(shutdown_deadline);
             default(AwaitShutdownAck);
             on(ForceOff) => PowerOff;
@@ -182,12 +209,35 @@ statechart! {
     }
 }
 
-impl LyraPowerOffActions for LyraActionContext<'_> {
-    async fn power_off(&mut self) {
-        self.pending_echo = None;
-        self.shutdown_id = None;
+impl LyraActions for LyraActionContext<'_> {
+    async fn initialize_power_off(&mut self) {
         self.lyra_power.power_off().await;
         info!("Lyra power off");
+    }
+}
+
+impl LyraPowerOffActions for LyraActionContext<'_> {
+    async fn defer_power_on(&mut self) {
+        self.pending_power_on = true;
+    }
+
+    async fn cancel_power_on(&mut self) {
+        self.pending_power_on = false;
+    }
+}
+
+impl LyraCutPowerActions for LyraActionContext<'_> {
+    async fn power_off(&mut self) {
+        self.cut_power().await;
+        info!("Lyra power off");
+    }
+}
+
+impl LyraReadyToPowerOnActions for LyraActionContext<'_> {
+    async fn replay_power_on(&mut self) {
+        if core::mem::take(&mut self.pending_power_on) {
+            self.emit(LyraEvent::PowerOn).unwrap();
+        }
     }
 }
 
@@ -234,8 +284,7 @@ impl LyraOnlineActions for LyraActionContext<'_> {
 
 impl LyraRetryActions for LyraActionContext<'_> {
     async fn power_off(&mut self) {
-        self.pending_echo = None;
-        self.lyra_power.power_off().await;
+        self.cut_power().await;
         warn!("Lyra off; retrying after 5 seconds");
     }
 }
@@ -256,13 +305,6 @@ impl LyraStoppingActions for LyraActionContext<'_> {
 
     async fn cancel_power_on(&mut self) {
         self.pending_power_on = false;
-    }
-
-    async fn replay_power_on(&mut self) {
-        if core::mem::take(&mut self.pending_power_on) {
-            // hsmc processes this only after PowerOff's power_off entry completes.
-            self.emit(LyraEvent::PowerOn).unwrap();
-        }
     }
 }
 
@@ -308,6 +350,11 @@ async fn shutdown_timeout(deadline: &mut Instant) -> LyraEvent {
     // An absolute deadline survives during-future cancellation on other events.
     Timer::at(*deadline).await;
     LyraEvent::ForceOff
+}
+
+async fn minimum_off_time(power_on_allowed_at: &mut Instant) -> LyraEvent {
+    Timer::at(*power_on_allowed_at).await;
+    LyraEvent::OffTimeElapsed
 }
 
 pub const QN: usize = 8;

@@ -48,6 +48,14 @@ fn tick(machine: &mut Lyra, seconds: u64) {
         while !machine.queue.is_empty() || next == Some(Duration::ZERO) {
             next = ready(machine.step(Duration::ZERO));
         }
+        // The local step driver supplies events normally produced by during activities.
+        if matches!(
+            machine.current_state(),
+            LyraState::MinimumOffTime | LyraState::Retry
+        ) && Instant::now() >= machine.context().power_on_allowed_at
+        {
+            dispatch(machine, LyraEvent::OffTimeElapsed);
+        }
     }
 }
 
@@ -62,6 +70,7 @@ fn online(machine: &mut Lyra, rpc: &RpcSender) {
 fn boot_requires_a_matching_probe_and_duplicate_power_on_does_not_reboot() {
     let _clock = reset_clock();
     let (mut machine, power, rpc) = setup();
+    assert_eq!(machine.current_state(), LyraState::ReadyToPowerOn);
     assert!(!power.is_on());
     dispatch(&mut machine, LyraEvent::PowerOn);
     assert!(power.is_on());
@@ -112,12 +121,15 @@ fn valid_echo_resets_missed_count_and_three_misses_trigger_recovery() {
     assert_eq!(machine.current_state(), LyraState::Retry);
     assert!(!power.is_on());
     let shutdown_requests = rpc.count::<ShutdownRequestTopic>();
+    tick(&mut machine, 2);
+    let changes = power.0.lock().unwrap().len();
     dispatch(&mut machine, LyraEvent::PowerOff);
-    assert_eq!(machine.current_state(), LyraState::PowerOff);
+    assert_eq!(machine.current_state(), LyraState::MinimumOffTime);
     assert_eq!(rpc.count::<ShutdownRequestTopic>(), shutdown_requests);
-    tick(&mut machine, 6);
-    assert_eq!(machine.current_state(), LyraState::PowerOff);
+    tick(&mut machine, 3);
+    assert_eq!(machine.current_state(), LyraState::ReadyToPowerOn);
     assert!(!power.is_on());
+    assert_eq!(power.0.lock().unwrap().len(), changes);
 }
 
 #[test]
@@ -146,16 +158,16 @@ fn shutdown_cuts_power_five_seconds_after_the_third_missed_echo() {
     assert_eq!(machine.current_state(), LyraState::WaitBeforePowerOff);
     assert!(power.is_on());
     tick(&mut machine, 1);
-    assert_eq!(machine.current_state(), LyraState::PowerOff);
+    assert_eq!(machine.current_state(), LyraState::MinimumOffTime);
     assert!(!power.is_on());
     assert_eq!(rpc.count::<EchoProbeTopic>(), probes);
     tick(&mut machine, 8);
-    assert_eq!(machine.current_state(), LyraState::PowerOff);
+    assert_eq!(machine.current_state(), LyraState::ReadyToPowerOn);
     assert!(!power.is_on());
 }
 
 #[test]
-fn power_on_during_shutdown_is_handled_normally_after_power_is_cut() {
+fn power_on_during_shutdown_waits_five_seconds_after_the_power_cut() {
     let _clock = reset_clock();
     let (mut machine, power, rpc) = setup();
     online(&mut machine, &rpc);
@@ -171,29 +183,38 @@ fn power_on_during_shutdown_is_handled_normally_after_power_is_cut() {
     tick(&mut machine, 4);
     assert_eq!(power.0.lock().unwrap().len(), changes);
     tick(&mut machine, 1);
+    assert_eq!(machine.current_state(), LyraState::MinimumOffTime);
+    assert!(!power.is_on());
+    tick(&mut machine, 4);
+    assert!(!power.is_on());
+    tick(&mut machine, 1);
     assert_eq!(machine.current_state(), LyraState::Starting);
     assert!(power.is_on());
     assert_eq!(&power.0.lock().unwrap()[changes..], &[false, true]);
 }
 
 #[test]
-fn shutdown_after_a_deferred_power_on_keeps_lyra_off() {
+fn ignition_off_during_minimum_off_time_cancels_the_pending_start() {
     let _clock = reset_clock();
     let (mut machine, power, rpc) = setup();
     online(&mut machine, &rpc);
     dispatch(&mut machine, LyraEvent::PowerOff);
     let id = rpc.last::<ShutdownRequestTopic>();
-    dispatch(&mut machine, LyraEvent::PowerOn);
     dispatch(&mut machine, LyraEvent::ShutdownAck { id });
-    tick(&mut machine, 3);
+    tick(&mut machine, 8);
+    assert_eq!(machine.current_state(), LyraState::MinimumOffTime);
+    dispatch(&mut machine, LyraEvent::PowerOn);
+    assert!(!power.is_on());
+    tick(&mut machine, 4);
     dispatch(&mut machine, LyraEvent::PowerOff);
-    tick(&mut machine, 5);
-    assert_eq!(machine.current_state(), LyraState::PowerOff);
+    tick(&mut machine, 1);
+    assert_eq!(machine.current_state(), LyraState::ReadyToPowerOn);
     assert!(!power.is_on());
 }
 
 fn check_absolute_shutdown_deadline(ack_at_secs: Option<u64>, power_on_pending: bool) {
-    let power = LyraPower::default();
+    let latch_time = TimeDuration::from_millis(15);
+    let power = LyraPower(Default::default(), Some(latch_time));
     let rpc = RpcSender::default();
     let channel = Box::leak(Box::new(
         Channel::<CriticalSectionRawMutex, LyraEvent, QN>::new(),
@@ -203,7 +224,10 @@ fn check_absolute_shutdown_deadline(ack_at_secs: Option<u64>, power_on_pending: 
     let mut cx = Context::from_waker(Waker::noop());
     assert!(running.as_mut().poll(&mut cx).is_pending());
     channel.try_send(LyraEvent::PowerOn).unwrap();
+    assert!(power.0.lock().unwrap().is_empty());
+    embassy_time::MockDriver::get().advance(latch_time);
     assert!(running.as_mut().poll(&mut cx).is_pending());
+    assert_eq!(&*power.0.lock().unwrap(), &[false, true]);
     channel.try_send(LyraEvent::PowerOff).unwrap();
     assert!(running.as_mut().poll(&mut cx).is_pending());
     let id = rpc.last::<ShutdownRequestTopic>();
@@ -228,12 +252,16 @@ fn check_absolute_shutdown_deadline(ack_at_secs: Option<u64>, power_on_pending: 
     let changes = power.0.lock().unwrap().len();
     embassy_time::MockDriver::get().advance(TimeDuration::from_millis(1));
     assert!(running.as_mut().poll(&mut cx).is_pending());
-    let expected_changes: &[bool] = if power_on_pending {
-        &[false, true]
-    } else {
-        &[false]
-    };
-    assert_eq!(&power.0.lock().unwrap()[changes..], expected_changes);
+    assert!(power.is_on());
+    embassy_time::MockDriver::get().advance(latch_time);
+    assert!(running.as_mut().poll(&mut cx).is_pending());
+    assert_eq!(&power.0.lock().unwrap()[changes..], &[false]);
+    embassy_time::MockDriver::get().advance(TimeDuration::from_millis(4_999));
+    assert!(running.as_mut().poll(&mut cx).is_pending());
+    assert!(!power.is_on());
+    embassy_time::MockDriver::get().advance(TimeDuration::from_millis(1));
+    assert!(running.as_mut().poll(&mut cx).is_pending());
+    assert_eq!(power.is_on(), power_on_pending);
 }
 
 #[test]
@@ -255,7 +283,7 @@ fn absolute_shutdown_deadline_cuts_power_without_any_ack() {
 }
 
 #[test]
-fn deferred_power_on_waits_for_the_absolute_shutdown_deadline() {
+fn deferred_power_on_waits_five_seconds_after_the_deadline_cuts_power() {
     let _clock = reset_clock();
     check_absolute_shutdown_deadline(None, true);
 }

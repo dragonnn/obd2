@@ -9,6 +9,7 @@
 #include <linux/delay.h>
 #include <linux/backlight.h>
 #include <linux/gpio/consumer.h>
+#include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of_device.h>
 #include <linux/regulator/consumer.h>
@@ -62,6 +63,13 @@ static int co6300_init(struct co6300 *ctx)
 	static const u8 hbm[] = { 0x80 };
 	static const u8 normal_brightness[] = { 0x07 };
 	int ret;
+
+	ret = mipi_dsi_dcs_soft_reset(ctx->dsi);
+	if (ret)
+		dev_warn(&ctx->dsi->dev, "SWRESET write failed: %d\n", ret);
+	else
+		dev_info(&ctx->dsi->dev, "SWRESET write completed\n");
+	msleep(120);
 
 	/* Unlock and select command page, as documented by the module vendor. */
 	ret = co6300_write(ctx, 0xfe, one_20, 1);
@@ -118,10 +126,53 @@ static int co6300_init(struct co6300 *ctx)
 	ret = co6300_write(ctx, 0x51, hbm, 1);
 	if (ret)
 		return ret;
-	ret = co6300_write(ctx, 0x58, normal_brightness, 1);
-	if (ret)
-		return ret;
-	return 0;
+	return co6300_write(ctx, 0x58, normal_brightness, 1);
+}
+
+static bool co6300_read_power_mode(struct co6300 *ctx)
+{
+	u8 power_mode;
+	int ret;
+
+	ret = mipi_dsi_dcs_get_power_mode(ctx->dsi, &power_mode);
+	if (ret) {
+		dev_warn(&ctx->dsi->dev, "GET_POWER_MODE after DISPLAY_ON failed: %d\n",
+			 ret);
+		return false;
+	}
+
+	dev_info(&ctx->dsi->dev,
+		 "GET_POWER_MODE after DISPLAY_ON: 0x%02x (sleep out=%d, display on=%d)\n",
+		 power_mode,
+		 !!(power_mode & MIPI_DSI_DCS_POWER_MODE_SLEEP),
+		 !!(power_mode & MIPI_DSI_DCS_POWER_MODE_DISPLAY));
+	return true;
+}
+
+static void co6300_log_display_status(struct co6300 *ctx)
+{
+	u8 display_status[4];
+	ssize_t status_len;
+	int ret;
+
+	ret = mipi_dsi_set_maximum_return_packet_size(ctx->dsi,
+						      sizeof(display_status));
+	if (ret) {
+		dev_warn(&ctx->dsi->dev, "GET_DISPLAY_STATUS setup failed: %d\n",
+			 ret);
+		return;
+	}
+	status_len = mipi_dsi_dcs_read(ctx->dsi, MIPI_DCS_GET_DISPLAY_STATUS,
+				       display_status, sizeof(display_status));
+	if (status_len < 0)
+		dev_warn(&ctx->dsi->dev, "GET_DISPLAY_STATUS after DISPLAY_ON failed: %zd\n",
+			 status_len);
+	else if (status_len != sizeof(display_status))
+		dev_warn(&ctx->dsi->dev, "GET_DISPLAY_STATUS returned %zd bytes, expected %zu\n",
+			 status_len, sizeof(display_status));
+	else
+		dev_info(&ctx->dsi->dev, "GET_DISPLAY_STATUS after DISPLAY_ON: 0x%4phN\n",
+			 display_status);
 }
 
 static int co6300_backlight_update_status(struct backlight_device *backlight)
@@ -153,7 +204,9 @@ static const struct backlight_ops co6300_backlight_ops = {
 
 static int co6300_prepare(struct drm_panel *panel)
 {
+	static const unsigned int reset_ms[] = { 50, 3000 };
 	struct co6300 *ctx = to_co6300(panel);
+	unsigned int attempt;
 	int ret;
 
 	if (ctx->prepared)
@@ -164,18 +217,29 @@ static int co6300_prepare(struct drm_panel *panel)
 		return ret;
 	msleep(50);
 
-	if (ctx->reset) {
-		gpiod_set_value_cansleep(ctx->reset, 1);
-		usleep_range(20000, 21000);
-		gpiod_set_value_cansleep(ctx->reset, 0);
-		msleep(120);
+	for (attempt = 0; attempt < ARRAY_SIZE(reset_ms); attempt++) {
+		if (ctx->reset) {
+			dev_info(&ctx->dsi->dev, "Holding panel reset for %u ms\n",
+				 reset_ms[attempt]);
+			gpiod_set_value_cansleep(ctx->reset, 1);
+			msleep(reset_ms[attempt]);
+			gpiod_set_value_cansleep(ctx->reset, 0);
+			msleep(120);
+		}
+
+		ret = co6300_init(ctx);
+		if (ret) {
+			dev_err(&ctx->dsi->dev, "panel initialization failed: %d\n",
+				ret);
+			regulator_disable(ctx->supply);
+			return ret;
+		}
+
+		if (co6300_read_power_mode(ctx) || !ctx->reset)
+			break;
 	}
 
-	ret = co6300_init(ctx);
-	if (ret) {
-		regulator_disable(ctx->supply);
-		return ret;
-	}
+	co6300_log_display_status(ctx);
 	ctx->prepared = true;
 	return 0;
 }
@@ -189,8 +253,13 @@ static int co6300_unprepare(struct drm_panel *panel)
 	mipi_dsi_dcs_set_display_off(ctx->dsi);
 	mipi_dsi_dcs_enter_sleep_mode(ctx->dsi);
 	msleep(120);
-	if (ctx->reset)
+	if (ctx->reset) {
 		gpiod_set_value_cansleep(ctx->reset, 1);
+		/* The panel supply can stay enabled across a system shutdown. */
+		if (system_state == SYSTEM_RESTART ||
+		    system_state == SYSTEM_POWER_OFF)
+			msleep(3000);
+	}
 	regulator_disable(ctx->supply);
 	ctx->prepared = false;
 	return 0;

@@ -10,10 +10,11 @@ macro_rules! warn {
 }
 
 pub mod board {
+    use embassy_time::{Duration, Timer};
     use std::sync::{Arc, Mutex};
 
     #[derive(Clone, Default)]
-    pub struct LyraPower(pub Arc<Mutex<Vec<bool>>>);
+    pub struct LyraPower(pub Arc<Mutex<Vec<bool>>>, pub Option<Duration>);
 
     impl LyraPower {
         pub async fn power_on(&mut self) {
@@ -21,6 +22,9 @@ pub mod board {
         }
 
         pub async fn power_off(&mut self) {
+            if let Some(delay) = self.1 {
+                Timer::after(delay).await;
+            }
             self.0.lock().unwrap().push(false);
         }
 
