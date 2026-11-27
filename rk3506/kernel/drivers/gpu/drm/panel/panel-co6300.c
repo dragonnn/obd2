@@ -64,13 +64,6 @@ static int co6300_init(struct co6300 *ctx)
 	static const u8 normal_brightness[] = { 0x07 };
 	int ret;
 
-	ret = mipi_dsi_dcs_soft_reset(ctx->dsi);
-	if (ret)
-		dev_warn(&ctx->dsi->dev, "SWRESET write failed: %d\n", ret);
-	else
-		dev_info(&ctx->dsi->dev, "SWRESET write completed\n");
-	msleep(120);
-
 	/* Unlock and select command page, as documented by the module vendor. */
 	ret = co6300_write(ctx, 0xfe, one_20, 1);
 	if (ret)
@@ -227,6 +220,15 @@ static int co6300_prepare(struct drm_panel *panel)
 			msleep(120);
 		}
 
+		if (attempt > 0) {
+			ret = mipi_dsi_dcs_soft_reset(ctx->dsi);
+			if (ret)
+				dev_warn(&ctx->dsi->dev, "SWRESET write failed: %d\n", ret);
+			else
+				dev_info(&ctx->dsi->dev, "SWRESET write completed\n");
+			msleep(120);
+		}
+
 		ret = co6300_init(ctx);
 		if (ret) {
 			dev_err(&ctx->dsi->dev, "panel initialization failed: %d\n",
@@ -235,7 +237,7 @@ static int co6300_prepare(struct drm_panel *panel)
 			return ret;
 		}
 
-		if (co6300_read_power_mode(ctx) || !ctx->reset)
+		if (co6300_read_power_mode(ctx))
 			break;
 	}
 
