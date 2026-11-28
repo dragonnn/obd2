@@ -267,6 +267,25 @@ static int co6300_unprepare(struct drm_panel *panel)
 	return 0;
 }
 
+static int co6300_loader_protect(struct drm_panel *panel, bool on)
+{
+	struct co6300 *ctx = to_co6300(panel);
+	int ret;
+
+	if (ctx->prepared == on)
+		return 0;
+
+	ret = on ? regulator_enable(ctx->supply) : regulator_disable(ctx->supply);
+	if (ret)
+		return ret;
+
+	ctx->prepared = on;
+	if (on)
+		dev_info(&ctx->dsi->dev, "Taking over U-Boot display\n");
+
+	return 0;
+}
+
 static const struct drm_display_mode co6300_mode = {
 	.clock = 16000,
 	.hdisplay = 262,
@@ -301,6 +320,7 @@ static const struct drm_panel_funcs co6300_panel_funcs = {
 	.prepare = co6300_prepare,
 	.unprepare = co6300_unprepare,
 	.get_modes = co6300_get_modes,
+	.loader_protect = co6300_loader_protect,
 };
 
 static int co6300_probe(struct mipi_dsi_device *dsi)

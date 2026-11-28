@@ -1,0 +1,177 @@
+--- u-boot/drivers/video/drm/rockchip_panel.h
++++ u-boot/drivers/video/drm/rockchip_panel.h
+@@ -29,6 +29,7 @@
+ 
+ 	struct rockchip_connector *conn;
+ 	struct display_state *state;
++	int loader_power_mode;
+ };
+ 
+ static inline void rockchip_panel_init(struct rockchip_panel *panel,
+--- u-boot/drivers/video/drm/rockchip_panel.c
++++ u-boot/drivers/video/drm/rockchip_panel.c
+@@ -334,6 +334,23 @@
+ 			ret = rockchip_panel_send_dsi_cmds(dsi, plat->on_cmds);
+ 		if (ret)
+ 			printf("failed to send on cmds: %d\n", ret);
++
++		if (device_is_compatible(panel->dev, "boe,co6300")) {
++			const u8 ready = MIPI_DSI_DCS_POWER_MODE_SLEEP |
++					 MIPI_DSI_DCS_POWER_MODE_DISPLAY;
++			u8 mode;
++
++			if (!ret)
++				ret = mipi_dsi_dcs_get_power_mode(dsi, &mode);
++			if (ret)
++				printf("CO6300 initialization or power-mode read failed: %d\n", ret);
++			else {
++				printf("CO6300 power mode 0x%02x\n", mode);
++				if ((mode & ready) != ready)
++					ret = -EIO;
++			}
++			panel->loader_power_mode = ret ? ret : mode;
++		}
+ 	}
+ 
+ 	priv->prepared = true;
+@@ -374,6 +391,7 @@
+ 	if (plat->delay.unprepare)
+ 		mdelay(plat->delay.unprepare);
+ 
++	panel->loader_power_mode = -ENODATA;
+ 	priv->prepared = false;
+ }
+ 
+@@ -570,6 +588,7 @@
+ 	panel->bus_format = plat->bus_format;
+ 	panel->bpc = plat->bpc;
+ 	panel->funcs = &rockchip_panel_funcs;
++	panel->loader_power_mode = -ENODATA;
+ 
+ 	return 0;
+ }
+@@ -577,6 +596,7 @@
+ static const struct udevice_id rockchip_panel_ids[] = {
+ 	{ .compatible = "simple-panel", },
+ 	{ .compatible = "simple-panel-dsi", },
++	{ .compatible = "boe,co6300", },
+ 	{ .compatible = "simple-panel-spi", },
+ 	{}
+ };
+--- u-boot/drivers/video/drm/rockchip_display.h
++++ u-boot/drivers/video/drm/rockchip_display.h
+@@ -300,6 +300,7 @@
+ 	int logo_mode;
+ 	int charge_logo_mode;
+ 	int logo_rotate;
++	int logo_result;
+ 	void *mem_base;
+ 	int mem_size;
+ 
+--- u-boot/drivers/video/drm/rockchip_display.c
++++ u-boot/drivers/video/drm/rockchip_display.c
+@@ -1066,13 +1066,14 @@
+ 		}
+ 	}
+ 
+-	display_check(state);
++	ret = display_check(state);
++	if (ret)
++		return ret;
+ 	ret = display_set_plane(state);
+ 	if (ret)
+ 		return ret;
+-	display_enable(state);
+-
+-	return 0;
++
++	return display_enable(state);
+ }
+ 
+ static int get_crtc_id(ofnode connect, bool is_ports_node)
+@@ -1587,10 +1588,12 @@
+ 	list_for_each_entry(s, &rockchip_display_list, head) {
+ 		s->logo.mode = s->logo_mode;
+ 		s->logo.rotate = s->logo_rotate;
+-		if (load_bmp_logo(&s->logo, s->ulogo_name)) {
++		s->logo_result = load_bmp_logo(&s->logo, s->ulogo_name);
++		if (s->logo_result) {
+ 			printf("failed to display uboot logo\n");
+ 		} else {
+ 			ret = display_logo(s);
++			s->logo_result = ret;
+ 			if (ret == -EAGAIN)
+ 				ms = s;
+ 		}
+@@ -1606,6 +1609,7 @@
+ 	if (ms) {
+ 		while (count < 5) {
+ 			ret = display_logo(ms);
++			ms->logo_result = ret;
+ 			if (ret != -EAGAIN)
+ 				break;
+ 			mdelay(10);
+@@ -2327,11 +2331,23 @@
+ 		if (s->crtc_state.crtc->funcs->fixup_dts && !s->crtc_state.crtc->assign_plane)
+ 			s->crtc_state.crtc->funcs->fixup_dts(s, blob);
+ 
+-		if (!s->is_init || !s->is_klogo_valid)
+-			continue;
+-
+ 		conn = s->conn_state.connector;
+ 		if (!conn)
++			continue;
++		if (conn->panel && device_is_compatible(conn->panel->dev, "boe,co6300")) {
++			fdt32_t status[] = {
++				cpu_to_fdt32(s->logo_result),
++				cpu_to_fdt32(s->is_enable),
++				cpu_to_fdt32(conn->panel->loader_power_mode),
++			};
++
++			fdt_increase_size(blob, 0x80);
++			do_fixup_by_path(blob, ofnode_to_np(s->node)->full_name,
++					 "logo,uboot-status", status, sizeof(status), 1);
++			if (!s->is_enable || conn->panel->loader_power_mode < 0)
++				continue;
++		}
++		if (!s->is_init || !s->is_klogo_valid)
+ 			continue;
+ 		conn_funcs = conn->funcs;
+ 		if (!conn_funcs) {
+--- kernel-6.1/include/drm/drm_panel.h
++++ kernel-6.1/include/drm/drm_panel.h
+@@ -142,6 +142,16 @@
+ 	 * Allows panels to create panels-specific debugfs files.
+ 	 */
+ 	void (*debugfs_init)(struct drm_panel *panel, struct dentry *root);
++
++	/**
++	 * @loader_protect:
++	 *
++	 * Adopt a panel initialized by the boot loader when @on is true.
++	 * Release the adopted state if the handoff is aborted.
++	 *
++	 * This function is optional.
++	 */
++	int (*loader_protect)(struct drm_panel *panel, bool on);
+ };
+ 
+ /**
+--- kernel-6.1/drivers/gpu/drm/rockchip/dw-mipi-dsi-rockchip.c
++++ kernel-6.1/drivers/gpu/drm/rockchip/dw-mipi-dsi-rockchip.c
+@@ -914,8 +914,14 @@
+ {
+ 	struct dw_mipi_dsi_rockchip *dsi = to_dsi(encoder);
+ 
+-	if (dsi->panel)
++	if (dsi->panel && dsi->panel->funcs->loader_protect) {
++		int ret = dsi->panel->funcs->loader_protect(dsi->panel, on);
++
++		if (ret)
++			return ret;
++	} else if (dsi->panel) {
+ 		panel_simple_loader_protect(dsi->panel);
++	}
+ 
+ 	dw_mipi_dsi_rockchip_loader_protect(dsi, on);
+ 
